@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>北交大像素校园 · 保卫处值班窗口</title>
+<!--
+  保安 · 老丁 —— 独立交付件（单文件前端，零依赖零构建，file:// 双击可用）
+  交付内容（保安.md §六）：
+    ① 登录窗口（昵称+密码，走轻后端账号服务；进不去就聊不了）
+    ② 聊天界面（登录后的主界面，失物 / 找物 / 报修三个入口都在这里）
+    ③ 本角色功能本体：四维失物匹配 matchLostItem / 以图搜物 matchByImage【云端】/
+       证件 OCR 双字段核对 / 报修 reportRepair / 工单查询与销单 / 推诿边界
+  对外暴露 window.GuardAPI = { matchLostItem, matchByImage, reportRepair, ... }（合体契约）
+  地图对接：MapBridge 为预留接口桩（见下方注释），功能调用点已接入，待地图组实现。
+  数据：优先 fetch data/*.json（由账号服务托管），file:// 下回退到内嵌种子，两份内容保持一致。
+-->
+<style>
+:root{
+  --bg:#10141c; --panel:#1a2230; --panel2:#141b27; --line:#2c3a52; --line2:#22304a;
+  --txt:#d7e2f2; --dim:#8496b3; --amber:#f0b429; --blue:#6ea8fe; --green:#69d58c; --red:#ef6a6a;
+  --guard:#3f5b8f; --me:#8a5f1d;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--txt);font:14px/1.6 "PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden}
+button{font:inherit;cursor:pointer}
+input{font:inherit}
+.hidden{display:none!important}
+
+/* ---------- 登录窗口 ---------- */
+#login-view{height:100%;display:flex;align-items:center;justify-content:center;background:
+  repeating-linear-gradient(0deg,transparent 0 31px,rgba(110,168,254,.04) 31px 32px),
+  repeating-linear-gradient(90deg,transparent 0 31px,rgba(110,168,254,.04) 31px 32px),var(--bg)}
+.login-card{width:360px;background:var(--panel);border:2px solid var(--line);padding:26px 26px 20px;image-rendering:pixelated}
+.login-card h1{font-size:17px;letter-spacing:2px;color:var(--amber);text-align:center;margin-bottom:2px}
+.login-card .sub{text-align:center;color:var(--dim);font-size:12px;margin-bottom:14px}
+.login-sprite{display:block;margin:0 auto 10px;image-rendering:pixelated}
+.tabs{display:flex;border:1px solid var(--line);margin-bottom:14px}
+.tabs button{flex:1;background:transparent;border:none;color:var(--dim);padding:7px 0;letter-spacing:2px}
+.tabs button.on{background:var(--line2);color:var(--txt)}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:12px;color:var(--dim);margin-bottom:3px;letter-spacing:1px}
+.field input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:8px 10px;outline:none}
+.field input:focus{border-color:var(--blue)}
+#li-submit{width:100%;background:var(--amber);color:#231a05;border:none;padding:9px 0;font-weight:700;letter-spacing:4px;margin-top:6px}
+#li-submit:hover{filter:brightness(1.08)}
+#li-msg{min-height:18px;font-size:12px;color:var(--red);margin-top:8px;text-align:center}
+#li-health{text-align:center;font-size:12px;color:var(--dim);margin-top:6px}
+#li-health b{font-weight:400}
+#li-health .ok{color:var(--green)} #li-health .bad{color:var(--red)}
+
+/* ---------- 聊天界面 ---------- */
+#chat-view{height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;background:var(--panel);border-bottom:2px solid var(--line);padding:8px 14px}
+header .mini{image-rendering:pixelated}
+header .title{font-weight:700;letter-spacing:1px}
+header .title small{display:block;font-weight:400;color:var(--dim);font-size:11px;letter-spacing:0}
+.chip{font-size:12px;border:1px solid var(--line);padding:2px 9px;color:var(--dim)}
+.chip.duty{color:var(--green);border-color:#2e5a3c}
+.chip.off{color:var(--amber);border-color:#5a4a2e}
+#clock{font-size:12px;color:var(--blue);border:1px dashed var(--line);padding:2px 9px;background:transparent}
+#clock:hover{border-color:var(--blue)}
+header .sp{flex:1}
+.hbtn{background:transparent;border:1px solid var(--line);color:var(--dim);font-size:12px;padding:3px 10px}
+.hbtn:hover{color:var(--txt);border-color:var(--dim)}
+
+#main{flex:1;display:flex;min-height:0}
+#chat-col{flex:1;display:flex;flex-direction:column;min-width:0}
+#msgs{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:8px;align-items:flex-start}
+.row.me{flex-direction:row-reverse}
+.row.sys{justify-content:center}
+.bubble{max-width:76%;padding:8px 12px;border:1px solid var(--line);background:var(--panel);white-space:pre-wrap;word-break:break-word}
+.row.me .bubble{background:#3a2c10;border-color:#6b5215}
+.row.sys .bubble{max-width:92%;background:transparent;border:1px dashed var(--line2);color:var(--dim);font-size:12px;padding:4px 10px}
+.avatar-c{width:34px;height:34px;flex:none;image-rendering:pixelated;border:1px solid var(--line);background:var(--panel2)}
+/* guard 消息名字条 */
+.row.guard .gtxt{display:flex;flex-direction:column;gap:3px;max-width:76%}
+.gname{font-size:11px;color:var(--amber);letter-spacing:1px;padding-left:2px}
+.row.guard .gtxt .bubble{max-width:100%}
+.row.guard .gtxt .cards{max-width:100%;width:100%}
+.bubble{border-radius:8px}
+.item-card,.order-card{border-radius:8px}
+
+/* 老丁立绘——左下角，随对话切表情 */
+#chat-col{position:relative}
+#guard-portrait{position:absolute;left:8px;bottom:60px;z-index:6;width:108px;pointer-events:none;user-select:none}
+#guard-portrait .pt-frame{position:relative;animation:breathe 3.2s ease-in-out infinite}
+#guard-portrait svg{width:108px;height:auto;display:block;image-rendering:pixelated;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))}
+#guard-portrait.bump .pt-frame{animation:bump .35s ease}
+.pt-tag{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);white-space:nowrap;
+  font-size:11px;letter-spacing:2px;color:var(--amber);background:rgba(20,26,38,.88);
+  border:1px solid var(--line);padding:1px 10px;border-radius:10px}
+.pt-mood{position:absolute;right:-6px;top:2px;font-size:16px;animation:bump .35s ease}
+@keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes bump{0%{transform:scale(.92)}55%{transform:scale(1.05)}100%{transform:scale(1)}}
+#msgs{padding-bottom:128px}
+@media (max-width:700px){ #guard-portrait{width:78px} #guard-portrait svg{width:78px} #msgs{padding-bottom:104px} #qa-row,#draft-bar{padding-left:94px} }
+.photo-thumb{max-width:180px;max-height:140px;display:block;image-rendering:auto;border:1px solid var(--line)}
+.photo-dropped{font-size:11px;color:var(--dim)}
+
+/* 候选失物卡片 */
+.cards{display:flex;flex-direction:column;gap:8px;max-width:86%}
+.item-card{border:1px solid var(--line);background:var(--panel2);padding:8px 10px}
+.item-card.best{border-color:var(--amber)}
+.item-card .hd{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.item-card .cat{color:var(--amber);font-weight:700}
+.item-card .best-tag{font-size:11px;background:var(--amber);color:#231a05;padding:0 6px}
+.item-card .score{margin-left:auto;font-size:12px;color:var(--blue)}
+.item-card .meta{font-size:12px;color:var(--dim)}
+.bar{height:5px;background:var(--line2);margin:6px 0}
+.bar i{display:block;height:100%;background:var(--blue)}
+.item-card.best .bar i{background:var(--amber)}
+.dims{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.dims span{font-size:11px;color:var(--dim);border:1px solid var(--line2);padding:0 5px}
+.dims span.hit{color:var(--green);border-color:#2e5a3c}
+.claim-btn{background:transparent;border:1px solid var(--line);color:var(--blue);font-size:12px;padding:2px 10px}
+.claim-btn:hover{border-color:var(--blue)}
+.opt-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}
+.opt-btn{background:var(--panel2);border:1px solid var(--blue);color:var(--blue);font-size:12px;padding:4px 12px;cursor:pointer;letter-spacing:1px}
+.opt-btn:hover{background:rgba(96,165,250,.14)}
+.opt-btn.ghost{border-color:var(--line);color:var(--dim)}
+.opt-btn.ghost:hover{border-color:var(--amber);color:var(--amber);background:transparent}
+
+/* 工单卡片 */
+.order-card{border:1px solid var(--line);background:var(--panel2);padding:7px 10px;font-size:13px;max-width:86%}
+.order-card .oid{color:var(--blue);font-weight:700;margin-right:8px}
+.badge{font-size:11px;padding:0 6px;border:1px solid}
+.badge.s0{color:var(--blue);border-color:#2c4a72}
+.badge.s1{color:var(--amber);border-color:#6b5215}
+.badge.s2{color:var(--green);border-color:#2e5a3c}
+.order-card .meta{color:var(--dim);font-size:12px}
+
+/* 快捷入口 + 输入区 */
+#qa-row{display:flex;gap:8px;padding:8px 14px 0 124px;flex-wrap:wrap}
+.qa{background:var(--panel2);border:1px solid var(--line);color:var(--txt);font-size:12px;padding:4px 12px;letter-spacing:1px}
+.qa:hover{border-color:var(--amber);color:var(--amber)}
+#draft-bar{display:flex;align-items:center;gap:10px;padding:8px 14px 0 124px}
+#draft-bar .thumb{width:56px;height:56px;object-fit:cover;border:1px solid var(--line);border-radius:4px}
+#draft-bar .draft-tip{font-size:12px;color:var(--dim)}
+#draft-bar .rm{margin-left:auto;background:none;border:1px solid var(--line);color:var(--dim);padding:2px 10px;cursor:pointer;font-size:12px}
+#draft-bar .rm:hover{color:var(--red);border-color:var(--red)}
+#input-row{display:flex;gap:8px;padding:10px 14px 14px}
+#inp{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:10px 12px;outline:none}
+#inp:focus{border-color:var(--blue)}
+.icon-btn{background:var(--panel2);border:1px solid var(--line);color:var(--dim);padding:0 14px}
+.icon-btn:hover{color:var(--amber);border-color:var(--amber)}
+#btn-send{background:var(--guard);border:1px solid #557bbd;color:#eaf1ff;padding:0 22px;letter-spacing:2px}
+
+/* 地图接口面板（预留） */
+#map-panel{width:280px;flex:none;border-left:2px solid var(--line);background:var(--panel2);display:flex;flex-direction:column}
+#map-panel .ph-title{padding:10px 12px 4px;font-size:13px;color:var(--amber);letter-spacing:1px}
+#map-panel .ph-sub{padding:0 12px 8px;font-size:11px;color:var(--dim);border-bottom:1px dashed var(--line2)}
+#map-holder{margin:10px 12px;border:1px dashed var(--line);height:150px;position:relative;
+  background:repeating-linear-gradient(0deg,transparent 0 15px,rgba(110,168,254,.05) 15px 16px),
+  repeating-linear-gradient(90deg,transparent 0 15px,rgba(110,168,254,.05) 15px 16px)}
+#map-holder .ph-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:12px;letter-spacing:2px}
+#map-log-title{padding:4px 12px;font-size:12px;color:var(--dim)}
+#map-log{flex:1;overflow-y:auto;padding:0 12px 12px;font-size:11px;color:var(--dim)}
+#map-log .ln{border-bottom:1px dashed var(--line2);padding:4px 0;word-break:break-all}
+#map-log .ln b{color:var(--blue);font-weight:400}
+
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-thumb{background:var(--line)}
+@media (max-width:900px){ #map-panel{display:none} }
+</style>
+</head>
+<body>
+
+<!-- ======================= ① 登录窗口 ======================= -->
+<section id="login-view">
+  <div class="login-card">
+    <canvas id="login-sprite" class="login-sprite" width="12" height="13"></canvas>
+    <h1>保卫处 · 值班窗口</h1>
+    <div class="sub">北交大像素校园 —— 保安 · 老丁</div>
+    <div class="tabs">
+      <button id="tab-login" class="on">登 录</button>
+      <button id="tab-reg">注 册</button>
+    </div>
+    <div class="field"><label>昵称</label><input id="li-nick" maxlength="16" placeholder="怎么称呼你"></div>
+    <div class="field"><label>密码</label><input id="li-pass" type="password" maxlength="32" placeholder="设个密码，至少6位"></div>
+    <button id="li-submit">进 入</button>
+    <div id="li-msg"></div>
+    <div id="li-health">正在连接账号服务……</div>
+  </div>
+</section>
+
+<!-- ======================= ② 聊天界面（登录后主界面） ======================= -->
+<section id="chat-view" class="hidden">
+  <header>
+    <canvas id="hd-sprite" class="mini" width="12" height="13" style="width:28px;height:30px"></canvas>
+    <div class="title">保安 · 老丁<small id="role-line">保卫处值班 · 公文腔</small></div>
+    <span id="status-chip" class="chip">—</span>
+    <button id="clock" title="点击可拨时间（演示用）">--:--</button>
+    <span class="sp"></span>
+    <button id="btn-reset" class="hbtn" title="清空本地数据重新来">重置数据</button>
+    <button id="btn-logout" class="hbtn">退出</button>
+  </header>
+  <div id="main">
+    <div id="chat-col">
+      <div id="msgs"></div>
+      <div id="guard-portrait" data-mood="idle" title="保安 · 老丁">
+        <div class="pt-frame">
+          <svg id="guard-svg" viewBox="0 0 48 60" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" aria-label="保安老丁"></svg>
+          <span class="pt-tag">保安 · 老丁</span>
+          <span class="pt-mood" id="pt-mood"></span>
+        </div>
+      </div>
+      <div id="qa-row">
+        <button class="qa" data-act="lost_search">找失物</button>
+        <button class="qa" data-act="lost_intake">登记失物</button>
+        <button class="qa" data-act="repair">报修</button>
+        <button class="qa" data-act="claim">认领核对</button>
+        <button class="qa" data-act="call">呼叫老丁</button>
+      </div>
+      <div id="draft-bar" class="hidden"></div>
+      <div id="input-row">
+        <button id="btn-photo" class="icon-btn" title="拍照或选图——找东西、认证件">图</button>
+        <input id="file-in" type="file" accept="image/*" capture="environment" class="hidden">
+        <input id="inp" placeholder="跟老丁说句话……">
+        <button id="btn-send">发送</button>
+      </div>
+    </div>
+    <aside id="map-panel">
+      <div class="ph-title">地图层 · MapBridge</div>
+      <div class="ph-sub">预留接口（本期不实现）。focus / addPin / highlight / setLayer / findPath / nearestWalkable / on——功能调用点已接入，待地图组按总体设计 §8 实现后自动生效。</div>
+      <div id="map-holder"><div class="ph-txt">地图未接入</div></div>
+      <div id="map-log-title">接口调用记录</div>
+      <div id="map-log"></div>
+    </aside>
+  </div>
+</section>
+
+<!-- ======================= 内嵌种子（与 data/*.json 内容一致，file:// 兜底） ======================= -->
+<script id="seed-points" type="application/json">{"version":2,"points":[
+{"id":"nanmen","name":"南门","aliases":["南校门","南大门","亚洲第一门"],"x":290,"y":320,"mapId":null},
+{"id":"ximen","name":"西门","aliases":["西校门"],"x":8,"y":150,"mapId":null},
+{"id":"siyuanlou","name":"思源楼","aliases":["主楼","SY"],"x":290,"y":110,"mapId":null},
+{"id":"siyuandong","name":"思源东楼","aliases":["思东","SD","思源东区"],"x":320,"y":110,"mapId":null},
+{"id":"siyuanxi","name":"思源西楼","aliases":["思西","SX","思源西区"],"x":260,"y":110,"mapId":null},
+{"id":"jx1","name":"第一教学楼","aliases":["一教"],"x":215,"y":170,"mapId":null},
+{"id":"jx2","name":"第二教学楼","aliases":["二教"],"x":255,"y":205,"mapId":null},
+{"id":"jx3","name":"第三教学楼","aliases":["三教"],"x":330,"y":215,"mapId":null},
+{"id":"jx4","name":"第四教学楼","aliases":["四教"],"x":360,"y":230,"mapId":null},
+{"id":"jx5","name":"第五教学楼","aliases":["五教"],"x":390,"y":220,"mapId":null},
+{"id":"jx6","name":"第六教学楼","aliases":["六教"],"x":410,"y":195,"mapId":null},
+{"id":"jx7","name":"第七教学楼","aliases":["七教"],"x":380,"y":260,"mapId":null},
+{"id":"jx8","name":"第八教学楼","aliases":["八教"],"x":420,"y":240,"mapId":null},
+{"id":"jx9","name":"第九教学楼","aliases":["九教"],"x":440,"y":270,"mapId":null},
+{"id":"jx10","name":"第十教学楼","aliases":["十教","逸夫楼","逸夫教学楼","YF"],"x":460,"y":225,"mapId":null},
+{"id":"dq_jx1","name":"东校区第一教学楼","aliases":["东校区一教","东区一教","DQ"],"x":600,"y":150,"mapId":null},
+{"id":"dq_jx2","name":"东校区第二教学楼","aliases":["东校区二教","东区二教","DQ2"],"x":600,"y":180,"mapId":null},
+{"id":"jixie","name":"机械楼","aliases":["机械工程楼"],"x":270,"y":250,"mapId":null},
+{"id":"dianqi","name":"电气楼","aliases":["电气工程楼"],"x":340,"y":290,"mapId":null},
+{"id":"jianyi","name":"建筑艺术楼","aliases":["建艺楼","建筑与艺术楼"],"x":300,"y":280,"mapId":null},
+{"id":"xinxi","name":"信息中心楼","aliases":["信息中心"],"x":300,"y":75,"mapId":null},
+{"id":"tushuguan","name":"图书馆","aliases":["主区图书馆","圆顶图书馆"],"x":380,"y":130,"mapId":null},
+{"id":"tianyou","name":"天佑会堂","aliases":["大礼堂","礼堂"],"x":230,"y":100,"mapId":null},
+{"id":"kexue","name":"科学会堂","aliases":[],"x":230,"y":140,"mapId":null},
+{"id":"xuehuo","name":"学生活动服务中心","aliases":["学活","学生活动中心"],"x":200,"y":60,"mapId":null},
+{"id":"yikatong","name":"一卡通中心","aliases":["卡务中心"],"x":330,"y":90,"mapId":null},
+{"id":"baoweichu","name":"保卫处","aliases":[],"x":250,"y":130,"mapId":null},
+{"id":"xiaoyiyuan","name":"校医院","aliases":["医院"],"x":180,"y":250,"mapId":null},
+{"id":"houqinlou","name":"后勤楼","aliases":["后勤","后勤集团","校园服务港"],"x":490,"y":95,"mapId":null},
+{"id":"xiaomai","name":"小麦公社","aliases":["小麦"],"x":240,"y":290,"mapId":null},
+{"id":"nanyouju","name":"南门邮局","aliases":["邮局","校内邮局"],"x":310,"y":300,"mapId":null},
+{"id":"xiachen","name":"下沉广场","aliases":["大坑"],"x":180,"y":120,"mapId":null},
+{"id":"minghu","name":"明湖","aliases":["明湖畔"],"x":140,"y":90,"mapId":null},
+{"id":"caochang","name":"西操场","aliases":["操场","田径场","西操"],"x":470,"y":250,"mapId":null},
+{"id":"tiyuguan","name":"体育馆","aliases":["老体育馆"],"x":430,"y":300,"mapId":null},
+{"id":"lanqiuchang","name":"篮球场","aliases":["球场"],"x":505,"y":205,"mapId":null},
+{"id":"shitang2","name":"第二食堂","aliases":["二食堂","学活一层","食堂"],"x":200,"y":72,"mapId":null},
+{"id":"shitang3","name":"第三食堂","aliases":["三食堂","学活二楼","学活食堂"],"x":200,"y":48,"mapId":null},
+{"id":"qingzhen","name":"清真食堂","aliases":["清真","清真餐厅","学活清真"],"x":225,"y":78,"mapId":null},
+{"id":"canting_mh","name":"明湖餐厅","aliases":["明湖食堂"],"x":150,"y":115,"mapId":null},
+{"id":"liuyuan","name":"留园餐厅","aliases":["留园","留园食堂"],"x":120,"y":140,"mapId":null},
+{"id":"shitang4","name":"学生第四食堂","aliases":["四食堂","第四食堂"],"x":430,"y":130,"mapId":null},
+{"id":"jiaozhigong","name":"教职工餐厅","aliases":["教工食堂","教工餐厅"],"x":350,"y":170,"mapId":null},
+{"id":"hongguoyuan","name":"红果园餐厅","aliases":["红果园","红果园饭店","红果园宾馆"],"x":150,"y":210,"mapId":null},
+{"id":"sushe","name":"学生宿舍区","aliases":["宿舍","宿舍楼"],"x":100,"y":200,"mapId":null},
+{"id":"jiayuan","name":"嘉园","aliases":["嘉园公寓","嘉园宿舍"],"x":60,"y":160,"mapId":null},
+{"id":"sushe19","name":"19号学生公寓","aliases":["19号楼","19号公寓","十九号楼"],"x":255,"y":295,"mapId":null},
+{"id":"sushe12","name":"12号学生公寓","aliases":["12号楼","12号公寓","十二号楼"],"x":225,"y":275,"mapId":null},
+{"id":"sushe22","name":"22号学生公寓","aliases":["22号楼","22号公寓","公主楼"],"x":205,"y":260,"mapId":null},
+{"id":"xueyuan","name":"学苑公寓","aliases":["学苑","学苑区","研究生公寓"],"x":560,"y":120,"mapId":null},
+{"id":"dongxiaoqu","name":"东校区","aliases":["东区"],"x":590,"y":165,"mapId":null}]}</script>
+
+<script id="seed-lostitems" type="application/json">{"version":2,"items":[
+{"id":"L-1001","category":"校园卡","place":"图书馆","placeId":"tushuguan","x":380,"y":130,"desc":"蓝色卡套，挂着小熊挂绳","name":"李某某","studentId":"20231234","hoursAgo":26,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1002","category":"校园卡","place":"图书馆","placeId":"tushuguan","x":380,"y":130,"desc":"黑色卡套，卡面磨损","name":"王某某","studentId":"20221506","hoursAgo":70,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1003","category":"水杯","place":"图书馆","placeId":"tushuguan","x":380,"y":130,"desc":"银色保温杯，杯身有贴纸","hoursAgo":9,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1004","category":"水杯","place":"第二食堂","placeId":"shitang2","x":200,"y":72,"desc":"白色带盖塑料杯，杯口有茶渍","hoursAgo":30,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1005","category":"钥匙","place":"操场","placeId":"caochang","x":470,"y":250,"desc":"一串三把钥匙，黑色钥匙扣","hoursAgo":50,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1006","category":"耳机","place":"图书馆","placeId":"tushuguan","x":380,"y":130,"desc":"白色蓝牙耳机，充电仓有卡通贴纸","hoursAgo":4,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1007","category":"雨伞","place":"学生活动中心","placeId":"xuehuo","x":200,"y":60,"desc":"黑色长柄伞，弯钩伞柄","hoursAgo":100,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1008","category":"充电宝","place":"第三教学楼","placeId":"jx3","x":330,"y":215,"desc":"黑色充电宝，自带短线","hoursAgo":20,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1009","category":"眼镜","place":"明湖","placeId":"minghu","x":140,"y":90,"desc":"黑框近视眼镜，硬壳眼镜盒","hoursAgo":60,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1010","category":"书","place":"第三教学楼","placeId":"jx3","x":330,"y":215,"desc":"高等数学课本，扉页写有名字","hoursAgo":12,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1011","category":"手机","place":"操场","placeId":"caochang","x":470,"y":250,"desc":"黑色手机，深色手机壳","hoursAgo":130,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1012","category":"钥匙","place":"南门","placeId":"nanmen","x":290,"y":320,"desc":"单把钥匙，黄色胶皮柄","hoursAgo":6,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"},
+{"id":"L-1013","category":"校园卡","place":"第二食堂","placeId":"shitang2","x":200,"y":72,"desc":"卡面贴有贴纸","name":"刘某某","studentId":"20212188","hoursAgo":3,"vector":null,"status":"in_storage","reporter":"巡逻登记","visibility":"public"}]}</script>
+
+<script id="seed-workorders" type="application/json">{"version":2,"orders":[
+{"id":"W-2301","place":"第三教学楼","placeId":"jx3","x":330,"y":215,"problem":"二楼东侧洗手间水龙头漏水","status":"已完成","reporter":"同学甲","hoursAgo":50,"visibility":"public"},
+{"id":"W-2302","place":"图书馆","placeId":"tushuguan","x":380,"y":130,"problem":"四层自习区靠窗座位灯管闪烁","status":"处理中","reporter":"同学乙","hoursAgo":30,"visibility":"public"},
+{"id":"W-2303","place":"第二食堂","placeId":"shitang2","x":200,"y":72,"problem":"一楼门口门禁刷卡失灵","status":"已受理","reporter":"同学丙","hoursAgo":8,"visibility":"public"},
+{"id":"W-2304","place":"操场","placeId":"caochang","x":470,"y":250,"problem":"看台东北角公共照明不亮","status":"已受理","reporter":"同学甲","hoursAgo":5,"visibility":"public"}]}</script>
+
+<script id="seed-agent" type="application/json">{"id":"guard","name":"保安 · 老丁","role":"保卫处值班","avatar":"sprite_guard","home":"baoweichu",
+"schedule":[{"t":"08:00-12:00","at":"baoweichu"},{"t":"12:00-14:00","at":"shitang2"},{"t":"14:00-22:00","at":"baoweichu"}],
+"roam":{"type":"patrol","speed":30,"stay_seconds":20,"waypoints":["nanmen","ximen","siyuanlou","tushuguan","shitang2","caochang","minghu","jx3"]},
+"persona":"公文腔，只讲流程，不寒暄",
+"knows":["失物招领","报修","门禁","证件核对","巡逻","保卫处职能"],
+"refuses":["选课","绩点","食堂评分","考研","社团","校园信息"],
+"tools":["matchLostItem","matchByImage","reportRepair"],
+"greeting":"保卫处值班。丢东西、报修，讲。",
+"unknown_line":"这事儿不归保卫处管，你找对应的人问去。",
+"refuse_routes":{"选课":"选课的事儿找学长，我这块儿管不了。","绩点":"绩点的事儿找学长或者教务处，保卫处管不着这块儿。","食堂评分":"食堂好不好吃找食堂阿姨，我这儿只管丢东西、报修。","考研":"考研的事儿找学长打听去，我帮不上忙。","社团":"社团的事儿找学长，别找我。","校园信息":"这个找向导小北问去，不归值班窗口管。"},
+"call_greeting":"来了来了，嘛事儿？",
+"offduty_line":"这会儿下班了，明儿白天再来吧。",
+"service_hours":{"start":"08:00","end":"22:00"},"dailyBudget":2}</script>
+
+<script>
+'use strict';
+/* ============================================================
+ * 配置
+ * ============================================================ */
+const CFG = {
+  dataVersion: 1,
+  // 云端 CV 入口：开发期直连 cv_service（同形 API）；合体/上线改为云函数代理地址（cloud/proxy.js）
+  cvBase: 'http://127.0.0.1:9000',
+  cvTimeoutMs: 3000,          // 总体设计 §6.4：代理 800ms 即降级；此处为前端整体超时
+  ocrMinConf: 0.6,            // 置信度门槛：低置信度字段不参与判定（保安.md §3.4）
+  weights: { category: 0.40, place: 0.25, time: 0.15, text: 0.20 },  // 四维权重（保安.md §五 待定项1，此处由 4 号定）
+  thMatch: 0.55, thHedge: 0.42,
+  thImage: 0.30,   // 以图搜物最低图像相似度（normSim 后）：低于此值不返回，杜绝给库不存在物品硬凑 top3
+  maxTop: 3
+};
+const CARD_CATS = ['校园卡', '学生证', '身份证'];
+
+/* ============================================================
+ * MapBridge —— 与地图层对接的预留接口（本交付不实现，桩已就位）
+ * 合体时由地图组提供的 MapAPI（总体设计 §8 / 附录A）替换以下实现即可；
+ * 业务调用点均已接入（搜索 “MAP:” 注释），业务代码无需改动。
+ * 点位表 data/points.json 的 mapId 字段即「合体对齐约定」：对齐 campus.json 的 places[].id。
+ * ============================================================ */
+const MapLog = []; let pinSeq = 0;
+const MapBridge = {
+  ready: false, // 地图层未接入
+  _log(fn, args){
+    MapLog.unshift({ t: fmtClock(), fn, args: JSON.stringify(args) });
+    if (MapLog.length > 40) MapLog.pop();
+    renderMapLog();
+    console.info('[MapBridge]', fn, args);
+  },
+  focus(placeId){ this._log('focus', [placeId]); return null; },             // MAP: 镜头飞向地点并高亮（AI 带路）
+  highlight(ids){ this._log('highlight', [ids]); return null; },             // MAP: 高亮一组地点
+  addPin(pin){ this._log('addPin', [pin]); return 'pin_' + (++pinSeq); },    // MAP: 打标记，返回 pinId
+  setLayer(name, ids){ this._log('setLayer', [name, ids]); return null; },   // MAP: 按条件切图层
+  getPlace(id){ this._log('getPlace', [id]); return null; },                 // MAP: 查询地点
+  listPlaces(){ this._log('listPlaces', []); return []; },                   // MAP: 列出地点
+  nearestWalkable(x, y){ this._log('nearestWalkable', [x, y]); return { x, y }; }, // MAP: 最近可行走点
+  getPlayerPos(){ this._log('getPlayerPos', []); return null; },             // MAP: 取玩家当前世界坐标（呼叫寻路终点）
+  findPath(from, to){ this._log('findPath', [from, to]); return null; },     // MAP: 寻路；返回 null 时业务层自行降级
+  on(evt, cb){ this._log('on', [evt]); return null; }                        // MAP: enter / leave 触发圈
+};
+
+/* ============================================================
+ * 工具函数
+ * ============================================================ */
+const $ = s => document.querySelector(s);
+function nowMs(){ return Date.now(); }
+function fmtTime(ts){ const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return `${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+function fmtClock(){ const d=curDate(); const p=n=>String(n).padStart(2,'0'); return `${p(d.getHours())}:${p(d.getMinutes())}`; }
+let timeOverride = null; // 演示拨时间 {h, m}
+function curDate(){ const d=new Date(); if(timeOverride){ d.setHours(timeOverride.h, timeOverride.m, 0, 0); } return d; }
+function currentHour(){ return curDate().getHours(); }
+function inServiceHours(){ const h=currentHour(); return h >= 8 && h < 22; } // 应答时段 08:00–22:00（总体设计 §6.1）
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function cosine(a, b){ let s=0,na=0,nb=0; const n=Math.min(a.length,b.length); for(let i=0;i<n;i++){ s+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; } return s/(Math.sqrt(na)*Math.sqrt(nb)+1e-9); }
+function normSim(cos){ return Math.max(0, Math.min(1, (cos-0.15)/0.75)); } // CLIP 余弦 → 0..1 展示分
+
+/* ============================================================
+ * 数据层：种子加载（fetch 优先，file:// 回退内嵌）+ localStorage 分片
+ * 公共层（失物库 / 工单库）= 保安.md §3.1 的「隔离期写法」：
+ * 独立即我自己这两个 JSON；合体时并入公共层，代码一行不改。
+ * ============================================================ */
+const EMBED = {
+  points: JSON.parse($('#seed-points').textContent),
+  lostitems: JSON.parse($('#seed-lostitems').textContent),
+  workorders: JSON.parse($('#seed-workorders').textContent),
+  agent: JSON.parse($('#seed-agent').textContent)
+};
+async function fetchJSON(url, fb){ try{ const r = await fetch(url, {cache:'no-store'}); if(!r.ok) throw 0; return await r.json(); }catch(e){ return fb; } }
+
+const Store = {
+  points: [], lost: [], orders: [], agent: EMBED.agent,
+  key(k){ return 'guard_v' + CFG.dataVersion + '_' + k; },
+  async init(){
+    this.points = (await fetchJSON('data/points.json', EMBED.points)).points;
+    const lj = await fetchJSON('data/lostitems.json', EMBED.lostitems);
+    const wj = await fetchJSON('data/workorders.json', EMBED.workorders);
+    this.agent = await fetchJSON('data/agents/guard.json', EMBED.agent);
+    // 物化种子：hoursAgo → 绝对时间；数据版本变化时重播
+    let seeded = false;
+    try{ if(localStorage.getItem(this.key('seedver')) != String(lj.version + '-' + wj.version)) seeded = true; }catch(e){ seeded = true; }
+    let lost = null, orders = null;
+    try{ lost = JSON.parse(localStorage.getItem(this.key('lost')) || 'null'); orders = JSON.parse(localStorage.getItem(this.key('orders')) || 'null'); }catch(e){}
+    if(seeded || !lost || !orders){
+      lost = lj.items.map(it => { const {hoursAgo, ...o} = it; o.foundTime = nowMs() - hoursAgo*3600e3; return o; });
+      orders = wj.orders.map(o => { const {hoursAgo, ...r} = o; r.time = nowMs() - hoursAgo*3600e3; return r; });
+      this.saveLost(lost); this.saveOrders(orders);
+      localStorage.setItem(this.key('seedver'), String(lj.version + '-' + wj.version));
+    }
+    this.lost = lost; this.orders = orders;
+  },
+  saveLost(v){ this.lost = v; localStorage.setItem(this.key('lost'), JSON.stringify(v)); },
+  saveOrders(v){ this.orders = v; localStorage.setItem(this.key('orders'), JSON.stringify(v)); },
+  reset(){ localStorage.removeItem(this.key('lost')); localStorage.removeItem(this.key('orders')); localStorage.removeItem(this.key('seedver')); },
+  pointById(id){ return this.points.find(p => p.id === id) || null; },
+  // 别称解析：点位名 / 别称最长匹配（保安.md §2.4 / 总体设计 §4.5 别称边思想）
+  resolvePlace(text){
+    let best = null;
+    for(const p of this.points){
+      for(const a of [p.name, ...p.aliases]){
+        if(!a || !text.includes(a)) continue;
+        // 数字边界：别称以数字结尾时（如 DQ2、12号楼），后一个字符不能也是数字，避免 DQ201 被当成 DQ2
+        const idx = text.indexOf(a);
+        if(/\d$/.test(a) && /\d/.test(text[idx + a.length] || '')) continue;
+        if(!best || a.length > best.alias.length) best = { point: p, alias: a };
+      }
+    }
+    // 通用教学楼简称：一教/二教/.../十教 → 第一教学楼/.../第十教学楼
+    if(!best){
+      const CN = '一二三四五六七八九十';
+      const m = text.match(new RegExp('([' + CN + '])教'));
+      if(m){
+        const idx = CN.indexOf(m[1]) + 1;
+        const full = '第' + ['','一','二','三','四','五','六','七','八','九','十'][idx] + '教学楼';
+        const p = this.points.find(pp => pp.name === full);
+        if(p) best = { point: p, alias: m[1] + '教' };
+      }
+    }
+    return best;
+  },
+  itemById(id){ return this.lost.find(i => i.id === id) || null; },
+  orderById(id){ return this.orders.find(o => o.id === id) || null; },
+  addLost(entry){ this.lost.unshift(entry); this.saveLost(this.lost); return entry; },
+  // 认领办结：当面确认、失主拿到手后才销账（returned）；此前一律保持在库 in_storage
+  markReturned(id, to){
+    const it = this.itemById(id); if(!it) return null;
+    it.status = 'returned'; it.returnedTime = nowMs(); it.returnedTo = to || null;
+    this.saveLost(this.lost); return it;
+  },
+  addOrder(o){ this.orders.unshift(o); this.saveOrders(this.orders); return o; },
+  // 私密记忆（visibility:private, 仅本人可见；公共层两条 JSON 不收对话内容——保安.md §4.3）
+  memKey(){ return this.key('player_' + (state.user ? state.user.user_id : 'anon')); },
+  memPush(desc, importance){
+    let list = []; try{ list = JSON.parse(localStorage.getItem(this.memKey()) || '[]'); }catch(e){}
+    list.unshift({ desc, time: fmtTime(nowMs()), importance, visibility:'private', playerId: state.user? state.user.user_id : null, source:'玩家' });
+    localStorage.setItem(this.memKey(), JSON.stringify(list.slice(0, 50)));
+  },
+  memList(){ try{ return JSON.parse(localStorage.getItem(this.memKey()) || '[]'); }catch(e){ return []; } }
+};
+
+/* ============================================================
+ * NLU：纯规则意图分类 + 槽位抽取（零 LLM，断网可用——总体设计 §23）
+ * ============================================================ */
+const CATEGORY_ALIAS = [
+  ['校园卡', ['校园卡','饭卡','一卡通','餐卡','校牌']],
+  ['学生证', ['学生证']],
+  ['身份证', ['身份证']],
+  ['水杯',   ['水杯','保温杯','杯子','茶杯','咖啡杯','水壶','保温壶','杯']],
+  ['钥匙',   ['钥匙','钥匙扣','钥匙串']],
+  ['耳机',   ['耳机','耳麦','airpods','蓝牙耳机']],
+  ['手机',   ['手机','电话']],
+  ['雨伞',   ['雨伞','遮阳伞','伞']],
+  ['书',     ['课本','教材','书','笔记']],
+  ['充电宝', ['充电宝','移动电源']],
+  ['眼镜',   ['眼镜','近视镜']],
+  ['钱包',   ['钱包','皮夹']],
+  ['书包',   ['书包','双肩包','背包','挎包','手提包','帆布包']]
+];
+function normCategory(text){
+  const t = String(text).toLowerCase(); let best = null;
+  for(const [cat, arr] of CATEGORY_ALIAS) for(const a of arr)
+    if(t.includes(a) && (!best || a.length > best.alias.length)) best = { cat, alias: a };
+  return best;
+}
+const isCardCat = c => CARD_CATS.includes(c);
+const FEATURE_WORDS = ['红','橙','黄','绿','蓝','紫','黑','白','灰','粉','金','银','透明','贴纸','卡通','图案','带盖','保温','不锈钢','磨砂','长柄','折叠','有线','无线','蓝牙','头戴','入耳','挂绳','卡套','条纹','格子','小熊','磨损','掉漆','裂纹','壳','套','绳','链','单把','一串','旧','新','弯钩','胶皮'];
+function featureHits(t){ const s=String(t).toLowerCase(); const out=[]; for(const w of FEATURE_WORDS) if(s.includes(w)) out.push(w);
+  (s.match(/[a-z0-9]+/g)||[]).forEach(w=>{ if(w.length>=2) out.push(w); }); return out; }
+function bigrams(t){ const s=String(t).replace(/[\s，。,.!？?、]/g,''); const out=new Set(); for(let i=0;i<s.length-1;i++) out.add(s.slice(i,i+2)); return out; }
+function textScore(qDesc, item){
+  const qf = featureHits(qDesc), itf = featureHits((item.desc||'') + ' ' + (item.category||''));
+  let lex = 0; if(qf.length) lex = qf.filter(w => itf.includes(w)).length / qf.length;
+  const qb = bigrams(qDesc), ib = bigrams((item.desc||'') + (item.category||''));
+  let bg = 0; if(qb.size){ let n=0; qb.forEach(b=>{ if(ib.has(b)) n++; }); bg = n/qb.size; }
+  if(!qf.length && !qb.size) return 0.5;
+  return 0.7*lex + 0.3*bg;
+}
+function parseWhen(t){
+  const now = nowMs();
+  const cnNum = s => ({'一':1,'两':2,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10}[s]||parseInt(s));
+  const mH = t.match(/(\d+)\s*(个)?小时前/); if(mH) return new Date(now - (+mH[1])*3600e3);
+  const mN = t.match(/(\d+)\s*天前/);
+  const mW = t.match(/([一二三四五六七八九十\d]+)\s*(个)?周前|([一二三四五六七八九十\d]+)\s*星期前/);
+  let days = null;
+  if(mN) days = +mN[1];
+  else if(mW) days = cnNum(mW[1]||mW[3]) * 7;
+  else if(/大前天/.test(t)) days = 3;
+  else if(/前天/.test(t)) days = 2;
+  else if(/昨天/.test(t)) days = 1;
+  else if(/今天/.test(t)) days = 0;
+  else if(/刚才|刚刚/.test(t)) return new Date(now - 2*3600e3);
+  if(days == null) return null;
+  const d = new Date(now - days*86400e3);
+  let hh = 12, mm = 0;
+  if(/早上|清晨/.test(t)) hh = 8; else if(/上午/.test(t)) hh = 10; else if(/中午/.test(t)) hh = 12;
+  else if(/下午/.test(t)) hh = 15; else if(/晚上/.test(t)) hh = 20;
+  const mT = t.match(/(\d{1,2})[点:：]\s*(\d{1,2})?分?/);
+  if(mT){ hh = +mT[1]; mm = +(mT[2]||0); if((/下午|晚上/.test(t)) && hh < 12) hh += 12; }
+  d.setHours(hh, mm, 0, 0); return d;
+}
+function parseSid(t){ const m = String(t).replace(/\s/g,'').match(/\d{8,12}/); return m ? m[0] : null; }
+function parseName(t){
+  const m = String(t).match(/(?:我叫|我是|姓名[：:]?|名字[：:]?)\s*([\u4e00-\u9fa5]{2,4})/);
+  if(m) return m[1];
+  const bare = String(t).replace(/[0-9a-zA-Z是我叫的，,。.\s：:]/g, '');  // 支持与学号混写：「20231234 李某某」
+  return /^[\u4e00-\u9fa5]{2,4}$/.test(bare) ? bare : null;
+}
+// 意图分类（纯关键词，有序短路）
+function classify(text){
+  const t = text;
+  if(/(呼叫|叫一(下|声)|老丁|保安).*(过来|来一趟|来一|赶)|^(呼叫|过来一下)$/.test(t) || t === '呼叫老丁') return 'call';
+  if(/^(你好|您好|嗨|hi|hello|在吗|在不在)[!！。~\s]*$/i.test(t)) return 'greet';
+  if(/(我(以前|之前)?(报过|丢过|登记过))|我的(报修|失物|工单|记录)/.test(t)) return 'my_records';
+  if(/(修好(了)?(吗|没)|维修进度|工单|报的修|处理(了吗|了没|没有)|受理(了吗|了没)|进度)/.test(t)) return 'repair_query';
+  if(/(已经修好|修好了|还没修|还在修|修着|不用修)/.test(t)) return 'repair_status';
+  if(/(报修|坏了|坏掉|漏水|漏电|不亮|失灵|故障|堵了|下水|灯管|水龙头)/.test(t)) return 'repair_report';
+  if(/(捡到|拾到|拾获|上交|交到保卫处)/.test(t)) return 'lost_intake';
+  if(/(认领|来拿|来取|是我的|取东西|领东西)/.test(t)) return 'claim';
+  if(/(丢|不见|找不到|落下|忘在|失物|找东西|帮.*找|有没有人捡)/.test(t)) return 'lost_search';
+  if(/(门禁|刷卡|门卡|进不去楼|门坏了)/.test(t)) return 'door';
+  if(/(选课|绩点|挂科|考研|转专业|社团|食堂|好吃|评分|窗口|课程表|老师|上课|教务)/.test(t)) return 'refuse';
+  if(/(在哪|怎么走|怎么去|地图|位置|路线)/.test(t)) return 'ask_way';
+  return 'unknown';
+}
+
+/* ============================================================
+ * 云端 CV 客户端（链路：前端 → 云函数代理 → GPU；保安.md §3.3）
+ * 独立演示期 cvBase 直连 cv_service（接口同形）；合体时换成代理 URL，仅改配置。
+ * ============================================================ */
+async function cvCall(action, payload){
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), CFG.cvTimeoutMs);
+  try{
+    const r = await fetch(CFG.cvBase + '/' + action, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload), signal: ctrl.signal });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
+
+/* ============================================================
+ * 本角色工具本体（对外契约：window.GuardAPI，合体按工具集接入——保安.md §六）
+ * ============================================================ */
+
+// ---- 四维相似度匹配（核心算法，保安.md §3.2）----
+// query: {category?, place(Point|null), when(Date|null), desc, imgSim?(0..1)}
+// 关键设计：imgSim 命中时直接替代「描述关键词」维，其余三维照常参与加权。
+function scoreItem(q, item, imgSim){
+  const dims = {};
+  dims.category = q.category ? (item.category === q.category ? 1 : 0.12) : 0.5;
+  if(q.place && item.x != null){
+    const d = Math.hypot(item.x - q.place.x, item.y - q.place.y);
+    dims.place = Math.exp(-d / 150);            // 人在哪丢的，东西多半在附近被捡到
+  } else dims.place = 0.5;
+  if(q.when && item.foundTime){
+    const h = Math.abs(item.foundTime - q.when.getTime()) / 3600e3;
+    dims.time = Math.exp(-h / 30);              // 隔了三天的大概率不是你的
+  } else dims.time = 0.5;
+  dims.text = imgSim != null ? imgSim : (q.desc ? textScore(q.desc, item) : 0.5);
+  const W = CFG.weights;
+  return { total: W.category*dims.category + W.place*dims.place + W.time*dims.time + W.text*dims.text, dims };
+}
+function toolMatchLostItem(query){
+  let pool = Store.lost.filter(it => it.status === 'in_storage');
+  if(query.category) pool = pool.filter(it => it.category === query.category); // 类别先粗筛
+  return pool.map(it => ({ it, s: scoreItem(query, it, null) }))
+             .sort((a,b) => b.s.total - a.s.total).slice(0, CFG.maxTop);
+}
+
+// ---- 以图搜物（相似度路，保安.md §3.3）----
+async function toolMatchByImage({ image, query }){
+  query = query || { category:null, place:null, when:null, desc:'' };
+  try{
+    const enc = await cvCall('encode', { image });
+    const v = enc.vector;
+    if(!v || !v.length) throw new Error('bad vector');
+    const rows = Store.lost.filter(it => it.status === 'in_storage' && it.vector && it.vector.length === v.length)
+      .map(it => ({ it, cos: cosine(v, it.vector) })).sort((a,b) => b.cos - a.cos);
+    if(!rows.length) return { mode:'image_empty', hits:[], reason:'库内暂无图像向量（入库时需云端编码）' };
+    // 最低图像相似度过滤：全部低于阈值 → 库里没有这东西，如实告知不硬凑（标准：不编造结果）
+    const above = rows.filter(r => normSim(r.cos) >= CFG.thImage);
+    if(!above.length) return { mode:'image_empty', hits:[], reason:'库里没有匹配物品——图像相似度全部低于阈值' };
+    const hits = above.slice(0, 6)
+      .map(r => ({ it: r.it, cos: r.cos, s: scoreItem(query, r.it, normSim(r.cos)) }))
+      .sort((a,b) => b.s.total - a.s.total).slice(0, CFG.maxTop);
+    return { mode:'image', hits };
+  }catch(e){
+    // 800ms 超时 / 断网 → 主动降级到文字匹配（附录 D：主动演示降级反而加分）
+    return { mode:'degraded', reason: String(e && e.message || e), hits: query.desc ? toolMatchLostItem(query) : [] };
+  }
+}
+
+// ---- 证件 OCR（精确路；字段抽取在云端，双字段交叉验证在本地——保安.md §3.4）----
+async function toolOcrCard(image){
+  const r = await cvCall('ocr', { image });
+  const f = r.fields || {};
+  const ok = x => x && x.value && (x.confidence == null || x.confidence >= CFG.ocrMinConf);
+  return { studentId: ok(f.student_id) ? f.student_id.value : null,
+           name: ok(f.name) ? f.name.value : null,
+           sidConf: f.student_id ? f.student_id.confidence : null,
+           nameConf: f.name ? f.name.confidence : null };
+}
+function toolFindCardBySid(sid){
+  return Store.lost.find(it => it.status === 'in_storage' && isCardCat(it.category) && it.studentId === sid) || null;
+}
+// 确定性判定：学号命中 且 姓名一致，才判「对得上」（双字段交叉验证）
+function toolVerifyClaim(entry, { studentId, name }){
+  if(!entry) return { pass:false, reason:'无此条目' };
+  if(entry.studentId && studentId && entry.studentId !== studentId) return { pass:false, reason:'学号对不上' };
+  if(entry.name && name && entry.name !== name) return { pass:false, reason:'姓名对不上——认错一位就是认错人' };
+  if(!name) return { pass:false, reason:'缺姓名' };
+  return { pass:true };
+}
+// 入库：证件只落必要字段（学号/姓名），原图用完即弃（隐私口径，保安.md §3.4）
+function toolRegisterCard({ studentId, name, place, reporter }){
+  const p = Store.resolvePlace(place || '保卫处');
+  const pt = p ? p.point : null;
+  return Store.addLost({
+    id:'L-' + String(nowMs()).slice(-6), category:'校园卡',
+    place: pt ? pt.name : (place || '保卫处'), placeId: pt ? pt.id : null,
+    x: pt ? pt.x : null, y: pt ? pt.y : null,
+    desc:'证件登记入库', name, studentId,
+    vector:null, status:'in_storage', reporter, foundTime: nowMs(), visibility:'public'
+  });
+}
+function toolRegisterItem({ category, desc, place, reporter, vector }){
+  const p = Store.resolvePlace(place || '');
+  const pt = p ? p.point : null;
+  return Store.addLost({
+    id:'L-' + String(nowMs()).slice(-6), category: category || '其他',
+    place: pt ? pt.name : (place || '未登记'), placeId: pt ? pt.id : null,
+    x: pt ? pt.x : null, y: pt ? pt.y : null,
+    desc, vector: vector || null, status:'in_storage', reporter, foundTime: nowMs(), visibility:'public'
+  });
+}
+
+// ---- 报修（同一句话，既报修也留档；工单库公共——保安.md §2.4）----
+function toolReportRepair({ place, problem, reporter }){
+  const p = Store.resolvePlace(place || '');
+  const pt = p ? p.point : null;
+  const order = Store.addOrder({
+    id:'W-' + String(nowMs()).slice(-6) + String(Math.floor(Math.random()*9)),
+    place: pt ? pt.name : (place || '未指明'), placeId: pt ? pt.id : null,
+    x: pt ? pt.x : null, y: pt ? pt.y : null,
+    problem, status:'已受理', reporter, time: nowMs(), visibility:'public'
+  });
+  // MAP: 报修地点在地图上打标记（地图层实现后可见）
+  if(pt) MapBridge.addPin({ placeId: pt.id, label: pt.name + ' · 报修', type:'repair', ref: order.id });
+  return order;
+}
+function toolQueryRepair({ place, reporter }){
+  let rows = Store.orders;
+  if(place){ const p = Store.resolvePlace(place); rows = p ? rows.filter(o => o.placeId === p.point.id) : rows.filter(o => o.place.includes(place)); }
+  if(reporter) rows = [...rows.filter(o => o.reporter === reporter), ...rows.filter(o => o.reporter !== reporter)];
+  return rows.slice(0, 6);
+}
+function toolUpdateRepair({ place, status }){
+  const p = Store.resolvePlace(place || '');
+  const rows = Store.orders.filter(o => o.status !== '已完成' && (p ? o.placeId === p.point.id : true));
+  if(!rows.length) return null;
+  rows[0].status = status; Store.saveOrders(Store.orders);
+  return rows[0];
+}
+
+// 对外契约（合体时引擎读 tools 字段调用这三个，引擎一行不改——总体设计 §2.2）
+window.GuardAPI = {
+  matchLostItem: toolMatchLostItem, matchByImage: toolMatchByImage, reportRepair: toolReportRepair,
+  queryRepair: toolQueryRepair, registerLostItem: toolRegisterItem, registerCard: toolRegisterCard,
+  verifyClaim: toolVerifyClaim, callGuard: doCall, MapBridge, Store, CFG
+};
+
+/* ============================================================
+ * 会话与界面
+ * ============================================================ */
+const state = { user:null, msgs:[], flow:null, lastHits:[], idleCount:0, lastMsgAt:0, summon:'idle', pendingPhoto:null };
+const msgsEl = $('#msgs');
+
+function saveChat(){
+  try{
+    const slim = state.msgs.map(m => m.kind === 'photo' ? { ...m, src:null } : m);
+    localStorage.setItem(Store.key('chat_' + state.user.user_id), JSON.stringify(slim.slice(-200)));
+  }catch(e){}
+}
+function loadChat(){
+  try{ state.msgs = JSON.parse(localStorage.getItem(Store.key('chat_' + state.user.user_id)) || '[]'); }catch(e){ state.msgs = []; }
+}
+function pushMsg(m, save = true){
+  m.ts = nowMs(); state.msgs.push(m); state.lastMsgAt = nowMs();
+  if(save) saveChat();
+  msgsEl.appendChild(renderMsg(m));
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+  const mood = autoMood(m); if(mood) setMood(mood);
+}
+function say(text){ pushMsg({ who:'guard', kind:'text', text }); }
+function me(text){ pushMsg({ who:'me', kind:'text', text }); }
+function sys(text){ pushMsg({ who:'sys', kind:'text', text }); }
+
+function renderMsg(m){
+  const row = document.createElement('div');
+  row.className = 'row ' + (m.who === 'me' ? 'me' : m.who === 'sys' ? 'sys' : 'guard');
+  // guard 消息：小头像 + 名字条 +（气泡列）
+  let box = row;
+  if(m.who === 'guard'){
+    const av = document.createElement('canvas'); av.className = 'avatar-c'; av.width = 12; av.height = 13;
+    drawSprite(av, 2); row.appendChild(av);
+    box = document.createElement('div'); box.className = 'gtxt';
+    const nm = document.createElement('div'); nm.className = 'gname'; nm.textContent = '老丁 · 保卫处';
+    box.appendChild(nm); row.appendChild(box);
+  }
+  if(m.kind === 'text'){
+    const b = document.createElement('div'); b.className = 'bubble'; b.textContent = m.text; box.appendChild(b);
+  } else if(m.kind === 'options'){
+    const b = document.createElement('div'); b.className = 'bubble';
+    if(m.text){ const t = document.createElement('div'); t.textContent = m.text; b.appendChild(t); }
+    const row = document.createElement('div'); row.className = 'opt-row';
+    (m.options || []).forEach(o => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn' + (o.ghost ? ' ghost' : '');
+      btn.textContent = o.label;
+      btn.onclick = () => pickClaimOption(m, o);
+      row.appendChild(btn);
+    });
+    b.appendChild(row); box.appendChild(b);
+  } else if(m.kind === 'photo'){
+    const b = document.createElement('div'); b.className = 'bubble';
+    if(m.src){ const img = document.createElement('img'); img.className = 'photo-thumb'; img.src = m.src; b.appendChild(img); }
+    else b.appendChild(Object.assign(document.createElement('span'), { className:'photo-dropped', textContent:'[照片 · 不留存]' }));
+    box.appendChild(b);
+  } else if(m.kind === 'cards'){
+    const wrap = document.createElement('div'); wrap.className = 'cards';
+    if(m.note){ const n = document.createElement('div'); n.className = 'bubble'; n.textContent = m.note; wrap.appendChild(n); }
+    m.hits.forEach((h, idx) => { if(!h.it) h.it = Store.itemById(h.id); wrap.appendChild(renderItemCard(h, idx === 0, m.mode)); });
+    box.appendChild(wrap);
+  } else if(m.kind === 'orders'){
+    const wrap = document.createElement('div'); wrap.className = 'cards';
+    if(m.note){ const n = document.createElement('div'); n.className = 'bubble'; n.textContent = m.note; wrap.appendChild(n); }
+    m.orders.forEach(oid => { const o = Store.orderById(oid); if(o) wrap.appendChild(renderOrderCard(o)); });
+    box.appendChild(wrap);
+  }
+  return row;
+}
+function renderOrderCard(o){
+  const st = { '已受理':0, '处理中':1, '已完成':2 }[o.status] ?? 0;
+  const d = document.createElement('div'); d.className = 'order-card';
+  d.innerHTML = `<div><span class="oid">${esc(o.id)}</span><span class="badge s${st}">${esc(o.status)}</span></div>
+    <div>${esc(o.place)} · ${esc(o.problem)}</div>
+    <div class="meta">报修人 ${esc(o.reporter)} · ${fmtTime(o.time)} · 公开记录</div>`;
+  return d;
+}
+function renderItemCard(h, isBest, mode){
+  const it = h.it, pct = Math.round(h.s.total * 100);
+  const d = document.createElement('div'); d.className = 'item-card' + (isBest ? ' best' : '');
+  const dimTag = (ok, label) => `<span class="${ok ? 'hit' : ''}">${label}</span>`;
+  const dims = dimTag(h.s.dims.category >= 0.9, '类别✓') + dimTag(h.s.dims.place >= 0.5, '地点近') +
+               dimTag(h.s.dims.time >= 0.4, '时间近') +
+               `<span class="${(mode === 'image') ? 'hit' : ''}">${mode === 'image' ? '图像 ' + Math.round(h.s.dims.text*100) + '%' : '描述 ' + Math.round(h.s.dims.text*100) + '%'}</span>`;
+  d.innerHTML = `
+    <div class="hd"><span class="cat">${esc(it.category)}</span>${isBest ? '<span class="best-tag">最像这条</span>' : ''}
+      <span class="score">匹配 ${pct}%</span></div>
+    <div class="meta">捡到地点：${esc(it.place)} · 入库 ${fmtTime(it.foundTime)}</div>
+    <div>${esc(it.desc)}</div>
+    ${it.studentId ? `<div class="meta">学号 ${esc(it.studentId)} · ${esc(it.name || '')}</div>` : ''}
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="dims">${dims}</div>`;
+  const btn = document.createElement('button'); btn.className = 'claim-btn'; btn.textContent = '认领这条';
+  btn.onclick = () => startClaimFor(it.id);
+  d.appendChild(btn);
+  return d;
+}
+
+/* ---------- 像素保安（12×13） ---------- */
+const SPRITE_ROWS = [
+  '............',
+  '...HHHHHH...',
+  '..HHHHHHHH..',
+  '..HFFFFFFH..',
+  '..HFEFFEFH..',
+  '..HFFFFFFH..',
+  '...FFMMFF...',
+  '..UUUUUUUU..',
+  '.UUUUBUUUUU.',
+  '.UUUUUUUUUU.',
+  '..UUUUUUUU..',
+  '..PP....PP..',
+  '..PP....PP..'
+];
+const SPRITE_COLORS = { H:'#2b3a55', F:'#f2c9a0', E:'#20242c', M:'#b3573f', U:'#3f5b8f', B:'#f0b429', P:'#232a36' };
+function drawSprite(cv, scale){
+  const ctx = cv.getContext('2d');
+  cv.style.width = (12*scale) + 'px'; cv.style.height = (13*scale) + 'px';
+  ctx.clearRect(0,0,cv.width,cv.height);
+  SPRITE_ROWS.forEach((r,y) => { for(let x=0;x<r.length;x++){ const c = SPRITE_COLORS[r[x]]; if(c){ ctx.fillStyle = c; ctx.fillRect(x,y,1,1); } } });
+}
+
+/* ============================================================
+ * 老丁立绘：SVG 像素半身像，表情随对话内容切换
+ * 8 种心情：idle 值班 / greet 招呼 / think 查询追问 / found 找到了 /
+ *          none 库里没有 / refuse 推诿 / serious 证件核对 / busy 登记受理
+ * ============================================================ */
+const PTC = { H:'#2b3a55', F:'#f2c9a0', E:'#20242c', M:'#b3573f', U:'#3f5b8f', B:'#f0b429', S:'#171c26', W:'#e8e0cf' };
+// [x,y,w,h,色] —— 身体与帽子不随表情变
+const PT_BODY = [
+  [12,3,24,6,'H'], [23,5,2,2,'B'], [7,9,34,3,'H'], [10,11,28,1,'S'],   // 大檐帽 + 帽徽 + 帽檐
+  [13,12,22,17,'F'], [11,17,2,6,'F'], [35,17,2,6,'F'],                  // 脸 + 耳朵
+  [20,29,8,4,'F'],                                                     // 脖子
+  [8,33,32,2,'H'], [9,33,5,2,'B'], [34,33,5,2,'B'],                    // 肩线 + 肩章
+  [10,35,28,25,'U'], [20,35,8,6,'S'], [23,35,2,3,'B'], [23,38,2,8,'S'],// 制服 + V领 + 领带
+  [30,38,6,3,'B'], [23,45,2,2,'B'], [23,51,2,2,'B']                    // 胸牌 + 扣子
+];
+// 各表情的眉/眼/嘴
+const PT_FACES = {
+  idle:    [ [17,19,2,2,'E'],[27,19,2,2,'E'], [21,24,6,1,'M'] ],
+  greet:   [ [16,19,4,1,'E'],[17,20,2,1,'E'],[26,19,4,1,'E'],[27,20,2,1,'E'],
+             [20,24,8,1,'M'],[22,25,4,1,'M'] ],
+  think:   [ [16,16,4,1,'H'],[27,15,4,1,'H'],
+             [17,19,2,2,'E'],[27,19,2,2,'E'], [24,24,4,1,'M'] ],
+  found:   [ [16,19,4,1,'E'],[17,20,2,1,'E'],[26,19,4,1,'E'],[27,20,2,1,'E'],
+             [21,23,6,3,'M'],[22,23,4,1,'W'] ],
+  none:    [ [16,16,2,1,'H'],[18,17,2,1,'H'],[28,16,2,1,'H'],[26,17,2,1,'H'],
+             [17,20,2,2,'E'],[27,20,2,2,'E'], [20,25,8,1,'M'],[22,24,4,1,'M'] ],
+  refuse:  [ [16,17,2,1,'H'],[18,16,2,1,'H'],[28,17,2,1,'H'],[26,16,2,1,'H'],
+             [17,19,2,2,'E'],[27,19,2,2,'E'], [20,25,8,1,'M'],[22,24,4,1,'M'] ],
+  serious: [ [15,17,5,1,'H'],[26,17,5,1,'H'],
+             [17,19,2,2,'E'],[27,19,2,2,'E'], [19,24,10,1,'M'] ],
+  busy:    [ [17,16,4,1,'H'],[27,16,4,1,'H'],
+             [18,19,2,2,'E'],[28,19,2,2,'E'], [22,24,4,1,'M'] ]
+};
+const PT_ICONS = { greet:'', think:'?', found:'✓', none:'×', refuse:'!', serious:'证', busy:'记', idle:'' };
+function portraitInner(mood){
+  return PT_BODY.concat(PT_FACES[mood] || PT_FACES.idle)
+    .map(r => `<rect x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" fill="${PTC[r[4]]}"/>`).join('');
+}
+function setMood(mood, hold){
+  const el = document.getElementById('guard-portrait');
+  if(!el || !mood) return;
+  if(el.dataset.mood !== mood){
+    el.dataset.mood = mood;
+    document.getElementById('guard-svg').innerHTML = portraitInner(mood);
+    document.getElementById('pt-mood').textContent = PT_ICONS[mood] || '';
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  }
+  clearTimeout(state._moodTimer);
+  if(hold !== 0) state._moodTimer = setTimeout(() => setMood('idle', 0), 4500);
+}
+// 按消息内容/类型自动判定表情
+function autoMood(m){
+  if(m.who === 'sys') return /正在|稍等/.test(m.text || '') ? 'think' : null;
+  if(m.who !== 'guard') return null;
+  const t = m.text || '';
+  if(m.kind === 'orders') return 'busy';
+  if(m.kind === 'cards') return /最像/.test(m.note || '') ? 'found' : 'think';
+  if(/受理|入库了|销单|工单/.test(t)) return 'busy';
+  if(/对上了|没跑|是你的|值班点领|来保卫处领|最像这一条|找到了/.test(t)) return 'found';
+  if(/没有对得上|还没人捡到|没登记着|确实没/.test(t)) return 'none';
+  if(/管不了|不归|找学长|找阿姨|找小北|教务处|向导/.test(t)) return 'refuse';
+  if(/学号|姓名|证件|校园卡|核对|念给你|确认一下|念一下|我念/.test(t)) return 'serious';
+  if(/来了来了|丢东西、报修|丢什么了|报修是吧|认领东西|登记捡到|说吧|什么事/.test(t)) return 'greet';
+  if(/补充|再补|查了|比对|有点像|说清楚|说说|先讲|再想想/.test(t)) return 'think';
+  return 'idle';
+}
+
+/* ============================================================
+ * 对话流（状态机）：失物三路 + 报修 + 认领 + 呼叫
+ * ============================================================ */
+function startFlow(type){
+  state.flow = { type, stage:'init', data:{} };
+  FLOWS[type].enter();
+}
+function endFlow(){ state.flow = null; }
+// 按注册昵称称呼用户——公文腔只在开场、受理、办结等关键节点叫一声，不句句叫
+function addr(){ const n = state.user && state.user.nickname; return n ? n + '，' : ''; }
+
+const FLOWS = {
+  /* ---------- 找失物（描述路 / 照片路 / 证件精确路） ---------- */
+  lost_search: {
+    enter(){
+      say(addr() + '丢什么了？说说什么东西、在哪儿丢的、大概几点钟、长什么样。说不清楚也行，直接拍张照片发过来。');
+      state.flow.stage = 'collect';
+    },
+    async handle(text, photo){
+      const f = state.flow, d = f.data;
+      if(photo){ return runImageSearch(photo, d); }
+      text = (text || '').trim();
+      // 追问轮：先处理确认 / 否定短路，其余按补充描述继续查
+      if(f.stage === 'refine'){
+        if(/^(都不是|不是我的|没有我的|算了|不对)$/.test(text) || /^(没有|没了|没有了|记不清|想不起来|不知道)$/.test(text)){
+          confirmNone(d, d.showedHedge ? '行，这几条都不是的话，那就是还没人捡到。' : '行，先这样。');
+          return;
+        }
+        if(d.showedHedge && /^(是这条|就是这条|对上了|对|是|第一条|第1条|第二|第二条|第2条)$/.test(text)){
+          d.showedHedge = false;
+          const pick = state.lastHits[0] && state.lastHits[0].it;
+          if(pick) MapBridge.addPin({ placeId: pick.placeId, label: pick.place + ' · ' + pick.category, type:'lost', ref: pick.id });
+          say(claimLine());
+          Store.memPush('认领候选' + (pick ? '：' + pick.id : ''), 3);
+          endFlow(); return;
+        }
+        d.showedHedge = false;
+      }
+      const cat = normCategory(text); if(cat) d.category = cat.cat;
+      const pl = Store.resolvePlace(text); if(pl) d.place = pl.point;
+      const wh = parseWhen(text); if(wh) d.when = wh;
+      if(text) d.desc = (d.desc ? d.desc + ' ' : '') + text;
+      // 证件类走精确路（确定性判定，不走相似度——保安.md §3.4）
+      if(d.category && isCardCat(d.category)){
+        say(isCardLostAsk());
+        f.type = 'card_query'; f.stage = 'card_query';
+        return;
+      }
+      if(!d.category && !d.desc.trim()){ say('好歹说个东西吧——什么东西、在哪儿丢的、啥时候的事，随便先说一样。'); return; }
+      evaluateSearch(d);
+    }
+  },
+  /* ---------- 证件精确路：报学号 或 拍卡面 ---------- */
+  card_query: {
+    enter(){ state.flow.stage = 'card_query'; },
+    async handle(text, photo){
+      const f = state.flow, d = f.data;
+      if(/(没有|不知道|忘了|记不清)/.test(text || '')){
+        say('行，没学号就按特征来。再说两句——卡套什么颜色、有没有挂绳之类的。');
+        d.category = d.category || '校园卡'; f.type = 'lost_search'; f.stage = 'collect';
+        return;
+      }
+      let sid = text ? parseSid(text) : null;
+      if(!sid && photo){
+        sys('云端证件识别中……');
+        try{
+          const o = await toolOcrCard(photo);
+          if(o.studentId) sid = o.studentId;
+          if(o.name) d.expectName = o.name;
+          say(o.studentId ? ('认出来了，学号 ' + o.studentId + (o.name ? '，姓名 ' + o.name : '') + '。') : '没认准学号，你直接把学号打出来吧。');
+        }catch(e){ say('识别系统这会儿连不上，你直接把学号打出来吧。'); }
+        if(!sid) return;
+      }
+      if(!sid){ say('报一下学号吧——卡面上那一串数字。或者拍张卡面照片发过来。'); return; }
+      const entry = toolFindCardBySid(sid);
+      if(!entry){
+        say('库里没登记到 ' + sid + ' 这张卡。建议你先去挂失；有人交到保卫处了，我按学号一查就能对上你。');
+        Store.memPush('丢了' + (d.category || '证件') + '，学号 ' + sid, 6);
+        endFlow(); return;
+      }
+      d.entryId = entry.id;
+      say('有了——' + entry.place + '那边捡到一张' + entry.category + '，登记学号 ' + entry.studentId + '。你把卡面上的姓名念一下，学号姓名都对上了才能领。');
+      f.type = 'claim'; f.stage = 'verify_name';
+    }
+  },
+  /* ---------- 登记失物 ---------- */
+  lost_intake: {
+    enter(){ say(addr() + '登记捡到的东西。什么东西？长什么样说两句。'); state.flow.stage = 'desc'; },
+    async handle(text, photo){
+      const f = state.flow, d = f.data;
+      if(f.stage === 'desc'){
+        if(photo) return void (d.photo = photo) && nextIntakePlace();
+        const cat = normCategory(text);
+        if(cat) d.category = cat.cat;
+        if(isCardCat(d.category)){
+          say('是证件啊。拍一张卡面照片发过来——对准了、别反光，我给你认学号和姓名入库。不方便拍就直接报学号和姓名。');
+          f.type = 'card_intake'; f.stage = 'card_photo'; return;
+        }
+        d.desc = text;
+        if(!d.desc || d.desc.length < 2){ say('再说两句特征呗——什么颜色、有没有贴纸、啥牌子，随便说两样。'); return; }
+        return nextIntakePlace();
+      }
+      if(f.stage === 'place'){
+        const pl = Store.resolvePlace(text);
+        d.place = pl ? pl.point.name : text.trim();
+        say('有照片就发一张——入库的时候顺手存个特征，以后有人找好对上。没有就回「跳过」。');
+        f.stage = 'photo';
+        return;
+      }
+      if(f.stage === 'photo'){
+        if(photo) d.photo = photo;
+        finishIntake(d, !!photo);
+      }
+    }
+  },
+  /* ---------- 证件入库（OCR → 念回确认 → 只落学号姓名，原图即弃） ---------- */
+  card_intake: {
+    enter(){ state.flow.stage = 'card_photo'; },
+    async handle(text, photo){
+      const f = state.flow, d = f.data;
+      if(f.stage === 'card_photo'){
+        let sid = null, nm = null;
+        if(photo){
+          sys('正在识别卡面信息……');
+          try{
+            const o = await toolOcrCard(photo);
+            sid = o.studentId; nm = o.name;
+          }catch(e){ say('识别系统连不上。直接报学号和姓名吧。'); f.stage = 'card_manual'; return; }
+          if(!sid || !nm){
+            say('有几个字没认准——认不出的我们就不瞎判，别给人认错了。你直接报一下学号和姓名。');
+            f.stage = 'card_manual'; return;
+          }
+        } else if(text){
+          sid = parseSid(text); nm = parseName(text);
+          if(!sid || !nm){ say('学号和姓名都得报——比如：20231234，李某某。'); return; }
+        } else { say('拍一张卡面照片，或者直接报学号和姓名。'); return; }
+        d.sid = sid; d.name = nm;
+        // 人机协同：把识别结果念出来让你确认——既兜 OCR 的不确定性，也是人格化动作
+        say('认出来了——学号 ' + sid + '，姓名 ' + nm + '。对不对？对的话回「对」我入库，不对就重来。');
+        f.stage = 'card_confirm'; return;
+      }
+      if(f.stage === 'card_confirm'){
+        if(/^(对|对得上|没错|是|好的|嗯)/.test(text.trim())){
+          const e = toolRegisterCard({ studentId:d.sid, name:d.name, place:'保卫处', reporter: state.user.nickname });
+          say(addr() + '入库了。编号 ' + e.id + '——校园卡，学号 ' + e.studentId + '，姓名 ' + e.name + '，在 ' + e.place + ' 捡到的。照片不留底，只存了学号和姓名。失主来核对对了就给。');
+          // MAP: 入库条目按捡到地点打标记
+          MapBridge.addPin({ placeId: e.placeId, label: e.place + ' · ' + e.category, type:'lost', ref: e.id });
+          Store.memPush('登记捡到校园卡（' + e.studentId + '）', 5);
+          endFlow(); return;
+        }
+        say('行，重来——重新拍一张，或者直接报学号和姓名。'); f.stage = 'card_photo'; return;
+      }
+      if(f.stage === 'card_manual'){
+        const sid = parseSid(text || ''), nm = parseName(text || '');
+        if(!sid || !nm){ say('学号（一串数字）和姓名（两到四个字）都得有。比如：20231234，李某某。'); return; }
+        d.sid = sid; d.name = nm;
+        say('登记为学号 ' + sid + '，姓名 ' + nm + '。对的话回「对」入库，不对重来。');
+        f.stage = 'card_confirm'; return;
+      }
+    }
+  },
+  /* ---------- 报修 ---------- */
+  repair: {
+    enter(){ say(addr() + '报修是吧。在哪儿、什么问题？一句话说清，比如：三教二楼水龙头坏了。'); state.flow.stage = 'collect'; },
+    async handle(text){
+      const f = state.flow, d = f.data;
+      if(f.stage === 'collect'){
+        const pl = Store.resolvePlace(text);
+        if(pl) d.place = pl.point.name;
+        d.problem = text.trim();
+        if(!d.place){ say('具体在哪儿？说个地名——教学楼、食堂、图书馆、操场这些就行。'); f.stage = 'place'; return; }
+        if(d.problem.length < 3){ say('什么问题？灯不亮、水漏了、门坏了，说清楚。'); f.stage = 'problem'; return; }
+        return createRepair(d);
+      }
+      if(f.stage === 'place'){ d.place = text.trim(); if(!d.problem) { say('什么问题？'); f.stage='problem'; return; } return createRepair(d); }
+      if(f.stage === 'problem'){ d.problem = text.trim(); return createRepair(d); }
+    }
+  },
+  /* ---------- 认领核对（核验证件 → 当面确认 → 交还销账 → 开启新一轮） ---------- */
+  claim: {
+    enter(){ say(addr() + '认领东西？卡类报学号，或者说说什么东西、在哪儿丢的，我帮你查。'); state.flow.stage = 'ask'; },
+    async handle(text, photo){
+      const f = state.flow, d = f.data;
+      if(f.stage === 'ask'){
+        const sid = parseSid(text || '');
+        if(sid){
+          const e = toolFindCardBySid(sid);
+          if(!e){ say('库里没这张卡（学号 ' + sid + '）。有人交来了我第一时间按学号对上你。'); endFlow(); return; }
+          d.entryId = e.id;
+          say('有这张卡——' + e.place + '捡到的，登记学号 ' + e.studentId + '。把卡面上的姓名念一下，学号姓名都对上才能给。');
+          f.stage = 'verify_name'; return;
+        }
+        if(photo){
+          sys('云端证件识别中……');
+          try{
+            const o = await toolOcrCard(photo);
+            if(o.studentId){ f.handle(String(o.studentId)); return; }
+            say('没认准学号，你直接打出来吧。');
+          }catch(e){ say('识别系统连不上，你直接把学号打出来吧。'); }
+          return;
+        }
+        // 按类别 / 地点检索库里条目（「认领这条」按钮走 startClaimFor，带上下文直达）
+        const cat = normCategory(text || ''), pl = Store.resolvePlace(text || '');
+        if(!sid && !cat && !pl){ say('报个学号（卡类），或者说说什么东西、在哪儿丢的。'); return; }
+        let cands = Store.lost.filter(i => i.status === 'in_storage');
+        if(cat) cands = cands.filter(i => i.category === cat.cat);
+        if(pl) cands = cands.filter(i => i.placeId === pl.point.id);
+        if(!cands.length){ say('库里没有对得上的。先去「找失物」里查查，或者报学号。'); endFlow(); return; }
+        const e = cands[0];
+        if(isCardCat(e.category)){
+          d.entryId = e.id;
+          say(e.place + '捡到一张' + e.category + '，登记学号 ' + e.studentId + '。把卡面上的姓名念一下，学号姓名都对上才能给。');
+          f.stage = 'verify_name'; return;
+        }
+        return enterOwnerConfirm(e.id);
+      }
+      if(f.stage === 'verify_name'){
+        const name = parseName(text || '');
+        if(!name){ say('念一下卡面上的姓名，两到四个字。'); return; }
+        const e = Store.itemById(d.entryId);
+        const r = toolVerifyClaim(e, { studentId:null, name });
+        if(r.pass){ say(addr() + '学号、姓名都对上了——没跑了。'); enterOwnerConfirm(d.entryId); }
+        else { say(r.reason + '。这张卡不能给你——宁可让你再核一次，也不能把卡给错人。'); endFlow(); }
+        return;
+      }
+      // 当面确认：是不是失主本人的失物
+      if(f.stage === 'confirm_owner'){
+        text = (text || '').trim();
+        if(/不是|不对|再看|再想|没有|算了/.test(text)){ holdItem(d.entryId); return; }
+        if(/是|对|我的|没错/.test(text)){ doHandover(d.entryId); return; }
+        say('认清楚再说话——是你的就回「是，这就是我的」，拿不准就回「不是，我再想想」。');
+        return;
+      }
+      // 交还：失主当面点清，拿到手才销账
+      if(f.stage === 'handover'){
+        text = (text || '').trim();
+        if(/少了|不对|有问题|错了|不是这/.test(text)){ handoverProblem(d.entryId); return; }
+        if(/拿到|谢谢|没问题|没事|可以了|好了|^好$|^是/.test(text)){ completeHandover(d.entryId); return; }
+        say('当面点一下——拿到了、没问题就回「拿到了」；要是少了什么、东西不对，直接说。');
+      }
+    }
+  }
+};
+function isCardLostAsk(){ return '校园卡、学生证这类，不靠「像不像」，只认「是不是你的」。报一下学号——或者拍张卡面照片，我认学号精确对。'; }
+function nextIntakePlace(){ say('在哪儿捡到的？'); state.flow.stage = 'place'; }
+async function finishIntake(d, hasPhoto){
+  let vector = null;
+  if(d.photo){
+    sys('正在存图像特征……');
+    try{ const enc = await cvCall('encode', { image: d.photo }); vector = enc.vector || null; }
+    catch(e){ sys('云端没连上，这条没存成图像特征——不影响文字匹配，以后以图搜物搜不到它。'); }
+  }
+  const e = toolRegisterItem({ category: d.category, desc: d.desc, place: d.place, reporter: state.user.nickname, vector });
+  say(addr() + '入库了。编号 ' + e.id + '——' + e.category + '，在 ' + e.place + ' 捡到的，' + fmtTime(e.foundTime) + '。失主来对，对得上才给。');
+  // MAP: 入库条目按捡到地点打标记
+  MapBridge.addPin({ placeId: e.placeId, label: e.place + ' · ' + e.category, type:'lost', ref: e.id });
+  Store.memPush('登记捡到' + e.category + '（' + e.place + '）', 4);
+  endFlow();
+}
+/* ---------- 找失物多轮追问：信息不全继续问，直到确认匹配或确认库里没有 ---------- */
+function missingDims(d){
+  const m = [];
+  if(!d.category) m.push({ key:'category', label:'什么东西（水杯、雨伞、钥匙这类）' });
+  if(!d.place) m.push({ key:'place', label:'在哪儿丢的' });
+  if(!d.when) m.push({ key:'when', label:'大概什么时候丢的' });
+  if((d.desc || '').trim().length < 4) m.push({ key:'desc', label:'长什么样——颜色、贴纸、牌子说两句' });
+  return m;
+}
+function claimLine(){
+  return '来保卫处值班点领——' + Store.agent.service_hours.start + '到' + Store.agent.service_hours.end + '有人。卡类的得学号姓名都对上才给。';
+}
+function showHitCards(hits, note){
+  state.lastHits = hits;
+  pushMsg({ who:'guard', kind:'cards', mode:'text', hits: hits.map(h => ({ id:h.it.id, s:h.s })), note });
+  const b = hits[0].it;
+  // MAP: 候选失物的捡到地点标到地图上（复现现实里「去保卫处认领」的动作）
+  MapBridge.addPin({ placeId: b.placeId, label: b.place + ' · ' + b.category, type:'lost', ref: b.id });
+  MapBridge.highlight(hits.map(h => h.it.placeId).filter(Boolean));
+  MapBridge.setLayer('lost', hits.map(h => h.it.placeId).filter(Boolean));
+}
+function confirmNone(d, prefix){
+  say((prefix || '') + '库里没有对得上的。别急——我把你说的记下来，有人交到保卫处，一查就能对上你。');
+  Store.memPush('寻找' + (d.category || '失物') + '：' + (d.desc || '').slice(0, 30), 3);
+  endFlow();
+}
+function evaluateSearch(d){
+  const f = state.flow;
+  d.rounds = (d.rounds || 0) + 1;
+  const hits = toolMatchLostItem({ category: d.category || null, place: d.place || null, when: d.when || null, desc: d.desc || '' });
+  const best = hits.length ? hits[0].s.total : 0;
+  // ① 确认匹配：达到确认阈值，且信息足够佐证（有地点 / 时间 / 外观特征），才出结果收流程
+  const enriched = !!(d.place || d.when || featureHits(d.desc || '').length);
+  if(best >= CFG.thMatch && enriched){
+    showHitCards(hits, '比对下来，最像的是这一条——' + (d.category ? '' : '（没听出类别，已全网搜）'));
+    say(claimLine());
+    Store.memPush('寻找' + (d.category || '失物') + '：' + (d.desc || '').slice(0, 30), 3);
+    endFlow(); return;
+  }
+  // ② 类别已定且零命中：类别是硬筛选，库里压根没有这个类别的在库物品
+  if(d.category && !hits.length){ confirmNone(d, '库里现在没登记着「' + d.category + '」这类的东西。'); return; }
+  // ③ 相似但不达标：摆出来让玩家核对，继续追问
+  if(hits.length && best >= CFG.thHedge){
+    showHitCards(hits, '这几条有点像，但我不敢打包票——');
+    d.showedHedge = true; f.stage = 'refine';
+    const miss = missingDims(d).map(x => x.label).join('、');
+    say('有没有对上的？回「是这条」我带你走认领；都不是就回「都不是」，或者再补点' + (miss ? '——' + miss : '特征') + '，我再帮你查。');
+    return;
+  }
+  // ④ 信息不全：追问缺失的维度，同一个维度不重复问，不硬凑结果
+  const miss = missingDims(d).filter(x => !(d.asked && d.asked[x.key]));
+  if(miss.length && d.rounds < 4){
+    d.asked = d.asked || {}; miss.forEach(x => d.asked[x.key] = 1);
+    f.stage = 'refine';
+    say((d.rounds > 1 ? '还是不太像。' : (hits.length ? '按你说的查了一轮，不太像。' : '库里暂时没查到像的。')) + '先补充一下：' + miss.map(x => x.label).join('、') + '。');
+    return;
+  }
+  // ⑤ 信息齐了（或追问到位）仍对不上：确认库里没有，如实告知并记录
+  confirmNone(d, '按你说的查了一遍又一遍——');
+}
+async function runImageSearch(photo, d){
+  me('[照片]'); pushMsg({ who:'me', kind:'photo', src: photo });
+  sys('正在拿照片比对库里物品……');
+  const r = await toolMatchByImage({ image: photo, query: d });
+  if(r.mode === 'image'){
+    state.lastHits = r.hits;
+    pushMsg({ who:'guard', kind:'cards', mode:'image', hits: r.hits.map(h => ({ id:h.it.id, s:h.s })),
+      note:'拿照片比出来了，最像的是这条——' });
+    const b = r.hits[0].it;
+    MapBridge.addPin({ placeId: b.placeId, label: b.place + ' · ' + b.category, type:'lost', ref: b.id });
+    MapBridge.setLayer('lost', r.hits.map(h => h.it.placeId).filter(Boolean));
+    say('看着像就来保卫处领。要是觉得不太对，再补两句文字描述，我再帮你查一遍。');
+  } else if(r.mode === 'image_empty'){
+    // 库里没有匹配物品（全部低于阈值 / 库内无图像向量）——如实告知，不编造
+    say(r.reason + '。换个角度再拍一张，或者用文字说说——什么东西、在哪儿丢的、啥时候的事。');
+  } else {
+    say('图像检索这会儿连不上（' + (r.reason || '超时') + '）。先按文字帮你查——');
+    if(r.hits.length && r.hits[0].s.total >= CFG.thHedge){
+      showHitCards(r.hits, '按文字查出来的：');
+      d.showedHedge = true;
+      say('有没有对上的？回「是这条」或「都不是」，也可以再补点特征。');
+    } else if(r.hits.length){
+      say('查出来几条但都不太像。先补充一下：' + (missingDims(d).map(x => x.label).join('、') || '颜色、贴纸、牌子这类细节') + '，我再帮你查。');
+    } else say('文字也没给够。什么东西、在哪儿丢的、啥时候的事、长什么样，随便补两样。');
+  }
+  // 以图搜物后流程不断线：后续文字并入同一轮多轮追问，直到确认匹配或确认库里没有
+  if(state.flow){ state.flow.stage = 'refine'; if(r.mode === 'image') state.flow.data.showedHedge = true; }
+}
+/* ---------- 认领闭环：当面确认 → 交还 → 销账 → 新一轮 ---------- */
+function itemBrief(e){
+  return '【' + e.id + '】' + e.category + '，' + e.place + '捡到的，入库 ' + fmtTime(e.foundTime) + '。' +
+    (e.desc ? '\n' + e.desc : '') +
+    (e.studentId ? '\n登记学号 ' + e.studentId + ' · ' + (e.name || '') : '');
+}
+// 核对通过后：把东西取出来，让失主当面再认一眼
+function enterOwnerConfirm(entryId){
+  const e = Store.itemById(entryId);
+  if(!e || e.status !== 'in_storage'){ say('这一件刚被领走，库里已经销了，你来晚一步。'); endFlow(); return; }
+  state.flow = { type:'claim', stage:'confirm_owner', data:{ entryId } };
+  MapBridge.focus('baoweichu');
+  pushMsg({
+    who:'guard', kind:'options', stage:'confirm_owner', entryId,
+    text: '东西取出来了，你当面认一眼——\n' + itemBrief(e) + '\n是不是你这一件？看清楚再点头，给错人我得担责。',
+    options: [
+      { label:'是，这就是我的', value:'是，这就是我的' },
+      { label:'不是，我再想想', value:'不是，我再想想', ghost:true }
+    ]
+  });
+  updateFlowHint();
+}
+// 失主认下了：物理交还，当面点清（此时还不销账，拿到手才销）
+function doHandover(entryId){
+  const e = Store.itemById(entryId);
+  if(!e){ say('东西找不着档了——你稍等，我翻翻登记本。'); endFlow(); return; }
+  state.flow.stage = 'handover';
+  Store.memPush('认领确认：' + e.category + '（' + e.id + '）待当面交还', 5);
+  pushMsg({
+    who:'guard', kind:'options', stage:'handover', entryId,
+    text: '好，物归原主。东西给你——拿好，当面点清，别回头少了东西说不清。',
+    options: [
+      { label:'拿到了，谢谢老丁', value:'拿到了，谢谢老丁' },
+      { label:'东西好像少了/不对', value:'东西好像少了', ghost:true }
+    ]
+  });
+  updateFlowHint();
+}
+// 失主拿到手、点清无误：销账为已归还，办结，开启新一轮工作对话
+function completeHandover(entryId){
+  const e = Store.markReturned(entryId, state.user.nickname);
+  if(e) Store.memPush('认领交还：' + e.category + '（' + e.id + '）→ ' + state.user.nickname, 6);
+  say('不客气。收好了，下回留心。');
+  startNextRound(e ? e.category + '已归还，这一条我销了——' : '');
+}
+// 当面没认下：东西继续留库，不销账
+function holdItem(entryId){
+  say('行，东西先留我这儿，不勉强领。再想起什么特征，或者确认是你的了，随时来保卫处。');
+  startNextRound();
+}
+// 交还时点出问题：东西收回暂管，登记异议，继续查
+function handoverProblem(entryId){
+  const e = Store.itemById(entryId);
+  if(e) Store.memPush('认领异议：' + e.category + '（' + e.id + '）物品暂留保卫处待查', 5);
+  say('那东西还归我保管，先别急着拿。你说说是哪儿不对、少了什么，我记下来接着查——不能让你把别人的东西错拿回去。');
+  startNextRound();
+}
+// 一件事办结，老丁回到值班状态，开启新一轮工作对话
+function startNextRound(prefix){
+  endFlow();
+  setMood('greet');
+  say((prefix || '') + '下一位——丢东西、找东西、报修，讲。');
+  updateFlowHint();
+}
+// 选项按钮点击：当前在认领流程里就喂给流程；点到历史消息上的按钮则按物品状态兜底重进
+async function pickClaimOption(m, o){
+  state.idleCount = 0;
+  me(o.label); setMood('think');
+  const f = state.flow;
+  const inClaim = f && f.type === 'claim' && f.data && f.data.entryId === m.entryId;
+  if(inClaim){ await FLOWS.claim.handle(o.value); updateFlowHint(); return; }
+  const it = m.entryId ? Store.itemById(m.entryId) : null;
+  if(!it){ say('这一档记录现在查不到了。'); updateFlowHint(); return; }
+  if(it.status !== 'in_storage'){ say(addr() + '这一件已经归还办结，不用再认了。'); updateFlowHint(); return; }
+  state.flow = { type:'claim', stage:m.stage || 'confirm_owner', data:{ entryId: it.id } };
+  await FLOWS.claim.handle(o.value);
+  updateFlowHint();
+}
+function startClaimFor(id){
+  const e = Store.itemById(id); if(!e) return;
+  me('认领这条');
+  if(e.status !== 'in_storage'){ say('这一件已经归还办结，不用再领了。'); return; }
+  if(isCardCat(e.category)){
+    state.flow = { type:'claim', stage:'verify_name', data:{ entryId: id } };
+    say('校园卡得核对——学号库里有了，你把卡面上的姓名念一下。');
+    updateFlowHint();
+  } else {
+    enterOwnerConfirm(id);
+  }
+}
+function createRepair(d){
+  const o = toolReportRepair({ place: d.place, problem: d.problem, reporter: state.user.nickname });
+  pushMsg({ who:'guard', kind:'orders', orders:[o.id], note: addr() + '受理了。工单号 ' + o.id + '——地点、问题、时间、报修人都记下了，谁都能查。' });
+  Store.memPush('报修：' + o.place + ' ' + o.problem + '（' + o.id + '）', 5);
+  endFlow();
+}
+
+/* ---------- 呼叫（全图唯一叫得动，总体设计 §12） ---------- */
+// to: 玩家当前位置 {x,y}。合体时由引擎/地图层传入；独立交付期未接入地图，用保卫处前台点兜底。
+function doCall(to){
+  if(!inServiceHours()){ say(Store.agent.offduty_line); return; }      // 只在 08:00–22:00 应答
+  if(state.summon === 'walking'){ say('已经在路上了，稍等。'); return; }
+  state.summon = 'walking';
+  const home = Store.pointById(Store.agent.home) || { x:0, y:0 };
+  // 终点 = 玩家位置；独立期无地图层，落回保卫处值班台前（baoweichu 坐标）——合体后引擎传真实玩家坐标即可
+  const dest = to || MapBridge.getPlayerPos && MapBridge.getPlayerPos() || Store.pointById('baoweichu') || { x:250, y:130 };
+  // MAP: 老丁沿路网自己走过来——实际走位由地图层完成（findPath + 沿路径移动）。
+  // 桩返回 null，独立交付期按固定时长模拟到场；合体后无需改这段业务。
+  MapBridge.findPath({ x: home.x, y: home.y }, dest);
+  MapBridge.setLayer('summon', [Store.agent.home]);
+  sys('老丁正往你那儿赶……');
+  setTimeout(() => {
+    state.summon = 'arrived';
+    say(addr() + Store.agent.call_greeting);
+    updateStatus();
+  }, 2600);
+}
+
+/* ---------- 自由文本入口 ---------- */
+async function handleText(text){
+  // 流程中：先喂给流程（「取消」逃生口）
+  if(state.flow){
+    if(/^(取消|算了|不弄了|退出)$/.test(text)){ endFlow(); say(addr() + '行，不弄了。有事再找我。'); return; }
+    await FLOWS[state.flow.type].handle(text, state.pendingPhoto);
+    state.pendingPhoto = null;
+    return;
+  }
+  const intent = classify(text);
+  switch(intent){
+    case 'call': doCall(); return;
+    case 'greet': say(Store.agent.greeting); return;
+    case 'my_records': {
+      const mem = Store.memList();
+      if(!mem.length){ say('之前没打过交道。丢东西、报修，说吧。'); return; }
+      say('你之前的记录：\n' + mem.slice(0, 6).map(m => '· ' + m.desc + '（' + m.time + '）').join('\n'));
+      return;
+    }
+    case 'repair_query': {
+      const pl = Store.resolvePlace(text);
+      const mine = toolQueryRepair({ place: pl ? pl.point.name : null, reporter: state.user.nickname });
+      if(!mine.length){ say('没查到工单' + (pl ? '——' + pl.point.name + '这边没登记过' : '') + '。要是报过的话，说个地名我按地点查公开记录。'); return; }
+      pushMsg({ who:'guard', kind:'orders', orders: mine.map(o => o.id),
+        note:'工单状态在对话里就能查、能改——不用开后台。' });
+      return;
+    }
+    case 'repair_status': {
+      const done = /已经修好|修好了|不用修/.test(text);
+      const pl = Store.resolvePlace(text) || null;
+      const o = toolUpdateRepair({ place: pl ? pl.point.name : '', status: done ? '已完成' : '处理中' });
+      if(!o){ say('手头没有没结的工单。说个地名我查查。'); return; }
+      say('销了。' + o.id + '（' + o.place + '）→ ' + o.status + '。进度随时来问。');
+      return;
+    }
+    case 'lost_intake': startFlow('lost_intake'); await FLOWS.lost_intake.handle(text); return;
+    case 'claim': startFlow('claim'); await FLOWS.claim.handle(text); return;
+    case 'lost_search': {
+      startFlow('lost_search');
+      // 触发句本身有实质信息（类别/地点/时间或足够长的描述）才喂给流程，否则只出开场白等玩家补充
+      const meaningful = normCategory(text) || Store.resolvePlace(text) || parseWhen(text) || text.trim().length >= 6;
+      if(meaningful) await FLOWS.lost_search.handle(text);
+      return;
+    }
+    case 'repair_report': startFlow('repair'); await FLOWS.repair.handle(text); return;
+    case 'door':
+      say('门禁坏了按报修登记；补卡、开卡去一卡通中心。这俩都归值班窗口管。');
+      return;
+    case 'refuse': {
+      // 推诿要推给对应角色，不能笼统推教务处（标准 §1.2 / 边界 §6.1）
+      const routes = Store.agent.refuse_routes || {};
+      let line = Store.agent.unknown_line;
+      for(const [key, msg] of Object.entries(routes)){
+        if(text.includes(key)){ line = msg; break; }
+      }
+      // 关键词兜底：食堂/好吃→阿姨，选课/教务/课程→学长
+      if(line === Store.agent.unknown_line){
+        if(/食堂|好吃|窗口|饭/.test(text)) line = routes['食堂评分'];
+        else if(/选课|教务|课程|上课|老师/.test(text)) line = routes['选课'];
+      }
+      say(line); return;
+    }
+    case 'ask_way': say('问路、导航找向导小北——不归我这儿管。丢东西、报修，说吧。'); return;
+    default:
+      if(normCategory(text) || Store.resolvePlace(text)){ startFlow('lost_search'); await FLOWS.lost_search.handle(text); return; }
+      say('没听明白。丢东西、找东西、报修——就这三样，说吧。');
+  }
+}
+
+/* ============================================================
+ * 界面装配
+ * ============================================================ */
+function updateStatus(){
+  const chip = $('#status-chip');
+  if(inServiceHours()){ chip.textContent = '值班中 08:00–22:00'; chip.className = 'chip duty'; }
+  else { chip.textContent = '已下班（演示可拨时间）'; chip.className = 'chip off'; }
+  $('#clock').textContent = fmtClock() + (timeOverride ? ' *' : '');
+}
+function renderMapLog(){
+  const el = $('#map-log');
+  el.innerHTML = MapLog.map(l => `<div class="ln">${esc(l.t)} <b>${esc(l.fn)}</b> ${esc(l.args)}</div>`).join('');
+}
+function renderAll(){
+  msgsEl.innerHTML = '';
+  state.msgs.forEach(m => msgsEl.appendChild(renderMsg(m)));
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+  // 按最后一条 guard/sys 消息还原立绘表情
+  for(let i = state.msgs.length - 1; i >= 0; i--){
+  const mood = autoMood(state.msgs[i]);
+  if(mood){ setMood(mood, 0); return; }
+  }
+  setMood('idle', 0);
+}
+function updateFlowHint(){
+  const inp = $('#inp');
+  inp.placeholder = state.flow
+    ? ({ lost_search:'说说丢了什么，或点「图」拍一张', card_query:'报学号，或拍张卡面', lost_intake:'说说这东西长啥样', card_intake:'拍张卡面，或报学号姓名', card_confirm:'回「对」或「不对」', card_manual:'报一下学号和姓名', repair:'在哪儿、什么问题', place:'说个地名', problem:'什么问题', photo:'发张照片，或回「跳过」', collect:'在哪儿、什么问题', ask:'报学号，或说说丢了啥', verify_name:'念一下卡面姓名', confirm_owner:'点上面按钮，或回「是」/「不是」', handover:'点清了回「拿到了」，少了就直说', desc:'说说这东西长啥样' }[state.flow.stage] || '继续说，或回「取消」')
+    : '跟老丁说句话……';
+}
+
+async function onSend(){
+  const inp = $('#inp'); const text = inp.value.trim();
+  const photo = state.draftPhoto || null;
+  if(!text && !photo) return;
+  inp.value = ''; clearDraft(); state.idleCount = 0;
+  if(text) me(text);
+  if(photo) pushMsg({ who:'me', kind:'photo', src: photo });
+  setMood('think');
+  if(photo) await handlePhotoWithText(photo, text);
+  else await handleText(text);
+  updateFlowHint();
+}
+// 选图后留置预览条，等用户补文字再点发送一起发出
+function showDraft(b64){
+  state.draftPhoto = b64;
+  const bar = $('#draft-bar');
+  bar.innerHTML = '';
+  const im = document.createElement('img'); im.className = 'thumb'; im.src = b64;
+  const tip = document.createElement('span'); tip.className = 'draft-tip'; tip.textContent = '照片已选——可以补两句描述再发送';
+  const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '移除';
+  rm.onclick = clearDraft;
+  bar.appendChild(im); bar.appendChild(tip); bar.appendChild(rm);
+  bar.classList.remove('hidden');
+  $('#inp').focus();
+}
+function clearDraft(){
+  state.draftPhoto = null;
+  const bar = $('#draft-bar'); bar.innerHTML = ''; bar.classList.add('hidden');
+}
+// 图片 + 文字组合检索：流程中喂流程，自由态走以图搜物（文字辅助）
+async function handlePhotoWithText(b64, text){
+  if(state.flow){
+    state.pendingPhoto = b64;
+    await FLOWS[state.flow.type].handle(text, b64);
+    state.pendingPhoto = null;
+    return;
+  }
+  // 自由态：先零样本分类，证件类转精确路，其余走以图搜物（带文字 query）
+  sys('正在看这张照片……');
+  let top = null;
+  try{ const cl = await cvCall('classify', { image: b64 }); top = (cl.labels && cl.labels[0]) || null; }
+  catch(e){ /* 云端不可用时不阻塞，直接走图像检索（会自行降级） */ }
+  if(top && isCardCat(top.label) && top.score >= 0.25){
+    state.flow = { type:'photo_route', stage:'route', data:{ image: b64 } };
+    if(text){ await FLOWS.photo_route.handle(text); return; }
+    say('看着是证件（' + top.label + '）。是找卡还是登记捡到的卡？回「找卡」或「登记」。');
+    return;
+  }
+  await runImageSearch(b64, parseQueryFromText(text));
+}
+// 把自然语言文字解析成以图搜物的 query（类别/地点/时间/描述）——图像相似度仍替换描述维，文字提供类别/地点/时间
+function parseQueryFromText(text){
+  if(!text) return {};
+  const d = {};
+  const cat = normCategory(text); if(cat) d.category = cat.cat;
+  const pl = Store.resolvePlace(text); if(pl) d.place = pl.point.name;
+  const wh = parseWhen(text); if(wh) d.when = wh;
+  d.desc = text;
+  return d;
+}
+async function onPhoto(file){
+  const dataURL = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file); });
+  const img = await new Promise(res => { const im = new Image(); im.onload = () => res(im); im.src = dataURL; });
+  const k = Math.min(1, 512 / Math.max(img.width, img.height));
+  const c = document.createElement('canvas'); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  const b64 = c.toDataURL('image/jpeg', 0.85);
+  state.idleCount = 0;
+  showDraft(b64);
+}
+FLOWS.photo_route = {
+  enter(){}, 
+  async handle(text){
+    const d = state.flow.data;
+    if(/找|丢/.test(text)){ state.flow = { type:'card_query', stage:'card_query', data:{ category:'校园卡' } }; await FLOWS.card_query.handle(null, d.image); }
+    else if(/登记|捡/.test(text)){ state.flow = { type:'card_intake', stage:'card_photo', data:{} }; await FLOWS.card_intake.handle(null, d.image); }
+    else say('回「找卡」或者「登记」。');
+  }
+};
+
+/* ============================================================
+ * 账号服务客户端（轻后端：注册 / 登录 / 签发 token——保安.md §六）
+ * ============================================================ */
+const API = {
+  base: location.protocol === 'file:' ? 'http://127.0.0.1:8000' : '',
+  token: null,
+  async req(path, opts = {}){
+    const r = await fetch(this.base + path, {
+      method: opts.method || 'GET',
+      headers: { 'Content-Type':'application/json', ...(this.token ? { Authorization:'Bearer ' + this.token } : {}) },
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    const data = await r.json().catch(() => ({}));
+    if(!r.ok) throw Object.assign(new Error(data.detail || ('HTTP ' + r.status)), { status: r.status });
+    return data;
+  }
+};
+async function checkHealth(){
+  const el = $('#li-health');
+  try{ await API.req('/api/health'); el.innerHTML = '账号服务 <b class="ok">已连接</b> · FastAPI + SQLite'; }
+  catch(e){ el.innerHTML = '账号服务 <b class="bad">没连上</b> —— 先启动：python server/app.py'; }
+}
+async function submitAuth(){
+  const nick = $('#li-nick').value.trim(), pass = $('#li-pass').value;
+  const msg = $('#li-msg');
+  if(!nick || !pass){ msg.textContent = '昵称和密码都要有。'; return; }
+  if(pass.length < 6){ msg.textContent = '密码至少 6 位。'; return; }
+  msg.textContent = '';
+  const isReg = $('#tab-reg').classList.contains('on');
+  try{
+    const r = await API.req(isReg ? '/api/register' : '/api/login', { method:'POST', body:{ nickname: nick, password: pass } });
+    if(isReg){ // 注册即登录
+      const l = await API.req('/api/login', { method:'POST', body:{ nickname: nick, password: pass } });
+      enterChat(l);
+    } else enterChat(r);
+  }catch(e){
+    msg.textContent = e.status === 409 ? '这昵称有人用了，直接去登录吧。'
+      : e.status === 401 ? '昵称或密码不对，再试试。' : ('账号服务连不上：' + e.message + '（先启动 python server/app.py）');
+  }
+}
+function enterChat(auth){
+  state.user = auth; API.token = auth.token;
+  localStorage.setItem(Store.key('auth'), JSON.stringify(auth));
+  $('#login-view').classList.add('hidden');
+  $('#chat-view').classList.remove('hidden');
+  loadChat();
+  renderAll(); updateStatus(); updateFlowHint();
+  if(!state.msgs.length){
+    pushMsg({ who:'guard', kind:'text', text: addr() + Store.agent.greeting }, false);
+    saveChat();
+  }
+  // MAP: 玩家进入保卫处触发圈（地图层接入后由 on('enter') 驱动）
+  MapBridge.on('enter', { placeId:'baoweichu' });
+}
+function logout(){
+  localStorage.removeItem(Store.key('auth'));
+  location.reload();
+}
+
+/* ============================================================
+ * 启动
+ * ============================================================ */
+(async function init(){
+  drawSprite($('#login-sprite'), 7);
+  drawSprite($('#hd-sprite'), 2);
+  document.getElementById('guard-svg').innerHTML = portraitInner('idle');
+  await Store.init();
+  // 恢复会话
+  try{
+    const saved = JSON.parse(localStorage.getItem(Store.key('auth')) || 'null');
+    if(saved && saved.token){
+      API.token = saved.token;
+      const meInfo = await API.req('/api/me');
+      enterChat({ ...saved, ...meInfo });
+      return;
+    }
+  }catch(e){ localStorage.removeItem(Store.key('auth')); }
+  checkHealth();
+  updateStatus();
+  setInterval(updateStatus, 15000);
+  // 空闲自语（附录 F ③：最便宜的「活着」信号，模板填充不调 LLM，每天 ≤ dailyBudget 条）
+  setInterval(() => {
+    if(!state.user || Date.now() - state.lastMsgAt < 45000 || state.idleCount >= (Store.agent.dailyBudget || 2)) return;
+    state.idleCount++;
+    const n = Store.lost.filter(i => i.status === 'in_storage').length;
+    const m = Store.orders.filter(o => o.status !== '已完成').length;
+    say('库里还压着 ' + n + ' 件没人领，' + m + ' 张工单没销。有事说吧。');
+  }, 45000);
+})();
+
+/* ---------- 事件绑定 ---------- */
+$('#tab-login').onclick = () => { $('#tab-login').classList.add('on'); $('#tab-reg').classList.remove('on'); checkHealth(); };
+$('#tab-reg').onclick   = () => { $('#tab-reg').classList.add('on'); $('#tab-login').classList.remove('on'); checkHealth(); };
+$('#li-submit').onclick = submitAuth;
+$('#li-pass').addEventListener('keydown', e => { if(e.key === 'Enter') submitAuth(); });
+$('#li-nick').addEventListener('keydown', e => { if(e.key === 'Enter') $('#li-pass').focus(); });
+$('#btn-send').onclick = onSend;
+$('#inp').addEventListener('keydown', e => { if(e.key === 'Enter') onSend(); });
+$('#btn-photo').onclick = () => $('#file-in').click();
+$('#file-in').addEventListener('change', e => { if(e.target.files[0]) onPhoto(e.target.files[0]); e.target.value = ''; });
+document.addEventListener('paste', e => { for(const it of (e.clipboardData ? e.clipboardData.items : [])){ if(it.type.startsWith('image/')){ onPhoto(it.getAsFile()); break; } } });
+document.querySelectorAll('.qa').forEach(b => {
+  b.onclick = () => {
+    state.idleCount = 0;
+    const act = b.dataset.act;
+    if(act === 'call') return doCall();
+    me(b.textContent);
+    if(state.flow) endFlow();
+    if(act === 'claim'){ startFlow('claim'); return; }
+    startFlow(act);
+  };
+});
+$('#btn-logout').onclick = logout;
+$('#btn-reset').onclick = () => {
+  if(!confirm('清空本地公共层数据（失物库 / 工单库）并重新播种？')) return;
+  Store.reset(); location.reload();
+};
+$('#clock').onclick = () => {
+  const v = prompt('演示拨时间（HH:mm，留空恢复真实时间）', '');
+  if(v === null) return;
+  const m = v.trim().match(/^(\d{1,2})[:：](\d{2})$/);
+  if(m){ timeOverride = { h:+m[1], m:+m[2] }; sys('时间已拨到 ' + v + '（仅影响应答时段判断）。'); }
+  else { timeOverride = null; sys('时间恢复真实。'); }
+  updateStatus();
+};
+</script>
+</body>
+</html>

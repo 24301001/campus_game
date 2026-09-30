@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "note": "保安公共层·工单库。不做后台管理端，状态由老丁在对话里更新（总体设计 §6.5）。状态档：已受理 / 处理中 / 已完成。hoursAgo 仅是种子相对偏移。",
+  "orders": [
+    { "id": "W-2301", "place": "第三教学楼", "placeId": "jx3",    "x": 330, "y": 215, "problem": "二楼东侧洗手间水龙头漏水", "status": "已完成", "reporter": "同学甲", "hoursAgo": 50, "visibility": "public" },
+    { "id": "W-2302", "place": "图书馆",     "placeId": "tushuguan", "x": 380, "y": 130, "problem": "四层自习区靠窗座位灯管闪烁", "status": "处理中", "reporter": "同学乙", "hoursAgo": 30, "visibility": "public" },
+    { "id": "W-2303", "place": "第二食堂",   "placeId": "shitang2",  "x": 200, "y": 72,  "problem": "一楼门口门禁刷卡失灵",   "status": "已受理", "reporter": "同学丙", "hoursAgo": 8,  "visibility": "public" },
+    { "id": "W-2304", "place": "操场",       "placeId": "caochang",  "x": 470, "y": 250, "problem": "看台东北角公共照明不亮", "status": "已受理", "reporter": "同学甲", "hoursAgo": 5,  "visibility": "public" }
+  ]
+}
