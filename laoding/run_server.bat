@@ -3,8 +3,8 @@ chcp 65001 >nul
 rem 切到本脚本所在目录（项目根目录）
 cd /d "%~dp0"
 
-rem 依赖装在项目内的 server_vendor（主）与 .pylibs（备），无需系统 pip
-set "PYTHONPATH=%~dp0server_vendor;%~dp0.pylibs;%PYTHONPATH%"
+rem 依赖装在模块目录内的 server_vendor，无需系统 pip
+set "PYTHONPATH=%~dp0server_vendor;%PYTHONPATH%"
 
 rem 解析 Python：优先嵌入版 D:\Scripts\python.exe，没有就用 PATH 上的 python
 set "PYEXE=D:\Scripts\python.exe"
