@@ -1,0 +1,1140 @@
+{
+  "metadata": {
+    "file_suffix": "pdf",
+    "producer": {
+      "name": "mineru",
+      "version": "4.0.0"
+    },
+    "document": {
+      "page_count": 4,
+      "page_count_kind": "physical"
+    }
+  },
+  "extensions": {
+    "mineru": {
+      "tier": "basic",
+      "parse_mode": "ocr"
+    },
+    "docvortex_layout": {
+      "version": 1,
+      "pages": [
+        {
+          "page_idx": 0,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 1,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 2,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 3,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        }
+      ]
+    }
+  },
+  "pages": [
+    {
+      "page_idx": 0,
+      "blocks": [
+        {
+          "type": "page_number",
+          "index": 0,
+          "bbox": [
+            0.81,
+            0.017,
+            0.876,
+            0.055
+          ],
+          "content": []
+        },
+        {
+          "type": "doc_title",
+          "index": 1,
+          "bbox": [
+            0.202,
+            0.083,
+            0.672,
+            0.105
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "北京交通大学考试试题（A物）"
+            }
+          ],
+          "level": 1
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.08,
+            0.11,
+            0.774,
+            0.13
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "课程名称:离散数学（A）ⅡL 期2017.201811二9M"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.075,
+            0.132,
+            0.789,
+            0.152
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "课程号，80L207Q开课院:让算机日期教师，V提川"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.069,
+            0.155,
+            0.791,
+            0.177
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "学生姓名: 学号: 任课教师， mesin."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.064,
+            0.179,
+            0.538,
+            0.199
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "学生学院: 斑级:"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 6,
+          "bbox": [
+            0.051,
+            0.205,
+            0.833,
+            0.296
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 6,
+              "bbox": [
+                0.051,
+                0.205,
+                0.833,
+                0.296
+              ],
+              "content": "<table><tr><td>题号</td><td></td><td>二</td><td>三</td><td>四</td><td>五</td><td>六</td><td>七</td><td>八</td><td>九</td><td>总分</td></tr><tr><td>得分</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>阅卷人</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 7,
+          "bbox": [
+            0.068,
+            0.348,
+            0.478,
+            0.372
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "一、选择题（10小题，共20分）"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.093,
+            0.387,
+            0.767,
+            0.471
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "1.下列关于循环群的命题不成立的是（ ). A. 循环群必是交换群 B. 循环群的子群是拥环群C. 素数阶群一定是循环群 D.阶小于5的群一定是排环群"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.098,
+            0.48,
+            0.765,
+            0.534
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2.下列集合关于数的加法和乘法运算不能构成坏的是(）。A.自然数集合B.整数集合C.有理数集合D.实数集合"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.095,
+            0.54,
+            0.779,
+            0.63
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "3. 设连通的简单平面图G中有12条边和6个面，则G的顶点数为). T A.6 B.7 C.8 D.9"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.09,
+            0.636,
+            0.833,
+            0.73
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "4. 无向图G有8条边，1个1度顶点，2个2度顶点，1个5度顶点，共余顶点的度数均为3，3度顶点的个数是（ ) A.1 B.2 C.3 D.4"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.089,
+            0.739,
+            0.682,
+            0.837
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "5. 下面集合（ ）关于整除关系构成格。A. {2,3,6,12,24,36} B. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\{ 1 , 2 , 3 , 4 , 6 , 8 , 1 2 \\}"
+            },
+            {
+              "type": "text",
+              "content": " C. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\{ 1 , 2 , 3 , 5 , 6 , 1 5 , 3 0 \\}"
+            },
+            {
+              "type": "text",
+              "content": " D. (3,6,9,12)"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 13,
+          "bbox": [
+            0.402,
+            0.852,
+            0.521,
+            0.873
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第1页/共4页"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 14,
+          "bbox": [
+            0.588,
+            0.918,
+            0.651,
+            0.965
+          ],
+          "content": []
+        },
+        {
+          "type": "footer",
+          "index": 15,
+          "bbox": [
+            0.657,
+            0.931,
+            0.834,
+            0.952
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "扫描全能王创建"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 1,
+      "blocks": [
+        {
+          "type": "header",
+          "index": 0,
+          "bbox": [
+            0.009,
+            0.003,
+            0.971,
+            0.021
+          ],
+          "content": []
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.104,
+            0.159,
+            0.689,
+            0.221
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "6.加右图所示的哈斯图络出的偏序集中，元素e和g的视小上界为（Ab D. c C. a D. 不#à"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 2,
+          "bbox": [
+            0.724,
+            0.164,
+            0.835,
+            0.238
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 2,
+              "bbox": [
+                0.724,
+                0.164,
+                0.835,
+                0.238
+              ],
+              "content": ""
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.088,
+            0.225,
+            0.709,
+            0.296
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "7. 设元向图 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\dot{ 漂攀 }"
+            },
+            {
+              "type": "text",
+              "content": " 同胚，至少从G中删除（ ) min才能使得所得到的图为平面图。A. 1 B.2 C.3 D.4"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.072,
+            0.309,
+            0.712,
+            0.373
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "8. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< \\overline{R}_{ 李李 } >"
+            },
+            {
+              "type": "text",
+              "content": " 是整环，则 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< \\vec{P}_{j} + \\boldsymbol{x} >"
+            },
+            {
+              "type": "text",
+              "content": " 不一定是（ ) A.可交换环 B.无零因子环 C.含么环 D.域"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.076,
+            0.382,
+            0.864,
+            0.444
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "9.下列数组中，不能构成无向图的度数列的数组是（）。A, "
+            },
+            {
+              "type": "equation_inline",
+              "content": "( 1 8 8 8 2 8 9 )"
+            },
+            {
+              "type": "text",
+              "content": " B. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\dot{ 粿 }2\\dot{\\bar{3}}4"
+            },
+            {
+              "type": "text",
+              "content": " C. (2,2,2,2,2)D. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "( 1 4 , 3 3 , 3 3 )"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.082,
+            0.452,
+            0.818,
+            0.545
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "10. 设无向图G的点连通度 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "策略示"
+            },
+            {
+              "type": "text",
+              "content": " 最小度 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\dot{s} = \\dot{\\theta}_{i}"
+            },
+            {
+              "type": "text",
+              "content": " 则边联通度λ不可能是C ). A3 B.4 C.5 D.6"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 7,
+          "bbox": [
+            0.063,
+            0.592,
+            0.468,
+            0.617
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "二、填空(5小题，共20分)"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.078,
+            0.628,
+            0.889,
+            0.692
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "11.设S是非空有限集合，代数系统(P(S)，U，n)中，P(S)对∪运算的零元是，P(S)对∩运算的单位元是"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.076,
+            0.698,
+            0.89,
+            0.762
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "12. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "H = \\{ 0, 6 \\}, \\quad < H, \\quad + , >"
+            },
+            {
+              "type": "text",
+              "content": " 是群 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< Z_{12}, + \\mathrm{j} \\mathrm{2}"
+            },
+            {
+              "type": "text",
+              "content": " 的子群，其中 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "Z_{l2} = \\left\\{ 0, 1, 2, \\cdots, 11 \\right\\}"
+            },
+            {
+              "type": "text",
+              "content": " "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\dot{ 噗濤 }"
+            },
+            {
+              "type": "text",
+              "content": " 是模12加法，则H的指数是 ，元素4的阶是"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.074,
+            0.771,
+            0.907,
+            0.837
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "13.在有补格 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\times L_{i} \\times , \\vee , 0 , 1 >"
+            },
+            {
+              "type": "text",
+              "content": " 中， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a_{i}b \\in L_{i}"
+            },
+            {
+              "type": "text",
+              "content": " 如果 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a _ { 2 } , b"
+            },
+            {
+              "type": "text",
+              "content": " 互为补元，则 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a \\wedge b > 0"
+            },
+            {
+              "type": "text",
+              "content": "当且仅当 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a \\lor b = \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\bullet"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 11,
+          "bbox": [
+            0.609,
+            0.926,
+            0.671,
+            0.975
+          ],
+          "content": []
+        },
+        {
+          "type": "footer",
+          "index": 12,
+          "bbox": [
+            0.677,
+            0.94,
+            0.852,
+            0.96
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "扫描全能王创建"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 2,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.147,
+            0.096,
+            0.65,
+            0.114
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "14. n(n≥2)阶无向究会图K，有 ."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.143,
+            0.121,
+            0.544,
+            0.14
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "出 时，K.中有在肤位四路。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.134,
+            0.145,
+            0.588,
+            0.165
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "15. 设给定图G(加如右图所示)，则图G的点割集"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.13,
+            0.167,
+            0.509,
+            0.191
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "是_ 和"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 4,
+          "bbox": [
+            0.667,
+            0.097,
+            0.807,
+            0.188
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 4,
+              "bbox": [
+                0.667,
+                0.097,
+                0.807,
+                0.188
+              ],
+              "content": ""
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 5,
+          "bbox": [
+            0.108,
+            0.223,
+            0.482,
+            0.249
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "三、综合题(8小题，共60分)"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.133,
+            0.263,
+            0.844,
+            0.323
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "16.(8分）设A，B是群G的两个子群，证明AB是G的子群的充要条件是AB=BA。 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "AB = \\{ ab|a \\in A,b \\in B \\}"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.139,
+            0.34,
+            0.835,
+            0.4
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "17.(8分)设G是一交换群，n是任一正整数， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "H = \\{ x | x \\in G \\land | x |"
+            },
+            {
+              "type": "text",
+              "content": " 是n的因子。试问:H是否是G的子群？为什么？"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.143,
+            0.409,
+            0.526,
+            0.43
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "18.（8分）设G=<a>是12阶循环群。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.155,
+            0.44,
+            0.436,
+            0.462
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(1) 求出G的所有的生成元。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.155,
+            0.47,
+            0.544,
+            0.491
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(2)求出G的所有子群，并画出子群格。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.152,
+            0.497,
+            0.845,
+            0.551
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(3)求出该子群格所有的5元子格。同时判断该子群格（不是5元子格）是否分配格。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.138,
+            0.557,
+            0.83,
+            0.583
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "19.（6分）若有n个人，每个人都恰有三个朋友，证明n必为偶数。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 13,
+          "bbox": [
+            0.137,
+            0.589,
+            0.856,
+            0.681
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "20.(6分)设在通信中字母A、B、C、D、E、F出现的频率依次为36%、18%、16%、15%、10%、5%，试求传输这些字母的最优前级码。要求写出求解过程。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 14,
+          "bbox": [
+            0.135,
+            0.685,
+            0.847,
+            0.749
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "21.(8分)设G为具有n个顶点m条边的连通平面图，且deg(Ri)≥1 1≥3，则m≤1(n-2)/(1-2)."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 15,
+          "bbox": [
+            0.133,
+            0.753,
+            0.707,
+            0.781
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "22.(8分）设G是具有n个顶点的无向简单图，其边"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 16,
+          "bbox": [
+            0.14,
+            0.785,
+            0.629,
+            0.834
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "数 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "m > \\frac{1}{2}(n - 1)(n - 2)"
+            },
+            {
+              "type": "text",
+              "content": " ，则G是半哈密顷图。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 17,
+          "bbox": [
+            0.443,
+            0.847,
+            0.568,
+            0.87
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第3页/共4页"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 18,
+          "bbox": [
+            0.585,
+            0.916,
+            0.648,
+            0.963
+          ],
+          "content": []
+        },
+        {
+          "type": "footer",
+          "index": 19,
+          "bbox": [
+            0.655,
+            0.929,
+            0.833,
+            0.95
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "扫描全能王创建"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 3,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.118,
+            0.141,
+            0.86,
+            0.198
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "23.(8分) 图 G=<V,E>，共中 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "V = \\{ a_{1}b_{1}c_{1}d_{1}e_{1} \\}"
+            },
+            {
+              "type": "text",
+              "content": " , E ={ (a, b), (a, c), (a, e), "
+            },
+            {
+              "type": "equation_inline",
+              "content": "( b , d ) , ( b , e ) , ( c , e ) , ( c , d ) , ( d , e ) \\}"
+            },
+            {
+              "type": "text",
+              "content": " ，对应边的权值依次为2、1、2、3、"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.129,
+            0.204,
+            0.333,
+            0.23
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "6、1、4及5，试"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.158,
+            0.239,
+            0.388,
+            0.265
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(1) 画出G的图形；"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.161,
+            0.275,
+            0.437,
+            0.3
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(2)写出G的邻接矩阵；"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.162,
+            0.31,
+            0.578,
+            0.335
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(3)求出G权最小的生成树及其权值。"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 5,
+          "bbox": [
+            0.591,
+            0.925,
+            0.653,
+            0.974
+          ],
+          "content": []
+        },
+        {
+          "type": "footer",
+          "index": 6,
+          "bbox": [
+            0.659,
+            0.938,
+            0.837,
+            0.961
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "扫描全能王 创建"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "is_full_document": true,
+  "schema": "docvortex.middle",
+  "schema_version": "2.0"
+}

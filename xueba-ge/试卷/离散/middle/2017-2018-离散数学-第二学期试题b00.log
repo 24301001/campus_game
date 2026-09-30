@@ -1,0 +1,44 @@
+2026-09-21 23:03:54.172 | INFO     | mineru.backend.analysis.pdf.window:_log_processing_window_plan:118 - Hybrid processing-window run. page_count=4, window_size=64, total_windows=1
+2026-09-21 23:03:56.073 | DEBUG    | docvortex.document.pdf.images:_load_images_from_pdf_worker:101 - PDF render worker started: pid=2864, pages=1-4, dpi=200, image_type=pil_img, pdf_bytes=2634585
+2026-09-21 23:03:56.581 | DEBUG    | docvortex.document.pdf.images:_load_images_from_pdf_worker:113 - PDF render worker completed: pid=2864, pages=1-4, elapsed=0.507s, images=4
+2026-09-21 23:03:56.740 | INFO     | mineru.backend.analysis.pdf.window:_log_processing_window:126 - Hybrid processing window 1/1: pages 1-4/4 (4 pages)
+
+Layout Predict:   0%|          | 0/4 [00:00<?, ?it/s]
+Layout Predict:  50%|█████     | 2/4 [00:01<00:01,  1.37it/s]
+Layout Predict: 100%|██████████| 4/4 [00:03<00:00,  1.31it/s]
+Layout Predict: 100%|██████████| 4/4 [00:03<00:00,  1.32it/s]
+
+MFR Predict:   0%|          | 0/24 [00:00<?, ?it/s]
+MFR Predict:  33%|███▎      | 8/24 [00:02<00:05,  3.13it/s]
+MFR Predict:  67%|██████▋   | 16/24 [00:05<00:02,  2.92it/s]
+MFR Predict: 100%|██████████| 24/24 [00:08<00:00,  2.70it/s]
+MFR Predict: 100%|██████████| 24/24 [00:08<00:00,  2.78it/s]
+
+Table-wireless Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wireless Predict: 100%|██████████| 1/1 [00:00<00:00, 11.75it/s]
+
+OCR-det:   0%|          | 0/53 [00:00<?, ?it/s]
+OCR-det:   2%|▏         | 1/53 [00:00<00:13,  3.78it/s]
+OCR-det:  17%|█▋        | 9/53 [00:00<00:01, 29.54it/s]
+OCR-det:  30%|███       | 16/53 [00:00<00:01, 30.40it/s]
+OCR-det:  40%|███▉      | 21/53 [00:00<00:00, 35.23it/s]
+OCR-det:  72%|███████▏  | 38/53 [00:00<00:00, 55.97it/s]
+OCR-det:  89%|████████▊ | 47/53 [00:01<00:00, 63.53it/s]
+OCR-det: 100%|██████████| 53/53 [00:01<00:00, 50.29it/s]
+
+OCR-rec Predict:   0%|          | 0/136 [00:00<?, ?it/s]
+OCR-rec Predict:   9%|▉         | 12/136 [00:00<00:01, 82.26it/s]
+OCR-rec Predict:  18%|█▊        | 24/136 [00:00<00:01, 86.34it/s]
+OCR-rec Predict:  26%|██▋       | 36/136 [00:00<00:01, 84.33it/s]
+OCR-rec Predict:  35%|███▌      | 48/136 [00:00<00:01, 86.99it/s]
+OCR-rec Predict:  44%|████▍     | 60/136 [00:00<00:00, 89.79it/s]
+OCR-rec Predict:  53%|█████▎    | 72/136 [00:00<00:00, 92.16it/s]
+OCR-rec Predict:  62%|██████▏   | 84/136 [00:00<00:00, 85.20it/s]
+OCR-rec Predict:  71%|███████   | 96/136 [00:01<00:00, 73.45it/s]
+OCR-rec Predict:  79%|███████▉  | 108/136 [00:01<00:00, 62.37it/s]
+OCR-rec Predict:  88%|████████▊ | 120/136 [00:01<00:00, 47.71it/s]
+OCR-rec Predict:  93%|█████████▎| 126/136 [00:02<00:00, 40.48it/s]
+OCR-rec Predict:  97%|█████████▋| 132/136 [00:02<00:00, 34.16it/s]
+OCR-rec Predict: 100%|██████████| 136/136 [00:02<00:00, 26.72it/s]
+OCR-rec Predict: 100%|██████████| 136/136 [00:02<00:00, 50.93it/s]
+已解析 1 个输入。

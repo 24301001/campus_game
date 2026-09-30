@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>资料库面板 · 学霸姐</title>
+<style>
+:root{
+  --bg:#0d1017; --bg2:#141926; --line:#232b3d; --ink:#eae8df; --dim:#8f9bb0;
+  --gold:#ffd76e; --gold2:#f2b950; --warn:#e2a06a; --ok:#68c07a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(900px 420px at 82% -8%, #1b2334 0%, transparent 60%),
+  linear-gradient(180deg,#10141f,#0d1017);
+  color:var(--ink);font:15px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+a{color:var(--gold)}
+.wrap{max-width:1080px;margin:0 auto;padding:26px 22px 60px}
+header.top{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+h1{margin:0;font-size:22px;background:linear-gradient(90deg,#ffe6a2,var(--gold2));
+   -webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--dim);font-size:13px}
+.stat{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 22px}
+.stat b{display:block;font-size:20px;color:var(--gold)}
+.stat span{font-size:12px;color:var(--dim)}
+.pill{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px 16px;min-width:96px}
+h2.grade{margin:26px 0 10px;font-size:16px;letter-spacing:2px;color:var(--gold);
+  border-left:3px solid var(--gold);padding-left:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.card{background:linear-gradient(180deg,#1b2334,#151b29);border:1px solid #2e3a54;border-radius:14px;
+  padding:14px 16px;box-shadow:0 10px 26px #0000003d, inset 0 1px 0 #ffffff0d}
+.card h3{margin:0 0 2px;font-size:15.5px;display:flex;align-items:center;gap:8px}
+.badge{font-size:11px;border-radius:20px;padding:1px 9px;border:1px solid #51618a;color:#cfd8ea;background:#20293c}
+.badge.zero{border-color:#7c3a44;color:#ff9a9a;background:#2a151c}
+.meta{font-size:12px;color:var(--dim);margin-bottom:8px}
+.books{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.books li{display:flex;align-items:center;gap:8px;font-size:12.5px;border-top:1px dashed #26304a;padding-top:5px}
+.books .bt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cfd4dd}
+.ty{color:var(--dim);flex:0 0 auto;font-size:11px}
+.dl{flex:0 0 auto;font-size:11.5px;padding:1px 9px;border-radius:8px;border:1px solid #51618a;
+  background:#20293c;color:#e9eefc;cursor:pointer;font-family:inherit}
+.dl:hover{border-color:var(--gold);color:var(--gold)}
+.dl:disabled{opacity:.35;cursor:default}
+a.dl{text-decoration:none;display:inline-block}
+.gap{color:#ff9a9a;font-size:12px}
+.chart{margin:4px 0 8px}
+.chart .row{display:grid;grid-template-columns:120px 1fr 64px;gap:8px;align-items:center;font-size:12px;margin:3px 0}
+.chart .nm{color:var(--dim);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chart .bar{height:10px;border-radius:6px;background:linear-gradient(90deg,#3b4a6e,var(--gold));min-width:2px}
+.chart .vv{color:var(--dim)}
+.note{font-size:12px;color:var(--dim);margin-top:26px;border-top:1px solid var(--line);padding-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>资料库面板</h1>
+    <span class="sub"><a href="/">← 回聊天</a></span>
+  </header>
+  <div class="sub" id="built"></div>
+  <div class="stat" id="stat"></div>
+  <div class="pill chart" id="chart"></div>
+  <div id="body"></div>
+  <div class="note">数据由程序从索引与对账单现算（config/corpus.json），年级归属为暂口径 —— 培养方案到手后照教务表改对账单即可。
+  下载按「校内作业演示」口径开放，公网部署前必须关（README §10 第 36 条）。</div>
+</div>
+<script>
+(async () => {
+  const tok = localStorage.getItem("xbg_token");
+  if (!tok) { location.replace("/"); return; }
+  const H = { headers: { Authorization: "Bearer " + tok } };
+  const res = await fetch("/api/library", H);
+  if (res.status === 401) { localStorage.removeItem("xbg_token"); location.replace("/"); return; }
+  const data = await res.json();
+  let health = {};
+  try { health = await (await fetch("/api/health")).json(); } catch (e) {}
+  if (health.stats && health.stats.built_at)
+    document.getElementById("built").textContent =
+      "索引建于 " + health.stats.built_at + " ｜ 向量 " + (health.stats.embed_provider || "") +
+      " " + (health.stats.embed_dim || "") + " 维 ｜ 术语 " + health.stats.terms;
+
+  const s = data.stats;
+  document.getElementById("stat").innerHTML = [
+    [s.n_pages.toLocaleString(), "页资料"], [Math.round(s.n_chars / 10000).toLocaleString(), "万字"],
+    [s.n_courses, "课程"], [s.n_books, "份书目"],
+  ].map(([n, t]) => `<div class="pill"><b>${n}</b><span>${t}</span></div>`).join("")
+    + (data.share && data.share.url
+      ? `<div class="pill" style="display:flex;align-items:center"><a href="${data.share.url}" target="_blank" rel="noopener" style="font-size:14px">📦 教材网盘（整包）</a></div>` : "");
+
+  const all = data.grades.flatMap(g => g.courses);
+  const max = Math.max(...all.map(c => c.chars), 1);
+  document.getElementById("chart").innerHTML =
+    `<div class="sub" style="margin-bottom:6px">各课程资料量（万字；点卡片里的按钮可下载）</div>` +
+    all.map(c => `<div class="row"><span class="nm">${c.course}</span>` +
+      `<div><div class="bar" style="width:${Math.max(2, 100 * c.chars / max)}%"></div></div>` +
+      `<span class="vv">${(c.chars / 10000).toFixed(1)}</span></div>`).join("");
+
+  const TY = { textbook: "教材", outline: "提纲", past_paper: "真题", campus_info: "校园" };
+  document.getElementById("body").innerHTML = data.grades.map(g => `
+    <h2 class="grade">${g.grade}</h2>
+    <div class="grid">${g.courses.map(c => {
+      const nByType = {};
+      c.books.forEach(b => { nByType[b.source_type] = (nByType[b.source_type] || 0) + 1; });
+      return `
+      <div class="card">
+        <h3>${c.course}
+          ${Object.entries(nByType).map(([t, n]) => `<span class="badge">${TY[t] || t} ×${n}</span>`).join("")}
+          ${c.chunks === 0 ? `<span class="badge zero">零资料</span>` : ""}
+        </h3>
+        <div class="meta">${c.pages ? `约 ${c.pages.toLocaleString()} 页 ｜ ` : ""}${(c.chars / 10000).toFixed(1)} 万字
+          ${c.gaps.length ? ` ｜ <span class="gap">${c.gaps.join(" · ")}</span>` : ""}</div>
+        <ul class="books">${c.books.map(b => `
+          <li><span class="ty">[${TY[b.source_type] || b.source_type}]</span>
+              <span class="bt" title="${b.book}">${b.book}</span>
+              <span class="ty">${b.pages ? b.pages + "页" : (b.chars / 1000).toFixed(0) + "千字"}</span>
+              ${b.download_pdf ? `<a class="dl" href="/api/download?kind=pdf&id=${encodeURIComponent(b.book_id)}">原件</a>` : ""}
+              ${b.share_url ? `<a class="dl" href="${b.share_url}" target="_blank" rel="noopener">网盘</a>` : ""}
+              ${b.download_md ? `<a class="dl" href="/api/download?kind=md&id=${encodeURIComponent(b.book_id)}">语料</a>` : ""}
+          </li>`).join("")}</ul>
+      </div>`; }).join("")}
+    </div>`).join("");
+  // 下载走浏览器原生 <a>（登录时服务端已下发 HttpOnly cookie，need_user 认它）：
+  // fetch+blob 整本大文件会被安全软件/下载助手插一手（实测教材必挂 Failed to fetch），
+  // 原生下载有浏览器自己的下载器：进度条、断点、不经过页面 JS。
+})();
+</script>
+</body>
+</html>

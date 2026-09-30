@@ -1,0 +1,391 @@
+:root{
+  --bg:#12141a; --bg2:#181b23; --line:#272c38; --ink:#e9e6dc; --dim:#8f9bb0;
+  --gold:#ffd76e; --me:#2b3a4d; --step:#1c2430; --warn:#e2a06a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font:15px/1.75 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+button,textarea,input{font:inherit;color:inherit}
+.hidden{display:none!important}
+.dim{color:var(--dim)} .tiny{font-size:12px} .spacer{flex:1}
+.tex{font-family:"Cambria Math",ui-monospace,Consolas,monospace;font-size:.9em;
+  background:#ffffff12;border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.tex.blk{display:block;margin:7px 0;padding:7px 9px;color:var(--gold);
+  white-space:pre-wrap;overflow-x:auto;font-size:.88em;line-height:1.6}
+.primary{background:var(--gold);color:#241d05;border:0;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:600}
+.primary:disabled{opacity:.45;cursor:default}
+.ghost{background:transparent;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:7px 13px;cursor:pointer}
+.ghost:hover{border-color:#485062;color:var(--ink);background:#ffffff0d}
+.wide{width:100%}
+
+.gate{position:fixed;inset:0;display:grid;place-items:center;
+  background:radial-gradient(1200px 600px at 50% -10%,#1d2331,#12141a 70%)}
+.card{width:min(390px,92vw);background:var(--bg2);border:1px solid var(--line);border-radius:14px;
+  padding:26px 26px 20px;box-shadow:0 24px 60px #0008}
+.card h1{margin:0 0 4px;font-size:23px;letter-spacing:.5px}
+.card .sub{margin:0 0 18px;font-size:13px;line-height:1.65}
+.card label{display:block;margin:12px 0 0;font-size:12px;color:var(--dim)}
+.card input{display:block;width:100%;margin-top:5px;background:#0f1218;border:1px solid var(--line);
+  border-radius:8px;padding:10px 12px;color:var(--ink)}
+.card input:focus{outline:0;border-color:var(--gold)}
+.row{display:flex;gap:9px;margin-top:18px}
+.msg{min-height:18px;margin:12px 0 0;font-size:13px;color:var(--warn)}
+.msg.ok{color:var(--gold)}
+
+/* 整页锁死不滚：app 占满可视区（dvh 照顾手机地址栏），溢出交给内部滚动条 */
+.app{display:grid;grid-template-columns:250px 1fr;grid-template-rows:minmax(0,1fr);
+  height:100vh;height:100dvh;overflow:hidden}
+#side{background:var(--bg2);border-right:1px solid var(--line);padding:14px 13px;
+  display:flex;flex-direction:column;gap:9px;overflow:auto}
+.brand{font-weight:700;letter-spacing:.6px;display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:#4c5567;display:inline-block}
+.dot.on{background:#68c07a} .dot.stub{background:var(--warn)}
+.who{font-size:12px;color:var(--dim);margin-top:-4px}
+.sec{font-size:11px;letter-spacing:1.4px;color:#6c778c;margin-top:8px;text-transform:uppercase}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:20px;padding:3px 11px;font-size:12.5px;cursor:pointer;
+  color:var(--dim);background:#0f1218}
+.chip.on{border-color:var(--gold);color:var(--gold);background:#241f0d}
+.sessions{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+/* 记忆卡片：侧栏只有 250px，画像又被我们卡在 240 字以内，所以给个能滚的小框就够，不抢历史的高度 */
+.memory{font-size:12px;line-height:1.55;color:#9aa6bb;background:#ffffff08;
+  border:1px solid var(--line);border-left:2px solid #4d6488;border-radius:8px;
+  padding:7px 9px;max-height:104px;overflow:auto;white-space:pre-wrap}
+.memory.off{border-left-color:#39415a;color:#6c778c}
+.side-btns{display:flex;gap:7px}
+.side-btns .ghost{flex:1;padding:7px 6px}
+.sessions li{display:flex;align-items:center;gap:5px;padding:6px 8px;border-radius:7px;font-size:13px;
+  cursor:pointer;color:var(--dim)}
+.sessions li .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sessions li .ago{font-size:10.5px;color:#5b6478;flex:0 0 auto}
+/* 删除入口照 DeepSeek 的做法分两步：平时行尾什么都不显示，悬停出一个 ⋯，
+   点开 ⋯ 才有「删除会话」，最后还有一层居中确认框。误触机会比原来那个 ✕ 少得多。 */
+.sessions li .more{opacity:0;flex:0 0 auto;width:21px;height:21px;padding:0;border:1px solid transparent;
+  border-radius:6px;background:transparent;color:#8d97ac;cursor:pointer;font-size:16px;line-height:18px}
+.sessions li:hover .more,.sessions li.on .more,.sessions li.menu-open .more{opacity:1}
+.sessions li .more:hover{background:#2c354a;border-color:#4b5670;color:var(--ink)}
+.sessions li.none{color:#7c8798;font-size:12px;cursor:default}
+.sessions li.none:hover{background:transparent;color:#7c8798}
+.sessions li:hover{background:#ffffff0d}
+.sessions li.on{background:#232a38;color:var(--ink)}
+/* ⋯ 点开的悬浮小菜单：fixed 定位，JS 按这一行的位置摆（贴左边，侧栏右侧放不下） */
+.item-menu{position:fixed;z-index:40;min-width:136px;padding:5px;background:#1d2433;
+  border:1px solid #3d465d;border-radius:10px;box-shadow:0 14px 34px #000000a8}
+.item-menu .mi{display:flex;align-items:center;gap:8px;width:100%;padding:7px 9px;border:0;
+  border-radius:7px;background:transparent;color:#c9d2e4;font:inherit;font-size:13px;
+  text-align:left;cursor:pointer}
+.item-menu .mi:hover{background:#2a3346}
+.item-menu .mi.danger{color:#ff9a9a}
+.item-menu .mi.danger:hover{background:#42222c;color:#ffc3c3}
+/* 删除确认框：自己画一个居中的，不用浏览器那种灰不拉几的 confirm() */
+.mask{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  background:#05070cb3}
+.modal{width:min(390px,86vw);padding:18px 18px 15px;background:#1c2331;border:1px solid #3d465d;
+  border-radius:14px;box-shadow:0 24px 60px #000000c0}
+.modal h3{margin:0 0 9px;font-size:16px;color:var(--ink)}
+.modal p{margin:0 0 17px;font-size:13px;line-height:1.65;color:var(--dim)}
+.md-btns{display:flex;justify-content:flex-end;gap:9px}
+.md-btns button{font:inherit;font-size:13px;padding:7px 17px;border-radius:9px;cursor:pointer;
+  border:1px solid transparent}
+.md-btns .ghost{border-color:#3d465d;background:transparent;color:var(--dim)}
+.md-btns .ghost:hover{color:var(--ink);background:#262f42}
+.md-btns .danger{border-color:#8a4049;background:#5c2530;color:#ffdadf}
+.md-btns .danger:hover{background:#752d3b;border-color:#b05462}
+.foot{margin-top:auto;display:flex;flex-direction:column;gap:7px}
+
+main{display:flex;flex-direction:column;min-width:0;min-height:0}
+#bar{display:flex;align-items:center;gap:8px;padding:9px 16px;border-bottom:1px solid var(--line);font-size:12.5px}
+.log{flex:1;min-height:0;overflow:auto;padding:20px 22px 8px;display:flex;flex-direction:column;gap:16px}
+
+.m{display:flex;flex-direction:column;gap:5px;max-width:min(880px,100%)}
+.m .who2{font-size:11.5px;color:#6c778c;letter-spacing:.6px}
+.bub{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 15px;overflow-wrap:break-word}
+.m.me{align-self:flex-end;align-items:flex-end}
+.m.me .bub{background:var(--me);border-color:#33465e}
+.bub p{margin:0 0 9px} .bub p:last-child{margin:0}
+.bub ul,.bub ol{margin:0 0 9px;padding-left:20px} .bub li{margin:2px 0}
+.bub code{background:#0d1016;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:13px}
+.bub blockquote{margin:0 0 9px;padding:6px 12px;border-left:2px solid #465065;color:var(--dim);
+  background:#0f1218;border-radius:0 6px 6px 0}
+/* 归档到历史里的出处卡片。以前它继承基础样式（11px 灰字小胶囊）贴在气泡底下，
+   和正文糊成一片 —— 组长说的"在最下面又丑又不显眼"就是它。现在给它自己的卡片壳。 */
+.m .srcs{margin:2px 0 0;padding:7px 11px 8px;background:#1a2130;border:1px solid #39415a;
+  border-left:3px solid var(--gold);border-radius:8px;gap:6px;align-items:flex-start}
+.m .srcs-h{display:block;width:100%;color:var(--gold);font-size:11.5px;margin:0 0 5px;letter-spacing:.3px}
+.m .src{font-size:12.5px;padding:3px 11px;color:var(--ink);background:#232c3e;border-color:#4b5670}
+.m .src:hover{border-color:var(--gold);color:var(--gold);background:#2a3346}
+.m .src::after{content:"点着看";font-size:10px;color:#6c778c;margin-left:5px;letter-spacing:.3px}
+.m .src:hover::after{color:var(--gold)}
+.m .nosrcbox{margin:4px 0 0;padding:6px 11px;border:1px dashed #4a3a22;border-radius:8px;background:#1c1811}
+
+.caret::after{content:"▌";color:var(--gold);animation:bl 1s steps(2) infinite;margin-left:1px}
+@keyframes bl{50%{opacity:0}}
+
+/* 角标：以前是个带边框的小方块，模型单独写一行时就吊在正文下面像两个按钮。
+   改成上标小字，视觉上回到"论文里的 [4]"。 */
+.cit{font-size:11px;line-height:1;color:var(--gold);cursor:pointer;font-weight:600;
+  margin:0 1px;padding:0 1px;font-family:ui-monospace,Consolas,monospace}
+.cit:hover{text-decoration:underline;background:#241f0d;border-radius:3px}
+
+/* 出处块：正文下面一行，不抢戏；点开右侧原面板 */
+.srcs{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:2px 0 0}
+.srcs-h{font-size:11px;color:#6c778c;letter-spacing:.5px;margin-right:2px}
+.src{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font:inherit;font-size:11.5px;
+  color:var(--dim);background:#141821;border:1px solid var(--line);border-radius:20px;padding:2px 9px}
+.src:hover{border-color:#485062;color:var(--ink);background:#191e29}
+.src b{color:var(--gold);font-weight:600;font-family:ui-monospace,Consolas,monospace}
+.src i{font-style:normal;color:#6c778c}
+.help{font-style:normal;display:inline-block;width:13px;height:13px;line-height:13px;text-align:center;
+  margin-left:3px;border:1px solid var(--line);border-radius:50%;font-size:10px;color:#6c778c;cursor:help}
+
+/* KaTeX：行内公式跟正文同大小，独立公式居中成块；横向溢出可滚 */
+.bub .katex,.panel-mask .katex,.rel .katex{font-size:1.02em}
+.texblk{display:block;margin:8px 0;padding:8px 10px;background:#0f1218;border:1px solid var(--line);
+  border-radius:8px;overflow-x:auto;text-align:center}
+.texblk .katex{font-size:1.08em}
+
+.steps{display:flex;flex-direction:column;gap:8px;margin:6px 0 4px}
+.step{background:var(--step);border:1px solid #2b3547;border-radius:10px;padding:10px 13px}
+.step h5{margin:0 0 5px;font-size:13.5px;color:var(--gold)}
+.step .acts{margin-top:8px;display:flex;gap:7px}
+.step .acts button{font-size:12px;padding:4px 10px}
+
+.trace{font-size:11.5px;color:#6c778c;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.trace b{color:var(--dim);font-weight:600}
+.warnpill{color:var(--warn);border:1px solid #4a3a22;background:#241c11;border-radius:5px;padding:0 6px}
+/* 归一术语的两个胶囊：一个说"我换了个教材里的说法再查"，一个说"模型补的词我查无此词，丢了" */
+.termpill{color:var(--gold);border:1px solid #2a3a52;background:#141d2b;border-radius:5px;padding:0 6px;font-size:11px}
+.droppill{color:var(--dim);border:1px dashed var(--line);border-radius:5px;padding:0 6px;font-size:11px}
+/* 无出处牌：故意用灰+虚线，和金色(.srcs)差一档，一眼能看出这条没有原文 */
+.nosrcbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 0;font-size:12px}
+.nosrc{color:var(--dim);border:1px dashed #4b5566;background:#1a1e27;border-radius:5px;padding:1px 7px;white-space:nowrap}
+.nosrc-t{color:var(--dim);font-size:12px}
+
+.empty{margin:auto;max-width:560px;padding:0 24px 40px;text-align:center}
+.empty h2{margin:0 0 6px;font-size:21px}
+
+.composer{display:flex;gap:9px;padding:12px 20px 16px;border-top:1px solid var(--line);background:var(--bg2)}
+.composer textarea{flex:1;resize:none;max-height:150px;background:#0f1218;border:1px solid var(--line);
+  border-radius:10px;padding:11px 13px;color:var(--ink);line-height:1.6}
+.composer textarea:focus{outline:0;border-color:#4a5468}
+
+/* 拍照提问：贴在输入框上面的一条（缩略图 + 识别状态 + 重认/去掉）。
+   图只在本地：FileReader 出来的 data URL 直接 POST 给 /api/vision，不落地、不进历史。
+   整页不滚动那条规矩不破 —— 这条是 flex 列里的一块固定高度，挤的是上面 #log 的空间。 */
+.shot{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 20px;padding:7px 10px;
+border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;background:var(--bg2)}
+.shot+.composer{border-top:0}
+.shot.bad{border-color:#6b3a3a}
+.shot-img{width:56px;height:42px;object-fit:cover;border-radius:6px;border:1px solid #3a4356;background:#0f1218}
+.shot-txt{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1 1 120px}
+.shot-txt b{font-size:12.5px;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shot-meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shot .ghost{flex:0 0 auto}
+/* 「拍完直接问」这个勾：它是拍照那条链唯一的"要不要先看一眼题面"开关，所以放在图片条上，
+   紧挨着重认/去掉，不藏进设置里。窄屏换行时让它整行占满，别和按钮咬在一起。 */
+.shot-ask{display:flex;align-items:center;gap:5px;color:var(--dim);cursor:pointer;
+user-select:none;white-space:nowrap;flex:0 0 auto;line-height:1.4}
+.shot-ask input{accent-color:var(--gold);width:13px;height:13px;cursor:pointer;margin:0}
+.shot-ask:hover{color:var(--ink)}
+/* 用户气泡上的"📷 拍照识别"小牌：说清这句话是认出来的，不是手打的 */
+.shotflag{font-size:11px;color:var(--dim);border:1px solid #3a4356;border-radius:5px;
+  padding:0 6px;margin-right:4px;background:#0f1218;white-space:nowrap}
+
+/* 拍照那条气泡：主体是图，识别出来的文字折在下面一行。
+   字必须留着且能一眼点开 —— 出处是靠那段字检索来的，认错了一眼得能核对。 */
+.bub-img{display:block;margin-top:6px;max-width:min(260px,54vw);max-height:180px;width:auto;height:auto;
+  border-radius:8px;border:1px solid #3a4356;background:#0f1218;cursor:zoom-in}
+.bub-toggle{display:block;margin-top:6px;padding:0;border:0;background:none;cursor:pointer;
+  font-size:11px;letter-spacing:.3px;color:var(--dim);text-align:right}
+.bub-toggle:hover{color:var(--gold)}
+.bub-txt{margin-top:5px;padding-top:5px;border-top:1px dashed #333c4e;color:var(--dim);
+  line-height:1.6;white-space:normal;max-height:190px;overflow:auto;text-align:left}
+/* 点开看大图：外壳复用 .mask/.modal，只是这张更宽、图自己居中，里面能滚。 */
+.pic-mask{z-index:45}
+.pic-mask .modal{width:min(880px,92vw);max-height:86vh;padding:0;overflow:hidden;background:#161c27;
+  display:flex;flex-direction:column}
+.pic-body{flex:1 1 auto;overflow:auto;padding:12px;display:flex;align-items:center;justify-content:center}
+.pic-body img{max-width:100%;max-height:calc(86vh - 60px);width:auto;height:auto;border-radius:6px}
+
+/* 引用原文卡：屏幕正中、可关闭。遮罩和外壳复用 .mask/.modal，只是这张更高一点、里面能滚。 */
+.panel-mask{z-index:45}
+.panel-mask .modal{width:min(620px,88vw);max-height:min(74vh,640px);padding:0;overflow:hidden;
+  display:flex;flex-direction:column}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:0 0 auto;
+  padding:11px 14px;border-bottom:1px solid var(--line)}
+.panel-head b{font-size:13.5px;color:var(--gold);letter-spacing:.4px}
+.panel-body{overflow:auto;padding:13px 15px;display:flex;flex-direction:column;gap:12px}
+@keyframes srcpop{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+.panel-mask:not(.hidden) .modal{animation:srcpop .14s ease-out}
+@media (prefers-reduced-motion:reduce){.panel-mask:not(.hidden) .modal{animation:none}}
+.ref{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:#0f1218}
+.ref .loc{font-size:12px;color:var(--gold);margin-bottom:6px}
+.ref .txt{font-size:13px;color:#cfd4dd;white-space:pre-wrap}
+.ref .ctx{font-size:11.5px;color:#5f6a7d;margin-top:7px;border-top:1px dashed var(--line);padding-top:6px}
+.ref .mid{font-size:11px;color:#5f6a7d;margin-top:6px;word-break:break-all}
+
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  #side{position:fixed;z-index:30;inset:0 30% 0 0;transform:translateX(-102%);transition:transform .18s}
+  #side.open{transform:none}
+    .only-mobile{display:inline-block}
+}
+.only-mobile{display:none}
+
+/* 同类往年题卡片 */
+.related { margin: 10px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.rel-h { font-size: 11.5px; color: #6c778c; letter-spacing: .04em; }
+.rel { display: block; text-align: left; cursor: pointer; background: #141821; border: 1px solid var(--line);
+       border-radius: 10px; padding: 8px 10px; font: inherit; color: inherit; }
+.rel:hover { background: #191e29; border-color: #485062; }
+.rel-t { display: block; font-size: 13px; font-weight: 600; color: var(--gold); }
+.rel-src { display: block; font-size: 11px; color: #8f9bb0; margin: 2px 0 4px; }
+.rel-q { font-size: 12px; color: #b9c2d0; line-height: 1.5;
+         display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ---------------- galgame 舞台：立绘 + 她的短台词 + 可直接点的选项 ----------------
+   2026-09-21 分工改了：回答正文**全部**在上面 #log 的消息列表里（像正常聊天），
+   这个框只承担"她在干什么"和"下一步你可以点什么"。理由有两条：
+     · 答案住在框里时，问下一句要把上一条"收进历史"，同一条回答出现两种视觉，越看越乱；
+     · 框高是定的，长答案在里面滚，读起来像在看字幕，往上翻两页人就走丢了。
+   2026-09-21 又收一刀：框高锁到 15.5vh（120-150px），并且让立绘反过来按框高缩放
+   （.port 走 stretch、.face 改成 height:100%）——「框和头像差不多高」是结构上成立的，
+   不是两个数字凑巧接近。外框仍然锁死高度：不锁的话台词换行会把上面的历史区顶走。 */
+.stage{display:flex;gap:12px;align-items:stretch;flex:0 0 auto;height:clamp(120px,15.5vh,150px);padding:9px 20px 8px;
+  border-top:1px solid var(--line);background:linear-gradient(180deg,#141821,#181b23 55%)}
+.port{position:relative;flex:0 0 auto;align-self:stretch;width:auto}
+/* 立绘是 1279x1706 的半身像。框比图片扁一点 + object-position 顶对齐 = 从下往上裁掉一条，
+   正好把右下角那个"AI生成"水印裁在框外；再用 mask 把下缘淡出，接缝看不出来。 */
+.face{display:block;height:100%;width:auto;aspect-ratio:1/1.14;object-fit:cover;object-position:50% 0;
+  background:#0f1218;border:1px solid #39415a;border-radius:14px 14px 3px 3px;box-shadow:0 10px 26px #0008;
+  -webkit-mask-image:linear-gradient(180deg,#000 74%,transparent 100%);
+          mask-image:linear-gradient(180deg,#000 74%,transparent 100%);
+  transition:opacity .16s ease,transform .32s ease}
+.face.fade{opacity:0}
+.port.talk .face{transform:translateY(-4px)}
+.fbub{position:absolute;top:-9px;left:50%;transform:translateX(-50%);z-index:2;white-space:nowrap;
+  font-size:11px;color:var(--gold);background:#241f0d;border:1px solid #4a3d12;border-radius:11px;
+  padding:1px 9px;box-shadow:0 4px 12px #0007}
+.fbub::after{content:"";position:absolute;left:50%;bottom:-4px;width:7px;height:7px;transform:translateX(-50%) rotate(45deg);
+  background:#241f0d;border-right:1px solid #4a3d12;border-bottom:1px solid #4a3d12}
+.fbub.hidden{display:none}
+.dlg{flex:1;min-width:0;min-height:0;align-self:stretch;display:flex;flex-direction:column;background:#151a24;border:1px solid #39415a;border-radius:12px;overflow:hidden;
+  box-shadow:0 -6px 22px #0006,inset 0 1px 0 #ffffff0d}
+.dlg-head{flex:0 0 auto;display:flex;align-items:center;gap:9px;padding:4px 12px;background:#1d2432;border-bottom:1px solid #39415a}
+.dlg-name{font-weight:700;font-size:13.5px;letter-spacing:.6px;color:var(--gold)}
+.dlg-tag{font-size:11.5px;color:var(--dim)}
+.dlg-stat{color:#7f8aa0}
+.dlg-stat.ok{color:#7fd392} .dlg-stat.bad{color:var(--warn)}
+.dlg-stat.ok::before,.dlg-stat.bad::before{content:"●";font-size:9px;margin-right:4px;vertical-align:1px}
+/* 台词条：只放她本人的一两句话，正文一个字都不进来 */
+/* 台词 + 选项当成一整块垂直居中，所以选项正好落在框的正中间（横向也居中）。 */
+.dlg-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center;
+  gap:8px;padding:5px 0 7px}
+.dlg-say{flex:0 0 auto;min-height:0;overflow-y:auto;padding:0 15px;font-size:14.5px;
+  line-height:1.55;color:var(--ink);text-align:center;overscroll-behavior:contain}
+/* 选项：没开始问时是示例问题，答完之后是追问建议，点了直接发出去 */
+.dlg-opts{flex:0 0 auto;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+  align-content:center;max-height:100%;overflow-y:auto;padding:0 12px}
+.dlg-opts:empty{display:none}
+/* 原来是浅灰字 + 深灰底 + 细边框，缩在角落里，又小又糊。现在加粗提亮、描边加重、
+   前面点一颗金色 ›，一眼看得出能按。 */
+.opt{font:inherit;font-size:13px;font-weight:600;color:#e9eefc;background:#20293c;
+  border:1px solid #5c6b8c;border-radius:999px;padding:6px 14px;cursor:pointer;
+  white-space:nowrap;box-shadow:inset 0 1px 0 #ffffff14;transition:background .14s,border-color .14s,color .14s}
+.opt::before{content:"\203A";color:var(--gold);font-weight:700;margin-right:6px}
+.opt:hover{border-color:var(--gold);color:#ffffff;background:#2b3752}
+.opt:active{transform:translateY(1px)}
+.dlg-say::-webkit-scrollbar,.log::-webkit-scrollbar,.panel-body::-webkit-scrollbar{width:9px}
+.dlg-say::-webkit-scrollbar-thumb,.log::-webkit-scrollbar-thumb,.panel-body::-webkit-scrollbar-thumb{
+  background:#3b445c;border-radius:6px;border:2px solid transparent;background-clip:content-box}
+.dlg-say::-webkit-scrollbar-thumb:hover,.log::-webkit-scrollbar-thumb:hover{background:#505b75;background-clip:content-box}
+.dlg-say::-webkit-scrollbar-track,.log::-webkit-scrollbar-track{background:transparent}
+@media (max-width:620px){.port{display:none}.stage{padding:8px 12px;height:clamp(152px,24vh,196px)}}
+
+/* ================== 2026-09-28 外观层：只动颜色/阴影/圆角/动效 ==================
+   上面那些量过几何的规矩（整页不滚 / 舞台恒高 / 立绘高=对话框高 / 选项胶囊尺寸）
+   一条不碰 —— 所以这里全是 paint，没有 layout。改完用 .tmp\ui_theme.py 对账。 */
+:root{
+  --bg:#0d1017; --bg2:#141926; --line:#232b3d;
+  --gold:#ffd76e; --gold2:#f2b950; --ink:#eae8df;
+}
+html,body{background:var(--bg)}
+main{background:
+  radial-gradient(900px 420px at 82% -8%, #1b2334 0%, transparent 60%),
+  linear-gradient(180deg, #10141f 0%, #0d1017 100%)}
+#bar{background:linear-gradient(180deg,#161c2a,#131826);border-bottom-color:#28324a}
+#side{background:linear-gradient(180deg,#151a28,#12161f);border-right-color:#28324a}
+.brand{background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* 气泡：以前和背景只差一档灰，现在给出「卡片浮在桌面上」的深度。
+   圆角做成不对称：她左上缺一个角、我右上缺一个角，视线立刻分得清谁在说话。 */
+.m .bub{background:linear-gradient(180deg,#1f2941,#1a2234);border:1px solid #37456a;
+  border-radius:4px 14px 14px 14px;box-shadow:0 10px 26px #0000004d, inset 0 1px 0 #ffffff10;
+  padding:13px 16px}
+.m.me .bub{background:linear-gradient(180deg,#2e4159,#273751);border-color:#3f5878;
+  border-radius:14px 4px 14px 14px;box-shadow:0 8px 24px #00000047}
+.m .who2{display:flex;align-items:center;gap:6px;color:#7d879e}
+.m .who2::before{content:"";width:6px;height:6px;border-radius:50%;background:#3c465e}
+.m.me .who2::before{background:var(--gold)}
+.m.bot{animation:mup .2s ease-out}
+@keyframes mup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.m.bot{animation:none}}
+
+/* 出处卡：左侧金条换成渐变，胶囊给一点内发光 */
+.m .srcs{background:linear-gradient(180deg,#1c2437,#182031);border-color:#3b4763;
+  border-left:3px solid transparent;border-image:linear-gradient(180deg,var(--gold),#8a6b2f) 1;
+  box-shadow:0 6px 18px #00000033}
+.m .src{background:linear-gradient(180deg,#28334a,#222c41);border-color:#51618a}
+.m .src:hover{box-shadow:0 0 10px #ffd76e2e}
+
+/* 输入区：整体抬出桌面感；输入框聚焦有金色光圈；发送键从纯色块换成渐变+投影 */
+.composer{background:linear-gradient(180deg,#141927,#111622);border-top-color:#28324a}
+.composer textarea{background:#0d1220;border-color:#2c3854;border-radius:14px;
+  transition:border-color .15s, box-shadow .15s}
+.composer textarea:focus{border-color:#5d6f96;box-shadow:0 0 0 3px #ffd76e1c, inset 0 1px 0 #ffffff08}
+.primary{background:linear-gradient(135deg,#ffdf8a,var(--gold2));border-radius:12px;
+  box-shadow:0 6px 16px #d99a2638, inset 0 1px 0 #fff6;transition:filter .14s, transform .14s, box-shadow .14s}
+.primary:hover{filter:brightness(1.06);box-shadow:0 8px 20px #d99a2652, inset 0 1px 0 #fff8}
+.primary:active{transform:translateY(1px)}
+
+/* 侧栏：选中历史项左侧一道金；课程 chip 有按压反馈 */
+.sessions li.on{background:linear-gradient(90deg,#28324a,#20293c);
+  box-shadow:inset 2px 0 0 var(--gold)}
+.chip{transition:border-color .14s, color .14s, transform .1s}
+.chip.on{background:linear-gradient(180deg,#2b2410,#241f0d);border-color:#6d5a22}
+.chip:active{transform:scale(.96)}
+
+/* 舞台：头部一条深金渐变，名字用渐变字；选项胶囊描边加一点蓝金层次 */
+.stage{background:linear-gradient(180deg,#131722,#171d2b 55%,#141926)}
+.dlg{background:linear-gradient(180deg,#182031,#141a27);border-color:#3a4763;
+  box-shadow:0 -8px 28px #0000005d, inset 0 1px 0 #ffffff0d}
+.dlg-head{background:linear-gradient(180deg,#232d44,#1d2536);border-bottom-color:#3a4763}
+.dlg-name{background:linear-gradient(90deg,#ffe29b,var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.opt{background:linear-gradient(180deg,#2a3552,#212b43);border-color:#6b7cab;
+  box-shadow:inset 0 1px 0 #ffffff1a, 0 3px 10px #00000030}
+.opt:hover{box-shadow:inset 0 1px 0 #ffffff24, 0 0 14px #ffd76e2b}
+
+/* 拍照条 / 引用原文卡 / 弹窗：同一套描边和投影语言，别再各用各的灰 */
+.shot{background:linear-gradient(180deg,#161d2c,#141927);border-color:#2c3854}
+.panel-mask .modal,.pic-mask .modal{background:linear-gradient(180deg,#1a2233,#151b29);
+  border-color:#3a4763;box-shadow:0 30px 70px #000000c9}
+.ref{background:#101623;border-color:#2b3550}
+.modal{background:linear-gradient(180deg,#1e2637,#19202f)}
+
+/* 登录页：卡片玻璃化，标题渐变字，输入框聚焦光圈和主界面同一语言 */
+.gate{background:radial-gradient(1100px 560px at 50% -12%, #223050 0%, #0d1017 62%)}
+.card{background:linear-gradient(180deg,#1b2334,#151b29);border-color:#2e3a54;
+  box-shadow:0 34px 90px #000000a8, inset 0 1px 0 #ffffff0d}
+.card h1{background:linear-gradient(90deg,#ffe6a2,var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.card input{background:#0d1220;border-color:#2c3854;transition:border-color .15s, box-shadow .15s}
+.card input:focus{border-color:#5d6f96;box-shadow:0 0 0 3px #ffd76e1c}
+
+/* 第二轮：步骤卡/往年题卡片跟新气泡同色阶，别再停在旧的 #1c2430 一档 */
+.step{background:linear-gradient(180deg,#212b42,#1b2436);border-color:#37456a;
+  box-shadow:0 4px 14px #00000033}
+.rel{background:linear-gradient(180deg,#1b2334,#171e2d);border-color:#313d59;
+  transition:border-color .14s, transform .14s}
+.rel:hover{border-color:#54648c;transform:translateY(-1px)}

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>端上 embedding 自检 · WebGPU/ONNX</title>
+<style>
+  body { font: 14px/1.65 system-ui, "Microsoft YaHei", sans-serif; margin: 0; padding: 22px 26px 40px;
+         background: #f6f7f9; color: #1c2530; }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  p.sub { color: #64708a; margin: 0 0 18px; }
+  .card { background: #fff; border: 1px solid #e2e6ee; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+  .kv { display: grid; grid-template-columns: 190px 1fr; gap: 4px 12px; }
+  .kv b { font-weight: 600; color: #35415a; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #edf0f5; }
+  th { color: #64708a; font-weight: 600; font-size: 12px; }
+  td.ok { color: #157f3d; font-weight: 600; }
+  td.bad { color: #b3261e; font-weight: 600; }
+  code, pre { font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+  pre { white-space: pre-wrap; word-break: break-all; background: #f2f4f8; padding: 8px 10px; border-radius: 6px; }
+  button { font: inherit; padding: 7px 16px; border-radius: 7px; border: 1px solid #2f6feb; background: #2f6feb;
+           color: #fff; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  #done { display: none; }
+  .note { color: #7a869c; font-size: 12.5px; }
+</style>
+</head>
+<body>
+<h1>端上 embedding 自检 · 浏览器里真跑 ONNX</h1>
+<p class="sub">模型 <code>bge-small-zh-v1.5</code>（22.9 MB int8）+ <code>onnxruntime-web 1.30.0</code>，
+全部从本站自己的地址取，没有一个公网依赖。验的是：浏览器算出来的查询向量和
+服务端 <code>onnxruntime</code>(CPU) 算出来的是不是同一个东西。</p>
+
+<div class="card">
+  <div class="kv" id="env"><b>环境</b><span>还没开始…</span></div>
+</div>
+
+<div class="card">
+  <button id="run">跑一遍</button>
+  <span class="note" id="hint">第一次要下载 23 MB 模型 + 20~26 MB wasm，本机 localhost 上大约一秒级；结果只在本页显示，不发到任何地方。</span>
+</div>
+
+<div class="card" id="tbl" hidden>
+  <table>
+    <thead><tr><th>问题</th><th>tokens</th><th>维度</th><th>cos（对服务端 int8 向量）</th><th>ms</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="note" id="summary"></p>
+</div>
+
+<div class="card" id="tok" hidden>
+  <b>模型实际看到的 token（第一条问题）</b>
+  <pre id="tokens"></pre>
+  <p class="note" id="unknote"></p>
+</div>
+
+<script type="application/json" id="vecs"></script>
+<pre id="out"></pre>
+<div id="done"></div>
+
+<script type="module">
+const $ = (s) => document.querySelector(s);
+// ?model=model.onnx 换一份权重（int8 和 fp32 的对照：int8 在 wasm/CPU 上是两套 kernel）
+const Q = new URLSearchParams(location.search);
+const MODEL_URL = "/models/bge-small-zh-v1.5/onnx/" + (Q.get("model") || "model_quantized.onnx");
+const lines = [];
+const log = (m) => { lines.push(m); $("#out").textContent = lines.join("\n"); };
+const setDone = (v) => { $("#done").textContent = v; };
+
+function cos(a, b) {
+  let d = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) { d += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; }
+  return d / Math.sqrt(na * nb);
+}
+
+async function main() {
+  $("#run").disabled = true;
+  const t0 = performance.now();
+  log(`UA ${navigator.userAgent}`);
+  log(`crossOriginIsolated=${self.crossOriginIsolated}  navigator.gpu=${!!navigator.gpu}`);
+  const enc = await import("/static/vendor/xbg-embed.js");
+  const fix = await (await fetch("/static/fixtures/onnx_vectors.json")).json();
+  let encoder;
+  try {
+    encoder = await enc.createEncoder({ modelPath: MODEL_URL });
+  } catch (exc) {
+    $("#env").innerHTML = "<b>结论</b><span>加载失败：" + String(exc && exc.message || exc) + "</span>";
+    log("LOAD-FAIL " + (exc && exc.stack || exc));
+    setDone("FAIL");
+    return;
+  }
+  const desc = encoder.describe();
+  const eps = Array.isArray(desc.eps) ? desc.eps.join("+") : String(desc.eps);
+  $("#env").innerHTML =
+    `<b>权重文件</b><span>${MODEL_URL.split("/").pop()}</span>` +
+    `<b>执行的 backend</b><span>${eps}</span>` +
+    `<b>向量维度</b><span>${desc.dim}</span>` +
+    `<b>模型加载</b><span>${desc.loaded_ms} ms（含 wasm 下载/编译）</span>` +
+    `<b>wasm 线程数</b><span>${desc.wasmThreads}${desc.wasmThreads === 1 ? "（页面没有 COEP，跑不了 SharedArrayBuffer 多线程）" : ""}</span>` +
+    `<b>本页总耗时</b><span>${Math.round(performance.now() - t0)} ms</span>`;
+  log(`backend=${eps} loaded=${desc.loaded_ms}ms`);
+
+  const rows = [];
+  const jsVecs = [];
+  for (let i = 0; i < fix.queries.length; i++) {
+    const q = fix.queries[i];
+    const s = performance.now();
+    const v = await encoder.embedOne(q);
+    const ms = performance.now() - s;
+    const c = cos(v, fix.vectors[i]);
+    rows.push({ q, n: v.length, c, ms, tok: encoder.tokenize(q) });
+    jsVecs.push({ query: q, vec: Array.from(v, (x) => Number(x.toFixed(6))) });
+  }
+  const tb = $("#tbl tbody");
+  for (const r of rows) {
+    const tr = document.createElement("tr");
+    const good = r.c >= 0.999;
+    tr.innerHTML = `<td>${r.q}</td><td>${r.tok.length}</td><td>${r.n}</td>` +
+                   `<td class="${good ? "ok" : "bad"}">${r.c.toFixed(6)}</td><td>${r.ms.toFixed(1)}</td>`;
+    tb.append(tr);
+    log(`COS ${r.q} ${r.c.toFixed(6)} ${r.ms.toFixed(1)}ms`);
+  }
+  $("#tbl").hidden = false;
+  const worst = Math.min(...rows.map((r) => r.c));
+  const okAll = worst >= 0.99;
+  // 阈值为什么是 0.99 而不是 1.0：模型是 int8 量化的，wasm EP 和 CPU EP 用的是两套
+  // int8 kernel，残余就在这个量级（实测 0.993~0.995）。真正要问的是"排序有没有变"，
+  // 那是 tools/xbg_onnx_parity.py 的活（它拿浏览器这份向量在 23,519 片上重排一次对答案）。
+  $("#vecs").textContent = JSON.stringify({ model: MODEL_URL.split("/").pop(), queries: jsVecs });
+  $("#summary").textContent = okAll
+    ? `最差 cos = ${worst.toFixed(6)}（阈值 0.99）。残余来自 int8 在 wasm/CPU 两套 kernel 上的差别，`
+      + `排序一致性由 tools/xbg_onnx_parity.py 量。`
+    : `最差 cos = ${worst.toFixed(6)} —— 低于 0.99，两边不是同一个向量，别开 provider=onnx。`;
+  $("#summary").style.color = okAll ? "#157f3d" : "#b3261e";
+
+  const unk = rows[0].tok.filter((t) => t === "[UNK]").length;
+  $("#tokens").textContent = rows[0].tok.join(" · ");
+  $("#unknote").textContent = `这一句里 ${rows[0].tok.length} 个 token 有 ${unk} 个 [UNK]。` +
+    `bge 这份词表里大写拉丁字母根本不存在（A/TCP 一律 [UNK]），LaTeX 的 \\boldsymbol 也照样拆不开 —— ` +
+    `这是「端上小模型」真实的天花板，不是接错的 bug。`;
+  $("#tok").hidden = false;
+  log(`WORST ${worst.toFixed(6)}`);
+  setDone(okAll ? "PASS" : "FAIL");
+}
+
+$("#run").addEventListener("click", () => { main().catch((exc) => { log("ERR " + (exc && exc.stack || exc)); setDone("FAIL"); }); });
+if (Q.get("auto") !== "0") $("#run").click();
+</script>
+</body>
+</html>

@@ -1,0 +1,1330 @@
+{
+  "metadata": {
+    "file_suffix": "pdf",
+    "producer": {
+      "name": "mineru",
+      "version": "4.0.0"
+    },
+    "document": {
+      "created_at": "2025-06-29T15:24:13",
+      "creator_application": "Quark",
+      "producer_application": "QuarkPDFCore",
+      "page_count": 4,
+      "page_count_kind": "physical"
+    }
+  },
+  "extensions": {
+    "mineru": {
+      "tier": "basic",
+      "parse_mode": "ocr"
+    },
+    "docvortex_layout": {
+      "version": 1,
+      "pages": [
+        {
+          "page_idx": 0,
+          "width_pt": 595.0,
+          "height_pt": 841.0
+        },
+        {
+          "page_idx": 1,
+          "width_pt": 595.0,
+          "height_pt": 841.0
+        },
+        {
+          "page_idx": 2,
+          "width_pt": 595.0,
+          "height_pt": 841.0
+        },
+        {
+          "page_idx": 3,
+          "width_pt": 595.0,
+          "height_pt": 841.0
+        }
+      ]
+    }
+  },
+  "pages": [
+    {
+      "page_idx": 0,
+      "blocks": [
+        {
+          "type": "doc_title",
+          "index": 0,
+          "bbox": [
+            0.335,
+            0.061,
+            0.69,
+            0.083
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "北京交通大学考试试题"
+            }
+          ],
+          "level": 1
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.1,
+            0.099,
+            0.921,
+            0.116
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "课程名称: 离散数学(A) 学年学期:2024—2025学年第二学期"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.1,
+            0.126,
+            0.529,
+            0.144
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "课程编号: M302031B"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.528,
+            0.126,
+            0.923,
+            0.143
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "开课学院: 计算机科学与技术学院"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.1,
+            0.152,
+            0.529,
+            0.17
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "学生姓名:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.529,
+            0.153,
+            0.925,
+            0.17
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "学生学号:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.099,
+            0.179,
+            0.53,
+            0.197
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "学生学院:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.529,
+            0.179,
+            0.927,
+            0.197
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "学生班级:"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 8,
+          "bbox": [
+            0.085,
+            0.22,
+            0.402,
+            0.238
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "一、 选择题（共20分，每题2分)"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.084,
+            0.249,
+            0.864,
+            0.349
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "1. 下列句子中有( )个命题。(1) 今天天气真好啊！ (2) 如果我是你，我就不会这样做 (3)2 是偶数(4) 请你关上门 (5) 所有素数都是奇数A. 1 B.2 C.3 D.4"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.076,
+            0.357,
+            0.926,
+            0.464
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2. 设P表示“他完成作业”，Q表示“他可以去看电影”，则命题“只有他没有完成作业，他才不能去看电影”符号化为()。A. ¬P → ¬Q B. ¬Q → ¬P C.Q → P D. P V ¬Q"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.071,
+            0.472,
+            0.932,
+            0.609
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "3. 设G是一个阶为12 的有限群，H是G的非空子集。下列说法中正确的是（ )。A. 若H对G的运算封闭，则H是G的子群。B. 若|H|=4，则H一定是G的子群。C. 若H是G的子群，则|H|可能为 5。D. 若H包含单位元且对逆元封闭，则H可能是G的子群。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.071,
+            0.619,
+            0.592,
+            0.756
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "4. 任意一个具有多个等幂元的半群，它（ )。A. 不能构成群B. 不一定能构成群C. 必能构成群D. 能构成交换群"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 13,
+          "bbox": [
+            0.077,
+            0.766,
+            0.731,
+            0.876
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "5. 设G是一个连通的无向图。下列说法中正确的是（ )。A. 如果G中所有顶点的度数都是奇数，则G是欧拉图；B. 如果G中恰有两个顶点的度为奇数，则G有一条欧拉回路；C. 如果G是欧拉图，则它一定有一个包含所有边且不重复的回路；"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 14,
+          "bbox": [
+            0.507,
+            0.92,
+            0.518,
+            0.931
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 1,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.109,
+            0.041,
+            0.523,
+            0.061
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "D. 如果 G 是欧拉图，则它的边数一定为偶数。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.077,
+            0.07,
+            0.849,
+            0.147
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "6. 设集合 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "A = \\{ a, b, c \\}"
+            },
+            {
+              "type": "text",
+              "content": " ，集合 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathbf{B} = \\{ 1, 2, 3 \\}"
+            },
+            {
+              "type": "text",
+              "content": " ，下列从A到B的关系中，不是函数的是（）。A. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "f _ { \\mathrm { ~ J ~ } } { = } \\left\\{ \\langle \\mathrm { a } , 1 \\rangle , \\langle \\mathrm { b } , 1 \\rangle , \\langle \\mathrm { c } , 2 \\rangle \\right\\}"
+            },
+            {
+              "type": "text",
+              "content": " B. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\pmb { f } _ { \\hat { Z } } = \\{ \\langle \\mathsf { a } , 1 \\rangle , \\langle \\mathsf { b } , 2 \\rangle , \\langle \\mathsf { c } , 3 \\rangle \\}"
+            },
+            {
+              "type": "text",
+              "content": " C. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\pmb { f } _ { \\mathcal { J } } = \\{ \\langle \\mathsf { a } , 1 \\rangle , \\langle \\mathsf { a } , 2 \\rangle , \\langle \\mathsf { b } , 3 \\rangle \\}"
+            },
+            {
+              "type": "text",
+              "content": " D. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "f _ { \\mathcal { A } } = \\{ \\langle \\mathsf { a } , \\mathsf { 2 } \\rangle , \\langle \\mathsf { b } , \\mathsf { 3 } \\rangle , \\langle \\mathsf { c } , \\mathsf { 3 } \\rangle \\}"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.079,
+            0.164,
+            0.902,
+            0.24
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "7. 如果R,和 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "R_{Z}"
+            },
+            {
+              "type": "text",
+              "content": " 是A上的自反关系，则 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "R _ { 1 } \\cup R _ { 2 } , \\quad R _ { 1 } \\cap R _ { 2 } , \\quad R _ { 1 } \\circ R _ { 2 }"
+            },
+            {
+              "type": "text",
+              "content": " 中自反关系有（）个。A. 0 B. 1 C.2 D.3"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.077,
+            0.255,
+            0.861,
+            0.302
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "8. 在自然数集N上，下列哪种运算是可结合的？（）A. a*b=a−b B. a* "
+            },
+            {
+              "type": "equation_inline",
+              "content": "b = \\max\\{a, b\\}"
+            },
+            {
+              "type": "text",
+              "content": " C. a * b = a + 2b D. a * b = |a − b |"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.077,
+            0.311,
+            0.922,
+            0.388
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "9. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathsf{D} = < \\mathsf{V}, \\mathsf{E} >"
+            },
+            {
+              "type": "text",
+              "content": " 为有向图，其中 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathsf { V } = \\{ \\mathsf { a } , \\mathsf { b } , \\mathsf { c } , \\mathsf { d } , \\mathsf { e } , \\mathsf { f } \\} , \\mathsf { E } = \\{ \\mathsf { < a , b > , < b , c > , < a , d > , < }"
+            },
+            {
+              "type": "text",
+              "content": " "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathrm{d}, \\mathrm{e} > , < \\mathrm{f}, \\mathrm{e} > \\}"
+            },
+            {
+              "type": "text",
+              "content": " ，则D是( )。A. 强连通图 B.单向连通图 C.弱连通图 D.不连通图"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.077,
+            0.399,
+            0.923,
+            0.483
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "10. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathrm{V1} = \\langle R, + \\rangle"
+            },
+            {
+              "type": "text",
+              "content": " 和 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathbf{V}2 = \\langle R^{*}, + \\rangle"
+            },
+            {
+              "type": "text",
+              "content": " 是同类型的代数系统，其中 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "R ^ { * }"
+            },
+            {
+              "type": "text",
+              "content": " 为非零实数集。若函数f: "
+            },
+            {
+              "type": "equation_inline",
+              "content": "R { \\rightarrow } R ^ { * }"
+            },
+            {
+              "type": "text",
+              "content": " 满足 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "f(x) = e^{x}"
+            },
+            {
+              "type": "text",
+              "content": " ，则f是V1到 V2的A. 单同态但非满同态 B. 满同态但非单同态 C. 同构 D.都不是"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 6,
+          "bbox": [
+            0.078,
+            0.514,
+            0.39,
+            0.534
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "二.填空题（共20分，每空2分)"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.077,
+            0.542,
+            0.923,
+            0.591
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "11. 设F(x)表示“x聪明”，M(x)表示“x是人”，则语句“尽管有人聪明，但未必所有人都很聪明”可以表示为:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.078,
+            0.601,
+            0.922,
+            0.651
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "12. 某校组织球类兴趣活动，参加足球队的有38人，参加篮球队的有13人，参加排球队的有20人。已知三支队伍共有58人，其中有3人三支队伍都参加，则有人参加两支队伍。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.077,
+            0.663,
+            0.918,
+            0.765
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "13. 设集合 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "A = \\{ 1, 2, 3 \\}"
+            },
+            {
+              "type": "text",
+              "content": " ，R是A上的关系，R的关系矩阵 MR为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "M_{R} = \\begin{pmatrix}1 & 1 & 0 \\\\0 & 1 & 1 \\\\0 & 0 & 1\\end{pmatrix}"
+            },
+            {
+              "type": "text",
+              "content": " ，则R具备关系的什么性质？"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.08,
+            0.774,
+            0.915,
+            0.825
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "14. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathsf{A} = \\{1, 3, 5\\}"
+            },
+            {
+              "type": "text",
+              "content": " ，令R为A×A上的二元关系，对于 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\forall < \\mathsf{a}, \\mathsf{b} >, < \\mathsf{c}, \\mathsf{d} > \\in \\mathsf{A} \\times \\mathsf{A}"
+            },
+            {
+              "type": "text",
+              "content": " ，若满足"
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathrm { { < a , b > R < c , d > \\Leftrightarrow a \\bullet b { = } c \\bullet d , } }"
+            },
+            {
+              "type": "text",
+              "content": " 则R导出的划分为:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.08,
+            0.834,
+            0.76,
+            0.855
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "15. 设G = (a) 是一个阶为 15 的循环群则 G 的所有生成元个数为"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.082,
+            0.866,
+            0.747,
+            0.886
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "16. 在群 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\langle \\mathsf { Z } , \\textsf { \\scriptsize o } \\rangle \\quad ( \\mathsf { a } \\circ \\mathsf { b } = \\mathsf { a } + \\mathsf { b } - \\mathsf { 3 } )"
+            },
+            {
+              "type": "text",
+              "content": " 中，元素5的逆元为"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 13,
+          "bbox": [
+            0.791,
+            0.869,
+            0.878,
+            0.94
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 13,
+              "bbox": [
+                0.791,
+                0.869,
+                0.878,
+                0.94
+              ],
+              "content": ""
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 14,
+          "bbox": [
+            0.495,
+            0.929,
+            0.508,
+            0.941
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 2,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.083,
+            0.04,
+            0.443,
+            0.063
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "17. 右图的图 G 点连通度为"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.079,
+            0.07,
+            0.915,
+            0.117
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "18. 设无向图 G有12 条边，有6 个3度结点，其余结点度数均小于3，则 G 中至少有 _个结点。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.075,
+            0.136,
+            0.916,
+            0.185
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "19. 设图 G 是一个连通的无向图，具有10 个顶点和 15 条边。若从 G 中去掉一条边后，图仍然连通，那么图中至少存在条环。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.074,
+            0.203,
+            0.917,
+            0.321
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "20. 设图 D=< V，E>为有向图， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathsf { V } = \\{ \\mathsf { v }   1 , \\mathsf { v } 2 , \\mathsf { v } 3 , \\mathsf { v } 4 \\}"
+            },
+            {
+              "type": "text",
+              "content": " ，若D的邻接矩阵 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\boldsymbol{A} = \\begin{pmatrix}0 & 1 & 0 & 1 \\\\1 & 0 & 1 & 1 \\\\1 & 1 & 0 & 0 \\\\1 & 0 & 0 & 0\\end{pmatrix}"
+            },
+            {
+              "type": "text",
+              "content": " ，则从 v2 到v4 长度为 2 的通路有条。"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 4,
+          "bbox": [
+            0.074,
+            0.375,
+            0.288,
+            0.395
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "三. 计算题 (共 22 分)"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.074,
+            0.403,
+            0.923,
+            0.475
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "21. 设集合 A = {1,2, 3}，集合 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathsf{B} = \\{ \\mathsf{a}, \\mathsf{b}, \\mathsf{c}, \\mathsf{c}"
+            },
+            {
+              "type": "text",
+              "content": " d}。定义两个函数:f: A → B， 其中 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "f(1) = a, f(2) ="
+            },
+            {
+              "type": "text",
+              "content": " "
+            },
+            {
+              "type": "equation_inline",
+              "content": "{ \\mathsf { b } } , f ( 3 ) = { \\mathsf { c } } ; g \\colon { \\mathsf { B } } \\to { \\mathsf { A } }"
+            },
+            {
+              "type": "text",
+              "content": " ，其中 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "g ( \\mathsf { a } ) = \\mathsf { 2 } , g ( \\mathsf { b } ) = \\mathsf { 1 } , g ( \\mathsf { c } ) = \\mathsf { 3 } , g ( \\mathsf { d } ) = \\mathsf { 2 } ;"
+            },
+            {
+              "type": "text",
+              "content": " 记复合函数 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "h ="
+            },
+            {
+              "type": "text",
+              "content": " "
+            },
+            {
+              "type": "equation_inline",
+              "content": "g \\circ f"
+            },
+            {
+              "type": "text",
+              "content": " ，即h(x)=f(g(x))(7分)。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.109,
+            0.48,
+            0.483,
+            0.499
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(1)写出所有的h(x)并判断h是否为双射"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.109,
+            0.503,
+            0.614,
+            0.525
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(2) 求出集合 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathsf{X} = \\{ \\mathsf{a}, \\mathsf{b}, \\mathsf{d} \\}"
+            },
+            {
+              "type": "text",
+              "content": " 在g下的像 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "g ( X )"
+            },
+            {
+              "type": "text",
+              "content": " 和 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "g^{-j}(g(X))"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.072,
+            0.537,
+            0.923,
+            0.602
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "22. 有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathrm { a } , \\mathrm { b } , \\mathrm { c } , \\mathrm { d } , \\mathrm { e } , \\mathrm { f } , \\mathrm { g }"
+            },
+            {
+              "type": "text",
+              "content": " 七个人，已知a会讲英语；b会讲英语、汉语；c会讲英语、俄语；d会讲日语、汉语；e会讲德语、俄语；f会讲法语、日语；g会讲法语、德语。试用图论方法安排圆桌座位，使每人都能与其身边的人交谈，请给出以ab开头的答案。(7分)"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.073,
+            0.624,
+            0.672,
+            0.644
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "23. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathsf { G } = \\{ \\mathsf { a } , \\mathsf { b }   , \\mathsf { c }   , \\mathsf { d }   , \\mathsf { e }   , \\mathsf { f }   \\}"
+            },
+            {
+              "type": "text",
+              "content": " ，G上的运算*定义如右表所示。(8分)"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.111,
+            0.649,
+            0.267,
+            0.666
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(1) 写出子群<a>"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.111,
+            0.671,
+            0.378,
+            0.688
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(2) 证明: "
+            },
+            {
+              "type": "equation_inline",
+              "content": "<a>^{*}c=c^{*}<a>"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.111,
+            0.693,
+            0.414,
+            0.712
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(3) 求<d>的右陪集，并求 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "| \\dot { \\mathbf { G } } | < d > 1"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 13,
+          "bbox": [
+            0.693,
+            0.622,
+            0.905,
+            0.77
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 13,
+              "bbox": [
+                0.693,
+                0.622,
+                0.905,
+                0.77
+              ],
+              "content": "<table><tr><td rowspan=\"2\"></td><td rowspan=\"2\">e</td><td rowspan=\"2\">a</td><td rowspan=\"2\">b</td><td rowspan=\"2\"></td><td rowspan=\"2\">d</td><td rowspan=\"2\"></td></tr><tr><td>C</td></tr><tr><td>e</td><td>e</td><td>a</td><td>6</td><td>è</td><td>d</td><td></td></tr><tr><td>a</td><td>a</td><td>b</td><td>e</td><td>d</td><td>f</td><td>C</td></tr><tr><td>6</td><td>6</td><td>e</td><td>a</td><td></td><td>C</td><td>d</td></tr><tr><td>è</td><td>é</td><td></td><td>d</td><td>e</td><td>b</td><td>a</td></tr><tr><td>d</td><td>d</td><td></td><td></td><td>a</td><td>é</td><td>6</td></tr><tr><td>f</td><td>f</td><td>d</td><td></td><td>b</td><td>à</td><td></td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 14,
+          "bbox": [
+            0.077,
+            0.766,
+            0.284,
+            0.786
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "四. 证明题（共38分)"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 15,
+          "bbox": [
+            0.074,
+            0.798,
+            0.923,
+            0.883
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "24. 用命题公式表示下列命题，并在自然推理系统中构造证明:如果超人能并且愿意阻止邪恶，那他会去阻止邪恶；如果他不能阻止邪恶，他是无能的；如果他不愿意阻止邪恶，他是邪恶的；超人没有阻止邪恶；如果超人存在，他既不是无能的，也不是邪恶的。因此，超人不存在。(7分)"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 16,
+          "bbox": [
+            0.489,
+            0.908,
+            0.502,
+            0.92
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 3,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.118,
+            0.053,
+            0.883,
+            0.105
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "25. 设S和T 是集合X的划分，定义二元关系R 为:SRT 当且仅当 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\forall \\mathsf { u } \\in \\mathsf { S } , \\exists \\mathsf { v } \\in \\mathsf { T } , \\mathsf { u } \\subseteq \\mathsf { v }"
+            },
+            {
+              "type": "text",
+              "content": " 。求证关系R在X的全体划分的集合上是一个偏序关系。(7分)"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.118,
+            0.119,
+            0.43,
+            0.141
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "26. 无向图 G 如右图所示。(7分)"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.16,
+            0.144,
+            0.65,
+            0.167
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(1) 图 G 是否为平面图，若是平面图则画出G的平面嵌人。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.161,
+            0.167,
+            0.489,
+            0.188
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(2) 图 G 是否为极大平面图？为什么？"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 4,
+          "bbox": [
+            0.776,
+            0.124,
+            0.874,
+            0.228
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 4,
+              "bbox": [
+                0.776,
+                0.124,
+                0.874,
+                0.228
+              ],
+              "content": ""
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.118,
+            0.21,
+            0.744,
+            0.253
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "27. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathfrak { S } = \\{ 1 , - 1 , \\mathfrak { i } , - \\mathfrak { i } \\}"
+            },
+            {
+              "type": "text",
+              "content": " ，其中 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "1 \\times 1 = - 1"
+            },
+            {
+              "type": "text",
+              "content": " ，运算×为普通乘法，证明: "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\left( \\mathbb{G}, \\mathbb{X} \\right)"
+            },
+            {
+              "type": "text",
+              "content": "是循环群。(9分)"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.118,
+            0.277,
+            0.884,
+            0.321
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "28. 设 G 是群，~是 G的元素之间的等价关系，并且 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\forall a,x,y \\in \\mathbb{G}"
+            },
+            {
+              "type": "text",
+              "content": " 有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "ax \\sim ay \\Rightarrow x \\sim y"
+            },
+            {
+              "type": "text",
+              "content": " 证明 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathsf{H} ="
+            },
+            {
+              "type": "text",
+              "content": " {x "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\{ x \\in \\mathbb { G } , x \\sim \\mathbb { G } \\}"
+            },
+            {
+              "type": "text",
+              "content": " 是G的子群，其中e是G的单位元。(8分)"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 7,
+          "bbox": [
+            0.513,
+            0.934,
+            0.524,
+            0.946
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "4"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "is_full_document": true,
+  "schema": "docvortex.middle",
+  "schema_version": "2.0"
+}

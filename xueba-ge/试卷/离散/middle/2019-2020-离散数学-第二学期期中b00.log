@@ -1,0 +1,36 @@
+2026-09-21 23:04:49.127 | INFO     | mineru.backend.analysis.pdf.window:_log_processing_window_plan:118 - Hybrid processing-window run. page_count=3, window_size=64, total_windows=1
+2026-09-21 23:04:51.170 | DEBUG    | docvortex.document.pdf.images:_load_images_from_pdf_worker:101 - PDF render worker started: pid=12012, pages=1-3, dpi=200, image_type=pil_img, pdf_bytes=910928
+2026-09-21 23:04:51.251 | DEBUG    | docvortex.document.pdf.images:_load_images_from_pdf_worker:113 - PDF render worker completed: pid=12012, pages=1-3, elapsed=0.081s, images=3
+2026-09-21 23:04:51.385 | INFO     | mineru.backend.analysis.pdf.window:_log_processing_window:126 - Hybrid processing window 1/1: pages 1-3/3 (3 pages)
+
+Layout Predict:   0%|          | 0/3 [00:00<?, ?it/s]
+Layout Predict:  67%|██████▋   | 2/3 [00:01<00:00,  1.21it/s]
+Layout Predict: 100%|██████████| 3/3 [00:02<00:00,  1.24it/s]
+Layout Predict: 100%|██████████| 3/3 [00:02<00:00,  1.23it/s]
+
+MFR Predict:   0%|          | 0/15 [00:00<?, ?it/s]
+MFR Predict:  53%|█████▎    | 8/15 [00:02<00:02,  2.90it/s]
+MFR Predict: 100%|██████████| 15/15 [00:06<00:00,  2.25it/s]
+MFR Predict: 100%|██████████| 15/15 [00:06<00:00,  2.33it/s]
+
+Table-wireless Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wireless Predict: 100%|██████████| 1/1 [00:00<00:00, 13.02it/s]
+
+OCR-det:   0%|          | 0/29 [00:00<?, ?it/s]
+OCR-det:   7%|▋         | 2/29 [00:00<00:01, 15.61it/s]
+OCR-det:  38%|███▊      | 11/29 [00:00<00:00, 36.74it/s]
+OCR-det:  72%|███████▏  | 21/29 [00:00<00:00, 43.52it/s]
+OCR-det: 100%|██████████| 29/29 [00:00<00:00, 48.95it/s]
+
+OCR-rec Predict:   0%|          | 0/89 [00:00<?, ?it/s]
+OCR-rec Predict:   7%|▋         | 6/89 [00:00<00:01, 41.88it/s]
+OCR-rec Predict:  20%|██        | 18/89 [00:00<00:01, 58.87it/s]
+OCR-rec Predict:  34%|███▎      | 30/89 [00:00<00:00, 71.93it/s]
+OCR-rec Predict:  47%|████▋     | 42/89 [00:00<00:00, 74.82it/s]
+OCR-rec Predict:  61%|██████    | 54/89 [00:00<00:00, 75.01it/s]
+OCR-rec Predict:  74%|███████▍  | 66/89 [00:01<00:00, 56.03it/s]
+OCR-rec Predict:  88%|████████▊ | 78/89 [00:01<00:00, 42.01it/s]
+OCR-rec Predict:  94%|█████████▍| 84/89 [00:01<00:00, 33.71it/s]
+OCR-rec Predict: 100%|██████████| 89/89 [00:02<00:00, 26.55it/s]
+OCR-rec Predict: 100%|██████████| 89/89 [00:02<00:00, 40.57it/s]
+已解析 1 个输入。

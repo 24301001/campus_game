@@ -1,0 +1,2424 @@
+{
+  "metadata": {
+    "file_suffix": "pdf",
+    "producer": {
+      "name": "mineru",
+      "version": "4.0.0"
+    },
+    "document": {
+      "title": "北 京 交 通 大 学 考 试 试 题",
+      "authors": [
+        "d"
+      ],
+      "languages": [
+        "zh-CN"
+      ],
+      "created_at": "2022-01-14T09:01:27+08:00",
+      "modified_at": "2022-01-14T09:01:27+08:00",
+      "creator_application": "Microsoft® Word 2016",
+      "producer_application": "Microsoft® Word 2016",
+      "page_count": 8,
+      "page_count_kind": "physical"
+    }
+  },
+  "extensions": {
+    "mineru": {
+      "tier": "basic",
+      "parse_mode": "ocr"
+    },
+    "docvortex_layout": {
+      "version": 1,
+      "pages": [
+        {
+          "page_idx": 0,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 1,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 2,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 3,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 4,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 5,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 6,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 7,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        }
+      ]
+    }
+  },
+  "pages": [
+    {
+      "page_idx": 0,
+      "blocks": [
+        {
+          "type": "paragraph_title",
+          "index": 0,
+          "bbox": [
+            0.227,
+            0.086,
+            0.756,
+            0.112
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "北京交通大学考试试题(A卷)"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.1,
+            0.126,
+            0.881,
+            0.262
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "课程名称:算法设计与分析学年学期:2021—2022学年第1学期课程编号:M210004B开课学院:软件学院出题教师:刘铎，童浩楠，吴睿智第一部分、单项选择题。请选择最适合的答案，并填涂到答题卡上。(共 16 分)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 2,
+          "bbox": [
+            0.285,
+            0.273,
+            0.714,
+            0.32
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 2,
+              "bbox": [
+                0.285,
+                0.273,
+                0.714,
+                0.32
+              ],
+              "content": "<table><tr><td>1.</td><td>2.</td><td>3.</td><td>4.</td><td>5.</td><td>6.</td><td>7.</td><td>8.</td></tr><tr><td>C</td><td>C</td><td>A</td><td>B</td><td>A</td><td>A</td><td>C</td><td>D</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 3,
+          "bbox": [
+            0.218,
+            0.342,
+            0.781,
+            0.44
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 3,
+              "bbox": [
+                0.218,
+                0.342,
+                0.781,
+                0.44
+              ],
+              "content": "<table><tr><td>考察知识点</td><td>要求</td></tr><tr><td>算法的数学基础</td><td>掌握</td></tr><tr><td>典型的分治算法</td><td>掌握</td></tr><tr><td>可选择性地介绍典型的贪婪算法0-1 背包问题</td><td>掌握</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 4,
+          "bbox": [
+            0.105,
+            0.467,
+            0.478,
+            0.49
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第二部分、计算题。（共34分）"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.104,
+            0.504,
+            0.31,
+            0.524
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "9.（共12分）解:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.15,
+            0.536,
+            0.19,
+            0.553
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(1)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 7,
+          "bbox": [
+            0.109,
+            0.563,
+            0.909,
+            0.63
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 7,
+              "bbox": [
+                0.109,
+                0.563,
+                0.909,
+                0.63
+              ],
+              "content": "<table><tr><td>Running time of (a)</td><td>T(n)=5T(n/2)+O(n)</td><td><eq>\\Rightarrow \\mathrm{T}(n) = \\mathrm{O}(n^{\\log 2^{5}})</eq></td></tr><tr><td>Running time of (b)</td><td>T(n)=2T(n-1)+O(1)</td><td>⇒ T(n)=O(2n)</td></tr><tr><td>Running time of (c)</td><td>T(n)=9T(n/3)+O(n²)</td><td>⇒ T(n)=O(n2logn)</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.104,
+            0.632,
+            0.879,
+            0.678
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(2)按照阶从低到高的顺序，对以上3个算法的时间复杂度进行排序为:O(n²logn)，O(nlog25), O(2n)。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.139,
+            0.687,
+            0.48,
+            0.705
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "为了更快地解决问题，应选择算法C。"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 10,
+          "bbox": [
+            0.218,
+            0.738,
+            0.781,
+            0.811
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 10,
+              "bbox": [
+                0.218,
+                0.738,
+                0.781,
+                0.811
+              ],
+              "content": "<table><tr><td>考察知识点</td><td>要求</td></tr><tr><td>分治算法的分析方法</td><td>理解</td></tr><tr><td>主定理</td><td>掌握</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 11,
+          "bbox": [
+            0.494,
+            0.919,
+            0.506,
+            0.932
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 1,
+      "blocks": [
+        {
+          "type": "paragraph_title",
+          "index": 0,
+          "bbox": [
+            0.106,
+            0.079,
+            0.308,
+            0.098
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "10.（共12分）解:"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.15,
+            0.111,
+            0.19,
+            0.127
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(1)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 3,
+          "bbox": [
+            0.156,
+            0.164,
+            0.842,
+            0.316
+          ],
+          "content": [
+            {
+              "type": "table_caption",
+              "index": 2,
+              "bbox": [
+                0.404,
+                0.138,
+                0.596,
+                0.157
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "表 1 目标函数 m[i, j]"
+                }
+              ]
+            },
+            {
+              "type": "table_body",
+              "index": 3,
+              "bbox": [
+                0.156,
+                0.164,
+                0.842,
+                0.316
+              ],
+              "content": "<table><tr><td>m[i, j]</td><td>j=1</td><td>j=2</td><td>j=3</td><td>j=4</td><td>j=5</td><td>j=6</td></tr><tr><td>i=1</td><td>0</td><td>42</td><td>168</td><td>258</td><td>270</td><td>286</td></tr><tr><td>i=2</td><td></td><td>0</td><td>189</td><td>324</td><td>258</td><td>282</td></tr><tr><td>i=3</td><td></td><td></td><td>0</td><td>315</td><td>216</td><td>272</td></tr><tr><td>i=4</td><td></td><td></td><td></td><td>0</td><td>90</td><td>162</td></tr><tr><td>i=5</td><td></td><td></td><td></td><td></td><td>0</td><td>40</td></tr><tr><td>i=6</td><td></td><td></td><td></td><td></td><td></td><td>0</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 5,
+          "bbox": [
+            0.156,
+            0.367,
+            0.842,
+            0.52
+          ],
+          "content": [
+            {
+              "type": "table_caption",
+              "index": 4,
+              "bbox": [
+                0.407,
+                0.341,
+                0.592,
+                0.36
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "表 2 标记函数 s[i, j]"
+                }
+              ]
+            },
+            {
+              "type": "table_body",
+              "index": 5,
+              "bbox": [
+                0.156,
+                0.367,
+                0.842,
+                0.52
+              ],
+              "content": "<table><tr><td>s[i, j]</td><td>j=1</td><td>j=2</td><td>j=3</td><td><eq>j = 4</eq></td><td>j=5</td><td>j =6</td></tr><tr><td>i=1</td><td>/</td><td>1</td><td>2</td><td>3</td><td>1</td><td>5</td></tr><tr><td>i=2</td><td></td><td>/</td><td>2</td><td>3</td><td>2</td><td>5</td></tr><tr><td>i=3</td><td></td><td></td><td>/</td><td>3</td><td>3</td><td>5</td></tr><tr><td>i=4</td><td></td><td></td><td></td><td>/</td><td>4</td><td>5</td></tr><tr><td>i=5</td><td></td><td></td><td></td><td></td><td>/</td><td>5</td></tr><tr><td>i=6</td><td></td><td></td><td></td><td></td><td></td><td>/</td></tr></table>"
+            },
+            {
+              "type": "table_caption",
+              "index": 6,
+              "bbox": [
+                0.15,
+                0.545,
+                0.771,
+                0.564
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "(2) ( "
+                },
+                {
+                  "type": "equation_inline",
+                  "content": "\\left( \\boldsymbol{A}_{1} \\left( \\boldsymbol{A}_{2} \\left( \\boldsymbol{A}_{3} \\left( \\boldsymbol{A}_{4} \\boldsymbol{A}_{5} \\right) \\right) \\right) \\boldsymbol{A}_{6} \\right)"
+                },
+                {
+                  "type": "text",
+                  "content": " 或者 "
+                },
+                {
+                  "type": "equation_inline",
+                  "content": "\\left( A _ { 1 } \\left( A _ { 2 } \\left( A _ { 3 } \\left( A _ { 4 } A _ { 5 } \\right) \\right) \\right) \\right) A _ { 6 }"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 7,
+          "bbox": [
+            0.217,
+            0.596,
+            0.782,
+            0.693
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 7,
+              "bbox": [
+                0.217,
+                0.596,
+                0.782,
+                0.693
+              ],
+              "content": "<table><tr><td>考察知识点</td><td>要求</td></tr><tr><td>算法的数学基础</td><td>掌握</td></tr><tr><td>典型的分治算法</td><td>掌握</td></tr><tr><td>典型的贪婪算法 0-1 背包问题</td><td>掌握</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.106,
+            0.72,
+            0.309,
+            0.74
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "11. （共10分）解:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.153,
+            0.752,
+            0.729,
+            0.77
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（1）请给出目标函数和标记函数的定义/表示、递推关系和初值。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.144,
+            0.78,
+            0.796,
+            0.798
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "令目标函数 d(i)表示凑出总和i所需的最少硬币数量。则 d(i)的初始值为:"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 11,
+          "bbox": [
+            0.409,
+            0.807,
+            0.589,
+            0.843
+          ],
+          "content": "\\left\\{ \\begin{matrix} d(0) = 0 \\\\ d(i) = +\\infty & i < 0 \\end{matrix} \\right."
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.105,
+            0.85,
+            0.43,
+            0.869
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "递推式为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "d(i)=\\min_{1 \\leq k \\leq 4} \\{ d(i-v_k) \\} + 1"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 13,
+          "bbox": [
+            0.146,
+            0.879,
+            0.894,
+            0.897
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "令标记函数 s(i)表示计算 d(i)时取得的 k 值，即 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\arg \\min_{1 \\leq k \\leq 4} \\{ d(i - v_k) \\}"
+            },
+            {
+              "type": "text",
+              "content": " ，含义是取得 d(i)"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 14,
+          "bbox": [
+            0.492,
+            0.919,
+            0.507,
+            0.931
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 2,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.105,
+            0.078,
+            0.346,
+            0.096
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "时所选取的最后一枚硬币。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.145,
+            0.107,
+            0.746,
+            0.125
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "则 s(i)的初始值为 s(0)=0，s(i)的递推式为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "s(i) = \\arg \\min_{1 \\leq k \\leq 4} \\{ d(i - v_k) \\}"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.156,
+            0.134,
+            0.315,
+            0.152
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（2）如表3所示。"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 4,
+          "bbox": [
+            0.135,
+            0.189,
+            0.863,
+            0.241
+          ],
+          "content": [
+            {
+              "type": "table_caption",
+              "index": 3,
+              "bbox": [
+                0.478,
+                0.162,
+                0.522,
+                0.179
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "表3"
+                }
+              ]
+            },
+            {
+              "type": "table_body",
+              "index": 4,
+              "bbox": [
+                0.135,
+                0.189,
+                0.863,
+                0.241
+              ],
+              "content": "<table><tr><td></td><td>-7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>-1</td><td>0</td><td></td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td></tr><tr><td>d(i)</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>0</td><td>1</td><td>2</td><td>3</td><td>1</td><td>2</td><td>1</td><td>2</td><td>1</td><td>2</td><td>2</td><td>3</td><td>2</td><td>3</td><td>2</td><td>3</td><td>2</td><td>3</td><td>3</td><td>4</td></tr><tr><td>s(i)</td><td></td><td>/</td><td></td><td></td><td></td><td>/</td><td>/</td><td></td><td>1</td><td>1</td><td>1</td><td>4</td><td>4</td><td>6</td><td>6</td><td>8</td><td>8</td><td>6</td><td>6</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.104,
+            0.249,
+            0.891,
+            0.324
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（3）付款的最优方案是使用一枚面值为8的硬币、一枚面值为6的硬币、一枚面值为4的硬币、一枚面值为1的硬币；或者三枚面值为6的硬币、一枚面值为1的硬币；共使用4枚硬币。"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 6,
+          "bbox": [
+            0.217,
+            0.356,
+            0.781,
+            0.404
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 6,
+              "bbox": [
+                0.217,
+                0.356,
+                0.781,
+                0.404
+              ],
+              "content": "<table><tr><td colspan=\"2\">考察知识点</td><td>要求</td></tr><tr><td>典型的动态规划算法</td><td>矩阵链乘积</td><td>掌握</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 7,
+          "bbox": [
+            0.105,
+            0.432,
+            0.533,
+            0.455
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第三部分、综合分析题。（共50分）"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "paragraph_title",
+          "index": 8,
+          "bbox": [
+            0.106,
+            0.469,
+            0.31,
+            0.489
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "12.（共12分）解:"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.105,
+            0.501,
+            0.893,
+            0.548
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（1）贪心策略:按币值从大到小排列零钱，从币值大的开始，每种钱尽量多用。如果剩余钱数小于该币值，再考虑用下一种钱币。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.146,
+            0.557,
+            0.181,
+            0.575
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "即:"
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "index": 11,
+          "bbox": [
+            0.145,
+            0.586,
+            0.453,
+            0.683
+          ],
+          "content": [
+            {
+              "type": "code_body",
+              "index": 11,
+              "bbox": [
+                0.145,
+                0.586,
+                0.453,
+                0.683
+              ],
+              "content": "remainder ← y\nfor i = n downto 0\nx ←  remainder / p\nremainder ← remainder − x×p"
+            }
+          ],
+          "sub_type": "code",
+          "guess_lang": "txt"
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.145,
+            0.691,
+            0.624,
+            0.709
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "解方案是:对所有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "0 \\leqslant i \\leqslant n"
+            },
+            {
+              "type": "text",
+              "content": " ，取 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "x _ { i }"
+            },
+            {
+              "type": "text",
+              "content": " 个币值为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "p ^ { i }"
+            },
+            {
+              "type": "text",
+              "content": " 的硬币。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 13,
+          "bbox": [
+            0.105,
+            0.719,
+            0.893,
+            0.765
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（2）对n做归纳，证明:当只有面值为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\{ p ^ { 0 } , \\cdots , p ^ { n } \\}"
+            },
+            {
+              "type": "text",
+              "content": " 的硬币可用时，贪婪解和最优解相同。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 14,
+          "bbox": [
+            0.146,
+            0.775,
+            0.442,
+            0.793
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "①n=0时，贪婪解和最优解相同。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 15,
+          "bbox": [
+            0.145,
+            0.802,
+            0.732,
+            0.821
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "②假设n=k时，贪婪解和最优解相同。现在考虑n=k+1时的情况。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 16,
+          "bbox": [
+            0.103,
+            0.831,
+            0.891,
+            0.878
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "假设贪婪解是对所有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "0 \\leqslant i \\leqslant k+1"
+            },
+            {
+              "type": "text",
+              "content": " ，取 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "x _ { i }"
+            },
+            {
+              "type": "text",
+              "content": " 个币值为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "p ^ { i }"
+            },
+            {
+              "type": "text",
+              "content": " 的硬币。假设最优解是对所有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "0 { \\leqslant }"
+            },
+            {
+              "type": "text",
+              "content": " "
+            },
+            {
+              "type": "equation_inline",
+              "content": "i \\leqslant k + 1"
+            },
+            {
+              "type": "text",
+              "content": " ，取 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "z _ { i }"
+            },
+            {
+              "type": "text",
+              "content": " 个币值为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "p ^ { i }"
+            },
+            {
+              "type": "text",
+              "content": " 的硬币。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 17,
+          "bbox": [
+            0.146,
+            0.886,
+            0.429,
+            0.907
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "则有Σk=+1 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\begin{array} { r } { x _ { i } p ^ { i } = \\sum _ { i = 0 } ^ { k + 1 } z _ { i } p ^ { i } = y } \\end{array}"
+            },
+            {
+              "type": "text",
+              "content": " C"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 18,
+          "bbox": [
+            0.492,
+            0.919,
+            0.506,
+            0.932
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 3,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.102,
+            0.078,
+            0.891,
+            0.154
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "考虑到贪婪算法的流程，必定对于所有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "0 \\leqslant i \\leqslant k"
+            },
+            {
+              "type": "text",
+              "content": " ，都有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "x _ { i } { < } p"
+            },
+            {
+              "type": "text",
+              "content": " 。否则，如果有某个 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "z _ { j } { \\geqslant }"
+            },
+            {
+              "type": "text",
+              "content": " "
+            },
+            {
+              "type": "equation_inline",
+              "content": "p, 0 \\leqslant j \\leqslant k"
+            },
+            {
+              "type": "text",
+              "content": " 则贪婪算法会先选择1枚面值为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "p ^ { j + 1 }"
+            },
+            {
+              "type": "text",
+              "content": " 的硬币，而不是 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "p"
+            },
+            {
+              "type": "text",
+              "content": " 枚面值为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "p ^ { j }"
+            },
+            {
+              "type": "text",
+              "content": " 的硬币。且由贪婪算法可知 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\begin{array} { r } { \\mathbb { I } { \\sum _ { i = 0 } ^ { k } x _ { i } p ^ { i } } \\leq p ^ { k + 1 } - 1 } \\end{array}"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.105,
+            0.163,
+            0.893,
+            0.21
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "断言:对于所有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "0 \\leq i \\leq k"
+            },
+            {
+              "type": "text",
+              "content": " ，都有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "z _ { i } { < } p"
+            },
+            {
+              "type": "text",
+              "content": " 。否则，如果有某个 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "z _ { j } \\geqslant p , 0 \\leqslant j \\leqslant k ,"
+            },
+            {
+              "type": "text",
+              "content": " 则用1枚面值为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "p ^ { j + 1 }"
+            },
+            {
+              "type": "text",
+              "content": " 的硬币替换 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "p"
+            },
+            {
+              "type": "text",
+              "content": " 枚面值为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "p ^ { j }"
+            },
+            {
+              "type": "text",
+              "content": " 的硬币，硬币总币值不变，而硬币总个数减少 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "P ^ { - 1 }"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.146,
+            0.217,
+            0.575,
+            0.238
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "②于是Σk "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\begin{array} { r } { \\phantom { } _ { = 0 } z _ { i } p ^ { i } \\leq ( p - 1 ) \\times \\sum _ { i = 0 } ^ { k } p ^ { i } = p ^ { k + 1 } - 1 } \\end{array}"
+            },
+            {
+              "type": "text",
+              "content": " 0"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.146,
+            0.247,
+            0.589,
+            0.265
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "考虑到贪婪算法的流程，所以必定有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "x_{k + 1} \\geq z_{k + 1}"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.147,
+            0.275,
+            0.369,
+            0.292
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "于是，若 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "x _ { k + 1 } { > } z _ { k + 1 }"
+            },
+            {
+              "type": "text",
+              "content": " ，则"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 5,
+          "bbox": [
+            0.116,
+            0.301,
+            0.879,
+            0.411
+          ],
+          "content": "\\begin{align*}p^{k+1} \\leq (x_{k+1}p^{k+1} - z_{k+1}p^{k+1}) = \\left(y - \\sum_{i=0}^{k} x_i p^i \\right) - \\left(y - \\sum_{i=0}^{k} z_i p^i \\right) = \\sum_{i=0}^{k} z_i p^i - \\sum_{i=0}^{k} x_i p^i \\\\ \\leq \\sum_{i=0}^{k} z_i p^i \\leq p^{k+1} - 1 < p^{k+1}\\end{align*}"
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.104,
+            0.418,
+            0.4,
+            0.436
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "产生矛盾，因此必然有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "x_{k + 1} = z_{k + 1}"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 7,
+          "bbox": [
+            0.146,
+            0.444,
+            0.891,
+            0.466
+          ],
+          "content": "\\begin{array} { r l r } { \\bigcirc } & { { } y - x _ { k + 1 } p ^ { k + 1 } = \\sum _ { i = 0 } ^ { k + 1 } x _ { i } p ^ { i } \\leq p ^ { k + 1 } - 1 \\quad \\mathrm { ~  且  ~ } \\quad \\sum _ { i = 0 } ^ { k + 1 } x _ { i } p ^ { i } = y - x _ { k + 1 } p ^ { k + 1 } = y - } \\end{array}"
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.104,
+            0.473,
+            0.892,
+            0.52
+          ],
+          "content": [
+            {
+              "type": "equation_inline",
+              "content": "\\begin{array} { r } { z _ { k + 1 } p ^ { k + 1 } = \\sum _ { i = 0 } ^ { k + 1 } z _ { i } p ^ { i } } \\end{array}"
+            },
+            {
+              "type": "text",
+              "content": " 。因此只能使用面值为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\{ p ^ { 0 } , \\; \\cdots , p ^ { k } \\}"
+            },
+            {
+              "type": "text",
+              "content": " 的硬币，由归纳假设可知对于所有"
+            },
+            {
+              "type": "equation_inline",
+              "content": "0 \\leq i \\leq k"
+            },
+            {
+              "type": "text",
+              "content": " ，都有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "z _ { i } { = } x _ { i }"
+            },
+            {
+              "type": "text",
+              "content": " C"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.144,
+            0.531,
+            0.743,
+            0.548
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "综上可得对于所有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "0 \\leqslant i \\leqslant k+1"
+            },
+            {
+              "type": "text",
+              "content": " ，都有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "z _ { i } { = } x _ { i }"
+            },
+            {
+              "type": "text",
+              "content": " ，即贪婪解和最优解相同。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.155,
+            0.559,
+            0.692,
+            0.576
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（3）在（1）中设计的贪心策略在此时不能确保得到最优解。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.104,
+            0.586,
+            0.894,
+            0.661
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "例如， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "m=n=1,\\ p=4,\\ q=5"
+            },
+            {
+              "type": "text",
+              "content": " 时，要凑得总面值为8。如果是使用（1）中设计的贪心算法的基本策略，则需要1枚面值为5的硬币、3枚面值为1的硬币，共使用4枚硬币；而事实上最优方案是使用两枚面值为4的硬币。"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 12,
+          "bbox": [
+            0.217,
+            0.697,
+            0.781,
+            0.794
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 12,
+              "bbox": [
+                0.217,
+                0.697,
+                0.781,
+                0.794
+              ],
+              "content": "<table><tr><td>考察知识点</td><td>要求</td></tr><tr><td>贪婪策略的基本思想</td><td>了解</td></tr><tr><td>贪婪算法的基本框架</td><td>掌握</td></tr><tr><td>贪婪算法最优性的分析与证明</td><td>理解</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 13,
+          "bbox": [
+            0.493,
+            0.919,
+            0.506,
+            0.931
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 4,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.105,
+            0.079,
+            0.31,
+            0.098
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "13.（共12分）解:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.114,
+            0.11,
+            0.46,
+            0.128
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（1）（参考解答。程序伪代码不唯一。）"
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "index": 2,
+          "bbox": [
+            0.183,
+            0.132,
+            0.699,
+            0.371
+          ],
+          "content": [
+            {
+              "type": "code_body",
+              "index": 2,
+              "bbox": [
+                0.183,
+                0.132,
+                0.699,
+                0.371
+              ],
+              "content": "Initial Call\nj ← Find(1, n)\nIfj>0 then outputj\nelse output“None\"\nFind ( start, end)\nif start > end then return -1\nelse\nj ← (start + end) / 2\nif A[j] =j then returnj\nelse if A[j] <j then return Find[j+1, end ]\nelse return Find[ start, j-1]"
+            }
+          ],
+          "sub_type": "code",
+          "guess_lang": "txt"
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.114,
+            0.376,
+            0.539,
+            0.394
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（2）算法的时间复杂度的递推关系式和初值为:"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 4,
+          "bbox": [
+            0.364,
+            0.397,
+            0.633,
+            0.434
+          ],
+          "content": "\\left\\{ \\begin{aligned} T(n) \\leq & T(n / 2)+0(1) \\quad n>1 \\\\ & T(1)=1 \\end{aligned} \\right."
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.105,
+            0.438,
+            0.365,
+            0.456
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "由主定理可知 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T ( n ) { = } O ( \\log n )"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 6,
+          "bbox": [
+            0.217,
+            0.476,
+            0.781,
+            0.598
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 6,
+              "bbox": [
+                0.217,
+                0.476,
+                0.781,
+                0.598
+              ],
+              "content": "<table><tr><td>考察知识点</td><td>要求</td></tr><tr><td>分治策略的基本思想</td><td>了解</td></tr><tr><td>分治算法的基本框架</td><td>掌握</td></tr><tr><td>分治算法的分析方法</td><td>理解</td></tr><tr><td>主定理</td><td>掌握</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.106,
+            0.617,
+            0.309,
+            0.637
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "14.（共13分）解:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.153,
+            0.648,
+            0.744,
+            0.667
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（1）将各个点进行坐标标号，并增加一些额外顶点，如图1所示。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.145,
+            0.673,
+            0.865,
+            0.691
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "令 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\nu ( i , j )"
+            },
+            {
+              "type": "text",
+              "content": " 表示点(i,j)的值， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "M ( i , j )"
+            },
+            {
+              "type": "text",
+              "content": " 表示从点(1,1)到点(i,j)的道路最小数值和，则有:"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 10,
+          "bbox": [
+            0.182,
+            0.695,
+            0.748,
+            0.758
+          ],
+          "content": "\\begin{aligned} &M(i,   1)   =   \\nu(1,   1); \\quad & if   j   =   0   or   i   =   0; \\\\&M(i, j)   =   \\min(M(i   -   1, j), M(i, j   -   1))   +   \\nu(i, j), \\quad & otherwise. \\\\ \\end{aligned}"
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.1,
+            0.761,
+            0.895,
+            0.85
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "标记函数 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "s ( i , j ) { = } 1"
+            },
+            {
+              "type": "text",
+              "content": " 表示到点(i,j)的最小数值和道路的最后一条边是从左侧来，即从(i, j−1)到(i,j); "
+            },
+            {
+              "type": "equation_inline",
+              "content": "s ( i , j ) { = } 0"
+            },
+            {
+              "type": "text",
+              "content": " 表示到点(i,j)的最小数值和道路的最后一条边是从上方来，即从(i-1, j)到(i,j)的点(i,j)的值；s(1,1)=-1 表示初始值或到点(i,j)的最小数值和道路的最后一条边是从上方来，即从(i-1,j)到(i,j)的点(i,j)的值。则有:"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 12,
+          "bbox": [
+            0.182,
+            0.855,
+            0.841,
+            0.929
+          ],
+          "content": "\\begin{align*}s(1,   1) &= -1; \\\\s(i, j) &= 0, &  if   (j \\geq 1   or   i \\geq 1)   and   M(i-1, j) &\\leq  M(i, j-1) \\\\s(i, j) &= 1, &  if   (j \\geq 1   or   i \\geq 1)   and   M(i-1, j) &\\geq  M(i, j-1).\\end{align*}"
+        }
+      ]
+    },
+    {
+      "page_idx": 5,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.156,
+            0.078,
+            0.746,
+            0.096
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（2）各个点的 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "M ( i , j )"
+            },
+            {
+              "type": "text",
+              "content": " 值如图2所示，各个点的s(i,j)值如图3所示。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.156,
+            0.101,
+            0.544,
+            0.119
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（3）道路选择如图4所示，总数值和为12。"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 2,
+          "bbox": [
+            0.13,
+            0.121,
+            0.457,
+            0.335
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 2,
+              "bbox": [
+                0.13,
+                0.121,
+                0.457,
+                0.335
+              ],
+              "content": ""
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 3,
+          "bbox": [
+            0.566,
+            0.141,
+            0.842,
+            0.324
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 3,
+              "bbox": [
+                0.566,
+                0.141,
+                0.842,
+                0.324
+              ],
+              "content": ""
+            },
+            {
+              "type": "image_caption",
+              "index": 5,
+              "bbox": [
+                0.593,
+                0.329,
+                0.817,
+                0.347
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "图 2 题目 14 解答用图 2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 6,
+          "bbox": [
+            0.164,
+            0.364,
+            0.427,
+            0.537
+          ],
+          "content": [
+            {
+              "type": "image_caption",
+              "index": 4,
+              "bbox": [
+                0.183,
+                0.339,
+                0.404,
+                0.357
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "图 1 题目 14 解答用图 1"
+                }
+              ]
+            },
+            {
+              "type": "image_body",
+              "index": 6,
+              "bbox": [
+                0.164,
+                0.364,
+                0.427,
+                0.537
+              ],
+              "content": ""
+            },
+            {
+              "type": "image_caption",
+              "index": 7,
+              "bbox": [
+                0.183,
+                0.546,
+                0.406,
+                0.563
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "图 3 题目 14 解答用图 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 8,
+          "bbox": [
+            0.573,
+            0.358,
+            0.835,
+            0.533
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 8,
+              "bbox": [
+                0.573,
+                0.358,
+                0.835,
+                0.533
+              ],
+              "content": ""
+            },
+            {
+              "type": "image_caption",
+              "index": 9,
+              "bbox": [
+                0.593,
+                0.538,
+                0.817,
+                0.556
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "图 4 题目 14 解答用图 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 10,
+          "bbox": [
+            0.217,
+            0.587,
+            0.782,
+            0.685
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 10,
+              "bbox": [
+                0.217,
+                0.587,
+                0.782,
+                0.685
+              ],
+              "content": "<table><tr><td>考察知识点</td><td>要求</td></tr><tr><td>动态规划的基本思想</td><td>掌握</td></tr><tr><td>动态规划的基本框架</td><td>理解</td></tr><tr><td>动态规划的实现方法</td><td>掌握</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 11,
+          "bbox": [
+            0.107,
+            0.716,
+            0.308,
+            0.735
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "15.（共13分）解:"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.154,
+            0.747,
+            0.766,
+            0.765
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（1）将各个点进行坐标标号，如图5所示。令 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\nu ( i , j )"
+            },
+            {
+              "type": "text",
+              "content": " 表示点(i,j)的值。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 13,
+          "bbox": [
+            0.104,
+            0.77,
+            0.892,
+            0.812
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "选择一条明显的道路（如图6所示），以其数值和（15）作为初始的界，即current_best←15。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 14,
+          "bbox": [
+            0.145,
+            0.817,
+            0.734,
+            0.836
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "如图7所示斜线方式考察 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "m ( k ) = \\operatorname* { m i n } \\{ v ( i , j ) | i + j = k \\}"
+            },
+            {
+              "type": "text",
+              "content": " ，2≤k≤8。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 15,
+          "bbox": [
+            0.145,
+            0.841,
+            0.531,
+            0.858
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "维护“到目前为止的最优值”current_best。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 16,
+          "bbox": [
+            0.105,
+            0.863,
+            0.888,
+            0.907
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "令 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "C _ { a } ( i , j )"
+            },
+            {
+              "type": "text",
+              "content": " 为从(1,1)到当前点 "
+            },
+            {
+              "type": "equation_inline",
+              "content": ". ( i , j )"
+            },
+            {
+              "type": "text",
+              "content": " 的道路的数值和，估值函数为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\scriptstyle C _ { e } ( i , j ) = \\sum _ { k = i + j + 1 } ^ { 8 } m ( k )"
+            },
+            {
+              "type": "text",
+              "content": "即估计还要发生的开销的下界。则估界函数为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "C _ { a } ( i , j ) + C _ { e } ( i , j )"
+            },
+            {
+              "type": "text",
+              "content": " O"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 17,
+          "bbox": [
+            0.493,
+            0.919,
+            0.507,
+            0.932
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 6,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.145,
+            0.078,
+            0.789,
+            0.121
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "若(i,j)为点(4,4)且 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "C _ { a } ( 4 , 4 ) { \\leq } c u r r e n t \\_ b e s t"
+            },
+            {
+              "type": "text",
+              "content": " ，则更新 current_best 为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "C _ { a } ( 4 , . 4 )"
+            },
+            {
+              "type": "text",
+              "content": "若(i,j)不是点(4,4)且 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "C _ { a } ( i , j ) + C _ { e } ( i , j ) \\geq c u r r e n t \\_ b e s t ,"
+            },
+            {
+              "type": "text",
+              "content": " ，则进行剪枝。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.155,
+            0.124,
+            0.54,
+            0.143
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（2）剪枝后的（部分）搜索树如图8所示。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.156,
+            0.148,
+            0.545,
+            0.166
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（3）道路选择如图9所示，总数值和为12。"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 3,
+          "bbox": [
+            0.176,
+            0.209,
+            0.453,
+            0.396
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 3,
+              "bbox": [
+                0.176,
+                0.209,
+                0.453,
+                0.396
+              ],
+              "content": ""
+            },
+            {
+              "type": "image_caption",
+              "index": 4,
+              "bbox": [
+                0.203,
+                0.4,
+                0.424,
+                0.419
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "图 5 题目 15 解答用图 1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 5,
+          "bbox": [
+            0.58,
+            0.21,
+            0.866,
+            0.398
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 5,
+              "bbox": [
+                0.58,
+                0.21,
+                0.866,
+                0.398
+              ],
+              "content": ""
+            },
+            {
+              "type": "image_caption",
+              "index": 6,
+              "bbox": [
+                0.614,
+                0.402,
+                0.837,
+                0.42
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "图 6 题目 15 解答用图 2"
+                }
+              ]
+            },
+            {
+              "type": "image_footnote",
+              "index": 7,
+              "bbox": [
+                0.499,
+                0.428,
+                0.7,
+                0.445
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "m(3)=1 m(4)=2 m(5)=1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 8,
+          "bbox": [
+            0.31,
+            0.444,
+            0.723,
+            0.673
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 8,
+              "bbox": [
+                0.31,
+                0.444,
+                0.723,
+                0.673
+              ],
+              "content": ""
+            },
+            {
+              "type": "image_caption",
+              "index": 9,
+              "bbox": [
+                0.408,
+                0.677,
+                0.632,
+                0.696
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "图 7 题目 15 解答用图 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 10,
+          "bbox": [
+            0.493,
+            0.919,
+            0.506,
+            0.932
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "7"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 7,
+      "blocks": [
+        {
+          "type": "image",
+          "index": 0,
+          "bbox": [
+            0.301,
+            0.075,
+            0.734,
+            0.335
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 0,
+              "bbox": [
+                0.301,
+                0.075,
+                0.734,
+                0.335
+              ],
+              "content": ""
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 2,
+          "bbox": [
+            0.369,
+            0.362,
+            0.63,
+            0.537
+          ],
+          "content": [
+            {
+              "type": "image_caption",
+              "index": 1,
+              "bbox": [
+                0.409,
+                0.342,
+                0.632,
+                0.36
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "图 8 题目 15 解答用图 3"
+                }
+              ]
+            },
+            {
+              "type": "image_body",
+              "index": 2,
+              "bbox": [
+                0.369,
+                0.362,
+                0.63,
+                0.537
+              ],
+              "content": ""
+            },
+            {
+              "type": "image_caption",
+              "index": 3,
+              "bbox": [
+                0.388,
+                0.541,
+                0.611,
+                0.559
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "图 9 题目 15 解答用图 5"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 4,
+          "bbox": [
+            0.218,
+            0.583,
+            0.782,
+            0.705
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 4,
+              "bbox": [
+                0.218,
+                0.583,
+                0.782,
+                0.705
+              ],
+              "content": "<table><tr><td>考察知识点</td><td>要求</td></tr><tr><td>回溯法的基本思想</td><td>了解</td></tr><tr><td>回溯法的基本框架</td><td>掌握</td></tr><tr><td>“剪枝”的概念</td><td>理解</td></tr><tr><td>对“界”的正确估算</td><td>掌握</td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 5,
+          "bbox": [
+            0.493,
+            0.919,
+            0.506,
+            0.931
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "8"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "is_full_document": true,
+  "schema": "docvortex.middle",
+  "schema_version": "2.0"
+}
