@@ -1,0 +1,32 @@
+# 前端
+frontend/node_modules/
+frontend/dist/
+
+# 后端
+backend/target/
+*.class
+*.jar
+
+# 通用
+.DS_Store
+*.log
+node_modules/
+target/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# 临时文件
+*.tmp
+*.temp
+
+# 判题临时目录（运行期产物，里面是编译输出和用户代码，不该进仓库）
+backend/tmp/
+
+# maven wrapper 的 jar 必须提交，别被上面的 *.jar 挡掉
+!backend/.mvn/wrapper/maven-wrapper.jar
+
+# 上传文件目录
+uploads/
