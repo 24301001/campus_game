@@ -269,8 +269,9 @@ function esc(s) { return String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "
    换脸不是装饰 —— 学生在等首字的那两三秒里，得知道"她在翻书"而不是"页面卡了"。 */
 const FACES = {calm: "/static/assets/xbj-calm.jpg", speak: "/static/assets/xbj-wink.jpg",
                point: "/static/assets/xbj-point.jpg"};
-const FACE_MAP = {idle: ["calm", "在呢，问吧"], think: ["calm", "翻书…"],
-                  speak: ["speak", ""], point: ["point", "就是这一页"], calm: ["calm", ""]};
+const FACE_MAP = {idle: ["calm", ""], think: ["calm", ""],
+                  speak: ["speak", ""], point: ["point", ""], calm: ["calm", ""],
+                  poke: ["speak", ""]};   // 2026-09-30：台词气泡接管后，头顶小气泡全部退役，不再和 saybub 说两遍
 Object.keys(FACES).forEach(k => { const im = new Image(); im.src = FACES[k]; });   // 预加载，换脸不闪白
 let faceNow = "", faceBack = null;
 
@@ -304,11 +305,36 @@ const LINES = {
   done: "有不理解的点上面的出处，或者继续问我。",
   wait: "等我把这句说完再换，不然这一答就丢掉了。"};
 const SAY_FACE = {idle: "idle", think: "think", speak: "speak", nosrc: "calm", done: "calm",
-                 wait: "speak"};
+                 wait: "speak", poke: "poke"};
+let lastSayKind = "idle";
 function say(kind, text) {
+  if (kind !== "poke") lastSayKind = kind;      // 彩蛋台词不覆盖"该回到哪句"
   $("dlgSay").textContent = text || LINES[kind] || LINES.idle;
   setFace(SAY_FACE[kind] || "calm");
 }
+/* ---------------- 彩蛋：戳立绘 ----------------
+   连点她，她一句一句回你 —— 台词逐句升级，但人设不崩：不发火、不说教，
+   最后一句永远把话头带回题上。只戳一下装没看见（可能是误触）；
+   停手 2.6 秒自动回到当前状态那句台词。句子必须短 —— 长了撑破舞台固定高度（LINES 上面那条注释）。 */
+const POKE = [
+  "怎么啦？我又不会跑，问问题就好。",
+  "再戳我要不好意思了。",
+  "戳我绩点不会涨的——书在那边。",
+  "嗯，是我。你继续戳，我陪你。",
+  "手比抄错题页码的时候稳多了。",
+  "好了好了，这局你赢，我脸都红了。",
+  "戳够了我们回来干活？刚才那步没懂的就再问一遍。",
+  "你今天是真的不想学呀。那我等你，想学了再戳我。"];
+let pokeN = 0, pokeT = null;
+$("face").addEventListener("click", () => {
+  pokeN = pokeN ? pokeN + 1 : 1;
+  if (pokeN < 2) return;
+  const port = $("face").parentElement;
+  port.classList.remove("poke"); void port.offsetWidth; port.classList.add("poke");   // 重放弹跳动画
+  say("poke", POKE[Math.min(pokeN - 2, POKE.length - 1)]);
+  clearTimeout(pokeT);
+  pokeT = setTimeout(() => { pokeN = 0; say(lastSayKind); }, 2600);
+});
 /** 她递过来的下一步。传空数组就收起这一排。 */
 function opts(list) {
   const box = $("dlgOpts");

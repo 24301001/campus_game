@@ -75,17 +75,20 @@
         <span id="fbub" class="fbub">在呢，问吧</span>
         <img id="face" class="face" src="/static/assets/xbj-calm.jpg" alt="学霸姐立绘">
       </div>
-      <div class="dlg">
-        <div class="dlg-head">
-          <span class="dlg-name" id="dlgName">学霸姐</span>
-          <span class="dlg-tag" id="dlgTag"></span>
-          <span class="spacer"></span>
-          <span class="dlg-stat tiny" id="dlgStat"></span>
-        </div>
-        <!-- 台词 + 选项当成一整块在框里垂直居中，答案正文永远不进这里 -->
-        <div class="dlg-body">
-          <div class="dlg-say" id="dlgSay">有什么问题尽管问。</div>
-          <div class="dlg-opts" id="dlgOpts"></div>
+      <div class="dlg-col">
+        <!-- 台词条 2026-09-30 从对话框里搬出来做成气泡：尾巴朝左指着立绘，
+             下面那个框只剩名字和选项 —— 组长口径："她说的话用气泡显示，不用在选择框上面" -->
+        <div class="saybub" id="dlgSay">有什么问题尽管问。</div>
+        <div class="dlg">
+          <div class="dlg-head">
+            <span class="dlg-name" id="dlgName">学霸姐</span>
+            <span class="dlg-tag" id="dlgTag"></span>
+            <span class="spacer"></span>
+            <span class="dlg-stat tiny" id="dlgStat"></span>
+          </div>
+          <div class="dlg-body">
+            <div class="dlg-opts" id="dlgOpts"></div>
+          </div>
         </div>
       </div>
     </section>

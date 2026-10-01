@@ -251,8 +251,20 @@ user-select:none;white-space:nowrap;flex:0 0 auto;line-height:1.4}
    2026-09-21 又收一刀：框高锁到 15.5vh（120-150px），并且让立绘反过来按框高缩放
    （.port 走 stretch、.face 改成 height:100%）——「框和头像差不多高」是结构上成立的，
    不是两个数字凑巧接近。外框仍然锁死高度：不锁的话台词换行会把上面的历史区顶走。 */
-.stage{display:flex;gap:12px;align-items:stretch;flex:0 0 auto;height:clamp(120px,15.5vh,150px);padding:9px 20px 8px;
-  border-top:1px solid var(--line);background:linear-gradient(180deg,#141821,#181b23 55%)}
+/* 2026-09-30 组长两条：立绘放大 1.5 倍；台词从选择框里搬进气泡。
+   舞台恒高从 clamp(120,15.5vh,150) 抬到 clamp(168,21vh,200) —— 立绘按列高走（faceH=stageH-17），
+   102→155px 正好 1.5 倍多一点；"整页不滚"那条不变，挤掉的还是 #log 的可视高度。 */
+.stage{display:flex;gap:12px;align-items:stretch;flex:0 0 auto;height:clamp(168px,21vh,200px);padding:9px 20px 8px;
+  border-top:1px solid var(--line);background:linear-gradient(180deg,#131722,#171d2b 55%,#141926)}
+.dlg-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+/* 台词气泡：尾巴朝左指着立绘。句子仍是常量短句（LINES 那段的注释没作废：
+   长文本会撑破恒高框），所以气泡给 max-content，不抢选项的宽度。 */
+.saybub{position:relative;align-self:flex-start;max-width:min(92%,560px);
+  background:linear-gradient(180deg,#2a2410,#221d0e);border:1px solid #5c4d1c;border-radius:12px;
+  padding:5px 13px;font-size:14.5px;line-height:1.5;color:var(--ink);
+  box-shadow:0 4px 14px #00000040, inset 0 1px 0 #ffffff12}
+.saybub::before{content:"";position:absolute;left:-6px;top:12px;width:10px;height:10px;
+  transform:rotate(45deg);background:#2a2410;border-left:1px solid #5c4d1c;border-bottom:1px solid #5c4d1c}
 .port{position:relative;flex:0 0 auto;align-self:stretch;width:auto}
 /* 立绘是 1279x1706 的半身像。框比图片扁一点 + object-position 顶对齐 = 从下往上裁掉一条，
    正好把右下角那个"AI生成"水印裁在框外；再用 mask 把下缘淡出，接缝看不出来。 */
@@ -300,7 +312,8 @@ user-select:none;white-space:nowrap;flex:0 0 auto;line-height:1.4}
   background:#3b445c;border-radius:6px;border:2px solid transparent;background-clip:content-box}
 .dlg-say::-webkit-scrollbar-thumb:hover,.log::-webkit-scrollbar-thumb:hover{background:#505b75;background-clip:content-box}
 .dlg-say::-webkit-scrollbar-track,.log::-webkit-scrollbar-track{background:transparent}
-@media (max-width:620px){.port{display:none}.stage{padding:8px 12px;height:clamp(152px,24vh,196px)}}
+@media (max-width:620px){.port{display:none}.stage{padding:8px 12px;height:clamp(156px,24vh,200px)}
+  .saybub::before{display:none}}   /* 窄屏没有立绘，尾巴指着空气就奇怪了 */
 
 /* ================== 2026-09-28 外观层：只动颜色/阴影/圆角/动效 ==================
    上面那些量过几何的规矩（整页不滚 / 舞台恒高 / 立绘高=对话框高 / 选项胶囊尺寸）
@@ -389,3 +402,9 @@ main{background:
 .rel{background:linear-gradient(180deg,#1b2334,#171e2d);border-color:#313d59;
   transition:border-color .14s, transform .14s}
 .rel:hover{border-color:#54648c;transform:translateY(-1px)}
+
+/* 彩蛋：连戳立绘，每戳一下弹一下（app.js 里 POKE 那段负责台词）。
+   动画只加在 .face 的 transform 上，不改任何尺寸——舞台恒高那条规矩不破。 */
+.port.poke .face{animation:pokepop .18s ease-out}
+@keyframes pokepop{30%{transform:translateY(-5px) rotate(-2.5deg)}60%{transform:translateY(0) rotate(1deg)}}
+@media (prefers-reduced-motion:reduce){.port.poke .face{animation:none}}
