@@ -114,6 +114,45 @@ guard/
 
 ---
 
+## 四点五、图像识别（Qwen3.8-Flash）配置
+
+老丁的三处"看图"能力——登记拍照自动填表、卡面证件识别、以图搜物降级——默认走阿里云百炼的 **qwen3.8-flash** 多模态模型（OpenAI 兼容接口，后端同源代理，密钥不进前端）。**不配 key 不影响任何文字功能**，拍照时会提示并自动走口头描述/备用识别路。
+
+### 申请 key（约 2 分钟）
+
+1. 登录阿里云百炼控制台：https://bailian.console.aliyun.com/
+2. 右上角头像 → **API-KEY 管理** → 创建我的 API-KEY，拿到 `sk-` 开头的一串密钥
+3. （首次使用可能需开通"模型服务"，qwen3.8-flash 在免费/低价额度内即可调试）
+
+### 二选一配置
+
+**方式 A：写文件（推荐，最省事）**
+在 `server/` 目录下新建 `qwen_key.txt`，把 `sk-` 密钥整串粘进去保存（只放密钥一行，不要引号空格）：
+
+```
+guard/laoding/server/qwen_key.txt
+└──────────────────
+sk-xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+**方式 B：环境变量**
+
+```powershell
+$env:DASHSCOPE_API_KEY = 'sk-xxxxxxxxxxxxxxxxxxxxxxxx'
+.\run_server.bat
+```
+
+配置后**重启服务**，浏览器访问验证：
+
+```powershell
+(Invoke-WebRequest http://127.0.0.1:8000/api/vision/status -UseBasicParsing).Content
+# 应返回 {"model":"qwen3.8-flash","enabled":true}
+```
+
+> 安全：`server/qwen_key.txt` 已写入 `.gitignore`，不会被提交。后端调用百炼时显式直连（绕过本机 Clash 等代理），无需挂梯子。
+
+---
+
 ## 五、常见问题
 
 **1. `ModuleNotFoundError: No module named 'fastapi''`**
@@ -134,4 +173,4 @@ Get-NetTCPConnection -LocalPort 8000 -State Listen | Select-Object OwningProcess
 预览工具（trae-preview 等）自行注入的热更新脚本请求，本项目不使用 Vite，可忽略；用系统浏览器直接开 http://127.0.0.1:8000 即无此提示。
 
 **5. OCR / 以图搜物提示"连不上"**
-这两个是可选云端能力（见 `cloud/`）。未启动云端时，失物登记、文字找物、认领、报修全部正常，仅图像类能力降级。
+原 9000 端口云端 CV 服务（见 `cloud/`）是可选能力。现在拍照识别优先走 Qwen3.8（见上节配置），未配 key 时再降级到口头描述/备用识别路——失物登记、文字找物、认领、报修始终正常。

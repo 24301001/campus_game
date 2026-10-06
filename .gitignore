@@ -6,6 +6,9 @@ __pycache__/
 # ---- 运行时数据（含账号/密码哈希，不入库）----
 laoding/server/users.db
 
+# ---- Qwen 百炼 API Key（sk- 密钥，绝不入库）----
+laoding/server/qwen_key.txt
+
 # ---- 备用依赖目录（未随仓库使用）----
 .pylibs/
 

@@ -17,9 +17,9 @@
 -->
 <style>
 :root{
-  --bg:#10141c; --panel:#1a2230; --panel2:#141b27; --line:#2c3a52; --line2:#22304a;
-  --txt:#d7e2f2; --dim:#8496b3; --amber:#f0b429; --blue:#6ea8fe; --green:#69d58c; --red:#ef6a6a;
-  --guard:#3f5b8f; --me:#8a5f1d;
+  --bg:#f8fafc; --panel:#ffffff; --panel2:#f1f5f9; --line:#e2e8f0; --line2:#cbd5e1;
+  --txt:#1e293b; --dim:#64748b; --amber:#d97706; --blue:#2563eb; --green:#16a34a; --red:#dc2626;
+  --guard:#3b82f6; --me:#b45309;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -30,8 +30,8 @@ input{font:inherit}
 
 /* ---------- 登录窗口 ---------- */
 #login-view{height:100%;display:flex;align-items:center;justify-content:center;background:
-  repeating-linear-gradient(0deg,transparent 0 31px,rgba(110,168,254,.04) 31px 32px),
-  repeating-linear-gradient(90deg,transparent 0 31px,rgba(110,168,254,.04) 31px 32px),var(--bg)}
+  repeating-linear-gradient(0deg,transparent 0 31px,rgba(37,99,235,.05) 31px 32px),
+  repeating-linear-gradient(90deg,transparent 0 31px,rgba(37,99,235,.05) 31px 32px),var(--bg)}
 .login-card{width:360px;background:var(--panel);border:2px solid var(--line);padding:26px 26px 20px;image-rendering:pixelated}
 .login-card h1{font-size:17px;letter-spacing:2px;color:var(--amber);text-align:center;margin-bottom:2px}
 .login-card .sub{text-align:center;color:var(--dim);font-size:12px;margin-bottom:14px}
@@ -43,7 +43,7 @@ input{font:inherit}
 .field label{display:block;font-size:12px;color:var(--dim);margin-bottom:3px;letter-spacing:1px}
 .field input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:8px 10px;outline:none}
 .field input:focus{border-color:var(--blue)}
-#li-submit{width:100%;background:var(--amber);color:#231a05;border:none;padding:9px 0;font-weight:700;letter-spacing:4px;margin-top:6px}
+#li-submit{width:100%;background:var(--amber);color:#ffffff;border:none;padding:9px 0;font-weight:700;letter-spacing:4px;margin-top:6px}
 #li-submit:hover{filter:brightness(1.08)}
 #li-msg{min-height:18px;font-size:12px;color:var(--red);margin-top:8px;text-align:center}
 #li-health{text-align:center;font-size:12px;color:var(--dim);margin-top:6px}
@@ -57,8 +57,8 @@ header .mini{image-rendering:pixelated}
 header .title{font-weight:700;letter-spacing:1px}
 header .title small{display:block;font-weight:400;color:var(--dim);font-size:11px;letter-spacing:0}
 .chip{font-size:12px;border:1px solid var(--line);padding:2px 9px;color:var(--dim)}
-.chip.duty{color:var(--green);border-color:#2e5a3c}
-.chip.off{color:var(--amber);border-color:#5a4a2e}
+.chip.duty{color:var(--green);border-color:#86efac}
+.chip.off{color:var(--amber);border-color:#fcd34d}
 #clock{font-size:12px;color:var(--blue);border:1px dashed var(--line);padding:2px 9px;background:transparent}
 #clock:hover{border-color:var(--blue)}
 header .sp{flex:1}
@@ -72,7 +72,7 @@ header .sp{flex:1}
 .row.me{flex-direction:row-reverse}
 .row.sys{justify-content:center}
 .bubble{max-width:76%;padding:8px 12px;border:1px solid var(--line);background:var(--panel);white-space:pre-wrap;word-break:break-word}
-.row.me .bubble{background:#3a2c10;border-color:#6b5215}
+.row.me .bubble{background:#fef3c7;border-color:#fcd34d}
 .row.sys .bubble{max-width:92%;background:transparent;border:1px dashed var(--line2);color:var(--dim);font-size:12px;padding:4px 10px}
 .avatar-c{width:34px;height:34px;flex:none;image-rendering:pixelated;border:1px solid var(--line);background:var(--panel2)}
 /* guard 消息名字条 */
@@ -83,21 +83,60 @@ header .sp{flex:1}
 .bubble{border-radius:8px}
 .item-card,.order-card{border-radius:8px}
 
-/* 老丁立绘——左下角，随对话切表情 */
+/* 老丁动漫立绘——左下角，随对话切表情 + 场景气泡 */
 #chat-col{position:relative}
-#guard-portrait{position:absolute;left:8px;bottom:60px;z-index:6;width:108px;pointer-events:none;user-select:none}
-#guard-portrait .pt-frame{position:relative;animation:breathe 3.2s ease-in-out infinite}
-#guard-portrait svg{width:108px;height:auto;display:block;image-rendering:pixelated;
-  filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))}
+#guard-portrait{position:absolute;left:10px;bottom:56px;z-index:6;width:150px;pointer-events:auto;user-select:none;cursor:pointer}
+#guard-portrait .pt-frame{position:relative;animation:breathe 3.4s ease-in-out infinite}
+#guard-portrait svg.ding{width:150px;height:auto;display:block;
+  filter:drop-shadow(0 10px 18px rgba(0,0,0,.2))}
 #guard-portrait.bump .pt-frame{animation:bump .35s ease}
-.pt-tag{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);white-space:nowrap;
-  font-size:11px;letter-spacing:2px;color:var(--amber);background:rgba(20,26,38,.88);
-  border:1px solid var(--line);padding:1px 10px;border-radius:10px}
-.pt-mood{position:absolute;right:-6px;top:2px;font-size:16px;animation:bump .35s ease}
+.pt-tag{position:absolute;left:50%;bottom:0;transform:translateX(-50%);white-space:nowrap;
+  font-size:11px;letter-spacing:2px;color:var(--amber);background:rgba(255,255,255,.92);
+  border:1px solid var(--line);padding:2px 12px;border-radius:10px}
+.pt-mood{position:absolute;right:2px;top:30px;font-size:15px;animation:bump .35s ease;
+  background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:50%;width:24px;height:24px;
+  display:flex;align-items:center;justify-content:center}
+#pt-bubble{position:absolute;left:146px;bottom:104px;width:248px;max-width:46vw;display:none;
+  background:linear-gradient(180deg,#ffffff,#f8fafc);border:1px solid #cbd5e1;
+  border-radius:12px;padding:10px 13px;font-size:13px;line-height:1.65;color:#1e293b;z-index:8;
+  box-shadow:0 10px 28px rgba(0,0,0,.12);cursor:pointer}
+#pt-bubble.show{display:block;animation:bubbleIn .22s ease}
+#pt-bubble:after{content:'';position:absolute;left:-7px;bottom:26px;width:12px;height:12px;
+  background:#ffffff;border-left:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;
+  transform:rotate(45deg)}
+#pt-bubble .go{display:block;margin-top:5px;font-size:12px;color:var(--amber)}
+#pt-bubble .typing{display:inline-block;letter-spacing:2px;color:var(--blue);animation:blink 1s infinite}
+@keyframes bubbleIn{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
 @keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @keyframes bump{0%{transform:scale(.92)}55%{transform:scale(1.05)}100%{transform:scale(1)}}
-#msgs{padding-bottom:128px}
-@media (max-width:700px){ #guard-portrait{width:78px} #guard-portrait svg{width:78px} #msgs{padding-bottom:104px} #qa-row,#draft-bar{padding-left:94px} }
+#msgs{padding-bottom:172px}
+@media (max-width:700px){
+  #guard-portrait{width:104px} #guard-portrait svg.ding{width:104px}
+  #msgs{padding-bottom:128px} #qa-row,#draft-bar{padding-left:128px}
+  #pt-bubble{left:0;bottom:132px;width:210px;max-width:60vw} #pt-bubble:after{left:18px;bottom:-7px;transform:rotate(-135deg)}
+}
+
+/* 右上角小挂件——可拖拽的老丁头像 */
+#ding-pet{position:fixed;z-index:40;width:74px;top:66px;right:18px;cursor:grab;touch-action:none;user-select:none}
+#ding-pet.dragging{cursor:grabbing}
+#ding-pet .pet-head{position:relative;width:62px;margin:0 auto}
+#ding-pet svg.ding-mini{width:62px;height:62px;display:block;border-radius:50%;object-fit:cover;
+  border:2px solid #cbd5e1;background:#f8fafc;box-shadow:0 6px 16px rgba(0,0,0,.15)}
+#ding-pet .pet-pill{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);white-space:nowrap;
+  font-size:10px;color:#475569;background:rgba(255,255,255,.92);border:1px solid #cbd5e1;border-radius:9px;padding:1px 7px}
+#ding-pet .pet-pill i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#3ddc84;margin-right:4px;vertical-align:1px}
+#pet-badge{position:absolute;right:-3px;top:-4px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;
+  background:#f0464d;color:#fff;font-size:11px;display:none;align-items:center;justify-content:center;
+  border:1px solid #ffffff;font-weight:700}
+#pet-badge.show{display:flex}
+#pet-bubble{position:absolute;right:72px;bottom:26px;width:190px;display:none;background:#ffffff;
+  border:1px solid #cbd5e1;border-radius:10px;padding:8px 11px;font-size:12px;line-height:1.55;color:#1e293b;
+  box-shadow:0 8px 22px rgba(0,0,0,.1)}
+#pet-bubble.show{display:block;animation:bubbleIn .2s ease}
+#pet-bubble:after{content:'';position:absolute;right:-6px;bottom:18px;width:10px;height:10px;background:#ffffff;
+  border-right:1px solid #cbd5e1;border-top:1px solid #cbd5e1;transform:rotate(45deg)}
+@media (max-width:700px){ #ding-pet{width:62px;top:58px;right:10px} #ding-pet svg.ding-mini{width:52px;height:52px} }
 .photo-thumb{max-width:180px;max-height:140px;display:block;image-rendering:auto;border:1px solid var(--line)}
 .photo-dropped{font-size:11px;color:var(--dim)}
 
@@ -107,7 +146,7 @@ header .sp{flex:1}
 .item-card.best{border-color:var(--amber)}
 .item-card .hd{display:flex;align-items:center;gap:8px;margin-bottom:2px}
 .item-card .cat{color:var(--amber);font-weight:700}
-.item-card .best-tag{font-size:11px;background:var(--amber);color:#231a05;padding:0 6px}
+.item-card .best-tag{font-size:11px;background:var(--amber);color:#ffffff;padding:0 6px}
 .item-card .score{margin-left:auto;font-size:12px;color:var(--blue)}
 .item-card .meta{font-size:12px;color:var(--dim)}
 .bar{height:5px;background:var(--line2);margin:6px 0}
@@ -115,12 +154,12 @@ header .sp{flex:1}
 .item-card.best .bar i{background:var(--amber)}
 .dims{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
 .dims span{font-size:11px;color:var(--dim);border:1px solid var(--line2);padding:0 5px}
-.dims span.hit{color:var(--green);border-color:#2e5a3c}
+.dims span.hit{color:var(--green);border-color:#bbf7d0}
 .claim-btn{background:transparent;border:1px solid var(--line);color:var(--blue);font-size:12px;padding:2px 10px}
 .claim-btn:hover{border-color:var(--blue)}
 .opt-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}
 .opt-btn{background:var(--panel2);border:1px solid var(--blue);color:var(--blue);font-size:12px;padding:4px 12px;cursor:pointer;letter-spacing:1px}
-.opt-btn:hover{background:rgba(96,165,250,.14)}
+.opt-btn:hover{background:rgba(59,130,246,.1)}
 .opt-btn.ghost{border-color:var(--line);color:var(--dim)}
 .opt-btn.ghost:hover{border-color:var(--amber);color:var(--amber);background:transparent}
 
@@ -128,16 +167,16 @@ header .sp{flex:1}
 .order-card{border:1px solid var(--line);background:var(--panel2);padding:7px 10px;font-size:13px;max-width:86%}
 .order-card .oid{color:var(--blue);font-weight:700;margin-right:8px}
 .badge{font-size:11px;padding:0 6px;border:1px solid}
-.badge.s0{color:var(--blue);border-color:#2c4a72}
-.badge.s1{color:var(--amber);border-color:#6b5215}
-.badge.s2{color:var(--green);border-color:#2e5a3c}
+.badge.s0{color:var(--blue);border-color:#bfdbfe}
+.badge.s1{color:var(--amber);border-color:#fcd34d}
+.badge.s2{color:var(--green);border-color:#bbf7d0}
 .order-card .meta{color:var(--dim);font-size:12px}
 
 /* 快捷入口 + 输入区 */
-#qa-row{display:flex;gap:8px;padding:8px 14px 0 124px;flex-wrap:wrap}
+#qa-row{display:flex;gap:8px;padding:8px 14px 0 172px;flex-wrap:wrap}
 .qa{background:var(--panel2);border:1px solid var(--line);color:var(--txt);font-size:12px;padding:4px 12px;letter-spacing:1px}
 .qa:hover{border-color:var(--amber);color:var(--amber)}
-#draft-bar{display:flex;align-items:center;gap:10px;padding:8px 14px 0 124px}
+#draft-bar{display:flex;align-items:center;gap:10px;padding:8px 14px 0 172px}
 #draft-bar .thumb{width:56px;height:56px;object-fit:cover;border:1px solid var(--line);border-radius:4px}
 #draft-bar .draft-tip{font-size:12px;color:var(--dim)}
 #draft-bar .rm{margin-left:auto;background:none;border:1px solid var(--line);color:var(--dim);padding:2px 10px;cursor:pointer;font-size:12px}
@@ -147,15 +186,15 @@ header .sp{flex:1}
 #inp:focus{border-color:var(--blue)}
 .icon-btn{background:var(--panel2);border:1px solid var(--line);color:var(--dim);padding:0 14px}
 .icon-btn:hover{color:var(--amber);border-color:var(--amber)}
-#btn-send{background:var(--guard);border:1px solid #557bbd;color:#eaf1ff;padding:0 22px;letter-spacing:2px}
+#btn-send{background:var(--guard);border:1px solid #60a5fa;color:#ffffff;padding:0 22px;letter-spacing:2px}
 
 /* 地图接口面板（预留） */
 #map-panel{width:280px;flex:none;border-left:2px solid var(--line);background:var(--panel2);display:flex;flex-direction:column}
 #map-panel .ph-title{padding:10px 12px 4px;font-size:13px;color:var(--amber);letter-spacing:1px}
 #map-panel .ph-sub{padding:0 12px 8px;font-size:11px;color:var(--dim);border-bottom:1px dashed var(--line2)}
 #map-holder{margin:10px 12px;border:1px dashed var(--line);height:150px;position:relative;
-  background:repeating-linear-gradient(0deg,transparent 0 15px,rgba(110,168,254,.05) 15px 16px),
-  repeating-linear-gradient(90deg,transparent 0 15px,rgba(110,168,254,.05) 15px 16px)}
+  background:repeating-linear-gradient(0deg,transparent 0 15px,rgba(37,99,235,.06) 15px 16px),
+  repeating-linear-gradient(90deg,transparent 0 15px,rgba(37,99,235,.06) 15px 16px)}
 #map-holder .ph-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:12px;letter-spacing:2px}
 #map-log-title{padding:4px 12px;font-size:12px;color:var(--dim)}
 #map-log{flex:1;overflow-y:auto;padding:0 12px 12px;font-size:11px;color:var(--dim)}
@@ -203,10 +242,11 @@ header .sp{flex:1}
       <div id="msgs"></div>
       <div id="guard-portrait" data-mood="idle" title="保安 · 老丁">
         <div class="pt-frame">
-          <svg id="guard-svg" viewBox="0 0 48 60" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" aria-label="保安老丁"></svg>
+          <div id="guard-art" class="ding-art"></div>
           <span class="pt-tag">保安 · 老丁</span>
           <span class="pt-mood" id="pt-mood"></span>
         </div>
+        <div id="pt-bubble"><span id="pt-bubble-txt"></span><span class="go">点我接着说 →</span></div>
       </div>
       <div id="qa-row">
         <button class="qa" data-act="lost_search">找失物</button>
@@ -230,6 +270,15 @@ header .sp{flex:1}
       <div id="map-log-title">接口调用记录</div>
       <div id="map-log"></div>
     </aside>
+  </div>
+  <!-- 可拖拽小挂件：老丁执勤头像 -->
+  <div id="ding-pet" title="拖我换个位置，点我有话说">
+    <div id="pet-bubble"></div>
+    <div class="pet-head">
+      <span id="pet-badge">0</span>
+      <div id="pet-art"></div>
+      <span class="pet-pill"><i></i><b id="pet-state">老丁 · 值班中</b></span>
+    </div>
   </div>
 </section>
 
@@ -329,13 +378,8 @@ header .sp{flex:1}
  * ============================================================ */
 const CFG = {
   dataVersion: 1,
-  // 云端 CV 入口：开发期直连 cv_service（同形 API）；合体/上线改为云函数代理地址（cloud/proxy.js）
-  cvBase: 'http://127.0.0.1:9000',
-  cvTimeoutMs: 3000,          // 总体设计 §6.4：代理 800ms 即降级；此处为前端整体超时
-  ocrMinConf: 0.6,            // 置信度门槛：低置信度字段不参与判定（保安.md §3.4）
   weights: { category: 0.40, place: 0.25, time: 0.15, text: 0.20 },  // 四维权重（保安.md §五 待定项1，此处由 4 号定）
   thMatch: 0.55, thHedge: 0.42,
-  thImage: 0.30,   // 以图搜物最低图像相似度（normSim 后）：低于此值不返回，杜绝给库不存在物品硬凑 top3
   maxTop: 3
 };
 const CARD_CATS = ['校园卡', '学生证', '身份证'];
@@ -379,8 +423,6 @@ function curDate(){ const d=new Date(); if(timeOverride){ d.setHours(timeOverrid
 function currentHour(){ return curDate().getHours(); }
 function inServiceHours(){ const h=currentHour(); return h >= 8 && h < 22; } // 应答时段 08:00–22:00（总体设计 §6.1）
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function cosine(a, b){ let s=0,na=0,nb=0; const n=Math.min(a.length,b.length); for(let i=0;i<n;i++){ s+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; } return s/(Math.sqrt(na)*Math.sqrt(nb)+1e-9); }
-function normSim(cos){ return Math.max(0, Math.min(1, (cos-0.15)/0.75)); } // CLIP 余弦 → 0..1 展示分
 
 /* ============================================================
  * 数据层：种子加载（fetch 优先，file:// 回退内嵌）+ localStorage 分片
@@ -409,7 +451,7 @@ const Store = {
     let lost = null, orders = null;
     try{ lost = JSON.parse(localStorage.getItem(this.key('lost')) || 'null'); orders = JSON.parse(localStorage.getItem(this.key('orders')) || 'null'); }catch(e){}
     if(seeded || !lost || !orders){
-      lost = lj.items.map(it => { const {hoursAgo, ...o} = it; o.foundTime = nowMs() - hoursAgo*3600e3; return o; });
+      lost = lj.items.map(it => { const {hoursAgo, ...o} = it; o.foundTime = nowMs() - hoursAgo*3600e3; if(o.storageTime == null) o.storageTime = o.foundTime; return o; });
       orders = wj.orders.map(o => { const {hoursAgo, ...r} = o; r.time = nowMs() - hoursAgo*3600e3; return r; });
       this.saveLost(lost); this.saveOrders(orders);
       localStorage.setItem(this.key('seedver'), String(lj.version + '-' + wj.version));
@@ -447,12 +489,12 @@ const Store = {
   },
   itemById(id){ return this.lost.find(i => i.id === id) || null; },
   orderById(id){ return this.orders.find(o => o.id === id) || null; },
-  addLost(entry){ this.lost.unshift(entry); this.saveLost(this.lost); return entry; },
+  addLost(entry){ this.lost.unshift(entry); this.saveLost(this.lost); updatePetBadge(); return entry; },
   // 认领办结：当面确认、失主拿到手后才销账（returned）；此前一律保持在库 in_storage
   markReturned(id, to){
     const it = this.itemById(id); if(!it) return null;
     it.status = 'returned'; it.returnedTime = nowMs(); it.returnedTo = to || null;
-    this.saveLost(this.lost); return it;
+    this.saveLost(this.lost); updatePetBadge(); return it;
   },
   addOrder(o){ this.orders.unshift(o); this.saveOrders(this.orders); return o; },
   // 私密记忆（visibility:private, 仅本人可见；公共层两条 JSON 不收对话内容——保安.md §4.3）
@@ -469,8 +511,8 @@ const Store = {
  * NLU：纯规则意图分类 + 槽位抽取（零 LLM，断网可用——总体设计 §23）
  * ============================================================ */
 const CATEGORY_ALIAS = [
-  ['校园卡', ['校园卡','饭卡','一卡通','餐卡','校牌']],
-  ['学生证', ['学生证']],
+  ['校园卡', ['校园卡','饭卡','一卡通','餐卡','校牌','卡片']],
+  ['学生证', ['学生证','学生卡']],
   ['身份证', ['身份证']],
   ['水杯',   ['水杯','保温杯','杯子','茶杯','咖啡杯','水壶','保温壶','杯']],
   ['钥匙',   ['钥匙','钥匙扣','钥匙串']],
@@ -515,7 +557,7 @@ function parseWhen(t){
   else if(/前天/.test(t)) days = 2;
   else if(/昨天/.test(t)) days = 1;
   else if(/今天/.test(t)) days = 0;
-  else if(/刚才|刚刚/.test(t)) return new Date(now - 2*3600e3);
+  else if(/刚才|刚刚|现在|立马/.test(t)) return new Date(now - 2*3600e3);
   if(days == null) return null;
   const d = new Date(now - days*86400e3);
   let hh = 12, mm = 0;
@@ -531,6 +573,15 @@ function parseName(t){
   if(m) return m[1];
   const bare = String(t).replace(/[0-9a-zA-Z是我叫的，,。.\s：:]/g, '');  // 支持与学号混写：「20231234 李某某」
   return /^[\u4e00-\u9fa5]{2,4}$/.test(bare) ? bare : null;
+}
+// 学号尾号：「尾号1035」「尾号是1035」「后四位1035」「末三位123」
+function parseSidTail(t){
+  const m = String(t || '').replace(/\s/g, '').match(/(?:尾号是?|尾数是?|后\d位是?|末\d位是?)(\d{3,6})/);
+  return m ? m[1] : null;
+}
+// 尾号查卡：只查在库证件类，返回命中列表（0/1/N 条由调用方分流）
+function findCardsByTail(tail){
+  return Store.lost.filter(it => it.status === 'in_storage' && isCardCat(it.category) && it.studentId && it.studentId.endsWith(tail));
 }
 // 意图分类（纯关键词，有序短路）
 function classify(text){
@@ -551,19 +602,32 @@ function classify(text){
 }
 
 /* ============================================================
- * 云端 CV 客户端（链路：前端 → 云函数代理 → GPU；保安.md §3.3）
- * 独立演示期 cvBase 直连 cv_service（接口同形）；合体时换成代理 URL，仅改配置。
+ * Qwen3.8-Flash 视觉识别（同源后端代理 → 阿里云百炼，保安.md §3.3 升级路）
+ * kind: 'item' 失物外观识别 / 'card' 证件 OCR；未配 key 或超时由调用方降级
  * ============================================================ */
-async function cvCall(action, payload){
+class VisionError extends Error {
+  constructor(code, msg){ super(msg || code); this.code = code; }
+}
+async function visionRecognize(image, kind){
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), CFG.cvTimeoutMs);
+  const timer = setTimeout(() => ctrl.abort(), 30000);
+  let r;
   try{
-    const r = await fetch(CFG.cvBase + '/' + action, {
+    r = await fetch('/api/vision/recognize', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload), signal: ctrl.signal });
-    if(!r.ok) throw new Error('HTTP ' + r.status);
-    return await r.json();
-  } finally { clearTimeout(timer); }
+      body: JSON.stringify({ kind, image }), signal: ctrl.signal });
+  }catch(e){ clearTimeout(timer); throw new VisionError('net', String(e.message || e)); }
+  clearTimeout(timer);
+  let j = {};
+  try{ j = await r.json(); }catch(e){}
+  if(r.ok) return j;
+  const d = j.detail || {};
+  if(r.status === 503 && d.code === 'no_key') throw new VisionError('no_key', d.msg);
+  throw new VisionError(d.code || ('http_' + r.status), d.msg || ('HTTP ' + r.status));
+}
+const VISION_KEY_HINT = '图像识别还没配 Qwen key：把百炼平台申请的 sk- 开头密钥存进 server/qwen_key.txt 后重启服务就能用（README 有步骤）。';
+function visionItemSummary(d){
+  return [d.category, [d.color, d.brand, d.desc].filter(Boolean).join('，')].filter(Boolean).join('：');
 }
 
 /* ============================================================
@@ -571,9 +635,9 @@ async function cvCall(action, payload){
  * ============================================================ */
 
 // ---- 四维相似度匹配（核心算法，保安.md §3.2）----
-// query: {category?, place(Point|null), when(Date|null), desc, imgSim?(0..1)}
-// 关键设计：imgSim 命中时直接替代「描述关键词」维，其余三维照常参与加权。
-function scoreItem(q, item, imgSim){
+// query: {category?, place(Point|null), when(Date|null), desc}
+// 外观维：文字检索走关键词/二元匹配；以图搜物时 Qwen 把照片转成外观描述后同样走这一维
+function scoreItem(q, item){
   const dims = {};
   dims.category = q.category ? (item.category === q.category ? 1 : 0.12) : 0.5;
   if(q.place && item.x != null){
@@ -584,49 +648,46 @@ function scoreItem(q, item, imgSim){
     const h = Math.abs(item.foundTime - q.when.getTime()) / 3600e3;
     dims.time = Math.exp(-h / 30);              // 隔了三天的大概率不是你的
   } else dims.time = 0.5;
-  dims.text = imgSim != null ? imgSim : (q.desc ? textScore(q.desc, item) : 0.5);
+  dims.text = q.desc ? textScore(q.desc, item) : 0.5;
   const W = CFG.weights;
   return { total: W.category*dims.category + W.place*dims.place + W.time*dims.time + W.text*dims.text, dims };
 }
 function toolMatchLostItem(query){
   let pool = Store.lost.filter(it => it.status === 'in_storage');
   if(query.category) pool = pool.filter(it => it.category === query.category); // 类别先粗筛
-  return pool.map(it => ({ it, s: scoreItem(query, it, null) }))
+  return pool.map(it => ({ it, s: scoreItem(query, it) }))
              .sort((a,b) => b.s.total - a.s.total).slice(0, CFG.maxTop);
 }
 
-// ---- 以图搜物（相似度路，保安.md §3.3）----
-async function toolMatchByImage({ image, query }){
+// ---- 以图搜物（全走 Qwen3.8：看图 → 类别+外观描述 → 文字四维匹配；保安.md §3.3 升级路）----
+// vision 可选：调用方已先做过一次识别（如自由态分路）时直接传入，一张照片只打一次 Qwen
+async function toolMatchByImage({ image, query, vision }){
   query = query || { category:null, place:null, when:null, desc:'' };
   try{
-    const enc = await cvCall('encode', { image });
-    const v = enc.vector;
-    if(!v || !v.length) throw new Error('bad vector');
-    const rows = Store.lost.filter(it => it.status === 'in_storage' && it.vector && it.vector.length === v.length)
-      .map(it => ({ it, cos: cosine(v, it.vector) })).sort((a,b) => b.cos - a.cos);
-    if(!rows.length) return { mode:'image_empty', hits:[], reason:'库内暂无图像向量（入库时需云端编码）' };
-    // 最低图像相似度过滤：全部低于阈值 → 库里没有这东西，如实告知不硬凑（标准：不编造结果）
-    const above = rows.filter(r => normSim(r.cos) >= CFG.thImage);
-    if(!above.length) return { mode:'image_empty', hits:[], reason:'库里没有匹配物品——图像相似度全部低于阈值' };
-    const hits = above.slice(0, 6)
-      .map(r => ({ it: r.it, cos: r.cos, s: scoreItem(query, r.it, normSim(r.cos)) }))
-      .sort((a,b) => b.s.total - a.s.total).slice(0, CFG.maxTop);
-    return { mode:'image', hits };
+    const v = vision || await visionRecognize(image, 'item');
+    const dd = v.data || {};
+    const sum = visionItemSummary(dd);
+    if(!sum) return { mode:'image_empty', hits:[], reason:'照片里没认出具体物品' };
+    const nc = dd.category && !query.category ? normCategory(dd.category) : null;
+    const q2 = { ...query,
+      desc: query.desc ? query.desc + '；' + sum : sum,
+      category: query.category || (nc ? nc.cat : (dd.category || null)) };
+    const hits = toolMatchLostItem(q2);
+    if(!hits.length) return { mode:'image_empty', hits:[], reason:'库里没有匹配物品', summary: sum };
+    return { mode:'image', hits, summary: sum, query: q2 };
   }catch(e){
-    // 800ms 超时 / 断网 → 主动降级到文字匹配（附录 D：主动演示降级反而加分）
-    return { mode:'degraded', reason: String(e && e.message || e), hits: query.desc ? toolMatchLostItem(query) : [] };
+    // Qwen 未配 key / 超时 → 主动降级到文字匹配（附录 D：主动演示降级反而加分）
+    return { mode:'degraded', reason: (e && e.code === 'no_key') ? 'no_key' : String(e && e.message || e),
+             hits: (query.desc || '').trim() ? toolMatchLostItem(query) : [] };
   }
 }
 
-// ---- 证件 OCR（精确路；字段抽取在云端，双字段交叉验证在本地——保安.md §3.4）----
+// ---- 证件 OCR（全走 Qwen3.8 卡面识别；双字段交叉验证在本地——保安.md §3.4）----
 async function toolOcrCard(image){
-  const r = await cvCall('ocr', { image });
-  const f = r.fields || {};
-  const ok = x => x && x.value && (x.confidence == null || x.confidence >= CFG.ocrMinConf);
-  return { studentId: ok(f.student_id) ? f.student_id.value : null,
-           name: ok(f.name) ? f.name.value : null,
-           sidConf: f.student_id ? f.student_id.confidence : null,
-           nameConf: f.name ? f.name.confidence : null };
+  const v = await visionRecognize(image, 'card');
+  const d = v.data || {};
+  return { studentId: d.student_id || null, name: d.name || null,
+           isCard: d.is_card !== false, type: d.type || null };
 }
 function toolFindCardBySid(sid){
   return Store.lost.find(it => it.status === 'in_storage' && isCardCat(it.category) && it.studentId === sid) || null;
@@ -648,17 +709,17 @@ function toolRegisterCard({ studentId, name, place, reporter }){
     place: pt ? pt.name : (place || '保卫处'), placeId: pt ? pt.id : null,
     x: pt ? pt.x : null, y: pt ? pt.y : null,
     desc:'证件登记入库', name, studentId,
-    vector:null, status:'in_storage', reporter, foundTime: nowMs(), visibility:'public'
+    status:'in_storage', reporter, foundTime: nowMs(), storageTime: nowMs(), visibility:'public'
   });
 }
-function toolRegisterItem({ category, desc, place, reporter, vector }){
+function toolRegisterItem({ category, desc, place, reporter, foundTime }){ // foundTime=用户上报的捡到时间
   const p = Store.resolvePlace(place || '');
   const pt = p ? p.point : null;
   return Store.addLost({
     id:'L-' + String(nowMs()).slice(-6), category: category || '其他',
     place: pt ? pt.name : (place || '未登记'), placeId: pt ? pt.id : null,
     x: pt ? pt.x : null, y: pt ? pt.y : null,
-    desc, vector: vector || null, status:'in_storage', reporter, foundTime: nowMs(), visibility:'public'
+    desc, status:'in_storage', reporter, foundTime: foundTime || nowMs(), storageTime: nowMs(), visibility:'public'
   });
 }
 
@@ -781,11 +842,11 @@ function renderItemCard(h, isBest, mode){
   const dimTag = (ok, label) => `<span class="${ok ? 'hit' : ''}">${label}</span>`;
   const dims = dimTag(h.s.dims.category >= 0.9, '类别✓') + dimTag(h.s.dims.place >= 0.5, '地点近') +
                dimTag(h.s.dims.time >= 0.4, '时间近') +
-               `<span class="${(mode === 'image') ? 'hit' : ''}">${mode === 'image' ? '图像 ' + Math.round(h.s.dims.text*100) + '%' : '描述 ' + Math.round(h.s.dims.text*100) + '%'}</span>`;
+               `<span class="${(mode === 'image') ? 'hit' : ''}">${mode === 'image' ? '外观 ' + Math.round(h.s.dims.text*100) + '%' : '描述 ' + Math.round(h.s.dims.text*100) + '%'}</span>`;
   d.innerHTML = `
     <div class="hd"><span class="cat">${esc(it.category)}</span>${isBest ? '<span class="best-tag">最像这条</span>' : ''}
       <span class="score">匹配 ${pct}%</span></div>
-    <div class="meta">捡到地点：${esc(it.place)} · 入库 ${fmtTime(it.foundTime)}</div>
+    <div class="meta">捡到地点：${esc(it.place)} · 捡到时间 ${fmtTime(it.foundTime)}</div>
     <div>${esc(it.desc)}</div>
     ${it.studentId ? `<div class="meta">学号 ${esc(it.studentId)} · ${esc(it.name || '')}</div>` : ''}
     <div class="bar"><i style="width:${pct}%"></i></div>
@@ -821,54 +882,236 @@ function drawSprite(cv, scale){
 }
 
 /* ============================================================
- * 老丁立绘：SVG 像素半身像，表情随对话内容切换
+ * 老丁立绘：动漫风 SVG 半身像，表情随对话内容切换
  * 8 种心情：idle 值班 / greet 招呼 / think 查询追问 / found 找到了 /
  *          none 库里没有 / refuse 推诿 / serious 证件核对 / busy 登记受理
+ * 同一份矢量同时渲染左下角大立绘与右上角圆形挂件
  * ============================================================ */
-const PTC = { H:'#2b3a55', F:'#f2c9a0', E:'#20242c', M:'#b3573f', U:'#3f5b8f', B:'#f0b429', S:'#171c26', W:'#e8e0cf' };
-// [x,y,w,h,色] —— 身体与帽子不随表情变
-const PT_BODY = [
-  [12,3,24,6,'H'], [23,5,2,2,'B'], [7,9,34,3,'H'], [10,11,28,1,'S'],   // 大檐帽 + 帽徽 + 帽檐
-  [13,12,22,17,'F'], [11,17,2,6,'F'], [35,17,2,6,'F'],                  // 脸 + 耳朵
-  [20,29,8,4,'F'],                                                     // 脖子
-  [8,33,32,2,'H'], [9,33,5,2,'B'], [34,33,5,2,'B'],                    // 肩线 + 肩章
-  [10,35,28,25,'U'], [20,35,8,6,'S'], [23,35,2,3,'B'], [23,38,2,8,'S'],// 制服 + V领 + 领带
-  [30,38,6,3,'B'], [23,45,2,2,'B'], [23,51,2,2,'B']                    // 胸牌 + 扣子
-];
-// 各表情的眉/眼/嘴
-const PT_FACES = {
-  idle:    [ [17,19,2,2,'E'],[27,19,2,2,'E'], [21,24,6,1,'M'] ],
-  greet:   [ [16,19,4,1,'E'],[17,20,2,1,'E'],[26,19,4,1,'E'],[27,20,2,1,'E'],
-             [20,24,8,1,'M'],[22,25,4,1,'M'] ],
-  think:   [ [16,16,4,1,'H'],[27,15,4,1,'H'],
-             [17,19,2,2,'E'],[27,19,2,2,'E'], [24,24,4,1,'M'] ],
-  found:   [ [16,19,4,1,'E'],[17,20,2,1,'E'],[26,19,4,1,'E'],[27,20,2,1,'E'],
-             [21,23,6,3,'M'],[22,23,4,1,'W'] ],
-  none:    [ [16,16,2,1,'H'],[18,17,2,1,'H'],[28,16,2,1,'H'],[26,17,2,1,'H'],
-             [17,20,2,2,'E'],[27,20,2,2,'E'], [20,25,8,1,'M'],[22,24,4,1,'M'] ],
-  refuse:  [ [16,17,2,1,'H'],[18,16,2,1,'H'],[28,17,2,1,'H'],[26,16,2,1,'H'],
-             [17,19,2,2,'E'],[27,19,2,2,'E'], [20,25,8,1,'M'],[22,24,4,1,'M'] ],
-  serious: [ [15,17,5,1,'H'],[26,17,5,1,'H'],
-             [17,19,2,2,'E'],[27,19,2,2,'E'], [19,24,10,1,'M'] ],
-  busy:    [ [17,16,4,1,'H'],[27,16,4,1,'H'],
-             [18,19,2,2,'E'],[28,19,2,2,'E'], [22,24,4,1,'M'] ]
-};
 const PT_ICONS = { greet:'', think:'?', found:'✓', none:'×', refuse:'!', serious:'证', busy:'记', idle:'' };
-function portraitInner(mood){
-  return PT_BODY.concat(PT_FACES[mood] || PT_FACES.idle)
-    .map(r => `<rect x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" fill="${PTC[r[4]]}"/>`).join('');
+// 各心情的眉形（左右两条）、眼形、嘴形
+const DING_FACE = {
+  idle:    { brow:['M43,55.5 Q48,53.5 53,55.5', 'M67,55.5 Q72,53.5 77,55.5'], eyes:'open',  mouth:'smile' },
+  greet:   { brow:['M43,55 Q48,51.8 53,55', 'M67,55 Q72,51.8 77,55'], eyes:'happy', mouth:'open' },
+  found:   { brow:['M43,55 Q48,51.8 53,55', 'M67,55 Q72,51.8 77,55'], eyes:'happy', mouth:'open' },
+  think:   { brow:['M43,53 Q48,52 53,54', 'M67,55.5 Q72,53.5 77,55.5'], eyes:'look', mouth:'tiny' },
+  none:    { brow:['M43,56.5 Q48,53.5 53,55.5', 'M67,55.5 Q72,53.5 77,56.5'], eyes:'narrow', mouth:'frown' },
+  refuse:  { brow:['M43,54 L53,57', 'M67,57 L77,54'], eyes:'narrow', mouth:'flat' },
+  serious: { brow:['M43,56.5 L53,56.5', 'M67,56.5 L77,56.5'], eyes:'narrow', mouth:'serious' },
+  busy:    { brow:['M43,55.5 Q48,53.5 53,55.5', 'M67,53 Q72,51.5 77,54'], eyes:'narrow', mouth:'o' }
+};
+// 动漫大眼：白底 + 渐变虹膜 + 双高光 + 粗上睫线（外眼角带小挑睫）
+function dingEye(cx, type){
+  const o = cx < 60 ? -1 : 1;
+  if(type === 'happy')
+    return `<path d="M${cx-7},63.5 Q${cx},55.5 ${cx+7},63.5" fill="none" stroke="#23202a" stroke-width="3.2" stroke-linecap="round"/>
+            <path d="M${cx+o*7},63 l${o*2},-1.8" fill="none" stroke="#23202a" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M${cx-4.5},66.5 Q${cx},68.4 ${cx+4.5},66.5" fill="none" stroke="#b07d63" stroke-width="1.3" stroke-linecap="round"/>`;
+  if(type === 'look')
+    return `<ellipse cx="${cx}" cy="64" rx="6.8" ry="8.2" fill="#fff"/>
+            <circle cx="${cx+1.6}" cy="64.6" r="5.4" fill="url(#dIris)" stroke="#2a1a12" stroke-width=".8"/>
+            <circle cx="${cx+1.6}" cy="64.6" r="2.6" fill="#17110c"/>
+            <circle cx="${cx-0.2}" cy="62.2" r="1.6" fill="#fff"/><circle cx="${cx+3.4}" cy="66.8" r=".9" fill="#fff" opacity=".85"/>
+            <path d="M${cx-7},61 Q${cx},55.5 ${cx+7},61" fill="none" stroke="#23202a" stroke-width="3" stroke-linecap="round"/>
+            <path d="M${cx+o*7},60.6 l${o*2.2},-1.6" fill="none" stroke="#23202a" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M${cx-4.5},68.8 Q${cx},70.4 ${cx+4.5},68.8" fill="none" stroke="#c88e6b" stroke-width="1" stroke-linecap="round" opacity=".8"/>`;
+  if(type === 'narrow')
+    return `<ellipse cx="${cx}" cy="64.5" rx="6.6" ry="4.6" fill="#fff"/>
+            <circle cx="${cx}" cy="65.2" r="3.6" fill="url(#dIris)" stroke="#2a1a12" stroke-width=".7"/>
+            <circle cx="${cx}" cy="65.2" r="1.8" fill="#17110c"/>
+            <circle cx="${cx-1.4}" cy="63.6" r="1" fill="#fff"/>
+            <path d="M${cx-7},61.5 Q${cx},58 ${cx+7},61.5" fill="none" stroke="#23202a" stroke-width="3" stroke-linecap="round"/>
+            <path d="M${cx-6},58.8 Q${cx},56.6 ${cx+6},58.8" fill="none" stroke="#c88e6b" stroke-width="1" stroke-linecap="round" opacity=".7"/>`;
+  return `<ellipse cx="${cx}" cy="64" rx="6.8" ry="8.2" fill="#fff"/>
+          <circle cx="${cx}" cy="64.6" r="5.4" fill="url(#dIris)" stroke="#2a1a12" stroke-width=".8"/>
+          <circle cx="${cx}" cy="64.6" r="2.6" fill="#17110c"/>
+          <circle cx="${cx-1.8}" cy="62.2" r="1.7" fill="#fff"/><circle cx="${cx+2.1}" cy="66.9" r=".9" fill="#fff" opacity=".85"/>
+          <path d="M${cx-7},61 Q${cx},55.5 ${cx+7},61" fill="none" stroke="#23202a" stroke-width="3" stroke-linecap="round"/>
+          <path d="M${cx+o*7},60.6 l${o*2.2},-1.6" fill="none" stroke="#23202a" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M${cx-4.5},68.8 Q${cx},70.4 ${cx+4.5},68.8" fill="none" stroke="#c88e6b" stroke-width="1" stroke-linecap="round" opacity=".8"/>`;
+}
+function dingMouth(type){
+  switch(type){
+    case 'open':
+      return `<path d="M54,78 Q60,87 66,78 Q60,82.5 54,78 Z" fill="#86453d"/>
+              <path d="M56,78.4 Q60,80.6 64,78.4 Q60,80 56,78.4 Z" fill="#f4e9e2"/>`;
+    case 'frown':   return `<path d="M55,82.5 Q60,79 65,82.5" fill="none" stroke="#8a5443" stroke-width="2.2" stroke-linecap="round"/>`;
+    case 'flat':    return `<path d="M56,81 L64,81" stroke="#8a5443" stroke-width="2.2" stroke-linecap="round"/>`;
+    case 'serious': return `<path d="M55,80.4 Q60,78.8 65,80.4" fill="none" stroke="#8a5443" stroke-width="2.2" stroke-linecap="round"/>`;
+    case 'tiny':    return `<path d="M57.5,80.2 L63.5,79.4" stroke="#8a5443" stroke-width="2.2" stroke-linecap="round"/>`;
+    case 'o':       return `<ellipse cx="60" cy="80.5" rx="2.5" ry="3.1" fill="#86453d"/>`;
+    default:        return `<path d="M55,78.6 Q60,82.6 65,78.6" fill="none" stroke="#8a5443" stroke-width="2.2" stroke-linecap="round"/>`;
+  }
+}
+// 不随表情变的身体——赛璐璐风：柔和脸型、腮红渐变、鬓发、低檐帽（帽檐不遮眼）
+const DING_BODY = `
+<defs>
+ <linearGradient id="dSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8d3b2"/><stop offset="1" stop-color="#ecb08a"/></linearGradient>
+ <linearGradient id="dUni" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4f7e"/><stop offset="1" stop-color="#1e2a45"/></linearGradient>
+ <linearGradient id="dCap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b4e78"/><stop offset="1" stop-color="#1a2440"/></linearGradient>
+ <radialGradient id="dIris" cx=".35" cy=".3" r=".95"><stop offset="0" stop-color="#8a5a34"/><stop offset=".55" stop-color="#5c3a22"/><stop offset="1" stop-color="#332015"/></radialGradient>
+ <radialGradient id="dBlush" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#f5918a" stop-opacity=".55"/><stop offset="1" stop-color="#f5918a" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="60" cy="151" rx="37" ry="5" fill="rgba(0,0,0,.35)"/>
+<path d="M14,156 C14,114 34,100 60,100 C86,100 106,114 106,156 Z" fill="url(#dUni)"/>
+<path d="M87,102 C100,110 106,124 106,156 L93,156 C96.5,132 94,114 87,102 Z" fill="#141c30" opacity=".5"/>
+<path d="M33,103 C20,111 14,125 14,156 L24,156 C21,133 24,115 33,103 Z" fill="#5a719f" opacity=".25"/>
+<path d="M20,108 L41,103.5 L43,109.5 L22,114 Z" fill="#28395e" stroke="#d9b35c" stroke-width="1"/>
+<path d="M80,103.5 L100,108 L98,114 L77,109.5 Z" fill="#28395e" stroke="#d9b35c" stroke-width="1"/>
+<circle cx="31.5" cy="108.5" r="1.4" fill="#d9b35c"/><circle cx="88.5" cy="108.5" r="1.4" fill="#d9b35c"/>
+<path d="M46,101 L60,123 L74,101 L67.5,100 L60,110.5 L52.5,100 Z" fill="#eef2f8"/>
+<path d="M45,100.5 L53,99.5 L50.5,111 Z" fill="#22304f"/><path d="M75,100.5 L67,99.5 L69.5,111 Z" fill="#22304f"/>
+<path d="M56.5,107 L63.5,107 L61.8,118 L60,124 L58.2,118 Z" fill="#26355c"/>
+<rect x="56.8" y="104" width="6.4" height="3.8" rx="1.2" fill="#1d2a49"/>
+<rect x="70" y="128" width="16" height="10" rx="1.5" fill="#eef2f8" stroke="#c9d3e4" stroke-width=".8"/>
+<rect x="72" y="130.5" width="12" height="2.2" rx="1" fill="#c8433b"/><rect x="72" y="134.2" width="8.5" height="1.5" rx=".7" fill="#8fa3c4"/>
+<circle cx="56" cy="130" r="1.7" fill="#d9b35c"/><circle cx="56" cy="139" r="1.7" fill="#d9b35c"/>
+<path d="M53,85 L67,85 L66,102 Q60,105 54,102 Z" fill="url(#dSkin)"/>
+<path d="M53,85 L67,85 L66.5,92 Q60,95.5 53.5,92 Z" fill="#d99b72" opacity=".55"/>
+<ellipse cx="33.8" cy="62" rx="4.2" ry="6" fill="url(#dSkin)"/><ellipse cx="86.2" cy="62" rx="4.2" ry="6" fill="url(#dSkin)"/>
+<path d="M33,59 q2.5,3 0,6.5 M87,59 q-2.5,3 0,6.5" fill="none" stroke="#d99b72" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M36,34 C31,46 32,60 38.5,71.5 C44,81.5 51.5,87.5 60,87.5 C68.5,87.5 76,81.5 81.5,71.5 C88,60 89,46 84,34 C77,27 69,24.5 60,24.5 C51,24.5 43,27 36,34 Z" fill="url(#dSkin)" stroke="#dda277" stroke-width="1.2"/>
+<ellipse cx="39" cy="71" rx="5.5" ry="3.2" fill="url(#dBlush)"/><ellipse cx="81" cy="71" rx="5.5" ry="3.2" fill="url(#dBlush)"/>
+<path d="M59.6,70.5 q1.6,2.2 .2,3.6" fill="none" stroke="#d59a72" stroke-width="1.3" stroke-linecap="round"/>
+<path d="M34.5,42 C31.5,52 32,64 34.5,73 C36,76 38.5,75.5 38.5,71.5 C36.5,63 36.5,51 39,42 Z" fill="#232833"/>
+<path d="M85.5,42 C88.5,52 88,64 85.5,73 C84,76 81.5,75.5 81.5,71.5 C83.5,63 83.5,51 81,42 Z" fill="#232833"/>
+<path d="M31,38 C29,12 91,12 89,38 Z" fill="url(#dCap)"/>
+<ellipse cx="46" cy="20" rx="12" ry="5" fill="#fff" opacity=".15" transform="rotate(-14 46 20)"/>
+<rect x="28" y="33.5" width="64" height="6.5" rx="3" fill="#101728"/>
+<circle cx="60" cy="25.5" r="5.2" fill="#c8433b" stroke="#d9b35c" stroke-width="1.3"/>
+<path d="M60,22.3 L60.76,24.45 L63.04,24.51 L61.24,25.9 L61.88,28.09 L60,26.8 L58.12,28.09 L58.76,25.9 L56.96,24.51 L59.24,24.45 Z" fill="#f3d27a"/>
+<path d="M22,38 C45,46.5 75,46.5 98,38 L94.5,45 C75,51.5 45,51.5 25.5,45 Z" fill="#0b111f"/>
+<path d="M30,41.5 C46,45.5 74,45.5 90,41.5" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1.3" stroke-linecap="round"/>
+`;
+function dingStars(){
+  return `<g fill="#f3d27a" stroke="#d9b35c" stroke-width=".6">
+    <path d="M26,28 l1.3,2.6 2.7,.4 -2,2 .5,2.7 -2.5-1.3 -2.5,1.3 .5-2.7 -2-2 2.7-.4 Z"/>
+    <path d="M96,32 l.9,1.8 1.9,.3 -1.4,1.4 .3,1.9 -1.7-.9 -1.7.9 .3-1.9 -1.4-1.4 1.9-.3 Z"/></g>`;
+}
+function dingPortrait(mood, mini){
+  const f = DING_FACE[mood] || DING_FACE.idle;
+  const sw = mini ? ' stroke-width="2.1"' : '';
+  const brows = f.brow.map(d => `<path d="${d}" fill="none" stroke="#3a2d26" stroke-width="2.7" stroke-linecap="round"/>`).join('');
+  return `<svg class="${mini ? 'ding-mini' : 'ding'}" viewBox="0 0 120 156" xmlns="http://www.w3.org/2000/svg" aria-label="保安老丁">
+    ${DING_BODY}${mood === 'found' ? dingStars() : ''}
+    <g${sw}>${brows}</g>${dingEye(48, f.eyes)}${dingEye(72, f.eyes)}${dingMouth(f.mouth)}
+  </svg>`;
 }
 function setMood(mood, hold){
   const el = document.getElementById('guard-portrait');
   if(!el || !mood) return;
   if(el.dataset.mood !== mood){
     el.dataset.mood = mood;
-    document.getElementById('guard-svg').innerHTML = portraitInner(mood);
+    document.getElementById('guard-art').innerHTML = dingPortrait(mood, false);
+    document.getElementById('pet-art').innerHTML = dingPortrait(mood, true);
     document.getElementById('pt-mood').textContent = PT_ICONS[mood] || '';
     el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
   }
   clearTimeout(state._moodTimer);
   if(hold !== 0) state._moodTimer = setTimeout(() => setMood('idle', 0), 4500);
+}
+/* ---------- 场景气泡 + 小挂件交互（参考互动演示） ---------- */
+const DING_IDLE_LINES = [
+  '丢东西别急——东西没长腿，跑不出校园。',
+  '盯着屏幕看没用，先把东西特征给我说说。',
+  '饭点前后最容易落东西，食堂那边我天天收一堆。',
+  '库里东西不少，不报特征我可不给你乱点鸳鸯谱。',
+  '证件丢了最省事——直接报学号，我按号查。',
+  '刚巡逻一圈回来，板凳还没坐热呢。',
+  '下雨天丢伞的最多，说颜色，我给你翻。'
+];
+const DING_STAGE_LINES = {
+  ask:'报学号，或者说说丢了啥——别让我猜。',
+  verify_name:'念姓名这关，错一个字都不能给。',
+  confirm_owner:'当面认一眼，你点头了我才销账。',
+  handover:'当面点清，出了门再说少了我可不认。',
+  desc:'颜色、牌子、贴纸……特征越细越好找。',
+  place:'说清楚在哪儿捡的，地图我比你熟。',
+  photo:'拍清楚点，模糊了我这老花眼看不真。',
+  repair:'哪儿坏了、什么毛病，说具体。',
+  collect:'什么东西、在哪儿丢的，先说一样。',
+  refine:'再补一句特征，我帮你接着筛。',
+  card_photo:'卡面放平、别反光，学号姓名我都认。'
+};
+const PET_TEASE = [
+  '点我干嘛？丢的东西又不会自己回来。',
+  '手感不错吧？可惜东西不是点一点就能找到的。',
+  '屏幕上戳八遍，不如来保卫处登记一趟。',
+  '别拽了，帽子都让你拽歪了。',
+  '我在这儿盯着呢，库里又躺着几件没人领的。',
+  '找东西报特征，戳我可不给你变出来。'
+];
+let _bubbleTimer = null, _idleBubbleTimer = null, _bubbleLock = 0;
+function showBubble(text, ttl){
+  const box = document.getElementById('pt-bubble');
+  document.getElementById('pt-bubble-txt').textContent = text;
+  box.classList.add('show');
+  clearTimeout(_bubbleTimer);
+  _bubbleTimer = setTimeout(() => box.classList.remove('show'), ttl || 9000);
+}
+function maybeStageBubble(){
+  if(Date.now() < _bubbleLock) return;
+  const st = state.flow && state.flow.stage;
+  const line = st && DING_STAGE_LINES[st];
+  if(line){ showBubble(line, 9000); _bubbleLock = Date.now() + 12000; }
+}
+function armIdleBubble(){
+  clearTimeout(_idleBubbleTimer);
+  _idleBubbleTimer = setTimeout(function tick(){
+    if(!state.flow){
+      const l = DING_IDLE_LINES[Math.floor(Math.random() * DING_IDLE_LINES.length)];
+      showBubble(l, 8000);
+    }
+    _idleBubbleTimer = setTimeout(tick, 24000 + Math.random() * 12000);
+  }, 18000);
+}
+function updatePetBadge(){
+  const n = Store.lost.filter(i => i.status === 'in_storage').length;
+  const b = document.getElementById('pet-badge');
+  b.textContent = n > 99 ? '99+' : String(n);
+  b.classList.toggle('show', n > 0);
+}
+function initMascot(){
+  document.getElementById('guard-art').innerHTML = dingPortrait('idle', false);
+  document.getElementById('pet-art').innerHTML = dingPortrait('idle', true);
+  updatePetBadge(); armIdleBubble();
+  document.getElementById('pt-bubble').addEventListener('click', () => {
+    document.getElementById('pt-bubble').classList.remove('show');
+    const inp = document.getElementById('inp'); inp.focus();
+    setMood('greet');
+  });
+  document.getElementById('guard-portrait').addEventListener('click', e => {
+    if(e.target.closest('#pt-bubble')) return;
+    setMood('greet');
+    if(!state.flow){ showBubble('值班呢。丢东西、找东西、报修，开口讲。', 6000); document.getElementById('inp').focus(); }
+  });
+  // 小挂件：拖拽换位；未拖动时的点击弹调侃
+  const pet = document.getElementById('ding-pet'), bubble = document.getElementById('pet-bubble');
+  let sx=0, sy=0, ox=0, oy=0, moved=false, dragging=false, teaseIdx=0;
+  pet.addEventListener('pointerdown', e => {
+    dragging = true; moved = false;
+    const r = pet.getBoundingClientRect();
+    sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
+    pet.classList.add('dragging'); pet.setPointerCapture(e.pointerId);
+  });
+  pet.addEventListener('pointermove', e => {
+    if(!dragging) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if(Math.abs(dx) + Math.abs(dy) > 6) moved = true;
+    if(!moved) return;
+    const x = Math.max(4, Math.min(window.innerWidth - 78, ox + dx));
+    const y = Math.max(52, Math.min(window.innerHeight - 70, oy + dy));
+    pet.style.left = x + 'px'; pet.style.top = y + 'px'; pet.style.right = 'auto';
+  });
+  pet.addEventListener('pointerup', () => {
+    dragging = false; pet.classList.remove('dragging');
+    if(!moved){
+      teaseIdx = (teaseIdx + 1) % PET_TEASE.length;
+      bubble.textContent = PET_TEASE[teaseIdx];
+      bubble.classList.add('show');
+      clearTimeout(pet._t); pet._t = setTimeout(() => bubble.classList.remove('show'), 5000);
+      setMood('greet');
+    }
+  });
 }
 // 按消息内容/类型自动判定表情
 function autoMood(m){
@@ -929,6 +1172,21 @@ const FLOWS = {
       const pl = Store.resolvePlace(text); if(pl) d.place = pl.point;
       const wh = parseWhen(text); if(wh) d.when = wh;
       if(text) d.desc = (d.desc ? d.desc + ' ' : '') + text;
+      // 尾号直通车：「尾号是1035的卡」——提到尾号即按证件精确路走，不再走四维匹配
+      const tail = parseSidTail(text);
+      if(tail){
+        d.category = d.category || '校园卡';
+        const hits = findCardsByTail(tail);
+        if(hits.length === 1){
+          const entry = hits[0]; d.entryId = entry.id;
+          say('尾号 ' + tail + ' 对上了——' + entry.place + '捡到的' + entry.category + '，登记学号 ' + entry.studentId + '。你把卡面上的姓名念一下，学号姓名都对上才能给。');
+          f.type = 'claim'; f.stage = 'verify_name'; return;
+        }
+        if(hits.length > 1){ say('尾号 ' + tail + ' 有 ' + hits.length + ' 张卡对上，你把完整学号报一下。'); f.type = 'card_query'; f.stage = 'card_query'; return; }
+        say('库里没找着尾号 ' + tail + ' 的卡。有人交来了我第一时间按学号对上你。');
+        Store.memPush('丢了' + d.category + '，尾号 ' + tail, 6);
+        endFlow(); return;
+      }
       // 证件类走精确路（确定性判定，不走相似度——保安.md §3.4）
       if(d.category && isCardCat(d.category)){
         say(isCardLostAsk());
@@ -950,14 +1208,28 @@ const FLOWS = {
         return;
       }
       let sid = text ? parseSid(text) : null;
+      if(!sid && text){
+        const tail = parseSidTail(text);
+        if(tail){
+          const hits = findCardsByTail(tail);
+          if(hits.length === 1){
+            const entry = hits[0]; d.entryId = entry.id;
+            say('尾号 ' + tail + ' 对上了——' + entry.place + '捡到的' + entry.category + '，登记学号 ' + entry.studentId + '。你把卡面上的姓名念一下，学号姓名都对上才能给。');
+            f.type = 'claim'; f.stage = 'verify_name'; return;
+          }
+          if(hits.length > 1){ say('尾号 ' + tail + ' 有 ' + hits.length + ' 张卡对上，你把完整学号报一下。'); return; }
+          say('库里没找着尾号 ' + tail + ' 的卡——你报完整学号试试。'); return;
+        }
+      }
       if(!sid && photo){
         sys('云端证件识别中……');
         try{
           const o = await toolOcrCard(photo);
-          if(o.studentId) sid = o.studentId;
+          if(!o.isCard){ say('这张看着不是证件——直接把学号打出来吧。'); return; }
+          sid = o.studentId;
           if(o.name) d.expectName = o.name;
           say(o.studentId ? ('认出来了，学号 ' + o.studentId + (o.name ? '，姓名 ' + o.name : '') + '。') : '没认准学号，你直接把学号打出来吧。');
-        }catch(e){ say('识别系统这会儿连不上，你直接把学号打出来吧。'); }
+        }catch(e){ say(e && e.code === 'no_key' ? VISION_KEY_HINT : '识别系统这会儿连不上，你直接把学号打出来吧。'); }
         if(!sid) return;
       }
       if(!sid){ say('报一下学号吧——卡面上那一串数字。或者拍张卡面照片发过来。'); return; }
@@ -978,7 +1250,23 @@ const FLOWS = {
     async handle(text, photo){
       const f = state.flow, d = f.data;
       if(f.stage === 'desc'){
-        if(photo) return void (d.photo = photo) && nextIntakePlace();
+        if(photo){
+          d.photo = photo;
+          // Qwen3.8 看图自动填类别与外观描述；没配 key 或识别失败则沿用口头描述路（保安.md §3.3）
+          sys('老丁盯着照片看了看……');
+          try{
+            const v = await visionRecognize(photo, 'item');
+            const dd = v.data || {};
+            const nc = dd.category ? normCategory(dd.category) : null;
+            if(nc) d.category = nc.cat; else if(dd.category) d.category = dd.category;
+            const sum = visionItemSummary(dd);
+            if(!d.desc && (dd.desc || sum)) d.desc = dd.desc || sum;
+            if(sum){ say('认出来了——' + sum + '。'); setMood('found', 4000); }
+          }catch(e){
+            sys(e && e.code === 'no_key' ? VISION_KEY_HINT : '这张没认准——回头你口头补两句特征也行。');
+          }
+          return nextIntakePlace();
+        }
         const cat = normCategory(text);
         if(cat) d.category = cat.cat;
         if(isCardCat(d.category)){
@@ -992,6 +1280,15 @@ const FLOWS = {
       if(f.stage === 'place'){
         const pl = Store.resolvePlace(text);
         d.place = pl ? pl.point.name : text.trim();
+        say('什么时候捡到的？回「现在」或具体时间，比如：昨天下午、前天 18:30。');
+        f.stage = 'when';
+        return;
+      }
+      if(f.stage === 'when'){
+        const wh = parseWhen(text) || new Date();
+        d.foundTime = wh.getTime();
+        // 用户已经在「描述」阶段发过照片了，不再重复要，直接入库
+        if(d.photo){ finishIntake(d, true); return; }
         say('有照片就发一张——入库的时候顺手存个特征，以后有人找好对上。没有就回「跳过」。');
         f.stage = 'photo';
         return;
@@ -1011,10 +1308,15 @@ const FLOWS = {
         let sid = null, nm = null;
         if(photo){
           sys('正在识别卡面信息……');
+          // 全走 Qwen3.8-Flash（9000 端口 CLIP/OCR 路已退役）
           try{
             const o = await toolOcrCard(photo);
-            sid = o.studentId; nm = o.name;
-          }catch(e){ say('识别系统连不上。直接报学号和姓名吧。'); f.stage = 'card_manual'; return; }
+            sid = o.studentId || null; nm = o.name || null;
+            if(o.isCard === false){ say('这张看着不是证件——重新拍一张，或直接报学号和姓名。'); f.stage = 'card_manual'; return; }
+          }catch(e){
+            if(e && e.code === 'no_key'){ sys('没配 Qwen key（server/qwen_key.txt 或 DASHSCOPE_API_KEY）。'); }
+            say('识别系统连不上。直接报学号和姓名吧。'); f.stage = 'card_manual'; return;
+          }
           if(!sid || !nm){
             say('有几个字没认准——认不出的我们就不瞎判，别给人认错了。你直接报一下学号和姓名。');
             f.stage = 'card_manual'; return;
@@ -1079,13 +1381,29 @@ const FLOWS = {
           say('有这张卡——' + e.place + '捡到的，登记学号 ' + e.studentId + '。把卡面上的姓名念一下，学号姓名都对上才能给。');
           f.stage = 'verify_name'; return;
         }
+        // 学号尾号匹配：「尾号1035」「后四位1035」这类
+        const tail = parseSidTail(text);
+        if(tail){
+          const hits = findCardsByTail(tail);
+          if(hits.length === 1){
+            const e = hits[0]; d.entryId = e.id;
+            say('尾号 ' + tail + ' 对上了——' + e.place + '捡到的' + e.category + '，登记学号 ' + e.studentId + '。把卡面上的姓名念一下，学号姓名都对上才能给。');
+            f.stage = 'verify_name'; return;
+          }
+          if(hits.length > 1){ say('尾号 ' + tail + ' 有 ' + hits.length + ' 张卡对上，你把完整学号报一下。'); return; }
+          say('库里没找着尾号 ' + tail + ' 的卡——你报完整学号试试，或者说说什么东西。'); return;
+        }
         if(photo){
           sys('云端证件识别中……');
+          // 全走 Qwen3.8-Flash（9000 端口 CLIP/OCR 路已退役）
+          let sid = null;
           try{
             const o = await toolOcrCard(photo);
-            if(o.studentId){ f.handle(String(o.studentId)); return; }
-            say('没认准学号，你直接打出来吧。');
-          }catch(e){ say('识别系统连不上，你直接把学号打出来吧。'); }
+            if(o.isCard === false){ say('这张看着不是证件——报学号，或者说说什么东西。'); return; }
+            sid = o.studentId || null;
+          }catch(e){ if(e && e.code === 'no_key') sys('没配 Qwen key。'); }
+          if(sid){ f.handle(String(sid)); return; }
+          say('没认准学号，你直接打出来吧。');
           return;
         }
         // 按类别 / 地点检索库里条目（「认领这条」按钮走 startClaimFor，带上下文直达）
@@ -1133,14 +1451,9 @@ const FLOWS = {
 function isCardLostAsk(){ return '校园卡、学生证这类，不靠「像不像」，只认「是不是你的」。报一下学号——或者拍张卡面照片，我认学号精确对。'; }
 function nextIntakePlace(){ say('在哪儿捡到的？'); state.flow.stage = 'place'; }
 async function finishIntake(d, hasPhoto){
-  let vector = null;
-  if(d.photo){
-    sys('正在存图像特征……');
-    try{ const enc = await cvCall('encode', { image: d.photo }); vector = enc.vector || null; }
-    catch(e){ sys('云端没连上，这条没存成图像特征——不影响文字匹配，以后以图搜物搜不到它。'); }
-  }
-  const e = toolRegisterItem({ category: d.category, desc: d.desc, place: d.place, reporter: state.user.nickname, vector });
-  say(addr() + '入库了。编号 ' + e.id + '——' + e.category + '，在 ' + e.place + ' 捡到的，' + fmtTime(e.foundTime) + '。失主来对，对得上才给。');
+  // 全走 Qwen：不再存 CLIP 向量，登记时把外观描述写进 desc，以图搜物走文字四维匹配
+  const e = toolRegisterItem({ category: d.category, desc: d.desc, place: d.place, reporter: state.user.nickname, foundTime: d.foundTime });
+  say(addr() + '入库了。编号 ' + e.id + '——' + e.category + '，在 ' + e.place + ' 捡到的，捡到时间 ' + fmtTime(e.foundTime) + '。失主来对，对得上才给。');
   // MAP: 入库条目按捡到地点打标记
   MapBridge.addPin({ placeId: e.placeId, label: e.place + ' · ' + e.category, type:'lost', ref: e.id });
   Store.memPush('登记捡到' + e.category + '（' + e.place + '）', 4);
@@ -1206,11 +1519,12 @@ function evaluateSearch(d){
   // ⑤ 信息齐了（或追问到位）仍对不上：确认库里没有，如实告知并记录
   confirmNone(d, '按你说的查了一遍又一遍——');
 }
-async function runImageSearch(photo, d){
-  me('[照片]'); pushMsg({ who:'me', kind:'photo', src: photo });
+async function runImageSearch(photo, d, preVision){
+  // 照片气泡已由 send() 统一推送，这里不再重复
   sys('正在拿照片比对库里物品……');
-  const r = await toolMatchByImage({ image: photo, query: d });
+  const r = await toolMatchByImage({ image: photo, query: d, vision: preVision });
   if(r.mode === 'image'){
+    sys('Qwen 看图：' + r.summary);
     state.lastHits = r.hits;
     pushMsg({ who:'guard', kind:'cards', mode:'image', hits: r.hits.map(h => ({ id:h.it.id, s:h.s })),
       note:'拿照片比出来了，最像的是这条——' });
@@ -1219,10 +1533,12 @@ async function runImageSearch(photo, d){
     MapBridge.setLayer('lost', r.hits.map(h => h.it.placeId).filter(Boolean));
     say('看着像就来保卫处领。要是觉得不太对，再补两句文字描述，我再帮你查一遍。');
   } else if(r.mode === 'image_empty'){
-    // 库里没有匹配物品（全部低于阈值 / 库内无图像向量）——如实告知，不编造
+    // 库里没有匹配物品——如实告知，不编造
+    if(r.summary) sys('Qwen 看图：' + r.summary);
     say(r.reason + '。换个角度再拍一张，或者用文字说说——什么东西、在哪儿丢的、啥时候的事。');
   } else {
-    say('图像检索这会儿连不上（' + (r.reason || '超时') + '）。先按文字帮你查——');
+    if(r.reason === 'no_key') say(VISION_KEY_HINT);
+    else say('图像识别这会儿连不上（' + (r.reason || '超时') + '）。先按文字帮你查——');
     if(r.hits.length && r.hits[0].s.total >= CFG.thHedge){
       showHitCards(r.hits, '按文字查出来的：');
       d.showedHedge = true;
@@ -1236,7 +1552,7 @@ async function runImageSearch(photo, d){
 }
 /* ---------- 认领闭环：当面确认 → 交还 → 销账 → 新一轮 ---------- */
 function itemBrief(e){
-  return '【' + e.id + '】' + e.category + '，' + e.place + '捡到的，入库 ' + fmtTime(e.foundTime) + '。' +
+  return '【' + e.id + '】' + e.category + '，' + e.place + '捡到的，捡到时间 ' + fmtTime(e.foundTime) + '。' +
     (e.desc ? '\n' + e.desc : '') +
     (e.studentId ? '\n登记学号 ' + e.studentId + ' · ' + (e.name || '') : '');
 }
@@ -1450,6 +1766,7 @@ function updateFlowHint(){
   inp.placeholder = state.flow
     ? ({ lost_search:'说说丢了什么，或点「图」拍一张', card_query:'报学号，或拍张卡面', lost_intake:'说说这东西长啥样', card_intake:'拍张卡面，或报学号姓名', card_confirm:'回「对」或「不对」', card_manual:'报一下学号和姓名', repair:'在哪儿、什么问题', place:'说个地名', problem:'什么问题', photo:'发张照片，或回「跳过」', collect:'在哪儿、什么问题', ask:'报学号，或说说丢了啥', verify_name:'念一下卡面姓名', confirm_owner:'点上面按钮，或回「是」/「不是」', handover:'点清了回「拿到了」，少了就直说', desc:'说说这东西长啥样' }[state.flow.stage] || '继续说，或回「取消」')
     : '跟老丁说句话……';
+  maybeStageBubble();   // 阶段推进时同步弹左下场景气泡（内部自带节流）
 }
 
 async function onSend(){
@@ -1489,20 +1806,26 @@ async function handlePhotoWithText(b64, text){
     state.pendingPhoto = null;
     return;
   }
-  // 自由态：先零样本分类，证件类转精确路，其余走以图搜物（带文字 query）
+  // 自由态：Qwen 识别一次——证件类转精确路，其余连同识别结果直接走以图搜物（一张照片只打一次 Qwen）
   sys('正在看这张照片……');
-  let top = null;
-  try{ const cl = await cvCall('classify', { image: b64 }); top = (cl.labels && cl.labels[0]) || null; }
-  catch(e){ /* 云端不可用时不阻塞，直接走图像检索（会自行降级） */ }
-  if(top && isCardCat(top.label) && top.score >= 0.25){
+  let top = null, preVision = null;
+  try{
+    const v = await visionRecognize(b64, 'item');
+    preVision = v;
+    const dd = v.data || {};
+    const nc = dd.category ? normCategory(dd.category) : null;
+    if(nc && isCardCat(nc.cat)) top = { label: nc.cat };
+    else if(isCardCat(dd.category || '')) top = { label: dd.category };
+  }catch(e){ /* Qwen 不可用时不阻塞，runImageSearch 内部会再试并给出 no_key/降级提示 */ }
+  if(top){
     state.flow = { type:'photo_route', stage:'route', data:{ image: b64 } };
     if(text){ await FLOWS.photo_route.handle(text); return; }
     say('看着是证件（' + top.label + '）。是找卡还是登记捡到的卡？回「找卡」或「登记」。');
     return;
   }
-  await runImageSearch(b64, parseQueryFromText(text));
+  await runImageSearch(b64, parseQueryFromText(text), preVision);
 }
-// 把自然语言文字解析成以图搜物的 query（类别/地点/时间/描述）——图像相似度仍替换描述维，文字提供类别/地点/时间
+// 把自然语言文字解析成以图搜物的 query（类别/地点/时间/描述）——照片维由 Qwen 看转出的外观描述承担，文字提供类别/地点/时间
 function parseQueryFromText(text){
   if(!text) return {};
   const d = {};
@@ -1579,6 +1902,7 @@ function enterChat(auth){
   $('#chat-view').classList.remove('hidden');
   loadChat();
   renderAll(); updateStatus(); updateFlowHint();
+  initMascot();   // 老丁立绘 + 场景气泡 + 右上小挂件（登录后挂一次）
   if(!state.msgs.length){
     pushMsg({ who:'guard', kind:'text', text: addr() + Store.agent.greeting }, false);
     saveChat();
@@ -1597,7 +1921,6 @@ function logout(){
 (async function init(){
   drawSprite($('#login-sprite'), 7);
   drawSprite($('#hd-sprite'), 2);
-  document.getElementById('guard-svg').innerHTML = portraitInner('idle');
   await Store.init();
   // 恢复会话
   try{
@@ -1640,9 +1963,10 @@ document.querySelectorAll('.qa').forEach(b => {
     if(act === 'call') return doCall();
     me(b.textContent);
     if(state.flow) endFlow();
-    if(act === 'claim'){ startFlow('claim'); return; }
+    if(act === 'claim'){ startFlow('claim'); updateFlowHint(); return; }
     startFlow(act);
-  };
+    updateFlowHint();
+  }
 });
 $('#btn-logout').onclick = logout;
 $('#btn-reset').onclick = () => {
