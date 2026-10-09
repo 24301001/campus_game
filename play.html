@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>进校园逛逛 · 像素校园</title>
+<style>
+  html,body{margin:0;height:100%;background:#0d0f13;overflow:hidden}
+  #f{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:#101216}
+  #bar{
+    position:fixed;left:14px;bottom:14px;z-index:9999;
+    display:flex;gap:10px;align-items:center;
+    padding:7px 13px;border-radius:6px;
+    background:rgba(29,33,41,.92);border:1px solid #39404d;color:#9fb4d0;
+    font:12.5px/1.5 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
+    box-shadow:0 6px 20px rgba(0,0,0,.5);backdrop-filter:blur(3px);
+  }
+  #bar a{color:#ffd76e;text-decoration:none;font-weight:600}
+  #bar a:hover{text-decoration:underline}
+  #bar b{color:#7fd6c8;font-weight:600}
+  @media (max-width:560px){#bar span{display:none}}
+</style>
+</head>
+<body>
+
+<!--
+  ⚠️ 顺序要紧：**先**在 localStorage 里放好 token，**再**建 iframe。
+     地图在加载期读 token 决定要不要弹登录门（见地图里的 loginGate）；
+     放在 iframe 之后就没用了。两个页面同源，所以能直接写。
+  ⚠️ 只在没登录过的时候补一个占位 token，别把访客自己的登录态冲掉。
+-->
+<script>
+try { if (!localStorage.getItem('token')) localStorage.setItem('token', 'campus-demo'); } catch (e) {}
+</script>
+
+<iframe id="f" src="像素校园_全校地图.html" title="像素校园 全校地图" allow="fullscreen"
+        onload="try{this.contentWindow.focus();}catch(e){}"></iframe>
+
+<div id="bar">
+  <a href="index.html">← 返回</a>
+  <span><b>点一下画面</b>，再用 <b>←→↑↓</b> / <b>WASD</b> 走动 · 滚轮缩放 · 按 <b>0</b> 看全图</span>
+</div>
+
+</body>
+</html>
