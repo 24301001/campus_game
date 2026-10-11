@@ -1,0 +1,21 @@
+{
+  "notice": "档口名称、菜品和活动价摘自 2026 年公众号文章；不含档口坐标，也不代表当前菜单或现价。",
+  "sources": {
+    "W1": {"title": "北京交通大学饮食中心特价菜资讯（2026-07-09 转载）", "url": "https://mp.weixin.qq.com/s?__biz=MzU4NDcxNzM1MQ==&mid=2247662208&idx=2&sn=017049a1b11dd622896150a7235c7344"},
+    "W2": {"title": "夏日食记·盛夏舌尖滋味（2026-06-25 转载）", "url": "https://mp.weixin.qq.com/s?__biz=MzU4NDcxNzM1MQ==&mid=2247662024&idx=2&sn=6a5a1c9bcacb4baaf994797212e26d1d"}
+  },
+  "windows": [
+    {"canteenId":"xuehuo","floorLabel":"2F","parentZoneId":"xh-2-xuesan","id":"xh-2-sichuan","name":"四川味道档口","kind":"window","rect":null,"summary":"学三风味餐厅；档口名见 2026 年活动资料，准确位置待核","hours":[],"dishes":[{"name":"番茄小酥肉","price":null,"offer":{"promotionalPrice":8.4,"originalPrice":14,"date":"2026-07-09"},"evidence":["W1"]}]},
+    {"canteenId":"xuehuo","floorLabel":"2F","parentZoneId":"xh-2-xuesan","id":"xh-2-northwest","name":"西北档口","kind":"window","rect":null,"summary":"学三风味餐厅；具体位置待核","hours":[],"dishes":[{"name":"炸酱面","price":null,"offer":{"promotionalPrice":6,"originalPrice":10,"date":"2026-06-25"},"evidence":["W2"]}]},
+    {"canteenId":"minghu","floorLabel":"2F","parentZoneId":"mh-2-dongkuai","id":"mh-2-dl","name":"吊龙米线档口","kind":"window","rect":null,"summary":"东快餐厅；具体位置待核","hours":[],"dishes":[{"name":"酸腌菜米线","price":null,"offer":{"promotionalPrice":8.4,"originalPrice":14,"date":"2026-07-09"},"evidence":["W1"]}]},
+    {"canteenId":"minghu","floorLabel":"3F","parentZoneId":"mh-3-south","id":"mh-3-huangmen","name":"黄焖鸡档口","kind":"window","rect":null,"summary":"明湖餐厅；具体位置待核","hours":[],"dishes":[{"name":"金针菇五花肉","price":null,"offer":{"promotionalPrice":9.6,"originalPrice":16,"date":"2026-07-09"},"evidence":["W1"]}]},
+    {"canteenId":"minghu","floorLabel":"3F","parentZoneId":"mh-3-south","id":"mh-3-dumpling","name":"手工鲜水饺档口","kind":"window","rect":null,"summary":"明湖餐厅；具体位置待核","hours":[],"dishes":[{"name":"猪肉香菇水饺","price":null,"offer":{"promotionalPrice":8.4,"originalPrice":14,"date":"2026-06-25"},"evidence":["W2"]}]},
+    {"canteenId":"xuesi","floorLabel":"2F","parentZoneId":"xs-2-flavor","id":"xs-2-set","name":"套餐档口","kind":"window","rect":null,"summary":"学四风味餐厅；具体位置待核","hours":[],"dishes":[{"name":"麻辣鸡排饭","price":null,"offer":{"promotionalPrice":8.28,"originalPrice":13.8,"date":"2026-07-09"},"evidence":["W1"]}]},
+    {"canteenId":"xuesi","floorLabel":"2F","parentZoneId":"xs-2-flavor","id":"xs-2-wonton","name":"馄饨档口","kind":"window","rect":null,"summary":"学四风味餐厅；具体位置待核","hours":[],"dishes":[{"name":"蒸饺","price":null,"offer":{"promotionalPrice":4.2,"originalPrice":7,"date":"2026-06-25"},"evidence":["W2"]}]},
+    {"canteenId":"dongqu","floorLabel":"1F","parentZoneId":"dq-1-fast","id":"dq-1-braised","name":"卤肉饭档口","kind":"window","rect":null,"summary":"东区中快餐厅；具体位置待核","hours":[],"dishes":[{"name":"土豆粉","price":null,"offer":{"promotionalPrice":7.2,"originalPrice":12,"date":"2026-07-09"},"evidence":["W1"]}]},
+    {"canteenId":"dongqu","floorLabel":"1F","parentZoneId":"dq-1-fast","id":"dq-1-bun","name":"小笼包档口","kind":"window","rect":null,"summary":"东区中快餐厅；具体位置待核","hours":[],"dishes":[{"name":"酸辣粉","price":null,"offer":{"promotionalPrice":4.8,"originalPrice":8,"date":"2026-06-25"},"evidence":["W2"]}]},
+    {"canteenId":"xueyuan","floorLabel":"B1","parentZoneId":"xy-b1-west","id":"xy-b1-chongqing","name":"重庆小面档口","kind":"window","rect":null,"summary":"学苑西餐厅；具体位置待核","hours":[],"dishes":[{"name":"酸菜河粉","price":null,"offer":{"promotionalPrice":6.6,"originalPrice":11,"date":"2026-07-09"},"evidence":["W1"]},{"name":"酸菜米线","price":null,"offer":{"promotionalPrice":6.6,"originalPrice":11,"date":"2026-06-25"},"evidence":["W2"]}]},
+    {"canteenId":"xueyuan","floorLabel":"B1","parentZoneId":"xy-b1-flavor","id":"xy-b1-lamian","name":"拉面档口","kind":"window","rect":null,"summary":"学苑风味餐厅；具体位置待核","hours":[],"dishes":[{"name":"酸菜牛肉面","price":null,"offer":{"promotionalPrice":8.4,"originalPrice":14,"date":"2026-07-09"},"evidence":["W1"]}]},
+    {"canteenId":"xueyuan","floorLabel":"B1","parentZoneId":"xy-b1-flavor","id":"xy-b1-spicy","name":"香锅档口","kind":"window","rect":null,"summary":"学苑风味餐厅；具体位置待核","hours":[],"dishes":[{"name":"方便面","price":null,"offer":{"promotionalPrice":1.2,"originalPrice":2,"date":"2026-06-25"},"evidence":["W2"]}]}
+  ]
+}

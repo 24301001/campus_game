@@ -1,0 +1,442 @@
+"""Independent FastAPI service for the canteen aunt.
+
+Run from the repository root with: python -m uvicorn aunt.server:app --reload
+"""
+
+from contextlib import contextmanager
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
+import hashlib
+import hmac
+import json
+import os
+import re
+import secrets
+import sqlite3
+import time
+
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+
+from . import knowledge, tone
+
+
+BASE = Path(__file__).absolute().parent
+DB_PATH = Path(os.environ.get("AUNT_DB_PATH", str(BASE / "data" / "aunt.sqlite3")))
+
+
+@contextmanager
+def db():
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(str(DB_PATH), timeout=10)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys=ON")
+    try:
+        yield connection
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def _ensure_column(connection, table, name, definition):
+    columns = {row["name"] for row in connection.execute("PRAGMA table_info(%s)" % table).fetchall()}
+    if name not in columns:
+        connection.execute("ALTER TABLE %s ADD COLUMN %s %s" % (table, name, definition))
+
+
+def init_db():
+    with db() as connection:
+        connection.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY,
+                username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+                password_hash TEXT NOT NULL,
+                created_at REAL NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS sessions (
+                token_hash TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                expires_at REAL NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS conversations (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                title TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id, updated_at DESC);
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE,
+                role TEXT NOT NULL CHECK(role IN ('user','assistant')),
+                content TEXT NOT NULL,
+                evidence_json TEXT NOT NULL DEFAULT '[]',
+                ranking_json TEXT NOT NULL DEFAULT '[]',
+                recommendations_json TEXT NOT NULL DEFAULT '[]',
+                created_at REAL NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS reviews (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                stall_id TEXT NOT NULL,
+                rating INTEGER CHECK(rating BETWEEN 1 AND 5),
+                queue_minutes INTEGER CHECK(queue_minutes BETWEEN 0 AND 240),
+                content TEXT NOT NULL,
+                source TEXT NOT NULL DEFAULT 'user',
+                source_ref TEXT,
+                tags_json TEXT NOT NULL DEFAULT '[]',
+                created_at REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_reviews_stall ON reviews(stall_id, created_at);
+            """
+        )
+        # Preserve data created by the first independent demo.
+        _ensure_column(connection, "messages", "conversation_id", "INTEGER REFERENCES conversations(id)")
+        _ensure_column(connection, "messages", "evidence_json", "TEXT NOT NULL DEFAULT '[]'")
+        _ensure_column(connection, "messages", "ranking_json", "TEXT NOT NULL DEFAULT '[]'")
+        _ensure_column(connection, "messages", "recommendations_json", "TEXT NOT NULL DEFAULT '[]'")
+        _ensure_column(connection, "reviews", "source_ref", "TEXT")
+        _ensure_column(connection, "reviews", "tags_json", "TEXT NOT NULL DEFAULT '[]'")
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id, id)")
+        old_user_ids = [row["user_id"] for row in connection.execute(
+            "SELECT DISTINCT user_id FROM messages WHERE conversation_id IS NULL"
+        ).fetchall()]
+        for user_id in old_user_ids:
+            now = time.time()
+            cursor = connection.execute(
+                "INSERT INTO conversations(user_id,title,created_at,updated_at) VALUES(?,?,?,?)",
+                (user_id, "早期对话", now, now),
+            )
+            connection.execute("UPDATE messages SET conversation_id=? WHERE user_id=? AND conversation_id IS NULL",
+                               (cursor.lastrowid, user_id))
+
+
+app = FastAPI(title="食堂阿姨", docs_url="/api/docs", redoc_url=None)
+app.mount("/static", StaticFiles(directory=str(BASE / "static")), name="static")
+
+
+@app.on_event("startup")
+def startup():
+    init_db()
+
+
+class Credentials(BaseModel):
+    username: str = Field(min_length=2, max_length=24)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class ChatInput(BaseModel):
+    message: str = Field(min_length=1, max_length=1000)
+    conversation_id: Optional[int] = None
+    context_stall_id: Optional[str] = None
+
+
+def password_hash(password: str, salt: Optional[bytes] = None) -> str:
+    salt = salt or secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 260000)
+    return salt.hex() + ":" + digest.hex()
+
+
+def password_matches(password: str, saved: str) -> bool:
+    try:
+        salt_hex, _ = saved.split(":", 1)
+        return hmac.compare_digest(password_hash(password, bytes.fromhex(salt_hex)), saved)
+    except (ValueError, TypeError):
+        return False
+
+
+def check_origin(request: Request):
+    origin = request.headers.get("origin")
+    if origin and origin.rstrip("/") != str(request.base_url).rstrip("/"):
+        raise HTTPException(403, "请求来源不匹配")
+
+
+def current_user(request: Request) -> sqlite3.Row:
+    token = request.cookies.get("aunt_session")
+    if not token:
+        raise HTTPException(401, "请先登录")
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    with db() as connection:
+        row = connection.execute(
+            "SELECT users.id,users.username FROM sessions JOIN users ON users.id=sessions.user_id "
+            "WHERE token_hash=? AND expires_at>?", (token_hash, time.time())
+        ).fetchone()
+    if not row:
+        raise HTTPException(401, "登录已过期，请重新登录")
+    return row
+
+
+def set_session(response: Response, user_id: int, secure: bool):
+    token = secrets.token_urlsafe(32)
+    with db() as connection:
+        connection.execute("DELETE FROM sessions WHERE expires_at<?", (time.time(),))
+        connection.execute(
+            "INSERT INTO sessions(token_hash,user_id,expires_at) VALUES(?,?,?)",
+            (hashlib.sha256(token.encode("utf-8")).hexdigest(), user_id, time.time() + 30 * 86400),
+        )
+    response.set_cookie("aunt_session", token, max_age=30 * 86400, httponly=True,
+                        secure=secure, samesite="strict", path="/")
+
+
+def iso(timestamp):
+    return datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
+
+
+def create_conversation(connection, user_id, title="新对话"):
+    now = time.time()
+    cursor = connection.execute(
+        "INSERT INTO conversations(user_id,title,created_at,updated_at) VALUES(?,?,?,?)",
+        (user_id, title, now, now),
+    )
+    return cursor.lastrowid
+
+
+def require_conversation(connection, user_id, conversation_id):
+    if conversation_id is None:
+        row = connection.execute(
+            "SELECT id FROM conversations WHERE user_id=? ORDER BY updated_at DESC,id DESC LIMIT 1",
+            (user_id,),
+        ).fetchone()
+        return row["id"] if row else create_conversation(connection, user_id)
+    row = connection.execute(
+        "SELECT id FROM conversations WHERE id=? AND user_id=?", (conversation_id, user_id)
+    ).fetchone()
+    if not row:
+        raise HTTPException(404, "没有这段对话")
+    return row["id"]
+
+
+@app.get("/")
+def index():
+    return FileResponse(BASE / "static" / "index.html")
+
+
+@app.post("/api/register")
+def register(payload: Credentials, request: Request, response: Response):
+    check_origin(request)
+    username = payload.username.strip()
+    if not re.fullmatch(r"[\w\u4e00-\u9fff]{2,24}", username, flags=re.UNICODE):
+        raise HTTPException(400, "用户名只能包含中文、字母、数字或下划线，长度 2–24 位")
+    with db() as connection:
+        try:
+            cursor = connection.execute(
+                "INSERT INTO users(username,password_hash,created_at) VALUES(?,?,?)",
+                (username, password_hash(payload.password), time.time()),
+            )
+        except sqlite3.IntegrityError:
+            raise HTTPException(409, "用户名已经存在")
+        user_id = cursor.lastrowid
+    set_session(response, user_id, request.url.scheme == "https")
+    return {"id": user_id, "username": username}
+
+
+@app.post("/api/login")
+def login(payload: Credentials, request: Request, response: Response):
+    check_origin(request)
+    with db() as connection:
+        user = connection.execute(
+            "SELECT id,username,password_hash FROM users WHERE username=?", (payload.username.strip(),)
+        ).fetchone()
+    if not user or not password_matches(payload.password, user["password_hash"]):
+        raise HTTPException(401, "用户名或密码不正确")
+    set_session(response, user["id"], request.url.scheme == "https")
+    return {"id": user["id"], "username": user["username"]}
+
+
+@app.post("/api/logout")
+def logout(request: Request, response: Response):
+    check_origin(request)
+    token = request.cookies.get("aunt_session")
+    if token:
+        with db() as connection:
+            connection.execute("DELETE FROM sessions WHERE token_hash=?",
+                               (hashlib.sha256(token.encode("utf-8")).hexdigest(),))
+    response.delete_cookie("aunt_session", path="/")
+    return {"ok": True}
+
+
+@app.get("/api/me")
+def me(request: Request):
+    user = current_user(request)
+    return {"id": user["id"], "username": user["username"]}
+
+
+@app.get("/api/canteens")
+def canteens(request: Request):
+    current_user(request)
+    return knowledge.CATALOG
+
+
+@app.get("/api/conversations")
+def conversations(request: Request):
+    user = current_user(request)
+    with db() as connection:
+        rows = connection.execute(
+            "SELECT c.id,c.title,c.created_at,c.updated_at,COUNT(m.id) AS message_count "
+            "FROM conversations c LEFT JOIN messages m ON m.conversation_id=c.id "
+            "WHERE c.user_id=? GROUP BY c.id ORDER BY c.updated_at DESC,c.id DESC",
+            (user["id"],),
+        ).fetchall()
+    return [{"id": row["id"], "title": row["title"], "createdAt": iso(row["created_at"]),
+             "updatedAt": iso(row["updated_at"]), "messageCount": row["message_count"]} for row in rows]
+
+
+@app.post("/api/conversations")
+def new_conversation(request: Request):
+    check_origin(request)
+    user = current_user(request)
+    with db() as connection:
+        conversation_id = create_conversation(connection, user["id"])
+    return {"id": conversation_id, "title": "新对话"}
+
+
+@app.get("/api/conversations/{conversation_id}/messages")
+def conversation_messages(conversation_id: int, request: Request):
+    user = current_user(request)
+    with db() as connection:
+        require_conversation(connection, user["id"], conversation_id)
+        rows = connection.execute(
+            "SELECT id,role,content,evidence_json,ranking_json,recommendations_json,created_at FROM messages "
+            "WHERE conversation_id=? ORDER BY id ASC", (conversation_id,)
+        ).fetchall()
+    return [{"id": row["id"], "role": row["role"], "content": row["content"],
+             "evidence": json.loads(row["evidence_json"] or "[]"),
+             "ranking": json.loads(row["ranking_json"] or "[]"),
+             "recommendations": json.loads(row["recommendations_json"] or "[]"),
+             "createdAt": iso(row["created_at"])}
+            for row in rows]
+
+
+@app.get("/api/history")
+def history(request: Request):
+    user = current_user(request)
+    with db() as connection:
+        rows = connection.execute(
+            "SELECT id,role,content,evidence_json,ranking_json,recommendations_json,created_at "
+            "FROM messages WHERE user_id=? ORDER BY id ASC",
+            (user["id"],),
+        ).fetchall()
+    return [{"id": row["id"], "role": row["role"], "content": row["content"],
+             "evidence": json.loads(row["evidence_json"] or "[]"),
+             "ranking": json.loads(row["ranking_json"] or "[]"),
+             "recommendations": json.loads(row["recommendations_json"] or "[]"),
+             "createdAt": iso(row["created_at"])}
+            for row in rows]
+
+
+def get_rating(stall_id: str) -> dict:
+    if stall_id not in knowledge.ZONES:
+        raise KeyError(stall_id)
+    init_db()
+    with db() as connection:
+        return knowledge.rating_for(connection, stall_id)
+
+
+def list_windows(canteen_id: Optional[str] = None) -> list:
+    return [{"stall": zone, "location": knowledge.ZONE_CONTEXT[zone_id]}
+            for zone_id, zone in knowledge.ZONES.items()
+            if canteen_id is None or knowledge.ZONE_CONTEXT[zone_id]["canteenId"] == canteen_id]
+
+
+def should_appear(at=None):
+    """Behavior-layer hook: show the NPC during ordinary meal windows."""
+    hour = (at or datetime.now()).hour
+    return 7 <= hour < 9 or 11 <= hour < 14 or 17 <= hour < 20
+
+
+@app.get("/api/ratings")
+def ratings(request: Request):
+    current_user(request)
+    with db() as connection:
+        return {zone_id: knowledge.rating_for(connection, zone_id) for zone_id in knowledge.ZONES}
+
+
+@app.get("/api/map-layer")
+def map_layer(request: Request):
+    current_user(request)
+    with db() as connection:
+        result = []
+        for canteen in knowledge.CATALOG["canteens"]:
+            rated = []
+            for zone_id, context in knowledge.ZONE_CONTEXT.items():
+                if context["canteenId"] == canteen["id"] and knowledge.rating_for(connection, zone_id)["score"] is not None:
+                    rated.append(zone_id)
+            result.append({"canteenId": canteen["id"], "ratedZoneIds": rated,
+                           "hasReviews": bool(rated), "planVerified": canteen["floorplanStatus"] == "verified"})
+    return result
+
+
+@app.get("/api/stalls/{stall_id}")
+def stall_details(stall_id: str, request: Request):
+    current_user(request)
+    if stall_id not in knowledge.ZONES:
+        raise HTTPException(404, "没有这个分区")
+    with db() as connection:
+        score = knowledge.rating_for(connection, stall_id)
+        queue = knowledge.recent_queue(connection, stall_id)
+        rows = connection.execute(
+            "SELECT rating,queue_minutes,content,source,source_ref,tags_json,created_at FROM reviews "
+            "WHERE stall_id=? ORDER BY created_at DESC,id DESC LIMIT 20", (stall_id,)
+        ).fetchall()
+    context = knowledge.ZONE_CONTEXT[stall_id]
+    canteen = knowledge.CANTEENS[context["canteenId"]]
+    floor = next(item for item in canteen["floors"] if item["label"] == context["floorLabel"])
+    return {"stall": knowledge.ZONES[stall_id], "location": context,
+            "rating": score,
+            "reviewSummary": floor.get("reviewSummary") or canteen.get("publicReviewSummary"),
+            "sourceReviews": knowledge.ZONES[stall_id].get("publicReviews", []),
+            "queue": {"minutes": queue["queue_minutes"], "reportedAt": iso(queue["created_at"])} if queue else None,
+            "reviews": [
+                {"rating": row["rating"], "queueMinutes": row["queue_minutes"],
+                 "content": row["content"], "source": row["source"], "sourceRef": row["source_ref"],
+                 "tags": json.loads(row["tags_json"] or "[]"), "createdAt": iso(row["created_at"])}
+                for row in rows
+            ]}
+
+
+@app.post("/api/chat")
+def chat(payload: ChatInput, request: Request):
+    check_origin(request)
+    user = current_user(request)
+    message = payload.message.strip()
+    if not message:
+        raise HTTPException(400, "请输入聊天内容")
+    if payload.context_stall_id and payload.context_stall_id not in knowledge.ZONES:
+        raise HTTPException(404, "没有这个档口")
+    with db() as connection:
+        conversation_id = require_conversation(connection, user["id"], payload.conversation_id)
+        previous_count = connection.execute(
+            "SELECT COUNT(*) AS n FROM messages WHERE conversation_id=? AND role='user'", (conversation_id,)
+        ).fetchone()["n"]
+        connection.execute(
+            "INSERT INTO messages(user_id,conversation_id,role,content,created_at) VALUES(?,?,'user',?,?)",
+            (user["id"], conversation_id, message, time.time()),
+        )
+        result = knowledge.answer(message, user["id"], connection, payload.context_stall_id)
+    # Do not hold a SQLite write transaction while the external model answers.
+    result["reply"] = tone.respond(message, result)
+    with db() as connection:
+        connection.execute(
+            "INSERT INTO messages(user_id,conversation_id,role,content,evidence_json,ranking_json,recommendations_json,created_at) "
+            "VALUES(?,?,'assistant',?,?,?,?,?)",
+            (user["id"], conversation_id, result["reply"], json.dumps(result["evidence"], ensure_ascii=False),
+             json.dumps(result["ranking"], ensure_ascii=False),
+             json.dumps(result["recommendations"], ensure_ascii=False), time.time()),
+        )
+        if previous_count == 0:
+            title = message.replace("\n", " ")[:18]
+            connection.execute("UPDATE conversations SET title=?,updated_at=? WHERE id=?",
+                               (title, time.time(), conversation_id))
+        else:
+            connection.execute("UPDATE conversations SET updated_at=? WHERE id=?",
+                               (time.time(), conversation_id))
+    return {**result, "conversationId": conversation_id}

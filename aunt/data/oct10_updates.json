@@ -1,0 +1,2764 @@
+{
+  "sources": {
+    "P5": {
+      "title": "演示文稿2.pptx · 学活一楼大概平面图（含示意标价）",
+      "url": "/static/plan-sources/xuehuo-1f-source.png"
+    },
+    "P6": {
+      "title": "明湖餐厅二楼（商铺名称版）平面示意图",
+      "url": "/static/plan-sources/minghu-2f-revised.png"
+    },
+    "M2DOC": {
+      "title": "明湖餐厅二楼 · 各档口逐菜价格与方向修订",
+      "url": "/static/plan-sources/minghu-2f-menu-source.docx"
+    }
+  },
+  "plans": [
+    {
+      "canteenId": "xuehuo",
+      "floorLabel": "1F",
+      "status": "approximate",
+      "sourceId": "P5",
+      "illustration": "/static/plan-sources/xuehuo-1f-illustrated.png",
+      "entrance": [
+        15,
+        19
+      ],
+      "north": "up",
+      "windows": [
+        {
+          "id": "xh-1-shop",
+          "name": "商店",
+          "kind": "window",
+          "rect": [
+            1,
+            1,
+            2,
+            8
+          ],
+          "front": "east",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P5"
+          ]
+        },
+        {
+          "id": "xh-1-staples",
+          "name": "主食窗口",
+          "kind": "window",
+          "rect": [
+            4,
+            1,
+            3,
+            8
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "馒头",
+              "price": null,
+              "historical": {
+                "value": 0.4,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "白花卷",
+              "price": null,
+              "historical": {
+                "value": 0.5,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "开花馒头",
+              "price": null,
+              "historical": {
+                "value": 2.5,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "蒸奶包",
+              "price": null,
+              "historical": {
+                "value": 2,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "肉包",
+              "price": null,
+              "historical": {
+                "value": 2,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "红豆馒头",
+              "price": null,
+              "historical": {
+                "value": 1.5,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "红糖发糕",
+              "price": null,
+              "historical": {
+                "value": 1,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "玉米窝窝",
+              "price": null,
+              "historical": {
+                "value": 2,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "豆沙饼",
+              "price": null,
+              "historical": {
+                "value": 1.5,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "麻酱烧饼",
+              "price": null,
+              "historical": {
+                "value": 1.5,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "牛舌饼",
+              "price": null,
+              "historical": {
+                "value": 4,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "大饼",
+              "price": null,
+              "historical": {
+                "value": 1,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            }
+          ],
+          "evidence": [
+            "P5"
+          ]
+        },
+        {
+          "id": "xh-1-home-1",
+          "name": "家常菜（一）",
+          "kind": "window",
+          "rect": [
+            7,
+            1,
+            3,
+            8
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "清炒圆白菜",
+              "price": null,
+              "historical": {
+                "value": 1,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "清炒快菜",
+              "price": null,
+              "historical": {
+                "value": 3,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "香辣鸡翅根",
+              "price": null,
+              "historical": {
+                "value": 3,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "红烧狮子头",
+              "price": null,
+              "historical": {
+                "value": 3,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "剁椒娃娃菜",
+              "price": null,
+              "historical": {
+                "value": 4,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "豆皮炒肉",
+              "price": null,
+              "historical": {
+                "value": 6,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "黄豆芽肉沫粉条",
+              "price": null,
+              "historical": {
+                "value": 6,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "红豆肉丝",
+              "price": null,
+              "historical": {
+                "value": 6,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "干炸鸡米花",
+              "price": null,
+              "historical": {
+                "value": 7,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            }
+          ],
+          "evidence": [
+            "P5"
+          ]
+        },
+        {
+          "id": "xh-1-home-2",
+          "name": "家常菜（二）",
+          "kind": "window",
+          "rect": [
+            10,
+            1,
+            3,
+            8
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "炒豆芽",
+              "price": null,
+              "historical": {
+                "value": 1,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "清炒小白菜",
+              "price": null,
+              "historical": {
+                "value": 3,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "红烧豆腐",
+              "price": null,
+              "historical": {
+                "value": 3,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "芹菜腐竹",
+              "price": null,
+              "historical": {
+                "value": 4,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "红烧香菇腿",
+              "price": null,
+              "historical": {
+                "value": 4,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "豆腐丝炒肉",
+              "price": null,
+              "historical": {
+                "value": 6,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "蒜薹炒肉",
+              "price": null,
+              "historical": {
+                "value": 6,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "魔芋丝烧鸭",
+              "price": null,
+              "historical": {
+                "value": 8,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "香辣片片肠",
+              "price": null,
+              "historical": {
+                "value": 7,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "锅包肉",
+              "price": null,
+              "historical": {
+                "value": 8,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "番茄龙利鱼",
+              "price": null,
+              "historical": {
+                "value": 8,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            }
+          ],
+          "evidence": [
+            "P5"
+          ]
+        },
+        {
+          "id": "xh-1-jiangxi",
+          "name": "江西小炒",
+          "kind": "window",
+          "rect": [
+            13,
+            1,
+            4,
+            8
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "菜椒菇炒肉",
+              "price": null,
+              "historical": {
+                "value": 12,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "外婆菜炒鸡蛋",
+              "price": null,
+              "historical": {
+                "value": 12,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "江西小炒笋",
+              "price": null,
+              "historical": {
+                "value": 13,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "酸香小炒鱼",
+              "price": null,
+              "historical": {
+                "value": 14,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "辣香翅根",
+              "price": null,
+              "historical": {
+                "value": 12,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "酸辣鸡杂",
+              "price": null,
+              "historical": {
+                "value": 14,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "鲜香豆炒牛肉",
+              "price": null,
+              "historical": {
+                "value": 16,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            }
+          ],
+          "evidence": [
+            "P5"
+          ]
+        },
+        {
+          "id": "xh-1-zhiwei",
+          "name": "知味拌饭",
+          "kind": "window",
+          "rect": [
+            17,
+            1,
+            3,
+            8
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "咖喱鸡腿拌饭",
+              "price": null,
+              "historical": {
+                "value": 10,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "蜜汁照烧鸡拌饭",
+              "price": null,
+              "historical": {
+                "value": 10,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "孜然鱿丁拌饭",
+              "price": null,
+              "historical": {
+                "value": 12,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "香酥鸡排拌饭",
+              "price": null,
+              "historical": {
+                "value": 12,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "香菇小炒肉拌饭",
+              "price": null,
+              "historical": {
+                "value": 12,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "火腿肉丝鸡蛋拌饭",
+              "price": null,
+              "historical": {
+                "value": 12,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "把子肉拌饭",
+              "price": null,
+              "historical": {
+                "value": 14,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "番茄鸡蛋牛肉拌饭",
+              "price": null,
+              "historical": {
+                "value": 14,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            }
+          ],
+          "evidence": [
+            "P5"
+          ]
+        },
+        {
+          "id": "xh-1-small",
+          "name": "小份菜",
+          "kind": "window",
+          "rect": [
+            20,
+            1,
+            3,
+            8
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "清炒快菜",
+              "price": null,
+              "historical": {
+                "value": 2,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "清炒小白菜",
+              "price": null,
+              "historical": {
+                "value": 2,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "木须西葫",
+              "price": null,
+              "historical": {
+                "value": 3,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "番茄炒鸡蛋",
+              "price": null,
+              "historical": {
+                "value": 3,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "红烧豆腐",
+              "price": null,
+              "historical": {
+                "value": 2,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "糖醋里脊",
+              "price": null,
+              "historical": {
+                "value": 4,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "锅包肉",
+              "price": null,
+              "historical": {
+                "value": 4,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "茄汁鸡柳",
+              "price": null,
+              "historical": {
+                "value": 4,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "孜然鸡块",
+              "price": null,
+              "historical": {
+                "value": 4,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "日式丸子",
+              "price": null,
+              "historical": {
+                "value": 4,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            }
+          ],
+          "evidence": [
+            "P5"
+          ]
+        },
+        {
+          "id": "xh-1-rice-noodles",
+          "name": "风味米线",
+          "kind": "window",
+          "rect": [
+            23,
+            1,
+            4,
+            8
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "面片",
+              "price": null,
+              "historical": {
+                "value": 9,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "米线",
+              "price": null,
+              "historical": {
+                "value": 10,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "土豆粉",
+              "price": null,
+              "historical": {
+                "value": 10,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "鸡米线·土豆粉",
+              "price": null,
+              "historical": {
+                "value": 12,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "牛肉米线·土豆粉",
+              "price": null,
+              "historical": {
+                "value": 16,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "香菇丸子米线·土豆粉",
+              "price": null,
+              "historical": {
+                "value": 14,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            }
+          ],
+          "evidence": [
+            "P5"
+          ]
+        },
+        {
+          "id": "xh-1-northwest",
+          "name": "西北面食",
+          "kind": "window",
+          "rect": [
+            27,
+            1,
+            4,
+            8
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "拉面",
+              "price": null,
+              "historical": {
+                "value": 9,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "拉条子",
+              "price": null,
+              "historical": {
+                "value": 10,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "烩面片",
+              "price": null,
+              "historical": {
+                "value": 9,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "油泼面",
+              "price": null,
+              "historical": {
+                "value": 8,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "炸酱面",
+              "price": null,
+              "historical": {
+                "value": 9,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "葱油拌面",
+              "price": null,
+              "historical": {
+                "value": 8,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "回锅肉拌面",
+              "price": null,
+              "historical": {
+                "value": 10,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            },
+            {
+              "name": "麻辣肉沫拌面",
+              "price": null,
+              "historical": {
+                "value": 8,
+                "date": "示意图",
+                "type": "illustrated_plan"
+              },
+              "evidence": [
+                "P5"
+              ]
+            }
+          ],
+          "evidence": [
+            "P5"
+          ]
+        },
+        {
+          "id": "xh-1-dessert",
+          "name": "甜品文创",
+          "kind": "window",
+          "rect": [
+            1,
+            14,
+            5,
+            4
+          ],
+          "front": "east",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P5"
+          ]
+        }
+      ],
+      "fixtures": [
+        {
+          "kind": "column",
+          "rect": [
+            5,
+            9,
+            1,
+            2
+          ],
+          "solid": true
+        },
+        {
+          "kind": "column",
+          "rect": [
+            18,
+            9,
+            1,
+            2
+          ],
+          "solid": true
+        },
+        {
+          "kind": "green_divider",
+          "rect": [
+            9,
+            15,
+            8,
+            1
+          ],
+          "solid": true
+        },
+        {
+          "kind": "green_divider",
+          "rect": [
+            20,
+            15,
+            8,
+            1
+          ],
+          "solid": true
+        }
+      ]
+    },
+    {
+      "canteenId": "minghu",
+      "floorLabel": "2F",
+      "status": "approximate",
+      "sourceId": "P6",
+      "illustration": "/static/plan-sources/minghu-2f-revised.png",
+      "entrance": [
+        16,
+        19
+      ],
+      "north": "up",
+      "windows": [
+        {
+          "id": "mh-2-roast-rice",
+          "name": "烧腊·肠粉·砂锅饭",
+          "kind": "window",
+          "rect": [
+            1,
+            1,
+            3,
+            6
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-spicy",
+          "name": "麻辣香锅·麻辣烫",
+          "kind": "window",
+          "rect": [
+            4,
+            1,
+            3,
+            6
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-cantonese",
+          "name": "明湖广式煲仔饭",
+          "kind": "window",
+          "rect": [
+            7,
+            1,
+            3,
+            6
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-furnace",
+          "name": "炉初原·炙烤五花肉",
+          "kind": "window",
+          "rect": [
+            10,
+            1,
+            2,
+            6
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "招牌五花肉",
+              "price": null,
+              "historical": {
+                "value": 17.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            }
+          ],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-roast-duck",
+          "name": "烤鸭米粉·烧腊",
+          "kind": "window",
+          "rect": [
+            12,
+            1,
+            3,
+            6
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "招牌红烧肥牛汤／拌粉",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "特色麻辣肥牛汤／拌粉",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "香菇鸭腿汤／拌粉",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "酸辣笋尖汤／拌粉",
+              "price": null,
+              "historical": {
+                "value": 14.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "红油鸡丝火鸡面",
+              "price": null,
+              "historical": {
+                "value": 16.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "明湖烤鸭套餐",
+              "price": null,
+              "historical": {
+                "value": 23.8,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            }
+          ],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-fenmi-chicken",
+          "name": "分米鸡·土豆泥拌饭",
+          "kind": "window",
+          "rect": [
+            15,
+            1,
+            2,
+            6
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "香酥分米鸡",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "酱香分米鸡",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "回锅肉套餐",
+              "price": null,
+              "historical": {
+                "value": 16.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "孜然肉片套餐",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            }
+          ],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-yunnan-mushroom",
+          "name": "云南菌菇炒饭·烤鱼",
+          "kind": "window",
+          "rect": [
+            17,
+            1,
+            3,
+            6
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "火腿鸡蛋炒饭",
+              "price": null,
+              "historical": {
+                "value": 12.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "广式腊肠炒饭",
+              "price": null,
+              "historical": {
+                "value": 14.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "青椒火腿炒饭",
+              "price": null,
+              "historical": {
+                "value": 14.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "干炒牛河",
+              "price": null,
+              "historical": {
+                "value": 13.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "香辣五花肉菌菇炒饭",
+              "price": null,
+              "historical": {
+                "value": 16.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "五花肉菌菇炒饭",
+              "price": null,
+              "historical": {
+                "value": 16.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "牛肉菌菇炒饭",
+              "price": null,
+              "historical": {
+                "value": 17.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "香辣牛肉菌菇炒饭",
+              "price": null,
+              "historical": {
+                "value": 17.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "虾仁菌菇炒饭",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "鸡蛋火腿炒米线",
+              "price": null,
+              "historical": {
+                "value": 13.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "五花肉炒米线",
+              "price": null,
+              "historical": {
+                "value": 14.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "扬州炒米线",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "扬州炒饭",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "豆花烤鱼饭",
+              "price": null,
+              "historical": {
+                "value": 16.8,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "黑椒烤鱼饭",
+              "price": null,
+              "historical": {
+                "value": 16.8,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "年糕烤鱼饭",
+              "price": null,
+              "historical": {
+                "value": 16.8,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "土豆烤鱼饭",
+              "price": null,
+              "historical": {
+                "value": 16.8,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "炸蛋烤鱼饭",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "鱼豆腐烤鱼饭",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            }
+          ],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-hand-powder",
+          "name": "一掌鲜手拍粉",
+          "kind": "window",
+          "rect": [
+            20,
+            1,
+            2,
+            6
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "青椒肉酱手拍粉",
+              "price": null,
+              "historical": {
+                "value": 13.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "牛腩块手拍粉",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "卤香肉酱手拍粉",
+              "price": null,
+              "historical": {
+                "value": 14.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "黑椒肉手拍粉",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "鱼豆腐手拍粉",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "红烧肉手拍粉",
+              "price": null,
+              "historical": {
+                "value": 16.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "培根手拍粉",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "撒尿牛丸手拍粉",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "肥牛手拍粉",
+              "price": null,
+              "historical": {
+                "value": 17.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "豆皮（加料）",
+              "price": null,
+              "historical": {
+                "value": 2.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "金针菇（加料）",
+              "price": null,
+              "historical": {
+                "value": 2.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "青菜（加料）",
+              "price": null,
+              "historical": {
+                "value": 2.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "粉（加料）",
+              "price": null,
+              "historical": {
+                "value": 2.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "茶树菇（加料）",
+              "price": null,
+              "historical": {
+                "value": 2.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "蟹棒肉（加料）",
+              "price": null,
+              "historical": {
+                "value": 3.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "鱼豆腐（加料）",
+              "price": null,
+              "historical": {
+                "value": 3.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "墨鱼丸（加料）",
+              "price": null,
+              "historical": {
+                "value": 3.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "培根（加料）",
+              "price": null,
+              "historical": {
+                "value": 3.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "火腿肠（加料）",
+              "price": null,
+              "historical": {
+                "value": 3.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "菌菇（加料）",
+              "price": null,
+              "historical": {
+                "value": 3.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "肥牛（加料）",
+              "price": null,
+              "historical": {
+                "value": 5.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "撒尿牛丸（加料）",
+              "price": null,
+              "historical": {
+                "value": 5.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "红烧肉（加料）",
+              "price": null,
+              "historical": {
+                "value": 5.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "鸡腿肉（加料）",
+              "price": null,
+              "historical": {
+                "value": 5.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "鹌鹑蛋（加料）",
+              "price": null,
+              "historical": {
+                "value": 5.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "牛肉（加料）",
+              "price": null,
+              "historical": {
+                "value": 6.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            }
+          ],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-egg-rice",
+          "name": "蛋浇肥牛饭·牛油拌饭",
+          "kind": "window",
+          "rect": [
+            22,
+            1,
+            3,
+            6
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "板烧鸡腿拌饭",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "炭烤黑椒五花肉拌饭",
+              "price": null,
+              "historical": {
+                "value": 17.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "安格斯肥牛拌饭",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "任意双拼拌饭",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "超级三拼拌饭",
+              "price": null,
+              "historical": {
+                "value": 19.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            }
+          ],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-northwest-flavor",
+          "name": "西北风味·拉面刀削面",
+          "kind": "window",
+          "rect": [
+            25,
+            1,
+            3,
+            6
+          ],
+          "front": "south",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "酸菜肉片小面",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "花生肉片小面",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "麻辣鸡块小面",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "麻辣肥牛小面",
+              "price": null,
+              "historical": {
+                "value": 16.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "芽菜肉片小面",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "红烧牛肉小面",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "兰州拉面",
+              "price": null,
+              "historical": {
+                "value": 10.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "加肉拉面",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "传统猪肉刀削面",
+              "price": null,
+              "historical": {
+                "value": 13.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "肉臊子汤刀削面",
+              "price": null,
+              "historical": {
+                "value": 13.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "红烧牛肉刀削面",
+              "price": null,
+              "historical": {
+                "value": 16.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "酸菜牛肉刀削面",
+              "price": null,
+              "historical": {
+                "value": 16.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "西红柿鸡蛋刀削面",
+              "price": null,
+              "historical": {
+                "value": 10.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "泼泼面",
+              "price": null,
+              "historical": {
+                "value": 10.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "炸酱面",
+              "price": null,
+              "historical": {
+                "value": 12.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "肉臊子干拌面",
+              "price": null,
+              "historical": {
+                "value": 13.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "大盘鸡拌面",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "二合一拌面",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "三合一拌面",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "鸡蛋炒面",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "肉炒面",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "牛肉炒面",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "肉臊子（加菜）",
+              "price": null,
+              "historical": {
+                "value": 5.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "牛肉片（加菜）",
+              "price": null,
+              "historical": {
+                "value": 5.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "牛肉沫（加菜）",
+              "price": null,
+              "historical": {
+                "value": 10.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "青菜（加菜）",
+              "price": null,
+              "historical": {
+                "value": 2.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "卤鸡蛋（加菜）",
+              "price": null,
+              "historical": {
+                "value": 2.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每个 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            }
+          ],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-cotti",
+          "name": "Cotti Coffee 咖啡饮品",
+          "kind": "window",
+          "rect": [
+            28,
+            1,
+            3,
+            6
+          ],
+          "front": "west",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-self-service",
+          "name": "自选快餐",
+          "kind": "window",
+          "rect": [
+            21,
+            14,
+            10,
+            3
+          ],
+          "front": "north",
+          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-yunnan-noodles",
+          "name": "云南米线",
+          "kind": "window",
+          "rect": null,
+          "front": "south",
+          "summary": "逐菜价格表收录了此菜单，但新平面图未标出独立位置，暂列为待定位窗口。",
+          "hours": [],
+          "dishes": [
+            {
+              "name": "招牌鲜烫吊龙米线（清汤）",
+              "price": null,
+              "historical": {
+                "value": 17.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "香辣卤牛肉米线（香辣）",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "鲜烫梅花肉米线（清汤）",
+              "price": null,
+              "historical": {
+                "value": 16.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "经典双拼米线（牛肉＋炸酱）",
+              "price": null,
+              "historical": {
+                "value": 21.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "酸腌菜米线（清汤）",
+              "price": null,
+              "historical": {
+                "value": 14.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "牛肉丸米线（清汤）",
+              "price": null,
+              "historical": {
+                "value": 15.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "泡椒鲜烫吊龙米线（香辣）",
+              "price": null,
+              "historical": {
+                "value": 18.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "番茄吊龙米线",
+              "price": null,
+              "historical": {
+                "value": 17.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "麻辣吊龙米线",
+              "price": null,
+              "historical": {
+                "value": 17.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "金汤吊龙米线",
+              "price": null,
+              "historical": {
+                "value": 17.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "藤椒吊龙米线",
+              "price": null,
+              "historical": {
+                "value": 17.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "吊龙牛肉（单加）",
+              "price": null,
+              "historical": {
+                "value": 6.5,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "云南炸酱（单加）",
+              "price": null,
+              "historical": {
+                "value": 4.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "特色炸蛋（单加）",
+              "price": null,
+              "historical": {
+                "value": 3.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            },
+            {
+              "name": "煎蛋（单加）",
+              "price": null,
+              "historical": {
+                "value": 2.0,
+                "date": "菜单截图",
+                "type": "menu_screenshot"
+              },
+              "priceNote": "每份 · 非实时售价",
+              "evidence": [
+                "M2DOC"
+              ]
+            }
+          ],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        },
+        {
+          "id": "mh-2-hot-braised",
+          "name": "热卤拌饭",
+          "kind": "window",
+          "rect": null,
+          "front": "south",
+          "summary": "补充文档列入已有窗口清单，但本张平面图未标出位置。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P6",
+            "M2DOC"
+          ]
+        }
+      ],
+      "fixtures": [
+        {
+          "kind": "column",
+          "rect": [
+            4,
+            8,
+            1,
+            2
+          ],
+          "solid": true
+        },
+        {
+          "kind": "column",
+          "rect": [
+            15,
+            8,
+            1,
+            2
+          ],
+          "solid": true
+        },
+        {
+          "kind": "column",
+          "rect": [
+            25,
+            8,
+            1,
+            2
+          ],
+          "solid": true
+        }
+      ]
+    }
+  ],
+  "heldMenuRows": 18
+}
