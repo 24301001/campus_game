@@ -39,6 +39,8 @@
 --------------------------------------------------------------------------------
 【有】四大模块的完整代码 + 配置 + 数据 + 文档、地图源文件与构建脚本、
       四个模块各自的 README / DEPLOY / 接口契约、Windows 一键启动器。
+      学霸姐的 bge-small-zh 权重（models/）和网页端 ONNX 运行时（web/vendor/onnxruntime/）
+      也一并放了进去 —— 所以端上推理那条可选路不用再跑 tools/get_onnx_assets.py。
 
 【没有，且是故意没放】—— 这些要么是垃圾，要么换机器要重装：
 
@@ -229,8 +231,11 @@
        campus_game/docker-compose.yml / docker-compose.dev.yml   MySQL 口令
        campus_game/start.sh                                      MySQL 口令
        laoding/server/qwen_key.txt                               老丁的 DashScope Key
-       xueba-ge/data/.llm_key                                    学霸姐的 DashScope Key
-     ⚠️ 这四个模块的 Git 历史里也带着旧值（老分支 wr 上早就有），轮换时请一并换掉。
+     ⚠️ 学霸姐的 Key **没进仓库** —— 她自己模块的 xueba-ge/.gitignore 挡了 data/ 整个目录
+        （data/ 里还有她的 .secret 和 xueba.db）。部署时用环境变量 XBG_LLM_KEY，
+        或自己往 xueba-ge/data/.llm_key 写一份（目录首次运行会自动建。
+        也可以把 config/llm.json 的 provider 改成 "stub"，不花钱但回答由抽取式拼资料代替）。
+     ⚠️ 这几个模块的 Git 历史里也带着旧值（老分支 wr 上早就有），轮换时请一并换掉。
 
   9) HTTPS 有个额外坑：阿姨的 check_origin 比的是 Origin 与自身 base_url，
      上了 HTTPS 之后 base_url 可能还是 http:// ⇒ 403。
