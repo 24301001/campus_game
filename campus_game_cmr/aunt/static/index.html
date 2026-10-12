@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#315b91">
+  <title>食堂阿姨 · 校园食堂</title>
+  <script>
+    /* 接进像素校园地图时，本页被挂在 http://localhost:3000/cmr/ 下（Vite 代理 + 服务端 PrefixStrip）。
+       独立运行时（http://127.0.0.1:8020/）前缀为空。只在 /cmr 下才加前缀，
+       这样两边共用同一份 HTML，资产既可用相对路径、接口也能各自对上。 */
+    window.AUNT_PREFIX = (function () {
+      var p = location.pathname;
+      return (p === "/cmr" || p.indexOf("/cmr/") === 0) ? "/cmr" : "";
+    })();
+    /* ⭐⭐ 第四十五轮：被像素校园地图嵌进抽屉时，本页开机**先不摆登录卡**，改亮一层
+       「正在进入…」纱幕（见下面的 <div id="aunt-boot"> 与 styles.css 末尾那段）。
+       判据与上面 `AUNT_PREFIX` **逐字同源** —— 两条路同源，`location.origin` 分不开，
+       只能看 pathname 前缀。独立跑（127.0.0.1:8020）时这个类根本不存在，渲染一字不差。
+       ⚠️⚠️ **8 秒无条件摘开关**：万一本页后面的 JS 在 `start()` 之前就炸了
+          （语法错、依赖 404、后端连不上…），纱幕会把人**永久**锁在「正在进入…」上 ——
+          比露出登录卡糟得多（登录卡至少还能救命）。这条与会话就绪与否无关，到点就摘。 */
+    if (window.AUNT_PREFIX) {
+      var _he = document.documentElement;
+      _he.classList.add("aunt-embed");
+      setTimeout(function () { try { _he.classList.remove("aunt-embed"); } catch (e) {} }, 8000);
+    }
+  </script>
+  <link rel="stylesheet" href="static/styles.css">
+  <script defer src="static/pixel-aunt.js"></script>
+  <script defer src="static/map.js"></script>
+  <script defer src="static/app.js"></script>
+</head>
+<body>
+  <!-- ⭐⭐ 第四十五轮：**被地图嵌进抽屉时的开机纱幕**（见 <head> 里那段脚本与
+       styles.css 末尾）。独立跑时它永远 display:none，一个字都不影响。 -->
+  <div id="aunt-boot" role="status">正在进入…</div>
+  <div id="auth-screen" class="auth-screen">
+    <section class="auth-intro" aria-labelledby="auth-title">
+      <div class="brand-line"><span class="brand-mark" aria-hidden="true">食</span><span>像素校园 / 食堂值班室</span></div>
+      <div class="auth-intro-main">
+        <div class="auth-portrait aunt-portrait" data-emotion="neutral" role="img" aria-label="动漫风格的食堂阿姨，平静微笑"></div>
+        <p class="small-label">阿姨 · 丙</p>
+        <h1 id="auth-title">今天想吃什么，<br>先来问问阿姨。</h1>
+        <p>查窗口、看菜品、聊口碑。登录后，阿姨会记住你说过的话。</p>
+      </div>
+      <p class="intro-foot">七处餐厅资料 · 公开来源整理 · 室内视图为示意</p>
+    </section>
+    <main class="auth-form-area">
+      <form id="auth-form" class="auth-form" novalidate>
+        <p class="form-overline">欢迎回来</p>
+        <h2 id="auth-heading">登录值班室</h2>
+        <p class="form-subtitle">用自己的账号继续上次的对话。</p>
+        <label for="username">用户名</label>
+        <input id="username" name="username" autocomplete="username" minlength="2" maxlength="24" required placeholder="输入用户名">
+        <label for="password">密码</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required placeholder="至少 8 位">
+        <p id="auth-error" class="form-error" role="alert" hidden></p>
+        <button id="auth-submit" class="primary-button" type="submit">登录</button>
+        <button id="auth-switch" class="text-button" type="button">没有账号？注册</button>
+      </form>
+    </main>
+  </div>
+
+  <div id="app-screen" class="app-screen" hidden>
+    <header class="topbar">
+      <div class="brand-line"><span class="brand-mark" aria-hidden="true">食</span><span>校园食堂 · 阿姨</span></div>
+      <span class="demo-badge">食堂资料体验版</span>
+      <div class="topbar-user"><span id="current-user"></span><button id="back-campus" class="subtle-button" type="button" hidden>← 返回校园</button><button id="logout-button" class="subtle-button" type="button">退出</button></div>
+    </header>
+
+    <main class="workbench">
+      <aside id="chat-view" class="chat-panel" aria-labelledby="chat-title">
+        <div class="chat-panel-heading">
+          <div><span class="panel-kicker">和阿姨聊聊</span><h1 id="chat-title">想吃什么？</h1></div>
+          <span class="online-indicator"><i aria-hidden="true"></i>在值班</span>
+        </div>
+        <div class="aunt-presence" aria-live="polite">
+          <div id="aunt-portrait" class="aunt-portrait" data-emotion="neutral" role="img" aria-label="食堂阿姨，平静倾听"></div>
+          <div class="aunt-presence-copy"><strong>阿姨 · 丙</strong><span id="aunt-mood">正听你说</span><small>问菜品、价格或窗口，阿姨陪你看。</small></div>
+        </div>
+        <details class="history-fold">
+          <summary>我的对话 <span>查看历史</span></summary>
+          <div class="conversation-heading"><button id="new-conversation" type="button">＋ 新对话</button></div>
+          <div id="conversation-list" class="conversation-list" aria-label="历史对话"></div>
+        </details>
+        <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
+        <div class="chat-bottom">
+          <div id="suggestions" class="suggestions" aria-label="提问示例">
+            <button type="button" data-prompt="学活每层有什么？">学活每层有什么？</button>
+            <button type="button" data-prompt="吃面有什么推荐？">吃面有什么推荐？</button>
+          </div>
+          <form id="chat-form" class="chat-composer">
+            <label class="visually-hidden" for="chat-input">给阿姨发消息</label>
+            <textarea id="chat-input" maxlength="1000" rows="2" placeholder="问阿姨…" required></textarea>
+            <button id="voice-button" class="voice-button" type="button" aria-label="开始语音输入" aria-pressed="false" title="语音输入" hidden>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 1 0 6 0V5a3 3 0 0 0-3-3Zm-7 9v1a7 7 0 0 0 14 0v-1M12 19v3m-4 0h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button id="send-button" class="primary-button" type="submit">发送</button>
+          </form>
+          <p id="voice-status" class="voice-status" role="status" aria-live="polite" hidden></p>
+          <p id="chat-error" class="chat-error" role="alert" hidden></p>
+          <p class="composer-help">Enter 发送 · Shift + Enter 换行</p>
+        </div>
+      </aside>
+
+      <section id="map-view" class="map-panel" aria-labelledby="map-title">
+        <div class="map-heading"><div><span class="panel-kicker">食堂内视图</span><h2 id="map-title">走进食堂看看</h2></div><span class="map-heading-note">点击档口看菜单与口碑</span></div>
+        <div class="map-toolbar">
+          <label for="canteen-select">食堂</label><select id="canteen-select"></select>
+          <div id="floor-buttons" class="floor-buttons" role="group" aria-label="选择楼层"></div>
+        </div>
+        <div class="map-frame">
+          <div class="map-frame-top"><span>室内平面 · 可操作示意</span><div class="map-zoom" role="group" aria-label="地图缩放"><button id="map-zoom-out" type="button" aria-label="缩小地图">−</button><span id="map-zoom-label">100%</span><button id="map-zoom-in" type="button" aria-label="放大地图">＋</button><button id="map-zoom-fit" type="button">看全图</button></div></div>
+          <div class="map-scroll" aria-label="食堂像素平面图"><canvas id="floor-map" width="960" height="600" tabindex="0" role="img" aria-label="食堂平面图；方向键或 WASD 控制可移动阿姨"></canvas></div>
+          <div class="map-frame-bottom"><span id="map-walk-status" role="status" aria-live="polite">方向键 / WASD 控制阿姨。</span><span>靠近窗口按 E · 滚轮缩放</span></div>
+        </div>
+        <div class="map-tools-row">
+          <div id="control-pad" class="control-pad" role="group" aria-label="移动阿姨"><button type="button" data-move="up" aria-label="向上移动">↑</button><button type="button" data-move="left" aria-label="向左移动">←</button><button type="button" data-move="down" aria-label="向下移动">↓</button><button type="button" data-move="right" aria-label="向右移动">→</button></div>
+          <button id="interact-window" class="interact-button" type="button">查看邻近档口</button>
+          <div class="map-legend" aria-label="口碑颜色图例"><span><i class="legend-best"></i>很好</span><span><i class="legend-good"></i>不错</span><span><i class="legend-mid"></i>一般</span><span><i class="legend-low"></i>较低</span><span><i class="legend-none"></i>暂无评分</span></div>
+        </div>
+        <div class="map-disclosures">
+          <details class="source-disclosure"><summary>资料与图纸说明</summary><p id="catalog-notice">已整理公开资料；历史价格、营业时间请以现场为准。</p><p id="plan-notice">正在读取楼层资料…</p><a id="plan-source-link" target="_blank" rel="noopener noreferrer" hidden>查看平面图原件</a></details>
+          <details class="stall-index"><summary id="stall-list-title">本层窗口与待定位线索</summary><div id="stall-list" class="stall-list"></div></details>
+          <details class="floor-leads"><summary>本层有来源的菜品线索</summary><div id="floor-lead-list"></div></details>
+        </div>
+      </section>
+
+      <aside id="detail-panel" class="detail-panel" aria-labelledby="detail-title">
+        <div class="detail-top"><div><span class="panel-kicker">窗口资料</span><h2 id="detail-title">档口详情</h2></div><button id="detail-close" type="button" aria-label="清除当前档口选择" hidden>×</button></div>
+        <div id="detail-tabs" class="detail-tabs" role="tablist" aria-label="档口详情分类"><button type="button" data-detail-tab="menu" class="active" disabled>菜品</button><button type="button" data-detail-tab="reviews" disabled>评价</button><button type="button" data-detail-tab="queue" disabled>排队</button></div>
+        <div id="floor-review-summary" class="floor-review-summary" hidden></div>
+        <div id="stall-detail-content" class="detail-content"><div class="detail-welcome"><div class="welcome-pixel" aria-hidden="true">食</div><strong>点一个窗口看看</strong><p>菜品、评价和近期排队反馈都会出现在这里。灰色窗口表示还没有可计算的评分。</p></div></div>
+        <form id="detail-ask-form" class="detail-ask" aria-label="向窗口阿姨提问"><label for="detail-question">问这位阿姨</label><div><input id="detail-question" maxlength="1000" placeholder="例如：这里有什么菜？" disabled><button type="submit" disabled>提问</button></div><p id="detail-chat-answer" role="status">选中档口后，可以继续问阿姨。</p></form>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

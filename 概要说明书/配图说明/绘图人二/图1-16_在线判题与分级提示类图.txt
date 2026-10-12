@@ -1,0 +1,24 @@
+图 1-16　在线判题与分级提示类图
+============================================================
+【图形类型】类图（Class Diagram）
+【所在位置】1.2.2.2
+
+【图的内容】
+  给出判题链路的类结构，说明编辑器、接口服务、队列、判题进程、沙箱、题库与榜单之间的关系。
+
+【主要组件】
+  AlgorithmAgent（角色入口）；CodeEditor（代码编辑）；JudgeAPI（提交与查询接口）；JudgeQueue（提交队列）；JudgeWorker（判题进程）；Sandbox（隔离执行）；ProblemBank（题库与用例）；SubmissionRepo（提交记录）；RankBoard（榜单）；HintGenerator（分级提示）。
+
+【组织方式】
+  AlgorithmAgent 组合 CodeEditor 与 HintGenerator；JudgeAPI 依赖 JudgeQueue 与 SubmissionRepo；JudgeWorker 依赖 JudgeQueue（出队）与 Sandbox（执行），并读取 ProblemBank 的用例；判题完成后写入 SubmissionRepo 与 RankBoard。
+
+【如何绘制】
+1) 画 AlgorithmAgent，列出提交、看榜、要提示等方法；
+2) 画 CodeEditor 与 HintGenerator，用组合关系连到 AlgorithmAgent；
+3) 画 JudgeAPI，用依赖关系连到 JudgeQueue 与 SubmissionRepo；
+4) 画 JudgeWorker，用依赖关系连到 JudgeQueue 与 Sandbox；
+5) 画 ProblemBank，用依赖关系连到 JudgeWorker（取用例）；
+6) 画 SubmissionRepo 与 RankBoard，用依赖关系连到 JudgeWorker（写结果）。
+
+【注意事项】
+  类图必须体现“判题不经过语言模型”——HintGenerator 只连 AlgorithmAgent，不连判题链路；Sandbox 要单独作为一个类，突出隔离执行这一关键设计。

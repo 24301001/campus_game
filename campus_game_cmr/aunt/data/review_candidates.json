@@ -1,0 +1,1516 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-10-03",
+  "purpose": "来源可追溯的学生逐条评价候选；需人工最终复核。",
+  "policy": {
+    "numericWindowRatings": "没有可靠的档口评分；禁止用点赞、星号或平台店铺分换算。",
+    "marketingCopy": "公众号 271 条所谓评价摘录是官方/营销文案的情感词抽取，不算学生逐条评论。",
+    "counts": "平台总评价数、评论数或笔记数是聚合指标，不是已取得的逐条评价正文。",
+    "currentStatus": "所有菜品、价格、排队、营业、窗口位置在来源日期之后可能变化。",
+    "selection": "仅选取逐条回查过、明确出现楼层/食堂或由父笔记明确归属的内容；排除外校、苏州留园、校外餐厅、空泛回复。"
+  },
+  "sourceFile": "rjcspc/xhs_dianping/output/canteen/北交大食堂评价_评论明细_20261002_115540.csv",
+  "noteFile": "rjcspc/xhs_dianping/output/canteen/北交大食堂评价_笔记清单_20261002_115540.csv",
+  "candidates": [
+    {
+      "id": "xhs-note-69c2af3200000000210396f5",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "1F",
+      "windowName": null,
+      "dish": "蒸苦累",
+      "reviewScope": "dish",
+      "excerpt": "北交大美食5-学活1楼蒸菜 — 阿姨说如果味道不够，可以再回去找她。她说的很对，确实没什么味道。不过能在学校里边吃到这么正宗的蒸苦累，觉得学校还是用心了的。是8块钱一份，但是必须买一整份，但是女生作为晚饭的话，其实有点吃不了#凉菜[话题]# #菜谱[话题]# #学校食堂[话题]# #冬寒菜稀饭[话题]# #万物皆可蒸[话题]# #好吃的饭菜[话题]# #蒸出来的美味[话题]# #中餐[话题]#",
+      "source": {
+        "title": "北交大美食5-学活1楼蒸菜",
+        "url": "https://www.xiaohongshu.com/explore/69c2af3200000000210396f5?xsec_token=AB6tzUKy3RygLDSkWm_KiTvInji8p_Oe2KO9EAPE_pgOA=&xsec_source=pc_search",
+        "date": "2026-03-24",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交大美食5-学活1楼蒸菜 — 阿姨说如果味道不够，可以再回去找她。她说的很对，确实没什么味道。不过能在学校里边吃到这么正宗的蒸苦累，觉得学校还是用心了的。是8块钱一份，但是必须买一整份，但是女生作为晚饭的话，其实有点吃不了"
+    },
+    {
+      "id": "xhs-note-65fc0567000000001302624b",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": "小碗菜",
+      "dish": "芹菜炒肉",
+      "reviewScope": "dish",
+      "excerpt": "北交食堂避雷：学活二楼小碗菜👊 — 一小勺芹菜炒肉，收我八块钱\n我后面买饭的小姐姐，也是被背刺到了，感觉很愤怒，怪不得这个窗口没人排队呢\n避雷学活二楼小碗菜❗️#北京交通大学[话题]# #北交[话题]# #北交食堂[话题]# #北交学活食堂[话题]#",
+      "source": {
+        "title": "北交食堂避雷：学活二楼小碗菜👊",
+        "url": "https://www.xiaohongshu.com/explore/65fc0567000000001302624b?xsec_token=ABLMJFqruiF2tggU2GeJgSiF_uh9iChMQ_pcsAKjcS3VU=&xsec_source=pc_search",
+        "date": "2024-03-21",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交食堂避雷：学活二楼小碗菜👊 — 一小勺芹菜炒肉，收我八块钱 我后面买饭的小姐姐，也是被背刺到了，感觉很愤怒，怪不得这个窗口没人排队呢 避雷学活二楼小碗菜❗️"
+    },
+    {
+      "id": "xhs-note-691d7736000000001b02252c",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": "亲爱的面",
+      "dish": "生椒牛肉面",
+      "reviewScope": "dish",
+      "excerpt": "北京高校食堂测试之北交（学活二楼） — 解锁北交人脉王老师，带我们品鉴该校食堂。\n学生活动中心食堂很宽长，三层，每层可供选择的菜品不少，我选了二层“亲爱的面”之生椒牛肉面，但和我想象中的不太一样，看起来更像荤燃面——我的生椒呢？不过咸香的口感还不错，虽因买饮料放了一段时间——桑葚草莓好喝，但也没有坨，仍然可以拌开，不算很干的那种。\n \n北郊特色之楼前火车头、教学设备的交通灯，一直面对这种不用遵守的红绿灯出门真的不会不管交通灯吗？\n \n很具年代感的世纪钟、悠闲伸脖的番鸭、晒太阳聊天的老人。\n \n传习所是真的没想到……\n \n#把大学食堂吃个遍[话题]# #北京交通大学[话题]# #北京交通大学食堂[话题]# #北京高校食堂打卡[话题]#",
+      "source": {
+        "title": "北京高校食堂测试之北交（学活二楼）",
+        "url": "https://www.xiaohongshu.com/explore/691d7736000000001b02252c?xsec_token=AB8kVG5WYEIItDt3YEylKehIwtbHjxaTmYUNmNSuEWAHI=&xsec_source=pc_search",
+        "date": "2025-11-19",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北京高校食堂测试之北交（学活二楼） — 解锁北交人脉王老师，带我们品鉴该校食堂。 学生活动中心食堂很宽长，三层，每层可供选择的菜品不少，我选了二层“亲爱的面”之生椒牛肉面，但和我想象中的不太一样，看起来更像荤燃面——我的生椒呢？不过咸香的口感还不错，虽因买饮料放了一段时间——桑葚草莓好喝，但也没有坨，仍然可以拌开，不算很干的那种。 北郊特色之楼前火车头、教学设备的交通灯，一直面对这种不用遵守的红绿灯出门真的不会不管交通灯吗？ 很具年代感的世纪钟、悠闲伸脖的番鸭、晒太阳聊天的老…"
+    },
+    {
+      "id": "xhs-note-6aae851d0000000011035dec",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "螺蛳粉",
+      "reviewScope": "dish",
+      "excerpt": "避雷北交学活二楼的螺蛳粉 — 这粉一点不劲道，15一份，小料也很少，难吃#螺蛳粉[话题]# #北交[话题]#",
+      "source": {
+        "title": "避雷北交学活二楼的螺蛳粉",
+        "url": "https://www.xiaohongshu.com/explore/6aae851d0000000011035dec?xsec_token=AB2TPiQlRnVMA-EciKODldqzcqqYBd-_MpcxDE2-VRLAU=&xsec_source=pc_search",
+        "date": "2026-09-19",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "避雷北交学活二楼的螺蛳粉 — 这粉一点不劲道，15一份，小料也很少，难吃"
+    },
+    {
+      "id": "xhs-note-676946bb000000000b0205d9",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "铁板乌冬面",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜学活二楼｜铁板乌冬面13r — 右手边是酸梅汤\n有点油\n煎蛋好吃\n还行吧\n#大馋丫头吃在北交[话题]# #女大学生干饭日常[话题]# #把大学食堂吃个遍[话题]# #在学校也要好好吃饭[话题]# #大学生在校吃饭[话题]# #和大学生抢饭吃[话题]# #大学生吃吃吃[话题]# #校园里的美食[话题]# #干饭人的日常[话题]# #好吃的食堂[话题]#",
+      "source": {
+        "title": "吃在北交｜学活二楼｜铁板乌冬面13r",
+        "url": "https://www.xiaohongshu.com/explore/676946bb000000000b0205d9?xsec_token=ABW3CbLe5bH7cp3fYP4iu1dQK_IUPqqMn6bjNu59JFZgY=&xsec_source=pc_search",
+        "date": "2024-12-23",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜学活二楼｜铁板乌冬面13r — 右手边是酸梅汤 有点油 煎蛋好吃 还行吧"
+    },
+    {
+      "id": "xhs-note-6729b1f5000000001a035cb3",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "烧鸭饭",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜学活二楼｜烧鸭饭16r — 比学苑的好吃多了，汤汁很有滋味很下饭，鸭肉也没有腥味，缺点是鸭皮还是没有很酥脆，但是已经很好吃了，（没upc的好吃 嘻嘻）\n#流连忘返的美食体验[话题]# #隐藏于街头巷尾的美食[话题]# #平价美食[话题]# #永远好滋味[话题]# #本地爱吃的店[话题]# #走街串巷找美食[话题]# #好吃的老店[话题]# #晒晒我的今日伙食[话题]#",
+      "source": {
+        "title": "吃在北交｜学活二楼｜烧鸭饭16r",
+        "url": "https://www.xiaohongshu.com/explore/6729b1f5000000001a035cb3?xsec_token=ABFYuhj6ymKXCbb2E1Pl0L4hDsFPIqezDFUF-yCvN9rZY=&xsec_source=pc_search",
+        "date": "2024-11-05",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜学活二楼｜烧鸭饭16r — 比学苑的好吃多了，汤汁很有滋味很下饭，鸭肉也没有腥味，缺点是鸭皮还是没有很酥脆，但是已经很好吃了，（没upc的好吃 嘻嘻）"
+    },
+    {
+      "id": "xhs-note-69df6712000000001e00e4e4",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "吊龙米线",
+      "reviewScope": "dish",
+      "excerpt": "北交学活二楼吊龙米线 — 这居然要17，怪不得高峰期他的窗口没人排队[捂脸R]#学校食堂[话题]# #北交食堂[话题]#",
+      "source": {
+        "title": "北交学活二楼吊龙米线",
+        "url": "https://www.xiaohongshu.com/explore/69df6712000000001e00e4e4?xsec_token=ABcgMSm1ig73ehPRv52NmDGR78K4Mw-BzNQvtB6TAYMVs=&xsec_source=pc_search",
+        "date": "2026-04-15",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交学活二楼吊龙米线 — 这居然要17，怪不得高峰期他的窗口没人排队"
+    },
+    {
+      "id": "xhs-note-67d55d59000000000603c5fe",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "小酥肉汤饭",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜给朋友推荐的饭被全部吃光！爽！！ — 🤓学活二楼\n⭐️⭐️⭐️⭐️⭐️\n \n💰14\n✅小酥肉汤饭\n✅在中间那块，忘记叫啥窗口了\n✅朋友说要带汤的，不辣的，果断推荐这款！\n✅问朋友怎么不吃米饭，回答说，太好吃了顾不及吃米饭了嘿嘿！\n😇😇😇😇😇开心\n#大馋丫头吃在北交[话题]# #大学生吃饭[话题]# #女大学生干饭日常[话题]# #食堂打卡[话题]# #学校食堂[话题]# #跟着大学生吃就对了[话题]# #和大学生抢饭吃[话题]# #干饭人日常[话题]# #食堂[话题]# #把大学食堂吃个遍[话题]#",
+      "source": {
+        "title": "吃在北交｜给朋友推荐的饭被全部吃光！爽！！",
+        "url": "https://www.xiaohongshu.com/explore/67d55d59000000000603c5fe?xsec_token=ABhLh1TC4h-jyLy9WwQdSbhROAKvmidIYrLOh7G_Di1-E=&xsec_source=pc_search",
+        "date": "2025-03-15",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜给朋友推荐的饭被全部吃光！爽！！ — 🤓学活二楼 ⭐️⭐️⭐️⭐️⭐️ 💰14 ✅小酥肉汤饭 ✅在中间那块，忘记叫啥窗口了 ✅朋友说要带汤的，不辣的，果断推荐这款！ ✅问朋友怎么不吃米饭，回答说，太好吃了顾不及吃米饭了嘿嘿！ 😇😇😇😇😇开心"
+    },
+    {
+      "id": "xhs-note-68bf9261000000001d034d11",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "咖喱鸡丁饭",
+      "reviewScope": "dish",
+      "excerpt": "北交干饭｜学活二楼｜咖喱鸡丁饭！终于吃到你 — 💰14\n⭐️⭐️⭐️⭐️⭐️\n✅喵的终于吃上了心心念念的咖喱鸡丁饭，真心推荐！北交本科22号楼朋友倾情推荐！😇\n好吃好吃，另外二楼绿豆汤有桂花味，也好喝，家人们，冲！不过等的时间略久，建议早去\n \n#大馋丫头吃在北交[话题]# #学校食堂[话题]# #大学生吃饭[话题]# #咖喱爱好者[话题]# #女大学生干饭日常[话题]# #大学食堂[话题]# #咖喱鸡[话题]# #食堂[话题]# #咖喱饭[话题]##北京交通大学[话题]#",
+      "source": {
+        "title": "北交干饭｜学活二楼｜咖喱鸡丁饭！终于吃到你",
+        "url": "https://www.xiaohongshu.com/explore/68bf9261000000001d034d11?xsec_token=ABWLhqT_1dt2-vNoXlB3HlncFcnEy1O7efKTU8piQmXvI=&xsec_source=pc_search",
+        "date": "2025-09-09",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交干饭｜学活二楼｜咖喱鸡丁饭！终于吃到你 — 💰14 ⭐️⭐️⭐️⭐️⭐️ ✅喵的终于吃上了心心念念的咖喱鸡丁饭，真心推荐！北交本科22号楼朋友倾情推荐！😇 好吃好吃，另外二楼绿豆汤有桂花味，也好喝，家人们，冲！不过等的时间略久，建议早去"
+    },
+    {
+      "id": "xhs-note-67235239000000003c0172cd",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "意式肉松焗面",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜学活二楼｜意式肉松局面13r❌ — 越吃越有一点不好吃，就是肉松OK，芝士OK，面的汤汁如此咸，还有青椒，青椒我能吃的，放到嘴里和这一碗饭有点不搭配啊。越往下吃越觉得just soso 。希望面没有这么多咸咸的汤汁，配菜整体味道趋同一下。我的评价是：能吃但难吃。OMG被中伤了🤣\n \n有没有想去尝尝中西大杂烩的朋友，速冲！！！",
+      "source": {
+        "title": "吃在北交｜学活二楼｜意式肉松局面13r❌",
+        "url": "https://www.xiaohongshu.com/explore/67235239000000003c0172cd?xsec_token=ABDg5ctMDWxgED6YzQD5w1zz1z_JVbgM5TNs5C0j4FSoA=&xsec_source=pc_search",
+        "date": "2024-10-31",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜学活二楼｜意式肉松局面13r❌ — 越吃越有一点不好吃，就是肉松OK，芝士OK，面的汤汁如此咸，还有青椒，青椒我能吃的，放到嘴里和这一碗饭有点不搭配啊。越往下吃越觉得just soso 。希望面没有这么多咸咸的汤汁，配菜整体味道趋同一下。我的评价是：能吃但难吃。OMG被中伤了🤣 有没有想去尝尝中西大杂烩的朋友，速冲！！！"
+    },
+    {
+      "id": "xhs-note-66d59848000000001f03fed4",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": "西式味道",
+      "dish": "牛排芝士焗饭",
+      "reviewScope": "dish",
+      "excerpt": "学活二楼｜牛排芝士焗饭 13r — 好吃，⭐️⭐️⭐️⭐️\n来北郊目前吃的最好吃的一顿了，😭\n隔壁桌应该是大一新生，见我在和朋友说这个好吃，学妹吃完勇敢的问我，学姐这个在哪买的，我指了指西式味道，其实我也是新生\n嘻嘻┏(｀ー´)┛\n#芝士拉丝[话题]# #烤肉拌饭[话题]# #一周美食打卡[话题]# #北交[话题]#",
+      "source": {
+        "title": "学活二楼｜牛排芝士焗饭 13r",
+        "url": "https://www.xiaohongshu.com/explore/66d59848000000001f03fed4?xsec_token=ABmW_uGriqCteefp02TviAzaewfygGMuQ6zZRpWNGfFlo=&xsec_source=pc_search",
+        "date": "2024-09-02",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "学活二楼｜牛排芝士焗饭 13r — 好吃，⭐️⭐️⭐️⭐️ 来北郊目前吃的最好吃的一顿了，😭 隔壁桌应该是大一新生，见我在和朋友说这个好吃，学妹吃完勇敢的问我，学姐这个在哪买的，我指了指西式味道，其实我也是新生 嘻嘻┏(｀ー´)┛"
+    },
+    {
+      "id": "xhs-note-67567f4c0000000002025f66",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": "土耳其味道",
+      "dish": "小酥肉汤饭",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜学活二楼｜土耳其味道的小酥肉汤饭 — 14r .我要的番茄的，很香，交大本科的朋友推荐的，我这个不吃粉丝的人都吃了，简直是很不错，很可以，我又光盘了，嘿嘿。和同门朋友们打完羽毛球的干饭日常✌✌✌\n#把大学食堂吃个遍[话题]# #女大学生干饭日常[话题]# #好吃的食堂[话题]# #在学校也要好好吃饭[话题]# #学校食堂[话题]# #大学生在校吃饭[话题]# #校园里的美食[话题]# #和大学生抢饭吃[话题]# #来我学校吃食堂[话题]#",
+      "source": {
+        "title": "吃在北交｜学活二楼｜土耳其味道的小酥肉汤饭",
+        "url": "https://www.xiaohongshu.com/explore/67567f4c0000000002025f66?xsec_token=ABpMaxTvjF-TllFtAZjQIG7i5J1VrdBBGbFQ3Zy3n9Ksc=&xsec_source=pc_search",
+        "date": "2024-12-09",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜学活二楼｜土耳其味道的小酥肉汤饭 — 14r .我要的番茄的，很香，交大本科的朋友推荐的，我这个不吃粉丝的人都吃了，简直是很不错，很可以，我又光盘了，嘿嘿。和同门朋友们打完羽毛球的干饭日常✌✌✌"
+    },
+    {
+      "id": "xhs-note-66ed0c38000000002603fb62",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": "广式味道",
+      "dish": "烧鸭笼仔饭",
+      "reviewScope": "dish",
+      "excerpt": "在北交吃什么！ — 坐标：学活二楼广式味道烧鸭笼仔饭 💰17r（感谢亲亲室友帮我打包的维持生命体征的午饭）\n饭是油润的，有玉米和豌豆，一丢丢荷叶清香，蔬菜很多，很满足！烧鸭也是超级多，真的是本科期间的两倍，哭死，我交的食堂越来越好吃了！\n综合指数：[红色心形R][红色心形R][红色心形R][红色心形R]#干饭人的日常[话题]# #把大学食堂吃个遍[话题]# #在校日常[话题]# #大学生精神状态[话题]#",
+      "source": {
+        "title": "在北交吃什么！",
+        "url": "https://www.xiaohongshu.com/explore/66ed0c38000000002603fb62?xsec_token=ABAbiP_XfYhDGXLAoTsvYcy1LkomBnkvHnNmRW26N-0NA=&xsec_source=pc_search",
+        "date": "2024-09-20",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "在北交吃什么！ — 坐标：学活二楼广式味道烧鸭笼仔饭 💰17r（感谢亲亲室友帮我打包的维持生命体征的午饭） 饭是油润的，有玉米和豌豆，一丢丢荷叶清香，蔬菜很多，很满足！烧鸭也是超级多，真的是本科期间的两倍，哭死，我交的食堂越来越好吃了！ 综合指数："
+    },
+    {
+      "id": "xhs-note-6916a5a500000000190262bf",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": "广式",
+      "dish": "鸡排饭",
+      "reviewScope": "dish",
+      "excerpt": "北交｜打包香喷喷的鸡排饭！！！！ — 📍学活二楼 广式\n💰15，打包再加1\n⭐️⭐️⭐️⭐️⭐️\n✅美味治愈！全部吃光\n#大馋丫头吃在北交[话题]# #学校食堂[话题]# #女大学生干饭日常[话题]# #大学食堂[话题]# #和大学生抢饭吃[话题]# #跟着大学生吃就对了[话题]# #好吃的外卖[话题]# #烤肉拌饭[话题]# #炸猪排[话题]# #鸡排[话题]#",
+      "source": {
+        "title": "北交｜打包香喷喷的鸡排饭！！！！",
+        "url": "https://www.xiaohongshu.com/explore/6916a5a500000000190262bf?xsec_token=ABnRCp-OZuy3t8VlAVBxUIgvp-pdNS0kR5ApoX76mJqNQ=&xsec_source=pc_search",
+        "date": "2025-11-14",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交｜打包香喷喷的鸡排饭！！！！ — 📍学活二楼 广式 💰15，打包再加1 ⭐️⭐️⭐️⭐️⭐️ ✅美味治愈！全部吃光"
+    },
+    {
+      "id": "xhs-note-6685239d000000000a006190",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "3F",
+      "windowName": null,
+      "dish": "通心粉、酸奶",
+      "reviewScope": "dish",
+      "excerpt": "北交大干饭记录61 — 学活三楼清真餐厅\n图一应该是通心粉？咸口的，有菜有肉我觉得不错\n图二酸奶微微凉，很解腻，好喝\n#食堂打卡[话题]# #食堂[话题]# #女大学生干饭日常[话题]# #吃饭日记[话题]#",
+      "source": {
+        "title": "北交大干饭记录61",
+        "url": "https://www.xiaohongshu.com/explore/6685239d000000000a006190?xsec_token=ABEmiuBSB46yO1JAgh1mLkLoXFH9Hfld4KJVkjfOBHDAQ=&xsec_source=pc_search",
+        "date": "2024-07-03",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "medium",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交大干饭记录61 — 学活三楼清真餐厅 图一应该是通心粉？咸口的，有菜有肉我觉得不错 图二酸奶微微凉，很解腻，好喝"
+    },
+    {
+      "id": "xhs-note-673320d4000000001d038b8e",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "3F",
+      "windowName": null,
+      "dish": "饼",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜学活三楼｜清真✅ — 今天探索了一个饼 还不错呀 with djz\n#女大学生干饭日常[话题]# #食堂[话题]# #食堂打卡[话题]# #晒晒我的今日伙食[话题]# #美食日记[话题]# #美食分享[话题]# #今天也要好好吃饭[话题]# #今天把饭吃光光[话题]# #干饭人的日常[话题]# #把大学食堂吃个遍[话题]#",
+      "source": {
+        "title": "吃在北交｜学活三楼｜清真✅",
+        "url": "https://www.xiaohongshu.com/explore/673320d4000000001d038b8e?xsec_token=AB2k5Brf4CpS_3RvuTEiqZOdzCQPytGctnKyiy_vYwL8U=&xsec_source=pc_search",
+        "date": "2024-11-12",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜学活三楼｜清真✅ — 今天探索了一个饼 还不错呀 with djz"
+    },
+    {
+      "id": "xhs-note-66000deb00000000130246eb",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "3F",
+      "windowName": null,
+      "dish": "蒸土豆、炒蘑菇、菜饼",
+      "reviewScope": "dish",
+      "excerpt": "北交大干饭记录11 — 学活三楼清真餐厅 第一次去吃\n蒸土豆很清淡 爱吃土豆的宝宝可以冲！主食品种很多，还有蒸紫薯之类\n炒蘑菇也好吃！\n图三的菜饼也很好吃！\n#食堂打卡[话题]# #食堂[话题]# #记录美好生活[话题]#",
+      "source": {
+        "title": "北交大干饭记录11",
+        "url": "https://www.xiaohongshu.com/explore/66000deb00000000130246eb?xsec_token=ABbGb1ROvFYQiqY-2MgHRzTtRYOkgtzYuI5mQy92QDgfc=&xsec_source=pc_search",
+        "date": "2024-03-24",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交大干饭记录11 — 学活三楼清真餐厅 第一次去吃 蒸土豆很清淡 爱吃土豆的宝宝可以冲！主食品种很多，还有蒸紫薯之类 炒蘑菇也好吃！ 图三的菜饼也很好吃！"
+    },
+    {
+      "id": "xhs-note-6733253c000000001d03bfd5",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "3F",
+      "windowName": null,
+      "dish": "饼",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜学活三楼｜清真的这个饼 — 就表面一层，超厚，咬不动，别买\n#肉夹馍[话题]# #平价美食[话题]# #烧饼夹一切[话题]# #就爱这一口街头小吃[话题]# #煎饼果子[话题]# #记录美好生活[话题]# #保持更新[话题]# #清清日常库存[话题]# #每一天都很哇塞[话题]# #所遇皆美好[话题]#",
+      "source": {
+        "title": "吃在北交｜学活三楼｜清真的这个饼",
+        "url": "https://www.xiaohongshu.com/explore/6733253c000000001d03bfd5?xsec_token=AB2k5Brf4CpS_3RvuTEiqZOWBx2SybfWWgwg5Lb9-dC4Q=&xsec_source=pc_search",
+        "date": "2024-11-12",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜学活三楼｜清真的这个饼 — 就表面一层，超厚，咬不动，别买"
+    },
+    {
+      "id": "xhs-note-6733218b000000001a03575e",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "3F",
+      "windowName": null,
+      "dish": "清真驴打滚",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜学活三楼｜清真驴打滚 — 1.5r还可以吧 甜的\n#论姜可以伪装成任何食物[话题]# #能吃是福只要没毒我都吃[话题]# #人间美味[话题]# #消暑就吃这一口[话题]# #好吃到无语[话题]# #酸汤自然发酵[话题]# #太好吃了[话题]# #小孩喜欢吃[话题]# #吃下这口就凉快了[话题]#",
+      "source": {
+        "title": "吃在北交｜学活三楼｜清真驴打滚",
+        "url": "https://www.xiaohongshu.com/explore/6733218b000000001a03575e?xsec_token=AB2k5Brf4CpS_3RvuTEiqZOTlowdu3NZt4_RewJa4KrXI=&xsec_source=pc_search",
+        "date": "2024-11-12",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜学活三楼｜清真驴打滚 — 1.5r还可以吧 甜的"
+    },
+    {
+      "id": "xhs-note-69141e3d0000000003019c5c",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "minghu",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "排骨锅仔",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜明湖二楼｜排骨锅仔 — 哎嘿，不会买第二次了😊\n \n😎\n \n💰18\n \n⭐️⭐️\n \n肉对我来说也一般😊\n \n#大馋丫头吃在北交[话题]# #把大学食堂吃个遍[话题]# #大学食堂[话题]# #在学校也要好好吃饭[话题]# #校园里的美食[话题]# #女大学生干饭日常[话题]# #干饭人食堂[话题]# #学校食堂[话题]#",
+      "source": {
+        "title": "吃在北交｜明湖二楼｜排骨锅仔",
+        "url": "https://www.xiaohongshu.com/explore/69141e3d0000000003019c5c?xsec_token=ABhtcvQj4SXNqrLDSR1iXOS4f0uGGkJLTO8XunA3ebfg4=&xsec_source=pc_search",
+        "date": "2025-11-12",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜明湖二楼｜排骨锅仔 — 哎嘿，不会买第二次了😊 😎 💰18 ⭐️⭐️ 肉对我来说也一般😊"
+    },
+    {
+      "id": "xhs-note-68beae07000000001d0394e4",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "minghu",
+      "floorLabel": "2F",
+      "windowName": "然他窗口",
+      "dish": "石锅片片鸡",
+      "reviewScope": "dish",
+      "excerpt": "北交｜明湖2楼｜然他窗口｜石锅片片鸡！光盘！ — 💰9.48\n⭐️⭐️⭐️⭐️\n✅略油，很香，微辣就有点辣哈哈哈哈，好吃，好吃到小馋丫头吃了两碗米饭！家人们趁着特价菜可以去试试！\n#大馋丫头吃在北交[话题]# #大学生在校吃饭[话题]# #把大学食堂吃个遍[话题]# #和大学生抢饭吃[话题]# #食堂打卡[话题]# #女大学生干饭日常[话题]# #校园里的美食[话题]# #在学校也要好好吃饭[话题]# #北京交通大学[话题]#",
+      "source": {
+        "title": "北交｜明湖2楼｜然他窗口｜石锅片片鸡！光盘！",
+        "url": "https://www.xiaohongshu.com/explore/68beae07000000001d0394e4?xsec_token=ABhpZijNq1CVkavXzyIEbyTbWqyeBivpAiia65FUnxn6E=&xsec_source=pc_search",
+        "date": "2025-09-08",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交｜明湖2楼｜然他窗口｜石锅片片鸡！光盘！ — 💰9.48 ⭐️⭐️⭐️⭐️ ✅略油，很香，微辣就有点辣哈哈哈哈，好吃，好吃到小馋丫头吃了两碗米饭！家人们趁着特价菜可以去试试！"
+    },
+    {
+      "id": "xhs-note-69abf043000000000e03dbaa",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "minghu",
+      "floorLabel": "3F",
+      "windowName": null,
+      "dish": "旋转自助小火锅",
+      "reviewScope": "dish",
+      "excerpt": "北交美食｜明湖三楼旋转自助小火锅 — 价格实惠，新品也不错，推荐茉莉或花田小黄杏冰茶，半分糖哦\n#小火锅[话题]# #北交食堂[话题]# #明湖餐厅[话题]# #旋转小火锅[话题]# #学校食堂[话题]#",
+      "source": {
+        "title": "北交美食｜明湖三楼旋转自助小火锅",
+        "url": "https://www.xiaohongshu.com/explore/69abf043000000000e03dbaa?xsec_token=ABrRtBhZ07MumD4amHir8MXI3XNS23O3tSYcMeO30ktKQ=&xsec_source=pc_search",
+        "date": "2026-03-07",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交美食｜明湖三楼旋转自助小火锅 — 价格实惠，新品也不错，推荐茉莉或花田小黄杏冰茶，半分糖哦"
+    },
+    {
+      "id": "xhs-note-67d7a471000000001201d661",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "minghu",
+      "floorLabel": "3F",
+      "windowName": null,
+      "dish": "水煮鸡肉",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜水煮鸡肉🤩懂的人有福了！！！！🤓 — ✅明湖三楼\n✅⭐️⭐️⭐️⭐️⭐️\n✅嘎嘎好吃！！！！！！！！\n✅有鸡肉，木耳，土豆，地瓜，豆芽，青菜🥬.，大馋丫头认为十分健康！！！！\n✅味道自己选，不吃辣的我要的清香，很有滋味！！！！！！！全部光盘📀！！！！什么含金量！！！！！！\n✅特价9💰，冲哇，还要什么自行车🚲，冲冲冲冲冲冲冲冲冲！！！！！！！！！性价比拉满！！！！！！\n \n✅边看种地边吃，二哥喂猪，我喂我自己，服了哈哈哈哈，猪和我都吃的很香🤓\n#大馋丫头吃在北交[话题]# #水煮肉片[话题]# #大学食堂[话题]# #学校食堂[话题]# #好吃的食堂[话题]# #在学校也要好好吃饭[话题]# #把大学食堂吃个遍[话题]# #大学生吃吃吃[话题]# #女大学生干饭日常[话题]# #食堂[话题]#",
+      "source": {
+        "title": "吃在北交｜水煮鸡肉🤩懂的人有福了！！！！🤓",
+        "url": "https://www.xiaohongshu.com/explore/67d7a471000000001201d661?xsec_token=ABVbeZ_IMwffvvDeOnFQT2OVIHyY3sQDSzqNx4y0Rt_dI=&xsec_source=pc_search",
+        "date": "2025-03-17",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜水煮鸡肉🤩懂的人有福了！！！！🤓 — ✅明湖三楼 ✅⭐️⭐️⭐️⭐️⭐️ ✅嘎嘎好吃！！！！！！！！ ✅有鸡肉，木耳，土豆，地瓜，豆芽，青菜🥬.，大馋丫头认为十分健康！！！！ ✅味道自己选，不吃辣的我要的清香，很有滋味！！！！！！！全部光盘📀！！！！什么含金量！！！！！！ ✅特价9💰，冲哇，还要什么自行车🚲，冲冲冲冲冲冲冲冲冲！！！！！！！！！性价比拉满！！！！！！ ✅边看种地边吃，二哥喂猪，我喂我自己，服了哈哈哈哈，猪和我都吃的很香🤓"
+    },
+    {
+      "id": "xhs-note-682b0ae50000000012000501",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "minghu",
+      "floorLabel": "3F",
+      "windowName": "干锅拌饭",
+      "dish": "爆汁牛肉饭",
+      "reviewScope": "dish",
+      "excerpt": "巨香！北交明湖三楼干锅拌饭，爆汁牛肉饭！ — 19.8一份，土豆很烂糊，跟着汤和米饭一拌，黏糊糊的超级香。牛肉不少，有瘦有肥有筋。吃的干干净净😋😋，很适合增肌吃，很爽。#学校食堂[话题]# #大学生吃饭[话题]##北京交通大学食堂[话题]# #校园里的美食[话题]# #增肌怎么吃[话题]#",
+      "source": {
+        "title": "巨香！北交明湖三楼干锅拌饭，爆汁牛肉饭！",
+        "url": "https://www.xiaohongshu.com/explore/682b0ae50000000012000501?xsec_token=ABq4aett52M5AItRTE2FGGjRYX2Qg7RDJQl3BSok8ha1U=&xsec_source=pc_search",
+        "date": "2025-05-19",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "2025-11-11 后续评论称这学期似乎已无该菜，不可当现售推荐。",
+      "displayText": "巨香！北交明湖三楼干锅拌饭，爆汁牛肉饭！ — 19.8一份，土豆很烂糊，跟着汤和米饭一拌，黏糊糊的超级香。牛肉不少，有瘦有肥有筋。吃的干干净净😋😋，很适合增肌吃，很爽。"
+    },
+    {
+      "id": "xhs-note-673d607f000000000601507b",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuesi",
+      "floorLabel": "1F",
+      "windowName": null,
+      "dish": "安徽板面",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜学四一楼｜安徽板面8r — ⭐️⭐️\n🎈学四一楼一进门左手边第一家\n🍊优点：就是还行还行，还挺香的\n👏缺点： 这个面一点都不筋道，这个面也太面了，然后呢，这个配菜也不好吃，然后呢，这个面他因为他太面了，都筷子夹不起来，然后他还会四处飞飞溅。如果你穿的白衣服就惨了，喜提油画涂鸦☺️\n🩵总结：我是不会买下一次了🥹",
+      "source": {
+        "title": "吃在北交｜学四一楼｜安徽板面8r",
+        "url": "https://www.xiaohongshu.com/explore/673d607f000000000601507b?xsec_token=ABQ8N9glh4H4frqZwQSvV1gEZIIeffHJiuROba3rwX0KA=&xsec_source=pc_search",
+        "date": "2024-11-20",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜学四一楼｜安徽板面8r — ⭐️⭐️ 🎈学四一楼一进门左手边第一家 🍊优点：就是还行还行，还挺香的 👏缺点： 这个面一点都不筋道，这个面也太面了，然后呢，这个配菜也不好吃，然后呢，这个面他因为他太面了，都筷子夹不起来，然后他还会四处飞飞溅。如果你穿的白衣服就惨了，喜提油画涂鸦☺️ 🩵总结：我是不会买下一次了🥹"
+    },
+    {
+      "id": "xhs-note-6a0d79850000000008030ce8",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuesi",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": null,
+      "reviewScope": "floor",
+      "excerpt": "四食堂二楼新品测评 — 最近四食堂二楼新品火热，测评来啦！[哇R]\n先说档口整体，昨天中午去吃档口依旧手忙脚乱，排队时间超10min，面和米线的档口没有煎蛋[扶墙R]会赠一瓶冰红茶盒装饮料，整体口味偏重，几个偏果味的清爽些，面和米线的汤都不多，干拌还是汤面属于随机刷新[笑哭R]\n比如档口图片巷巷面有汤，出品终极干拌！[捂脸R]\n#杂酱面[话题]#：建议改名红烧牛肉面(无牛肉版)\n[向右R]非常香！大厨师傅说是自己熬的料，香味和红烧牛肉面有一拼！这个料应该是怎么做都不会难吃的[哇R]蹲一波改良，如果出食堂版红烧牛肉面，必然是夯爆了！\n#巷巷面vs担担面[话题]# : 两者味道相似度比较高\n[向右R]巷巷面有麻酱的香，整体辣度更高，属于很厚重的香辣 12的价格性价比很不错\n[向右R]担担面属于半汤的状态，没有做出川香麻辣的地道口味，相比巷巷面会没那么腻，但是15的价格是比巷巷面多了什么呢\n#香茅vs木姜子[话题]#：\n这两款都很不错，据说厨师是云南的很正宗！\n[向右R]香茅长得简直葱白的真假美猴王，两款口味都是偏重的，口味清淡的朋友估计会觉得咸（送饮料还是必要的）[捂脸R]木姜子的味道还是很明显的，吃不惯的注意避开了\n#百香果vs酸辣番茄[话题]#：\n夏季仙品，如果是凉面感觉会很哇塞[派",
+      "source": {
+        "title": "四食堂二楼新品测评",
+        "url": "https://www.xiaohongshu.com/explore/6a0d79850000000008030ce8?xsec_token=ABJScWnmispRGSFe12-1XOL2qGwM6BhTnvdyVMBYz9NEE=&xsec_source=pc_search",
+        "date": "2026-05-20",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "medium",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "四食堂二楼新品测评 — 最近四食堂二楼新品火热，测评来啦！ 先说档口整体，昨天中午去吃档口依旧手忙脚乱，排队时间超10min，面和米线的档口没有煎蛋会赠一瓶冰红茶盒装饮料，整体口味偏重，几个偏果味的清爽些，面和米线的汤都不多，干拌还是汤面属于随机刷新 比如档口图片巷巷面有汤，出品终极干拌！ ：建议改名红烧牛肉面(无牛肉版) 非常香！大厨师傅说是自己熬的料，香味和红烧牛肉面有一拼！这个料应该是怎么做都不会难吃的蹲一波改良，如果出食堂版红烧牛肉面，必然是夯爆了！ : 两者味道相似…"
+    },
+    {
+      "id": "xhs-note-675eaa5b00000000020369f0",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuesi",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "小笼包",
+      "reviewScope": "dish",
+      "excerpt": "吃在北交｜学四二楼｜小笼包7r — 这个不咸，家属区的好像有点咸\n中规中矩\n#小笼包[话题]# #本地人才知道的美食[话题]# #生煎包[话题]# #地方小吃美食[话题]# #包子[话题]# #碳水使我快乐[话题]# #大馋丫头吃在北交[话题]#",
+      "source": {
+        "title": "吃在北交｜学四二楼｜小笼包7r",
+        "url": "https://www.xiaohongshu.com/explore/675eaa5b00000000020369f0?xsec_token=ABcFbfMOEuuz_TtHrRuQlr1TZphCmLKnPMJFWgg8uObRc=&xsec_source=pc_search",
+        "date": "2024-12-15",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜学四二楼｜小笼包7r — 这个不咸，家属区的好像有点咸 中规中矩"
+    },
+    {
+      "id": "xhs-note-6782807f000000001703c011",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuesi",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "大盘鸡拌面",
+      "reviewScope": "dish",
+      "excerpt": "北交嗦面日记-学四二楼大盘鸡拌面 — 14¥一份 可以告诉大叔加辣椒 会送一碗面汤\n面好像是现拉的 好吃是好吃的 就是有一点吃不完\n#大盘鸡[话题]# #北京交通大学食堂[话题]# #北交美食[话题]#",
+      "source": {
+        "title": "北交嗦面日记-学四二楼大盘鸡拌面",
+        "url": "https://www.xiaohongshu.com/explore/6782807f000000001703c011?xsec_token=ABNVzBzqYZ6nKWxiJHc7PK3nR-te8SUY3SbFlnqno-lYg=&xsec_source=pc_search",
+        "date": "2025-01-11",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交嗦面日记-学四二楼大盘鸡拌面 — 14¥一份 可以告诉大叔加辣椒 会送一碗面汤 面好像是现拉的 好吃是好吃的 就是有一点吃不完"
+    },
+    {
+      "id": "xhs-note-66f3923d000000002c02d0a9",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuesi",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "卤肉饭",
+      "reviewScope": "dish",
+      "excerpt": "北交｜学四二楼｜卤肉饭18justsoso — 只能说汤汁有滋味，让我把米饭吃完了，其他一般般啦\n#这伙食没谁了[话题]# #干饭人的日常[话题]#",
+      "source": {
+        "title": "北交｜学四二楼｜卤肉饭18justsoso",
+        "url": "https://www.xiaohongshu.com/explore/66f3923d000000002c02d0a9?xsec_token=ABScskSczgs5ehVAMBp0gB9dftQRgizoq7HBfMQ6xFw7c=&xsec_source=pc_search",
+        "date": "2024-09-25",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交｜学四二楼｜卤肉饭18justsoso — 只能说汤汁有滋味，让我把米饭吃完了，其他一般般啦"
+    },
+    {
+      "id": "xhs-note-6ab34b22000000000a022595",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuesi",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "过油肉拌面",
+      "reviewScope": "dish",
+      "excerpt": "学四二楼过油肉拌面 — 18元，给的牛肉很足，味道不错，每天早点来不然排长队了",
+      "source": {
+        "title": "学四二楼过油肉拌面",
+        "url": "https://www.xiaohongshu.com/explore/6ab34b22000000000a022595?xsec_token=ABbjWMK5MN8IehSK0a7jPH87Od6b8OeSuIGa8e7DK2CbU=&xsec_source=pc_search",
+        "date": "2026-09-23",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "学四二楼过油肉拌面 — 18元，给的牛肉很足，味道不错，每天早点来不然排长队了"
+    },
+    {
+      "id": "xhs-note-68a84cdd000000001d0027da",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "liuyuan",
+      "floorLabel": null,
+      "windowName": null,
+      "dish": null,
+      "reviewScope": "canteen",
+      "excerpt": "我单方面宣布留园是北交最好吃的食堂～ — 北交食堂｜自返校十多天以来第一次在食堂吃饭[微笑R]留园你太香了[色色R][色色R]#北交食堂[话题]# #留园[话题]#",
+      "source": {
+        "title": "我单方面宣布留园是北交最好吃的食堂～",
+        "url": "https://www.xiaohongshu.com/explore/68a84cdd000000001d0027da?xsec_token=ABOZyQAksrW0vp51QBzFBF0u2qr5LWL2hoRumEDW5RdVE=&xsec_source=pc_search",
+        "date": "2025-08-22",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "我单方面宣布留园是北交最好吃的食堂～ — 北交食堂｜自返校十多天以来第一次在食堂吃饭留园你太香了"
+    },
+    {
+      "id": "xhs-note-68465f92000000001101cf34",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "liuyuan",
+      "floorLabel": "1F",
+      "windowName": null,
+      "dish": "豆角",
+      "reviewScope": "dish",
+      "excerpt": "北交｜留园一楼｜朋友说这个好吃的豆角 吃啦 — 💰好像5\n✅香喷喷，豆角很入味，大家可以去试试，真的很不错！怪不得朋友经常吃！今天也是被大馋丫头吃着了\n \n#大馋丫头吃在北交[话题]# #干饭人最拒绝不了的一道菜[话题]# #干饭人食堂[话题]# #校园里的美食[话题]# #干饭人的下饭菜[话题]# #食堂打卡[话题]# #好吃的饭菜[话题]# #把大学食堂吃个遍[话题]# #大学生吃饭[话题]# #大学食堂[话题]#",
+      "source": {
+        "title": "北交｜留园一楼｜朋友说这个好吃的豆角 吃啦",
+        "url": "https://www.xiaohongshu.com/explore/68465f92000000001101cf34?xsec_token=ABy-lAqMm5EOy_GuP35ucy7PhsYgjApHYwhFMkrpyTQOw=&xsec_source=pc_search",
+        "date": "2025-06-09",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交｜留园一楼｜朋友说这个好吃的豆角 吃啦 — 💰好像5 ✅香喷喷，豆角很入味，大家可以去试试，真的很不错！怪不得朋友经常吃！今天也是被大馋丫头吃着了"
+    },
+    {
+      "id": "xhs-note-66e410fc00000000120104b1",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "liuyuan",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": null,
+      "reviewScope": "floor",
+      "excerpt": "留园二楼 — 今天去的太早了，五点开始打饭，去的太早真不好，感觉阿姨都不舍得多盛一点，分量都好少[哭惹R][哭惹R]气鼠了，菜还是一如既往的好吃，含泪把所有菜炫光了。又买了个绿茶味月饼，不得不说配料表真的挺干净的，留着当早饭[萌萌哒R][萌萌哒R]\nPS:不是饿的要鼠的话，别来太早，绿豆汤一碗带绿豆的都没有[生气R][生气R]\n#食堂[话题]##北京交通大学[话题]# #研究生日常[话题]# #干饭[话题]#",
+      "source": {
+        "title": "留园二楼",
+        "url": "https://www.xiaohongshu.com/explore/66e410fc00000000120104b1?xsec_token=AB2OEEqjlI3R93izZew_2WwQ-_FNw5uGlLriopTk50IOI=&xsec_source=pc_search",
+        "date": "2024-09-13",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "留园二楼 — 今天去的太早了，五点开始打饭，去的太早真不好，感觉阿姨都不舍得多盛一点，分量都好少气鼠了，菜还是一如既往的好吃，含泪把所有菜炫光了。又买了个绿茶味月饼，不得不说配料表真的挺干净的，留着当早饭 PS:不是饿的要鼠的话，别来太早，绿豆汤一碗带绿豆的都没有"
+    },
+    {
+      "id": "xhs-note-66f68c09000000001902ccf3",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "liuyuan",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "青椒炒肉、土豆牛肉",
+      "reviewScope": "dish",
+      "excerpt": "留园二楼 — 在留园吃的最奢侈的一顿，18.5米，今天的青椒炒肉炒鸡辣，导致青椒都没吃完[哭惹R]土豆牛肉很好吃，但是也比较贵，六块一份，就三块牛肉[哭惹R][哭惹R]还有个豌豆的菜，不知道是什么肉，味道也不错。黄色的小饼1.5元，吃着也还行。\n#北京交通大学[话题]# #研究生日常[话题]# #干饭[话题]# #吃的干净长得干净[话题]#",
+      "source": {
+        "title": "留园二楼",
+        "url": "https://www.xiaohongshu.com/explore/66f68c09000000001902ccf3?xsec_token=ABxCjrQ0I8FxjRUq2I6RPE0GSZgRyXOe7c7eEHDlblK24=&xsec_source=pc_search",
+        "date": "2024-09-27",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "留园二楼 — 在留园吃的最奢侈的一顿，18.5米，今天的青椒炒肉炒鸡辣，导致青椒都没吃完土豆牛肉很好吃，但是也比较贵，六块一份，就三块牛肉还有个豌豆的菜，不知道是什么肉，味道也不错。黄色的小饼1.5元，吃着也还行。"
+    },
+    {
+      "id": "xhs-note-675ac022000000000201565e",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "liuyuan",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": null,
+      "reviewScope": "floor",
+      "excerpt": "吃在北交｜留园二楼｜12r — 真便宜真好吃真开心 和lyt遇到了mt.嘿嘿\n#女大学生干饭日常[话题]# #一周美食打卡[话题]# #晒晒我的今日伙食[话题]# #干饭人的日常[话题]# #干饭[话题]# #平价美食[话题]# #今天也要好好吃饭[话题]# #每天吃的不一样[话题]# #干饭使我快乐[话题]# #干饭人食堂[话题]#",
+      "source": {
+        "title": "吃在北交｜留园二楼｜12r",
+        "url": "https://www.xiaohongshu.com/explore/675ac022000000000201565e?xsec_token=ABflUjbO3HWB_sVr3cema3k0NaiO6DhyV8RLVTxw8vJ8o=&xsec_source=pc_search",
+        "date": "2024-12-12",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "吃在北交｜留园二楼｜12r — 真便宜真好吃真开心 和lyt遇到了mt.嘿嘿"
+    },
+    {
+      "id": "xhs-note-66d196a2000000001d03a1e0",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "liuyuan",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "豆腐皮菜、西兰花、绿豆汤",
+      "reviewScope": "dish",
+      "excerpt": "留园食堂二楼 — 留园非常好，很推荐，来吃了好几顿了，图片这么多才6米，不过这个豆腐皮的菜不是很推荐，算荤菜，但是肉很少，不太划算，味道也有点腻，不过吃着也可以的，西兰花也不错，绿豆汤好喝，就是有的碗里一粒绿豆都没有，可以挑挑。#读研日记[话题]# #食堂打卡[话题]# #干饭日记[话题]# #北京交通大学[话题]#",
+      "source": {
+        "title": "留园食堂二楼",
+        "url": "https://www.xiaohongshu.com/explore/66d196a2000000001d03a1e0?xsec_token=ABgSUCDcnAbLXxgHP_6cjzVdCd1S6pmxdCxzxUd_E6ABg=&xsec_source=pc_search",
+        "date": "2024-08-30",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "留园食堂二楼 — 留园非常好，很推荐，来吃了好几顿了，图片这么多才6米，不过这个豆腐皮的菜不是很推荐，算荤菜，但是肉很少，不太划算，味道也有点腻，不过吃着也可以的，西兰花也不错，绿豆汤好喝，就是有的碗里一粒绿豆都没有，可以挑挑。"
+    },
+    {
+      "id": "xhs-note-6ab8f5df000000000a025425",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "yimin",
+      "floorLabel": null,
+      "windowName": null,
+      "dish": "藤椒牛肉、干锅菜花、疙瘩汤",
+      "reviewScope": "dish",
+      "excerpt": "北交益民餐厅 — 从东门出去左转就是，藤椒牛肉有点咸，一般，干锅菜花好吃😋，疙瘩汤量太大了，少于4个人慎点",
+      "source": {
+        "title": "北交益民餐厅",
+        "url": "https://www.xiaohongshu.com/explore/6ab8f5df000000000a025425?xsec_token=ABFX_WreKEviH_OeLEMgzP_si9qnxWV1ZIop84ozfBLl8=&xsec_source=pc_search",
+        "date": "2026-09-27",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交益民餐厅 — 从东门出去左转就是，藤椒牛肉有点咸，一般，干锅菜花好吃😋，疙瘩汤量太大了，少于4个人慎点"
+    },
+    {
+      "id": "xhs-note-6a9a7004000000001202412c",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "yimin",
+      "floorLabel": null,
+      "windowName": null,
+      "dish": "湖南农家一碗香、醋炒蛋",
+      "reviewScope": "dish",
+      "excerpt": "重生之我在北交大都吃些啥——二人食版 — 1️⃣图1 10 11都在益民餐厅——不愧是北交学生一餐厅哈，确实菜品很多，但是我个人而言会反复点的菜品：\n湖南农家一碗香 老长沙醋炒蛋（偏酸）\n❗我感觉他们家都是偏重口的，如果口味较淡的宝宝慎入！\n2️⃣图2 3留园，性价比超高！适合一个人吃小碗菜，特别是减脂人群，西蓝花一小碗才三元！\n3️⃣图456麦当当，南门外一家店，地下一楼卡座特别宽敞，也适合非饭点团建或者自习\n大家一定要试试薯条🍟➕麦旋风的组合好吗……\n4️⃣图789古丽花儿，在天津，但是周末去天津玩的话一定要去试试！吃过很多回了，物美价廉，不推荐去河南路那家店，人特别多！排队老久了\n推荐菜品：\n包菜炒馕 新疆面皮汤（酸口老开胃了）大盘鸡（分量有点大，味道美味但较单一，两个人的话慎点）咸奶茶 娜帕里勇\n5️⃣图12魏家凉皮的汉堡哥，个人不推荐他家凉皮嘻嘻，汉堡的皮是偏油脆的，跟其他的汉堡胚不一样的感觉，可以一试\n6️⃣图13 14 大叹号烤肉！七八月来来回回吃了好多次！主要是叠上学生优惠以后两个人最多也就一百出头！又想吃了[哭惹R][哭惹R]\n7️⃣图16 17校内一个坑里面的店叫啥来着我给忘了，我觉得只能说是规规矩矩，豌杂面不入味，黄焖鸡还可以\n8️⃣图18 吉野家 减脂人群可以",
+      "source": {
+        "title": "重生之我在北交大都吃些啥——二人食版",
+        "url": "https://www.xiaohongshu.com/explore/6a9a7004000000001202412c?xsec_token=ABAUGCZaRXZpLYHkb9rPGx0-U_8fJcvW-kQHKXp-jC9qY=&xsec_source=pc_search",
+        "date": "2026-09-04",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "重生之我在北交大都吃些啥——二人食版 — 1️⃣图1 10 11都在益民餐厅——不愧是北交学生一餐厅哈，确实菜品很多，但是我个人而言会反复点的菜品： 湖南农家一碗香 老长沙醋炒蛋（偏酸） ❗我感觉他们家都是偏重口的，如果口味较淡的宝宝慎入！ 2️⃣图2 3留园，性价比超高！适合一个人吃小碗菜，特别是减脂人群，西蓝花一小碗才三元！ 3️⃣图456麦当当，南门外一家店，地下一楼卡座特别宽敞，也适合非饭点团建或者自习 大家一定要试试薯条🍟➕麦旋风的组合好吗…… 4️⃣图789古丽花…"
+    },
+    {
+      "id": "xhs-note-6645ffa7000000001e03288d",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "yimin",
+      "floorLabel": null,
+      "windowName": null,
+      "dish": "清炒油麦菜、小炒黄牛肉、铁板豆腐",
+      "reviewScope": "dish",
+      "excerpt": "益民餐厅！北交学生的穷鬼大乐园！ — 四个人三个菜人均16，点了清炒油麦菜（14r）、小炒黄牛肉（28r）、铁板豆腐（18r）、四碗米饭（4r\n根本没法拍吃之前的照片因为大馋丫头们急死了[失望R][失望R][失望R][失望R][失望R]\n只好把吃完的照片附上证明我们的实力与益民餐厅的实力……\n附上了菜单[害羞R][害羞R]宝宝们可以提前看看想吃什么到了之后就点上省得排很久队哦！（p5是我们上课的时候就在点菜了一下课就冲出教室去点菜于是很快就吃上了………\n地点就是交大东门那边，可以从交大家属区进去，然后问路过的学生哈哈哈哈我们白胶的学生都很乐于助人[萌萌哒R][萌萌哒R][萌萌哒R][萌萌哒R][萌萌哒R]\n#北京交通大学[话题]# #北京美食[话题]# #穷鬼套餐[话题]#",
+      "source": {
+        "title": "益民餐厅！北交学生的穷鬼大乐园！",
+        "url": "https://www.xiaohongshu.com/explore/6645ffa7000000001e03288d?xsec_token=ABvAC-ohJ2p294VgDXNUMLkXoX5vnMN8Ikl5AxlF7nSNs=&xsec_source=pc_search",
+        "date": "2024-05-16",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "益民餐厅！北交学生的穷鬼大乐园！ — 四个人三个菜人均16，点了清炒油麦菜（14r）、小炒黄牛肉（28r）、铁板豆腐（18r）、四碗米饭（4r 根本没法拍吃之前的照片因为大馋丫头们急死了 只好把吃完的照片附上证明我们的实力与益民餐厅的实力…… 附上了菜单宝宝们可以提前看看想吃什么到了之后就点上省得排很久队哦！（p5是我们上课的时候就在点菜了一下课就冲出教室去点菜于是很快就吃上了……… 地点就是交大东门那边，可以从交大家属区进去，然后问路过的学生哈哈哈哈我们白胶的学生都很乐于助…"
+    },
+    {
+      "id": "xhs-note-68e87530000000000302f232",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "yimin",
+      "floorLabel": null,
+      "windowName": null,
+      "dish": "锅包肉、干锅土豆",
+      "reviewScope": "dish",
+      "excerpt": "北交｜益民好好好好好好………………好吃！！！ — [捂嘴笑R]俩人吃的饱饱\n💰见p3\n⭐️⭐️⭐️⭐️⭐️\n✅超级好吃，锅包肉无敌了，是我吃过目前为止最好吃的锅包肉！！！！！干锅土豆也很🉑，开心，全部光盘！！！！\n#女大学生干饭日常[话题]# #大学生吃吃吃[话题]#\n#大馋丫头吃在北交[话题]# #食堂[话题]# #跟着大学生吃就对了[话题]# #在学校也要好好吃饭[话题]# #北京交通大学[话题]# #校园里的美食[话题]# #干饭日记[话题]#",
+      "source": {
+        "title": "北交｜益民好好好好好好………………好吃！！！",
+        "url": "https://www.xiaohongshu.com/explore/68e87530000000000302f232?xsec_token=ABToiaADG45EUMfXoDewTRz6V2Rq7xtANV6yAB_DoV004=&xsec_source=pc_search",
+        "date": "2025-10-10",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交｜益民好好好好好好………………好吃！！！ — 俩人吃的饱饱 💰见p3 ⭐️⭐️⭐️⭐️⭐️ ✅超级好吃，锅包肉无敌了，是我吃过目前为止最好吃的锅包肉！！！！！干锅土豆也很🉑，开心，全部光盘！！！！"
+    },
+    {
+      "id": "xhs-note-693e2133000000001e00dbd8",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "yimin",
+      "floorLabel": null,
+      "windowName": null,
+      "dish": "醋溜木须、锅包肉、酸菜鱼",
+      "reviewScope": "dish",
+      "excerpt": "06女大在北交and周边逛吃一天吃什么 — p1-p5是益民餐厅的小炒，好多菜都是煮啵二刷的，尊嘟好好吃！！\np1醋溜木须：墙裂推荐！一盘可以炫八碗饭！\np2锅包肉：一份28要什么自行车啊[赞R]\np3酸菜鱼：煮啵点的是小份，但是鱼肉还是很多，不过感觉没有很好吃，有一股大自然的清香[笑哭R][笑哭R]\np4炒合菜：感觉味道和醋溜木须有点像但是没有醋溜木须好吃\np5焦溜丸子:吃前两口还挺惊艳，不过吃到后面有点腻，总体还行叭\np6:学活小店的5块钱糖葫芦太好吃啦！馋了它好久了（不过是不是涨价了？咋记得去年是四块钱？）\np7:枫蓝国际的萨莉亚：推荐香烤蜗牛and榴莲披萨and焗饭\np8:南锣鼓巷仙豆菓夫的仙豆糕，煮啵几乎把每个味道都尝了一遍，这个是肉松咸蛋黄口味，肉松很多，但是感觉仙豆糕还是更推荐甜口的\np9-10:鸦儿李记涮肉（展览馆路店）：煮啵十一点半左右到的已经有好多人在排队了[笑哭了R]因为真的香迷糊了，煮啵甚至忙着吃都忘了拍真正的主角：铜锅and涮肉，因为煮啵不吃羊肉，所以点了一盘鲜切牛肉和手工虾滑（超级超级好吃），但是听说铜锅涮肉就是要吃羊肉，所以还点了一份羊肉（叫什么三宝？记不得了反正有一个宝字[害羞R][大笑R]）煮啵小尝一口感觉也挺不错的，老嫩了！还有必吃的起家烧饼and",
+      "source": {
+        "title": "06女大在北交and周边逛吃一天吃什么",
+        "url": "https://www.xiaohongshu.com/explore/693e2133000000001e00dbd8?xsec_token=AB-s4Qfd7jNKstezLTvetJSwSHGsLGaPeV0UXJzAqsn2Q=&xsec_source=pc_search",
+        "date": "2025-12-14",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "06女大在北交and周边逛吃一天吃什么 — p1-p5是益民餐厅的小炒，好多菜都是煮啵二刷的，尊嘟好好吃！！ p1醋溜木须：墙裂推荐！一盘可以炫八碗饭！ p2锅包肉：一份28要什么自行车啊 p3酸菜鱼：煮啵点的是小份，但是鱼肉还是很多，不过感觉没有很好吃，有一股大自然的清香 p4炒合菜：感觉味道和醋溜木须有点像但是没有醋溜木须好吃 p5焦溜丸子:吃前两口还挺惊艳，不过吃到后面有点腻，总体还行叭 p6:学活小店的5块钱糖葫芦太好吃啦！馋了它好久了（不过是不是涨价了？咋记得去年是…"
+    },
+    {
+      "id": "xhs-note-6957615e00000000210331bb",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "yimin",
+      "floorLabel": null,
+      "windowName": null,
+      "dish": "锅包肉",
+      "reviewScope": "dish",
+      "excerpt": "北交！益民！锅包肉！ — 香！到！光！盘！\n#大馋丫头吃在北交[话题]# #校园里的美食[话题]# #东北菜[话题]# #食堂[话题]# #大学生吃吃吃[话题]# #谁不爱吃铁锅炖啊[话题]# #食堂打卡[话题]# #锅包肉[话题]# #大学食堂[话题]# #学校食堂[话题]#",
+      "source": {
+        "title": "北交！益民！锅包肉！",
+        "url": "https://www.xiaohongshu.com/explore/6957615e00000000210331bb?xsec_token=ABScSw9yYLPFvvTomuqLOBH3zreti0mNxd9cbQGW1bIGA=&xsec_source=pc_search",
+        "date": "2026-01-02",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交！益民！锅包肉！ — 香！到！光！盘！"
+    },
+    {
+      "id": "xhs-note-69aa738d000000001a01c3e9",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "yimin",
+      "floorLabel": null,
+      "windowName": null,
+      "dish": "宫保鸡丁盖饭",
+      "reviewScope": "dish",
+      "excerpt": "挑战全网最多宫保鸡丁｜012 益民餐厅 — 位于北交家属区里的一个小餐馆，价格异常便宜，一份盖饭加不少炸串才花了二十出头\n宫保鸡丁盖饭 14r\n首先一上来，卖相特别好，比很多三四十的餐馆都好，口味上是很正宗的甜咸微辣口，没有因为价格低而糊弄\n总体4.6/5\n \n#美食[话题]# #宫保鸡丁[话题]# #美食解构主理人[话题]# #北京美食[话题]#",
+      "source": {
+        "title": "挑战全网最多宫保鸡丁｜012 益民餐厅",
+        "url": "https://www.xiaohongshu.com/explore/69aa738d000000001a01c3e9?xsec_token=ABnA2f7xUZckQddCFcjMMVUZm19eIdSMoVSJ7HRft90yA=&xsec_source=pc_search",
+        "date": "2026-03-06",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "挑战全网最多宫保鸡丁｜012 益民餐厅 — 位于北交家属区里的一个小餐馆，价格异常便宜，一份盖饭加不少炸串才花了二十出头 宫保鸡丁盖饭 14r 首先一上来，卖相特别好，比很多三四十的餐馆都好，口味上是很正宗的甜咸微辣口，没有因为价格低而糊弄 总体4.6/5"
+    },
+    {
+      "id": "xhs-note-673c1cdc00000000070390db",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "yimin",
+      "floorLabel": null,
+      "windowName": null,
+      "dish": null,
+      "reviewScope": "canteen",
+      "excerpt": "北交大东门益民餐厅？炫我嘴里！！！ — 人均24的巨好吃“食堂”🍱\n盲点不会出错的那种\n四个人点了四个菜都没吃完\n而且还米饭管够😝\n还好我不太经常去东门\n不然天天吃好吃的菜和碳水\n我这减肥计划又完了😫\n#北京[话题]# #北京探店[话题]# #研究生[话题]# #北交大[话题]# #北京交通大学[话题]# #研究生日常[话题]# #美食[话题]# #食堂[话题]# #宝藏餐厅分享[话题]# #探店[话题]#",
+      "source": {
+        "title": "北交大东门益民餐厅？炫我嘴里！！！",
+        "url": "https://www.xiaohongshu.com/explore/673c1cdc00000000070390db?xsec_token=ABIt5e_lXQit8je4SwlAu_LIow41bub44UVqOkBB6TG2s=&xsec_source=pc_search",
+        "date": "2024-11-19",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交大东门益民餐厅？炫我嘴里！！！ — 人均24的巨好吃“食堂”🍱 盲点不会出错的那种 四个人点了四个菜都没吃完 而且还米饭管够😝 还好我不太经常去东门 不然天天吃好吃的菜和碳水 我这减肥计划又完了😫"
+    },
+    {
+      "id": "xhs-note-68fb580e00000000070092f4",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "1F",
+      "windowName": "西餐厅",
+      "dish": "牛肉 taco、薯条、炸鲜奶",
+      "reviewScope": "dish",
+      "excerpt": "🫧 | 北交读研 | 西餐厅吃什么😋 — 📆DAY25\n⭐牛肉taco | 10元子\n只能说，这个价格就别要自行车了\n酱多多，味道不错滴！\n⭐薯条🍟 | 6元子\n无功无过\n⭐炸鲜奶 | 8元子\n避雷，胶质感贼强，很腻很腻很腻！\n❤️有没有什么推荐，俺下次去吃\n \n#food[话题]# #北京交通大学食堂[话题]# #北京读研[话题]# #宝藏餐厅分享[话题]# #北京交通大学[话题]# #读研吃什么[话题]# #plog[话题]# #吃肥皂吐泡泡[话题]# #美食拍照[话题]# #北交大读研[话题]#",
+      "source": {
+        "title": "🫧 | 北交读研 | 西餐厅吃什么😋",
+        "url": "https://www.xiaohongshu.com/explore/68fb580e00000000070092f4?xsec_token=ABRYI6WpG51ULj2Yg_SJLjO2R0q2rKsn0p5piwTQapEQI=&xsec_source=pc_search",
+        "date": "2025-10-24",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "🫧 | 北交读研 | 西餐厅吃什么😋 — 📆DAY25 ⭐牛肉taco | 10元子 只能说，这个价格就别要自行车了 酱多多，味道不错滴！ ⭐薯条🍟 | 6元子 无功无过 ⭐炸鲜奶 | 8元子 避雷，胶质感贼强，很腻很腻很腻！ ❤️有没有什么推荐，俺下次去吃"
+    },
+    {
+      "id": "xhs-note-6555ed07000000003203705e",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": "xuehuo",
+      "floorLabel": "1F",
+      "windowName": "西餐厅",
+      "dish": "培根牛肉汉堡",
+      "reviewScope": "dish",
+      "excerpt": "北交·西餐厅·牛肉汉堡 — 食堂的汉堡还挺好吃的，我点的培根牛肉汉堡，33💰，有两块很厚的牛肉饼和🥓，特别juicy的汉堡，带🍟和🥗，比什么S**ke S**ck好吃多了（拉踩\n#北京交通大学[话题]# #食堂[话题]# #牛肉汉堡[话题]#",
+      "source": {
+        "title": "北交·西餐厅·牛肉汉堡",
+        "url": "https://www.xiaohongshu.com/explore/6555ed07000000003203705e?xsec_token=AB8xUajU3cTiUzKhCZ4HHk7Ni9XPDKoPCJdENOXG49Qbg=&xsec_source=pc_search",
+        "date": "2023-11-16",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交·西餐厅·牛肉汉堡 — 食堂的汉堡还挺好吃的，我点的培根牛肉汉堡，33💰，有两块很厚的牛肉饼和🥓，特别juicy的汉堡，带🍟和🥗，比什么S**ke S**ck好吃多了（拉踩"
+    },
+    {
+      "id": "xhs-note-6a96b23d0000000011033a68",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": null,
+      "floorLabel": null,
+      "windowName": "红果园餐厅",
+      "dish": "烤鸭、芥末虾球",
+      "reviewScope": "dish",
+      "excerpt": "北交红果园餐厅打卡 — 烤鸭和芥末虾球都不错而且量挺大 下次还来[猪头R]#北京交通大学[话题]# #红果园餐厅[话题]#",
+      "source": {
+        "title": "北交红果园餐厅打卡",
+        "url": "https://www.xiaohongshu.com/explore/6a96b23d0000000011033a68?xsec_token=ABWsTFiJf_Qs7cnwgYVoYRwP0dLyM4P6SiNnyqyWAH86o=&xsec_source=pc_search",
+        "date": "2026-09-01",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交红果园餐厅打卡 — 烤鸭和芥末虾球都不错而且量挺大 下次还来"
+    },
+    {
+      "id": "xhs-note-6ab2af280000000015017fe3",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": null,
+      "floorLabel": null,
+      "windowName": "红果园餐厅",
+      "dish": "皮蛋豆腐、菠萝咕咾肉、水煮鱼、毛血旺",
+      "reviewScope": "dish",
+      "excerpt": "红果园餐厅 — 今天在北交吃了红果园餐厅，进门右拐上二楼，平板点菜。皮蛋豆腐皮蛋有点少，感觉一般。菠萝咕咾肉酸甜，不错。水煮鱼刺有一点多，毛血旺我觉得比麻六记的好吃，香辣味，但是毛肚很少。\n比较适合多人聚餐来吃",
+      "source": {
+        "title": "红果园餐厅",
+        "url": "https://www.xiaohongshu.com/explore/6ab2af280000000015017fe3?xsec_token=AB5Bte1q_TOlkHnZwrigE5MPthGc1TuEjIf95SaSL0_FQ=&xsec_source=pc_search",
+        "date": "2026-09-23",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "红果园餐厅 — 今天在北交吃了红果园餐厅，进门右拐上二楼，平板点菜。皮蛋豆腐皮蛋有点少，感觉一般。菠萝咕咾肉酸甜，不错。水煮鱼刺有一点多，毛血旺我觉得比麻六记的好吃，香辣味，但是毛肚很少。 比较适合多人聚餐来吃"
+    },
+    {
+      "id": "xhs-note-68c42f38000000001d0368fe",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": null,
+      "floorLabel": null,
+      "windowName": "红果园餐厅",
+      "dish": "杭椒脆藕爆牛肉",
+      "reviewScope": "dish",
+      "excerpt": "北交大寻食记之红果园餐厅 — [赞R][赞R]杭椒脆藕爆牛肉：点了无数次的一道菜，吃多了食堂的假肉，得吃点真牛肉吧～牛肉既嫩也能吃到真肉的纹理感，而且很大片。很喜欢吃脆脆的藕，不会让整个菜那么腻。微微微辣度，可以忽略。\n \n[赞R][赞R]炝炒油麦菜：还挺爱油麦菜这种既微苦有清甜的味道，口感也是脆脆的，辣椒和蒜爆炒很有锅气！大口吃蔬菜让我很满足，感觉一口一口都在吃维生素。\n \n[石化R]桂花米糕：由于很爱西贝的黄米凉糕，看到菜单有就点来试试了。桂花酱和果脯没问题，但是相比于糯米黄米的比例有点少，黄米之间也有点粒粒分明，应该是糯糯的拉丝的，吃起来不够黏糊。\n \n俩人102。\n \n#北京交通大学[话题]##女大学生干饭日记[话题]#",
+      "source": {
+        "title": "北交大寻食记之红果园餐厅",
+        "url": "https://www.xiaohongshu.com/explore/68c42f38000000001d0368fe?xsec_token=ABokOBpAL-OWRSwHKWK22RJGkzWM6ZX3c0q7FFXh2-YJM=&xsec_source=pc_search",
+        "date": "2025-09-12",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "北交大寻食记之红果园餐厅 — 杭椒脆藕爆牛肉：点了无数次的一道菜，吃多了食堂的假肉，得吃点真牛肉吧～牛肉既嫩也能吃到真肉的纹理感，而且很大片。很喜欢吃脆脆的藕，不会让整个菜那么腻。微微微辣度，可以忽略。 炝炒油麦菜：还挺爱油麦菜这种既微苦有清甜的味道，口感也是脆脆的，辣椒和蒜爆炒很有锅气！大口吃蔬菜让我很满足，感觉一口一口都在吃维生素。 桂花米糕：由于很爱西贝的黄米凉糕，看到菜单有就点来试试了。桂花酱和果脯没问题，但是相比于糯米黄米的比例有点少，黄米之间也有点粒粒分明，应该是…"
+    },
+    {
+      "id": "xhs-note-6a636f12000000000301fa7b",
+      "sourceKind": "individual_xhs_note",
+      "canteenId": null,
+      "floorLabel": null,
+      "windowName": "红果园餐厅",
+      "dish": "烧烤",
+      "reviewScope": "dish",
+      "excerpt": "红果园的烧烤 — 难吃，没有肉味，全是料味，和校外相比确实便宜，但是味道。。。。。。#烧烤呀撸串呀[话题]# #北京交通大学[话题]# #红果园餐厅[话题]# #难吃[话题]#",
+      "source": {
+        "title": "红果园的烧烤",
+        "url": "https://www.xiaohongshu.com/explore/6a636f12000000000301fa7b?xsec_token=AB1tV7putbu6kVaDfRFOsDko5Jq0vstUqpT3dGwwFBtIg=&xsec_source=pc_search",
+        "date": "2026-07-24",
+        "kind": "xhs_note",
+        "publisher": null
+      },
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "个体感受；图片未在本条独立核验。",
+      "displayText": "红果园的烧烤 — 难吃，没有肉味，全是料味，和校外相比确实便宜，但是味道。。。。。。"
+    },
+    {
+      "id": "xhs-comment-66d8277300000000200257ef",
+      "sourceKind": "individual_xhs_comment",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "滑蛋饭",
+      "reviewScope": "dish",
+      "excerpt": "学活二楼的滑蛋饭超好吃！",
+      "source": {
+        "title": "学活二楼｜牛排芝士焗饭 13r",
+        "url": "https://www.xiaohongshu.com/explore/66d59848000000001f03fed4?xsec_token=ABmW_uGriqCteefp02TviAzaewfygGMuQ6zZRpWNGfFlo=&xsec_source=pc_search",
+        "date": "2024-09-04",
+        "kind": "xhs_comment",
+        "publisher": null
+      },
+      "parentNoteId": "66d59848000000001f03fed4",
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "评论只反映发布者当时的主观体验或供应线索。",
+      "displayText": "学活二楼的滑蛋饭超好吃！"
+    },
+    {
+      "id": "xhs-comment-66d7c083000000000f007255",
+      "sourceKind": "individual_xhs_comment",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": null,
+      "reviewScope": "floor",
+      "excerpt": "这学期学活二楼好多窗口都狠狠涨价了，这个窗口和隔壁鱼粉尊嘟好吃而且没涨价[哭惹R][哭惹R]",
+      "source": {
+        "title": "学活二楼｜牛排芝士焗饭 13r",
+        "url": "https://www.xiaohongshu.com/explore/66d59848000000001f03fed4?xsec_token=ABmW_uGriqCteefp02TviAzaewfygGMuQ6zZRpWNGfFlo=&xsec_source=pc_search",
+        "date": "2024-09-04",
+        "kind": "xhs_comment",
+        "publisher": null
+      },
+      "parentNoteId": "66d59848000000001f03fed4",
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "评论只反映发布者当时的主观体验或供应线索。",
+      "displayText": "这学期学活二楼好多窗口都狠狠涨价了，这个窗口和隔壁鱼粉尊嘟好吃而且没涨价"
+    },
+    {
+      "id": "xhs-comment-660450810000000005002115",
+      "sourceKind": "individual_xhs_comment",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "麻辣香锅",
+      "reviewScope": "dish",
+      "excerpt": "还有学活二楼的麻辣香锅也难吃 吃了两次都剩了一半难吃到吃不进去[哭惹R]",
+      "source": {
+        "title": "北交食堂避雷：学活二楼小碗菜👊",
+        "url": "https://www.xiaohongshu.com/explore/65fc0567000000001302624b?xsec_token=ABLMJFqruiF2tggU2GeJgSiF_uh9iChMQ_pcsAKjcS3VU=&xsec_source=pc_search",
+        "date": "2024-03-28",
+        "kind": "xhs_comment",
+        "publisher": null
+      },
+      "parentNoteId": "65fc0567000000001302624b",
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "评论只反映发布者当时的主观体验或供应线索。",
+      "displayText": "还有学活二楼的麻辣香锅也难吃 吃了两次都剩了一半难吃到吃不进去"
+    },
+    {
+      "id": "xhs-comment-69df72150000000015000eee",
+      "sourceKind": "individual_xhs_comment",
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "windowName": null,
+      "dish": "米线",
+      "reviewScope": "dish",
+      "excerpt": "学活的米线太难吃了，明湖的吊龙米线还挺好吃的[笑哭R]",
+      "source": {
+        "title": "北交学活二楼吊龙米线",
+        "url": "https://www.xiaohongshu.com/explore/69df6712000000001e00e4e4?xsec_token=ABcgMSm1ig73ehPRv52NmDGR78K4Mw-BzNQvtB6TAYMVs=&xsec_source=pc_search",
+        "date": "2026-04-15",
+        "kind": "xhs_comment",
+        "publisher": null
+      },
+      "parentNoteId": "69df6712000000001e00e4e4",
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "评论只反映发布者当时的主观体验或供应线索。",
+      "displayText": "学活的米线太难吃了，明湖的吊龙米线还挺好吃的"
+    },
+    {
+      "id": "xhs-comment-68bfea3e00000000300071e8",
+      "sourceKind": "individual_xhs_comment",
+      "canteenId": "minghu",
+      "floorLabel": "2F",
+      "windowName": "然他窗口",
+      "dish": "石锅片片鸡",
+      "reviewScope": "dish",
+      "excerpt": "这道菜致命缺点往外喷油啊[笑哭R]吃一顿衣服上全是有点子[哭惹R]",
+      "source": {
+        "title": "北交｜明湖2楼｜然他窗口｜石锅片片鸡！光盘！",
+        "url": "https://www.xiaohongshu.com/explore/68beae07000000001d0394e4?xsec_token=ABhpZijNq1CVkavXzyIEbyTbWqyeBivpAiia65FUnxn6E=&xsec_source=pc_search",
+        "date": "2025-09-09",
+        "kind": "xhs_comment",
+        "publisher": null
+      },
+      "parentNoteId": "68beae07000000001d0394e4",
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "评论只反映发布者当时的主观体验或供应线索。",
+      "displayText": "这道菜致命缺点往外喷油啊吃一顿衣服上全是有点子"
+    },
+    {
+      "id": "xhs-comment-691341bd000000003302297b",
+      "sourceKind": "individual_xhs_comment",
+      "canteenId": "minghu",
+      "floorLabel": "3F",
+      "windowName": "干锅拌饭",
+      "dish": "爆汁牛肉饭",
+      "reviewScope": "dish",
+      "excerpt": "这学期好像已经没了，大家不用去找了[哭惹R]",
+      "source": {
+        "title": "巨香！北交明湖三楼干锅拌饭，爆汁牛肉饭！",
+        "url": "https://www.xiaohongshu.com/explore/682b0ae50000000012000501?xsec_token=ABq4aett52M5AItRTE2FGGjRYX2Qg7RDJQl3BSok8ha1U=&xsec_source=pc_search",
+        "date": "2025-11-11",
+        "kind": "xhs_comment",
+        "publisher": null
+      },
+      "parentNoteId": "682b0ae50000000012000501",
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "评论只反映发布者当时的主观体验或供应线索。",
+      "displayText": "这学期好像已经没了，大家不用去找了"
+    },
+    {
+      "id": "xhs-comment-69abf8a6000000000c0316d6",
+      "sourceKind": "individual_xhs_comment",
+      "canteenId": "minghu",
+      "floorLabel": "3F",
+      "windowName": null,
+      "dish": "旋转自助小火锅",
+      "reviewScope": "dish",
+      "excerpt": "嚯旋转火锅居然回归了[萌萌哒R]",
+      "source": {
+        "title": "北交美食｜明湖三楼旋转自助小火锅",
+        "url": "https://www.xiaohongshu.com/explore/69abf043000000000e03dbaa?xsec_token=ABrRtBhZ07MumD4amHir8MXI3XNS23O3tSYcMeO30ktKQ=&xsec_source=pc_search",
+        "date": "2026-03-07",
+        "kind": "xhs_comment",
+        "publisher": null
+      },
+      "parentNoteId": "69abf043000000000e03dbaa",
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "评论只反映发布者当时的主观体验或供应线索。",
+      "displayText": "嚯旋转火锅居然回归了"
+    },
+    {
+      "id": "xhs-comment-68a5e144000000002700b6e0",
+      "sourceKind": "individual_xhs_comment",
+      "canteenId": "minghu",
+      "floorLabel": "1F",
+      "windowName": "打饭窗口",
+      "dish": null,
+      "reviewScope": "floor",
+      "excerpt": "真的是这样 太难了 好吃的都放假了 不过今天去了明湖一楼打饭窗口还挺好吃的呢[萌萌哒R]",
+      "source": {
+        "title": "北京交通大学吃什么！",
+        "url": "https://www.xiaohongshu.com/explore/68a3db99000000001b01f0f3?xsec_token=ABsLo68VxVO3s9IdQQHxpZCSApUJTHbgIvwBYjgxeg60o=&xsec_source=pc_search",
+        "date": "2025-08-20",
+        "kind": "xhs_comment",
+        "publisher": null
+      },
+      "parentNoteId": "68a3db99000000001b01f0f3",
+      "attributionConfidence": "medium",
+      "currentlyVerified": false,
+      "eligibleForScore": false,
+      "note": "评论只反映发布者当时的主观体验或供应线索。",
+      "displayText": "真的是这样 太难了 好吃的都放假了 不过今天去了明湖一楼打饭窗口还挺好吃的呢"
+    }
+  ],
+  "qualitativeSummaryLeads": [
+    {
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "summary": "学活二楼个体评价涉及面食、广式饭和套餐，口味意见有褒有贬；价格、份量和等餐时间被反复提及。",
+      "supportingCandidateIds": [
+        "xhs-note-691d7736000000001b02252c",
+        "xhs-note-6aae851d0000000011035dec",
+        "xhs-note-68bf9261000000001d034d11",
+        "xhs-note-6729b1f5000000001a035cb3",
+        "xhs-note-65fc0567000000001302624b"
+      ],
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 5
+    },
+    {
+      "canteenId": "xuehuo",
+      "floorLabel": "3F",
+      "summary": "学活三楼清真厅的记录包含主食和小吃，有人喜欢蒸菜、菜饼，也有人觉得某款饼难嚼；没有证据把这些归到具体窗口。",
+      "supportingCandidateIds": [
+        "xhs-note-66000deb00000000130246eb",
+        "xhs-note-6733253c000000001d03bfd5",
+        "xhs-note-6733218b000000001a03575e"
+      ],
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 3
+    },
+    {
+      "canteenId": "minghu",
+      "floorLabel": "1F",
+      "summary": "明湖一楼可确认的近期逐条评价较少；一条明确评论觉得打饭窗口好吃，不能据此概括全楼口碑。",
+      "supportingCandidateIds": [
+        "xhs-comment-68a5e144000000002700b6e0"
+      ],
+      "attributionConfidence": "medium",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 1
+    },
+    {
+      "canteenId": "minghu",
+      "floorLabel": "3F",
+      "summary": "明湖三楼的小火锅与干锅饭有个人推荐，但 2025 年后续评论反映菜品调整；不能据此宣称当前在售。",
+      "supportingCandidateIds": [
+        "xhs-note-69abf043000000000e03dbaa",
+        "xhs-note-682b0ae50000000012000501",
+        "xhs-comment-691341bd000000003302297b"
+      ],
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 3
+    },
+    {
+      "canteenId": "xuehuo",
+      "floorLabel": "1F",
+      "summary": "一条笔记谈学活一楼蒸菜味道偏淡、份量偏多；另外两条笔记谈一楼西餐厅的汉堡、taco 和炸鲜奶，属于不同区域，不能合并成全层评分。",
+      "supportingCandidateIds": [
+        "xhs-note-69c2af3200000000210396f5",
+        "xhs-note-68fb580e00000000070092f4",
+        "xhs-note-6555ed07000000003203705e"
+      ],
+      "attributionConfidence": "medium",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 3
+    },
+    {
+      "canteenId": "minghu",
+      "floorLabel": "2F",
+      "summary": "明湖二楼的排骨锅仔有人觉得肉一般；然他窗口石锅片片鸡有好评，也有评论提醒油会溅。两道不同菜，样本很少。",
+      "supportingCandidateIds": [
+        "xhs-note-69141e3d0000000003019c5c",
+        "xhs-note-68beae07000000001d0394e4"
+      ],
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 2
+    },
+    {
+      "canteenId": "xuesi",
+      "floorLabel": "1F",
+      "summary": "仅有一条明确的学四一楼安徽板面笔记：作者觉得香气尚可，但面条口感和配菜一般。不能概括全层。",
+      "supportingCandidateIds": [
+        "xhs-note-673d607f000000000601507b"
+      ],
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 1
+    },
+    {
+      "canteenId": "xuesi",
+      "floorLabel": "2F",
+      "summary": "学四二楼有关于面食、小笼包和卤肉饭的不同体验；有人喜欢大盘鸡拌面和过油肉拌面，也有人说新档口排队、口味偏重，评价取决于具体菜品。",
+      "supportingCandidateIds": [
+        "xhs-note-6a0d79850000000008030ce8",
+        "xhs-note-675eaa5b00000000020369f0",
+        "xhs-note-6782807f000000001703c011",
+        "xhs-note-66f3923d000000002c02d0a9",
+        "xhs-note-6ab34b22000000000a022595"
+      ],
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 5
+    },
+    {
+      "canteenId": "liuyuan",
+      "floorLabel": null,
+      "summary": "一条未注明楼层的留园笔记表达整体喜爱，无法据此判断具体窗口或楼层。",
+      "supportingCandidateIds": [
+        "xhs-note-68a84cdd000000001d0027da"
+      ],
+      "attributionConfidence": "medium",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 1
+    },
+    {
+      "canteenId": "liuyuan",
+      "floorLabel": "1F",
+      "summary": "仅有一条留园一楼豆角笔记，作者觉得入味，不能概括全层菜品。",
+      "supportingCandidateIds": [
+        "xhs-note-68465f92000000001101cf34"
+      ],
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 1
+    },
+    {
+      "canteenId": "liuyuan",
+      "floorLabel": "2F",
+      "summary": "留园二楼的几条笔记总体提到打菜选择与价格，但也有关于份量、个别菜偏辣或偏腻的不同意见；没有可靠的单档口评分。",
+      "supportingCandidateIds": [
+        "xhs-note-66e410fc00000000120104b1",
+        "xhs-note-66f68c09000000001902ccf3",
+        "xhs-note-675ac022000000000201565e",
+        "xhs-note-66d196a2000000001d03a1e0"
+      ],
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 4
+    },
+    {
+      "canteenId": "yimin",
+      "floorLabel": null,
+      "summary": "益民餐厅的个体笔记覆盖锅包肉、宫保鸡丁盖饭、小炒和家常菜；多有好评，也有藤椒牛肉偏咸、分量或价格的具体反馈。未确认室内具体窗口。",
+      "supportingCandidateIds": [
+        "xhs-note-6ab8f5df000000000a025425",
+        "xhs-note-6a9a7004000000001202412c",
+        "xhs-note-6645ffa7000000001e03288d",
+        "xhs-note-68e87530000000000302f232",
+        "xhs-note-693e2133000000001e00dbd8",
+        "xhs-note-6957615e00000000210331bb",
+        "xhs-note-69aa738d000000001a01c3e9",
+        "xhs-note-673c1cdc00000000070390db"
+      ],
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 8
+    },
+    {
+      "canteenId": null,
+      "floorLabel": null,
+      "summary": "红果园餐厅的几条笔记谈烤鸭、家常菜、烧烤等，意见因菜品而异；它是餐厅层级资料，不能混入学活或明湖档口。",
+      "supportingCandidateIds": [
+        "xhs-note-6a96b23d0000000011033a68",
+        "xhs-note-6ab2af280000000015017fe3",
+        "xhs-note-68c42f38000000001d0368fe",
+        "xhs-note-6a636f12000000000301fa7b"
+      ],
+      "attributionConfidence": "high",
+      "currentlyVerified": false,
+      "numericRating": null,
+      "sampleCount": 4,
+      "venueName": "红果园餐厅"
+    }
+  ],
+  "excludedBuckets": [
+    {
+      "kind": "wechat_marketing_copy",
+      "count": 271,
+      "reason": "官方宣传句，不是学生逐条体验"
+    },
+    {
+      "kind": "dianping_shop_rating",
+      "count": 12,
+      "reason": "商户级评分及问大家，不是档口逐条评价正文"
+    },
+    {
+      "kind": "xhs_status_irrelevant",
+      "count": 299,
+      "reason": "采集状态已标记不相关；部分还有跨校和地名歧义"
+    }
+  ],
+  "coverageGaps": [
+    {
+      "canteenId": "xueyuan",
+      "floorLabel": null,
+      "reason": "本轮白名单中没有归属明确且含评价的逐条笔记；不可用搜索结果数代替评论。"
+    },
+    {
+      "canteenId": "dongqu",
+      "floorLabel": "1F",
+      "reason": "本轮白名单中没有归属明确且含评价的逐条笔记；东区东侧、西侧、清真别名易混。"
+    }
+  ]
+}

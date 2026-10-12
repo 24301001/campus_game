@@ -1,0 +1,25 @@
+图 1-13　带出处的课本问答与解题辅导类图
+============================================================
+【图形类型】类图（Class Diagram）
+【所在位置】1.2.2.1
+
+【图的内容】
+  给出本功能点的类结构，重点展示检索层“双路召回、融合、精排”的分工与知识库的出处元数据。
+
+【主要组件】
+  StudyAgent（角色入口）；Retriever（检索编排）；BM25Index（字面检索）；VectorIndex（语义检索）；Fusion（结果融合）；Reranker（精排）；KnowledgeBase（切片与出处元数据）；Embedder（本地向量推算）；Generator（生成与流式输出）；PlanMaker（复习规划）。
+
+【组织方式】
+  StudyAgent 持有 Retriever 与 Generator；Retriever 组合 BM25Index、VectorIndex、Fusion、Reranker；两个索引依赖 KnowledgeBase（切片携带课程 / 教材 / 章节 / 页码）；Generator 依赖 LLMClient；PlanMaker 依赖 KnowledgeBase。
+
+【如何绘制】
+1) 画 StudyAgent 类，列出关键方法（问答、解题、复习规划）；
+2) 画 Retriever，用组合关系连接 BM25Index、VectorIndex；
+3) 画 Fusion 与 Reranker，串在 Retriever 之后；
+4) 画 KnowledgeBase，标注每个切片携带出处元数据；
+5) 画 Embedder，用依赖关系连到 VectorIndex；
+6) 画 Generator，用依赖关系连到 LLMClient；
+7) 画 PlanMaker，用依赖关系连到 KnowledgeBase。
+
+【注意事项】
+  类图要体现“两路检索是互补的”——字面路擅专有术语、语义路擅换说法的问法；出处的元数据要作为 KnowledgeBase 的属性出现，说明答案可回溯。

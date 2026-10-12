@@ -1,0 +1,3333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>像素校园 · 全校地图</title>
+<style>
+  html,body{margin:0;height:100%;background:#101216;overflow:hidden;}
+  #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+  canvas{
+    display:block;
+    image-rendering:pixelated;
+    image-rendering:-moz-crisp-edges;
+    image-rendering:crisp-edges;
+    box-shadow:0 0 0 2px #2b2f3a,0 18px 40px rgba(0,0,0,.55);
+  }
+  #hud{
+    position:fixed;left:14px;top:12px;pointer-events:none;
+    color:#e9e5d8;font:12px/1.75 ui-monospace,Consolas,"Courier New",monospace;
+    text-shadow:0 1px 0 #000,0 0 8px rgba(0,0,0,.8);letter-spacing:.6px;
+  }
+  #hud b{color:#ffd76e;}
+  #hud span{color:#9fb4d0;}
+  /* 缩放控件单独一格：#hud 是 pointer-events:none，按钮/滑条放进去点不动 */
+  #zoom{
+    position:fixed;right:14px;bottom:12px;display:flex;align-items:center;gap:8px;
+    font:12px/1 ui-monospace,Consolas,"Courier New",monospace;color:#e9e5d8;
+    text-shadow:0 1px 0 #000,0 0 8px rgba(0,0,0,.8);
+  }
+  #zoom button{
+    pointer-events:auto;cursor:pointer;width:26px;height:24px;padding:0;
+    background:#1d2129;color:#e9e5d8;border:1px solid #39404d;border-radius:4px;
+    font:14px/1 ui-monospace,Consolas,monospace;
+  }
+  #zoom button:hover{background:#272d38;border-color:#5a6474;}
+  #zoom b{min-width:52px;text-align:center;color:#ffd76e;font-weight:600;}
+  /* 滑条：档位是离散的（step=1），拖动时吸附到档位 */
+  #zoom input[type=range]{
+    pointer-events:auto;cursor:pointer;margin:0;width:170px;height:20px;
+    background:transparent;-webkit-appearance:none;appearance:none;
+  }
+  #zoom input[type=range]:focus{outline:none;}
+  #zoom input[type=range]:focus-visible{outline:1px solid #ffd76e;outline-offset:2px;}
+  #zoom input[type=range]::-webkit-slider-runnable-track{
+    height:4px;border-radius:2px;background:#39404d;
+  }
+  #zoom input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:14px;height:14px;margin-top:-5px;
+    border-radius:50%;background:#ffd76e;border:1px solid #7a6320;
+  }
+  #zoom input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:#39404d;}
+  #zoom input[type=range]::-moz-range-thumb{
+    width:14px;height:14px;border-radius:50%;background:#ffd76e;border:1px solid #7a6320;
+  }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv"></canvas></div>
+<div id="hud">
+  <b>像素校园</b> · 全校地图<br>
+  <span>← → / A D 左右移动　↑ ↓ / W S 前后移动</span><br>
+  <span>滚轮 / + − 缩放　0 看全图　1 回原尺寸　（也可拖右下角滑条）</span><br>
+  <span id="hudpos"></span>
+</div>
+<div id="zoom">
+  <button data-z="-1" title="缩小一档">−</button>
+  <input id="zrng" type="range" min="0" max="8" step="1" value="6" aria-label="缩放档位">
+  <button data-z="1" title="放大一档">+</button>
+  <b id="zoomlv">1×</b>
+</div>
+<script>
+"use strict";
+
+/* =========================================================
+   0. 常量 / 标尺
+   ---------------------------------------------------------
+   标尺由**思源楼**推出（用户给定：思源楼 = 50 米）：
+
+     思源楼世界宽  450 px = 50 m   ⇒ 1 世界像素 ≈ 0.1111 m
+     思源楼 PPT 宽 1.1521 in       ⇒ 1 英寸 = 450 / 1.1521 = 390.5911 px
+
+   世界尺寸 = 整张 PPT 幻灯片（13.33333 × 7.5 英寸）。
+   三重交叉验证见交接文档 §4.4（篮球场 28.7m / 网球场 25.0m）。
+   ========================================================= */
+const TILE    = 32;                           // 瓦片尺寸（保持颗粒感）
+const U       = 450 / 1.1521;                 // 390.5911 世界像素 / 英寸
+const IX      = v => v * U;                   // 英寸 → 世界像素
+const WORLD_W = Math.round(13.33333 * U);     // 5208
+const WORLD_H = Math.round(7.5 * U);          // 2929（7.5×390.5911=2929.43）
+const VIEW_W  = 480, VIEW_H = 270;            // **背板**尺寸（16:9），整数倍放大到屏幕
+                                              // ⚠️ 它不等于可见世界尺寸：世界视口 = 背板 / zoom
+const BASE_SPEED = 200;                       // 1× 档下的行走速度（世界像素/秒）
+
+/* --- 缩放 ---------------------------------------------------------
+   zoom = 每个世界像素占几个背板像素。背板恒为 VIEW_W×VIEW_H 不变，
+   所以 zoom=4 就是"把 120×67 的世界区域放大 4 倍显示" —— 像素风里这就是变大看细节，
+   信息量本来就在背板里，不需要动背板分辨率。
+   于是：可见世界尺寸 = VIEW_W/zoom × VIEW_H/zoom。
+
+   档位刻意**离散**：像素风连续缩放只会糊。且 ≥1 的档位只取整数 ——
+   非整数倍最近邻放大必然出现"某列 1px、某列 2px"的宽窄不齐。
+
+   两端都由用户定死：一端是"整个校园"（FIT，再往外就是世界外的纹理区，没意义），
+   另一端封顶 3×（视野 ≈18×10 米）—— 再拉近就只看得见一个门洞，容易"不知道自己站在哪"。 */
+const FIT = Math.min(VIEW_W / WORLD_W, VIEW_H / WORLD_H);   // ≈0.09217：整幅铺满视口
+const ZOOM_STEPS = [FIT, 1 / 8, 1 / 6, 1 / 4, 1 / 3, 1 / 2, 1, 2, 3];
+let zoomI = ZOOM_STEPS.indexOf(1);            // 默认 1×（与无缩放版观感完全一致）
+let zoom  = ZOOM_STEPS[zoomI];
+let viewW = VIEW_W / zoom, viewH = VIEW_H / zoom;   // 可见世界矩形尺寸
+const mips = [];                              // 地面 mip 金字塔（÷1 ÷2 ÷4 ÷8），6.0.1 填
+
+/* PPT 形状 {x,y,w,h}（英寸）→ 世界像素矩形 */
+const rc = s => ({ x: IX(s.x), y: IX(s.y), w: IX(s.w), h: IX(s.h) });
+
+/* 全局光源：从左上方来。所有明暗与投影方向都必须服从它。
+   投影方向 = -SUN，即朝右下方。 */
+const SUN = { x: -0.60, y: -0.80 };
+
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const wrapi = (i, m) => ((i % m) + m) % m;
+
+function mkCanvas(w, h) {
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  return c;
+}
+function px(g, x, y, w, h, col) {
+  g.fillStyle = col;
+  g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+}
+function makeRng(seed) {                     // 确定性随机，保证每次刷新一致
+  let s = seed >>> 0;
+  return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+}
+function circlePx(g, cx, cy, r, col) {
+  g.fillStyle = col;
+  for (let y = -r; y <= r; y++) {
+    const t = r * r - y * y;
+    if (t < 0) continue;
+    const dx = Math.floor(Math.sqrt(t));
+    g.fillRect(Math.round(cx - dx), Math.round(cy + y), dx * 2 + 1, 1);
+  }
+}
+function ellipsePx(g, cx, cy, rx, ry, col) {
+  g.fillStyle = col;
+  for (let y = -ry; y <= ry; y++) {
+    const t = 1 - (y * y) / (ry * ry);
+    if (t <= 0) continue;
+    const dx = Math.floor(rx * Math.sqrt(t));
+    g.fillRect(Math.round(cx - dx), Math.round(cy + y), dx * 2 + 1, 1);
+  }
+}
+function poly(g, pts, col) {
+  g.fillStyle = col;
+  g.beginPath();
+  g.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
+  g.closePath();
+  g.fill();
+}
+function flipH(src) {                        // 水平镜像（右侧角色 = 左侧镜像）
+  const c = mkCanvas(src.width, src.height);
+  const g = c.getContext("2d");
+  g.translate(src.width, 0);
+  g.scale(-1, 1);
+  g.drawImage(src, 0, 0);
+  return c;
+}
+function speckle(g, x, y, w, h, col, count, rng) {   // 颗粒 / 磨损 / 灰尘
+  g.fillStyle = col;
+  for (let i = 0; i < count; i++) g.fillRect(x + ((rng() * w) | 0), y + ((rng() * h) | 0), 1, 1);
+}
+
+/* ---------------------------------------------------------
+   1.1 颜色运算 —— 真实感的核心
+   统一光源要求：受光面偏暖、背光面偏冷，
+   而不是简单叠一层半透明黑。
+   --------------------------------------------------------- */
+const _hc = Object.create(null);
+function rgb(hex) {
+  let v = _hc[hex];
+  if (v === undefined) {
+    v = [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+    _hc[hex] = v;
+  }
+  return v;
+}
+function rgba(hex, a) {
+  const c = rgb(hex);
+  return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")";
+}
+/* k > 0 提亮（偏暖）；k < 0 压暗（偏冷） */
+function shade(hex, k) {
+  const c = rgb(hex);
+  let r, g, b;
+  if (k >= 0) {
+    r = c[0] + (255 - c[0]) * k;
+    g = c[1] + (255 - c[1]) * (k * 0.93);
+    b = c[2] + (255 - c[2]) * (k * 0.80);
+  } else {
+    const t = -k;
+    r = c[0] * (1 - t * 1.08);
+    g = c[1] * (1 - t * 1.00);
+    b = c[2] * (1 - t * 0.86);
+  }
+  return "rgb(" + (r | 0) + "," + (g | 0) + "," + (b | 0) + ")";
+}
+function mix(hexA, hexB, t) {
+  const A = rgb(hexA), B = rgb(hexB);
+  return "rgb(" + ((A[0] + (B[0] - A[0]) * t) | 0) + ","
+                 + ((A[1] + (B[1] - A[1]) * t) | 0) + ","
+                 + ((A[2] + (B[2] - A[2]) * t) | 0) + ")";
+}
+
+/* ---------------------------------------------------------
+   1.2 值噪声 —— 让地面出现"成片的深浅"而不是纯随机噪点
+   --------------------------------------------------------- */
+function makeNoise(seed, gw, gh) {
+  const r = makeRng(seed), v = new Float32Array(gw * gh);
+  for (let i = 0; i < v.length; i++) v[i] = r();
+  return { gw, gh, v };
+}
+function noiseAt(n, x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  let tx = x - xi, ty = y - yi;
+  tx = tx * tx * (3 - 2 * tx);
+  ty = ty * ty * (3 - 2 * ty);
+  const at = (a, b) => n.v[wrapi(b, n.gh) * n.gw + wrapi(a, n.gw)];
+  const v00 = at(xi, yi), v10 = at(xi + 1, yi), v01 = at(xi, yi + 1), v11 = at(xi + 1, yi + 1);
+  return (v00 * (1 - tx) + v10 * tx) * (1 - ty) + (v01 * (1 - tx) + v11 * tx) * ty;
+}
+function fbm2(nA, nB, x, y) {               // 双倍频，返回 0..1
+  return noiseAt(nA, x, y) * 0.62 + noiseAt(nB, x, y) * 0.38;
+}
+
+/* ---------------------------------------------------------
+   1.3 阴影系统
+   --------------------------------------------------------- */
+/* 软阴影：多层同心椭圆，做出像素风的柔和边缘 */
+function shadowBlob(g, cx, cy, rx, ry, alpha, layers) {
+  const L = layers || 4, step = alpha / L;
+  for (let i = L; i >= 1; i--) {
+    const t = i / L;
+    ellipsePx(g, cx, cy, Math.max(1, Math.round(rx * t)), Math.max(1, Math.round(ry * t)),
+      "rgba(14,18,28," + step.toFixed(3) + ")");
+  }
+}
+/* 方向性投影：矩形 footprint 朝背离光源方向拉伸出的凸包。
+   多层不同拉伸量叠加 → 靠物体处最深，向外渐淡。 */
+function shadowQuad(g, x0, y0, x1, y1, dx, dy, alpha, layers) {
+  const L = layers || 4, step = alpha / L;
+  for (let i = L; i >= 1; i--) {
+    const t = i / L, ox = dx * t, oy = dy * t;
+    poly(g, [[x0, y0], [x1, y0], [x1 + ox, y0 + oy], [x1 + ox, y1 + oy], [x0 + ox, y1 + oy], [x0, y1]],
+      "rgba(14,18,28," + step.toFixed(3) + ")");
+  }
+}
+/* 接触阴影：物体与地面交接处那条最深的窄带 */
+function contactBand(g, x0, x1, y, h, alpha) {
+  const w = x1 - x0, e = w * 0.16;
+  px(g, x0, y, w, h, "rgba(14,18,28," + alpha + ")");
+  px(g, x0, y, e, h, "rgba(14,18,28," + (alpha * 0.45) + ")");
+  px(g, x1 - e, y, e, h, "rgba(14,18,28," + (alpha * 0.45) + ")");
+}
+/* =========================================================
+   2. 地面（全校 5208 × 2929）
+   ---------------------------------------------------------
+   PPT 只画了"有什么"（色块），**道路 = 剩余留白**。
+   流程：占用位图 → 距离变换 → 路网分级 → 烘焙。
+
+   烘焙顺序 = 校外底 → 草地 / 建筑基座 / 道路（逐格）
+            → 广场 → 水域底 → 运动场地表 → 路缘石 → 标线 → 泥土过渡带
+   整张地面预渲染成一张世界大图，运行时只贴可见区域。
+   ========================================================= */
+
+/* --- 2.0 地面配色（沿用 Demo 的色阶，保证与前作同一套色语） --- */
+const GRASS_RAMP   = ["#437a33", "#4c883a", "#559241", "#5d9d49", "#68ab52"];
+const ASPHALT_RAMP = ["#4b4b53", "#52525a", "#595961", "#606068"];
+const PAVE_BASE = "#b3ada0", PAVE_A = "#a8a295", PAVE_B = "#bdb7a9";
+const KERB_TOP = "#cbc7b8", KERB_LIT = "#b3af9f", KERB_DARK = "#8a8779";
+const KERB_JOINT = "rgba(14,18,28,0.17)";
+const DIRT      = "#8a7a5c";                  // 硬地与草地之间的泥土过渡
+const DIRT_DARK = "#6f6247";
+const OUT_BASE  = "#4a5340";                  // 校外：比草地暗、低饱和
+const OUT_BLOCK = "#5f6672";                  // 校外示意城市楼
+const FOUND     = "#9e9382";                  // 建筑基座（大半被精灵遮住）
+const PLAZA_BASE = "#b5ab99";                 // 石头广场
+const PLAZA_DARK = "#8d8374";
+
+/* --- 2.1 校园总平面数据（PPT §5.1 全表，52 个，单位英寸） ---
+   [名称, kind, x, y, w, h]；kind 决定地面分类与后续生成器。
+   ※ 思源楼（#5）本身是冻结精灵，这里只用来占位与标定落位。 */
+const CAMPUS = [
+  ["第九教学楼", "bld",     5.7583, 5.0021, 1.1514, 0.7792],
+  ["草坪",       "grass",   4.6063, 5.0021, 0.4007, 0.7785],
+  ["篮球场",     "bball",   8.8965, 2.6035, 0.6604, 1.0618],
+  ["水域",       "water",   7.0104, 2.6035, 0.6972, 1.0618],
+  ["草坪",       "grass",   4.6056, 4.0208, 1.1528, 0.7799],
+  ["思源楼",     "siyuan",  4.6056, 3.0889, 1.1521, 0.5764],
+  ["思源东楼",   "bld",     5.8833, 3.2215, 0.9486, 0.4437],
+  ["科学会堂",   "bld",     5.8833, 2.6035, 0.9486, 0.4854],
+  ["草坪",       "grass",   4.6056, 2.5688, 1.1528, 0.4431],
+  ["图书馆",     "library", 7.8861, 2.6035, 0.8931, 1.0618],
+  ["第七教学楼", "bld",     5.8833, 4.0208, 0.6618, 0.4437],
+  ["第五教学楼", "bld",     6.6097, 4.0208, 0.5486, 0.7806],
+  ["草坪",       "grass",   5.8833, 4.4993, 0.6618, 0.3014],
+  ["草坪",       "grass",   7.4597, 4.0208, 1.3188, 0.4437],
+  ["宿舍",       "bld",     7.4590, 4.5486, 1.3403, 0.2903],
+  ["红果园餐厅", "bld",     7.4597, 4.9229, 1.3403, 0.2604],
+  ["宿舍",       "bld",     7.4597, 5.2674, 1.3403, 0.2653],
+  ["宿舍",       "bld",     7.4590, 5.7222, 0.6611, 0.4257],
+  ["逸夫楼",     "bld",     9.0250, 4.0208, 1.6951, 0.6118],
+  ["电气工程楼", "bld",     9.0250, 4.8007, 0.9708, 0.3007],
+  ["机械实验馆", "bld",     9.0250, 5.2319, 0.9708, 0.3007],
+  ["机械楼",     "bld",    10.0347, 4.8014, 0.6854, 0.7312],
+  ["工程训练楼", "bld",    10.9667, 4.0208, 1.0764, 0.6118],
+  ["光波楼",     "bld",    10.9667, 4.8007, 1.1514, 0.7319],
+  ["18宿舍楼",   "bld",     7.8861, 1.7146, 0.8931, 0.5757],
+  ["学生1食堂",  "bld",     7.8854, 0.9646, 0.8931, 0.5757],
+  ["16宿舍楼",   "bld",     7.8854, 0.3319, 0.8931, 0.4583],
+  ["运输实验馆", "bld",     6.3681, 0.3326, 1.3181, 1.2076],
+  ["第八教学楼", "bld",     6.8139, 1.8049, 0.8938, 0.4854],
+  ["第一教学楼", "bld",     5.8833, 1.8118, 0.8319, 0.4854],
+  ["第二教学楼", "bld",     4.6056, 1.8049, 1.1792, 0.4854],
+  ["新体育馆",   "bld",     2.8910, 0.3326, 1.4007, 1.2354],
+  ["网球场",     "tennis",  2.8910, 1.7146, 1.4014, 0.5764],
+  ["篮球场",     "bball",   2.2306, 0.3889, 0.5479, 1.9090],
+  ["操场",       "track",   9.6743, 2.6035, 1.5056, 0.9993],
+  ["操场",       "track",   1.0840, 0.3889, 1.0340, 1.9090],
+  ["老体育馆",   "bld",     0.1271, 1.1389, 0.8444, 1.1528],
+  ["计算机中心", "bld",     3.1125, 2.5688, 1.1792, 0.4854],
+  ["思源西楼",   "bld",     3.1125, 3.2076, 1.1792, 0.4854],
+  ["校史馆",     "bld",     3.1125, 4.0139, 1.1792, 0.2653],
+  ["天佑会堂",   "bld",     3.1125, 4.7465, 1.1792, 0.4854],
+  ["积秀园",     "bld",     3.1125, 4.3507, 1.1792, 0.2653],
+  ["宿舍",       "bld",     3.1125, 5.3708, 1.1792, 0.4104],
+  ["宿舍",       "bld",     1.5986, 5.9000, 1.1792, 0.4104],
+  ["宿舍",       "bld",     1.5986, 5.3118, 1.1792, 0.4104],
+  ["宿舍",       "bld",     1.5986, 4.7465, 1.1792, 0.4104],
+  ["宿舍",       "bld",     1.5986, 4.1382, 1.1792, 0.4104],
+  ["宿舍",       "bld",     1.5986, 3.6028, 1.1792, 0.4104],
+  ["宿舍",       "bld",     1.5986, 3.0542, 1.1792, 0.4104],
+  ["宿舍",       "bld",     1.5986, 2.5688, 1.1792, 0.4104],
+  ["学生服务中心", "bld",   0.4535, 2.5132, 0.9493, 1.6799],
+  ["宿舍",       "bld",     0.6542, 4.3507, 0.6972, 0.7514]
+];
+
+/* --- 2.2 围墙边界折线（PPT §5.3 顺时针闭合顺序，单位英寸） ---
+   五个校门是这条折线上的**缺口**，但折线本身连续跨过缺口：
+   玩家因此可以走到门口、却走不出校园。 */
+const BOUND_IN = [
+  [1.1319, 0.2500], [4.3534, 0.2500],                       // #65 北界西段
+  [4.3132, 1.5403],                                         // #64 南下
+  [4.5556, 1.6042],                                         // ~缺口 G5 北门~
+  [6.3195, 1.6389],                                         // #63 北界中段
+  [6.2847, 0.2569],                                         // #62 北上
+  [8.8966, 0.2854],                                         // #61 北界东段
+  [8.8486, 2.3118],                                         // #60 南下
+  [8.8000, 2.5347],                                         // ~缺口 G4 东门~
+  [11.3681, 2.5548],                                        // #59
+  [11.8861, 3.6104],                                        // #58 斜向东南
+  [12.1458, 3.9097],                                        // ~缺口 G3 东南门~
+  [12.1527, 5.6319],                                        // #57 南下
+  [8.2639, 5.6319],                                         // #56 西向
+  [8.2646, 6.3959],                                         // #55 南下
+  [5.3826, 6.3681],                                         // #54 西向
+  [4.8820, 6.3750],                                         // ~缺口 G2 南门（主门）~
+  [0.8681, 6.3750],                                         // #53 西向
+  [0.0903, 2.5000],                                         // #52 斜向西北
+  [0.0902, 2.2431],                                         // ~缺口 G1 西门~
+  [0.0694, 1.1250],                                         // #67 北上
+  [1.1459, 0.2361]                                          // #66 斜向东北 → 回到起点
+];
+const BOUND = BOUND_IN.map(p => [IX(p[0]), IX(p[1])]);
+
+/* --- 2.3 五个校门（世界像素；门洞朝向见 dir） --- */
+const GATES = [
+  { id: "G1", name: "西门",     x: IX(0.0902), y: (IX(2.2431) + IX(2.5)) / 2, dir: "h", w: 100 },
+  { id: "G2", name: "南门",     x: (IX(4.8820) + IX(5.3826)) / 2, y: IX(6.3750), dir: "v", w: 195 },
+  { id: "G3", name: "东南门",   x: (IX(11.8861) + IX(12.1458)) / 2, y: (IX(3.6104) + IX(3.9097)) / 2, dir: "d", w: 168 },
+  { id: "G4", name: "东门",     x: IX(8.8486), y: (IX(2.3118) + IX(2.5347)) / 2, dir: "h", w: 87 },
+  { id: "G5", name: "北门",     x: (IX(4.3132) + IX(4.5556)) / 2, y: IX(1.6042), dir: "v", w: 94 }
+];
+
+/* --- 2.4 显式广场（石头铺装；接门 + 建筑前区） --- */
+const PLAZA = [
+  { name: "南门入口广场",   x: IX(4.35), y: IX(6.02), w: IX(1.54), h: IX(0.36) },
+  { name: "思源楼前广场",   x: IX(4.6056), y: IX(3.6653), w: IX(1.1521), h: IX(0.3555) },
+  { name: "西门内广场",     x: IX(0.09), y: IX(2.2431), w: IX(1.09), h: IX(0.2569) },
+  { name: "东门内广场",     x: IX(7.60), y: IX(2.3118), w: IX(1.25), h: IX(0.2229) },
+  { name: "北门内广场",     x: IX(4.15), y: IX(1.60), w: IX(0.56), h: IX(0.41) },
+  { name: "东南门内广场",   x: IX(11.40), y: IX(3.53), w: IX(0.75), h: IX(0.46) }
+];
+
+/* --- 2.5 显式主干道 ARTERY（保证 5 个门都能走到主路网，且主干道成环） ---
+   cls: 2 = MAJOR（沥青 + 双黄中线 + 路缘石）；1 = MINOR（砖石铺装，无中线） */
+const ARTERY = [
+  { name: "东西主路",   x: IX(3.1125), y: IX(3.6653), w: IX(8.25), h: IX(0.3533), cls: 2 },
+  { name: "南北主路",   x: IX(4.2933), y: IX(1.5872), w: IX(0.3124), h: IX(4.7864), cls: 2 },
+  { name: "南门纵向",   x: IX(4.8820), y: IX(4.0186), w: IX(0.5000), h: IX(2.3564), cls: 2 },
+  { name: "西门横向",   x: IX(0.0902), y: IX(2.2431), w: IX(4.20), h: IX(0.2569), cls: 1 },
+  { name: "东门横向",   x: IX(8.60), y: IX(2.3118), w: IX(0.46), h: IX(0.2229), cls: 1 },
+  { name: "北门纵向",   x: IX(4.3315), y: IX(1.5410), w: IX(0.2229), h: IX(0.27), cls: 1 },
+  { name: "东侧环路",   x: IX(8.8403), y: IX(2.5347), w: IX(0.1850), h: IX(3.10), cls: 1 },
+  { name: "南侧环路",   x: IX(5.3826), y: IX(6.1450), w: IX(2.8813), h: IX(0.23), cls: 1 }
+];
+
+/* =========================================================
+   2.6 占用位图 + 距离变换 → 自动推路网（核心算法）
+   ---------------------------------------------------------
+   PPT 只标了"有什么"，建筑之间的留白就是路。
+   对留白格做「到最近非留白格」的距离变换 d：
+       d <= 2.5 格  → 走廊（路）
+       否则          → 开阔地（草坪）
+   走廊宽度按 d 原样保留（**连续变化，不吸附到固定档**），
+   只由宽度决定铺装与标线画法。
+   ========================================================= */
+const CELL = 16;
+const NW = Math.ceil(WORLD_W / CELL);          // 326
+const NH = Math.ceil(WORLD_H / CELL);          // 184  → 59,984 格
+
+const K = { FREE: 0, BLD: 1, GRASS: 2, WATER: 3, TRACK: 4, BBALL: 5, TENNIS: 6, OUT: 7, PLAZA: 8, ROAD: 9 };
+const CELLK   = new Uint8Array(NW * NH);
+const ROADCLS = new Uint8Array(NW * NH);       // 0=小径 1=MINOR 2=MAJOR
+
+/* 点在多边形内（射线法）。边界折线跨过 5 个门洞 → 走到门口也出不去。 */
+function insideBoundary(x, y) {
+  let hit = false;
+  for (let i = 0, j = BOUND.length - 1; i < BOUND.length; j = i++) {
+    const xi = BOUND[i][0], yi = BOUND[i][1], xj = BOUND[j][0], yj = BOUND[j][1];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) hit = !hit;
+  }
+  return hit;
+}
+
+const KIND_TO_K = { bld: K.BLD, grass: K.GRASS, water: K.WATER, track: K.TRACK,
+                    bball: K.BBALL, tennis: K.TENNIS, library: K.BLD, siyuan: K.BLD };
+
+function buildOcc() {
+  CELLK.fill(K.OUT);
+  for (let cy = 0; cy < NH; cy++) {
+    for (let cx = 0; cx < NW; cx++) {
+      if (insideBoundary(cx * CELL + CELL / 2, cy * CELL + CELL / 2)) CELLK[cy * NW + cx] = K.FREE;
+    }
+  }
+  for (const [, kind, x, y, w, h] of CAMPUS) {
+    const k = KIND_TO_K[kind];
+    stampRect(x, y, w, h, k);
+  }
+  for (const p of PLAZA) stampRectAbs(p.x, p.y, p.w, p.h, K.PLAZA);
+}
+
+function stampRect(x, y, w, h, k) {            // 英寸输入
+  stampRectAbs(IX(x), IX(y), IX(w), IX(h), k);
+}
+function stampRectAbs(x, y, w, h, k) {
+  const c0 = Math.max(0, Math.floor(x / CELL)), c1 = Math.min(NW - 1, Math.floor((x + w) / CELL));
+  const r0 = Math.max(0, Math.floor(y / CELL)), r1 = Math.min(NH - 1, Math.floor((y + h) / CELL));
+  for (let cy = r0; cy <= r1; cy++)
+    for (let cx = c0; cx <= c1; cx++) CELLK[cy * NW + cx] = k;
+}
+
+/* 两遍 chamfer 距离变换（3-4 权重）= 到最近非留白格的距离 */
+function distanceTransform() {
+  const INF = 1e9;
+  const d = new Float32Array(NW * NH);
+  for (let i = 0; i < d.length; i++) d[i] = CELLK[i] === K.FREE ? INF : 0;
+  for (let y = 0; y < NH; y++) {
+    for (let x = 0; x < NW; x++) {
+      const i = y * NW + x;
+      if (d[i] === 0) continue;
+      let m = d[i];
+      if (x > 0)              m = Math.min(m, d[i - 1] + 3);
+      if (y > 0)              m = Math.min(m, d[i - NW] + 3);
+      if (x > 0 && y > 0)     m = Math.min(m, d[i - NW - 1] + 4);
+      if (x < NW - 1 && y > 0) m = Math.min(m, d[i - NW + 1] + 4);
+      d[i] = m;
+    }
+  }
+  for (let y = NH - 1; y >= 0; y--) {
+    for (let x = NW - 1; x >= 0; x--) {
+      const i = y * NW + x;
+      if (d[i] === 0) continue;
+      let m = d[i];
+      if (x < NW - 1)                 m = Math.min(m, d[i + 1] + 3);
+      if (y < NH - 1)                 m = Math.min(m, d[i + NW] + 3);
+      if (x < NW - 1 && y < NH - 1)   m = Math.min(m, d[i + NW + 1] + 4);
+      if (x > 0 && y < NH - 1)        m = Math.min(m, d[i + NW - 1] + 4);
+      d[i] = m;
+    }
+  }
+  return d;
+}
+
+/* 留白 → 走廊 / 开阔地；再叠加显式主干道
+   ROADBAND 越小，楼间留白越容易长出草地（校园才不至于一片水泥）。 */
+const ROADBAND = 1.55 * CELL;                  // ≈25 px ≈ 2.8 m（人行道尺度）
+function classifyFree(d) {
+  for (let i = 0; i < CELLK.length; i++) {
+    if (CELLK[i] !== K.FREE) continue;
+    const dpx = d[i] * CELL / 3;               // chamfer 权重 → 像素
+    if (dpx <= ROADBAND) {
+      CELLK[i] = K.ROAD;
+      ROADCLS[i] = dpx * 2 >= ROADBAND ? 1 : 0; // 靠中间铺砖石，贴墙铺混凝土
+    } else {
+      CELLK[i] = K.GRASS;
+    }
+  }
+  for (const a of ARTERY) {
+    const c0 = Math.max(0, Math.floor(a.x / CELL)), c1 = Math.min(NW - 1, Math.floor((a.x + a.w) / CELL));
+    const r0 = Math.max(0, Math.floor(a.y / CELL)), r1 = Math.min(NH - 1, Math.floor((a.y + a.h) / CELL));
+    for (let cy = r0; cy <= r1; cy++)
+      for (let cx = c0; cx <= c1; cx++) {
+        CELLK[cy * NW + cx] = K.ROAD;
+        ROADCLS[cy * NW + cx] = a.cls;
+      }
+  }
+}
+
+/* =========================================================
+   2.7 烘焙
+   ========================================================= */
+function buildGround() {
+  const c = mkCanvas(WORLD_W, WORLD_H);
+  const g = c.getContext("2d");
+  const rng = makeRng(20260912);
+  const nA = makeNoise(9137, Math.ceil(WORLD_W / 96) + 2, Math.ceil(WORLD_H / 96) + 2);
+  const nB = makeNoise(4471, Math.ceil(WORLD_W / 40) + 2, Math.ceil(WORLD_H / 40) + 2);
+  const nR = makeNoise(3391, Math.ceil(WORLD_W / 42) + 2, Math.ceil(WORLD_H / 42) + 2);
+
+  paintOutside(g, rng);                        // 1) 校外底（先铺满，校内会被覆盖）
+  paintCells(g, rng, nA, nB, nR);              // 2) 草地 / 基座 / 道路
+  paintPlazas(g, rng);                         // 3) 广场
+  paintLibraryPlaza(g, rng);                   // 3b) 图书馆三角广场            [36_library]
+  paintWaterBase(g, rng);                      // 4) 水域静态底                [45_water]
+  paintTracks(g, rng);                         // 5) 操场                      [37_sports]
+  paintCourts(g, rng);                         // 6) 篮球场 / 网球场            [37_sports]
+  paintGateAprons(g, rng);                     // 7) 校门车行道 + 斑马线
+  paintKerbs(g, rng);                          // 8) 路缘石
+  paintMarkings(g, rng);                       // 9) 标线
+  paintManholes(g, rng);                       // 9b) 井盖                  [48_ground_detail]
+  paintWear(g, rng);                           // 9c) 斑马线磨损 + 车辙      [48_ground_detail]
+  paintDirt(g, rng);                           // 10) 泥土过渡带
+  paintWalls(g, rng);                          // 11) 围墙（最后画，压在土带之上）[46_walls]
+  return c;
+}
+
+/* --- 2.7.1 校外：低饱和底色 + 45° 街区纹理 + 零散灰色小方块 --- */
+function paintOutside(g, rng) {
+  const S = 128, tile = mkCanvas(S, S), tg = tile.getContext("2d");
+  px(tg, 0, 0, S, S, OUT_BASE);
+  for (let off = -S; off <= S; off += 32) {    // 45° 斜线（128 = 4×32 → 可无缝平铺）
+    for (let i = 0; i < S; i += 4) {
+      const x0 = off + i;
+      if (x0 >= 0 && x0 < S) px(tg, x0, i, 2, 4, shade(OUT_BASE, -0.16));
+    }
+  }
+  for (let i = 0; i < 5; i++)                  // 零散灰块：示意城市楼
+    px(tg, ((rng() * S) | 0), ((rng() * S) | 0), 8 + ((rng() * 14) | 0), 6 + ((rng() * 12) | 0), OUT_BLOCK);
+  const pat = g.createPattern(tile, "repeat");
+  g.fillStyle = pat;
+  g.fillRect(0, 0, WORLD_W, WORLD_H);
+}
+
+/* --- 2.7.2 逐格：草地 / 建筑基座 / 道路 --- */
+function paintCells(g, rng, nA, nB, nR) {
+  const B = CELL;
+  for (let cy = 0; cy < NH; cy++) {
+    for (let cx = 0; cx < NW; cx++) {
+      const i = cy * NW + cx, k = CELLK[i];
+      if (k === K.OUT) continue;               // 校外已铺好
+      const x = cx * B, y = cy * B;
+      const w = Math.min(B, WORLD_W - x), h = Math.min(B, WORLD_H - y);
+
+      if (k === K.GRASS || k === K.TRACK || k === K.BBALL || k === K.TENNIS || k === K.WATER) {
+        /* ⚠️ 运动场地/水域也要先铺草底：paintOutside 是整幅铺满的，
+           这些格子若不铺底，跑道椭圆四角会漏出"校外纹理"。 */
+        paintGrassCell(g, rng, nA, nB, x, y, w, h, B);
+      } else if (k === K.ROAD) {
+        paintRoadCell(g, rng, nR, x, y, w, h, ROADCLS[i]);
+      } else if (k === K.BLD) {
+        /* 建筑轮廓内：铺"楼前硬地"。楼体精灵会压住南半边，
+           露出来的北半边读作前庭/消防通道，而不是一块空白基座。 */
+        paintRoadCell(g, rng, nR, x, y, w, h, 0);
+        px(g, x, y, w, h, "rgba(80,72,58,0.10)");
+      } else if (k === K.PLAZA) {
+        continue;                              // 广场由 paintPlazas 统一画
+      }
+    }
+  }
+}
+
+/* 草地：世界坐标 8px 子格采样 fbm → 连续渐变（逐格单色会留下 16px 方块感） */
+function paintGrassCell(g, rng, nA, nB, x, y, w, h, B) {
+  let vmid = 0;
+  for (let sy = 0; sy < h; sy += 8)
+    for (let sx = 0; sx < w; sx += 8) {
+      const sw = Math.min(8, w - sx), sh = Math.min(8, h - sy);
+      let v = fbm2(nA, nB, (x + sx) / 96, (y + sy) / 96);
+      v = clamp((v - 0.5) * 2.0 + 0.5, 0, 1);
+      vmid += v;
+      px(g, x + sx, y + sy, sw, sh, GRASS_RAMP[Math.min(4, Math.floor(v * 5))]);
+    }
+  const base = GRASS_RAMP[Math.min(4, Math.floor((vmid / 4) * 5))];
+  const dark = shade(base, -0.22), lit = shade(base, 0.22);
+  const nGrass = Math.max(2, ((w * h) / 85) | 0);
+  for (let n = 0; n < nGrass; n++) {                 // 草叶成簇：下段暗、顶端亮
+    const gx = (x + 2 + rng() * (B - 6)) | 0, gy = (y + 4 + rng() * (B - 8)) | 0;
+    px(g, gx, gy, 1, 4, dark);
+    px(g, gx, gy - 1, 1, 2, lit);
+    if (rng() < 0.14) px(g, gx, gy + 1, 1, 1, "#e8d76a");    // 小黄花
+  }
+}
+
+/* 道路：cls 2 = 沥青（主干道），1 = 砖石铺装，0 = 混凝土小径
+   ※ 颜色一律按世界坐标 8px 子格采样噪声 —— 逐格单色会留下 16px 方块感。 */
+function paintNoiseCell(g, x, y, w, h, nR, scale, ramp, mixers) {
+  for (let sy = 0; sy < h; sy += 8)
+    for (let sx = 0; sx < w; sx += 8) {
+      const sw = Math.min(8, w - sx), sh = Math.min(8, h - sy);
+      const v = noiseAt(nR, (x + sx) / scale, (y + sy) / scale);
+      px(g, x + sx, y + sy, sw, sh, mixers ? mix(mixers[0], mixers[1], v) : ramp[Math.min(ramp.length - 1, Math.floor(v * ramp.length))]);
+    }
+}
+function paintRoadCell(g, rng, nR, x, y, w, h, cls) {
+  if (cls === 2) {
+    paintNoiseCell(g, x, y, w, h, nR, 46, ASPHALT_RAMP);
+    speckle(g, x, y, w, h, "rgba(255,255,255,0.045)", 3, rng);
+    speckle(g, x, y, w, h, "rgba(0,0,0,0.07)", 3, rng);
+  } else if (cls === 1) {
+    paintNoiseCell(g, x, y, w, h, nR, 42, null, [PAVE_A, PAVE_B]);
+    /* 逐砖色差（16×8 一块）[48_ground_detail]：原来只有 42px 尺度的整体色斑，
+       1× 下人行道是一片平色，"砖"读不出来。色调走**世界砖号的哈希**（brickTone）
+       而不是 rng —— 一块砖常横跨两个 CELL，各格各画，rng 会在格边界留接缝。
+       55% 半透明叠加，底下的噪声仍然透得出来。 */
+    for (let by = (y / 8) | 0; by <= ((y + h - 1) / 8) | 0; by++) {
+      const cy2 = Math.max(y, by * 8), bh2 = Math.min(y + h, by * 8 + 8) - cy2;
+      if (bh2 <= 0) continue;
+      for (let bx = (x / 16) | 0; bx <= ((x + w - 1) / 16) | 0; bx++) {
+        const cx2 = Math.max(x, bx * 16), bw2 = Math.min(x + w, bx * 16 + 16) - cx2;
+        if (bw2 <= 0) continue;
+        px(g, cx2, cy2, bw2, bh2, rgba(shade(PAVE_B, (brickTone(bx, by) - 0.5) * 0.30), 0.55));
+      }
+    }
+    for (let yy = y; yy < y + h; yy += 8)        // 砖缝（世界坐标对齐，跨格不断缝）
+      px(g, x, ((yy / 8) | 0) * 8, w, 1, "rgba(14,18,28,0.10)");
+    for (let xx = x; xx < x + w; xx += 16)
+      px(g, ((xx / 16) | 0) * 16, y, 1, h, "rgba(14,18,28,0.07)");
+  } else {
+    /* 小径：整块现浇混凝土 + 16px 分格缝（与广场的 32px 石板明显区分） */
+    paintNoiseCell(g, x, y, w, h, nR, 60, null, ["#b6b0a3", "#c3bdaf"]);
+    for (let yy = y; yy < y + h; yy += 16)
+      px(g, x, ((yy / 16) | 0) * 16, w, 1, "rgba(14,18,28,0.15)");
+    for (let xx = x; xx < x + w; xx += 16)
+      px(g, ((xx / 16) | 0) * 16, y, 1, h, "rgba(14,18,28,0.11)");
+    speckle(g, x, y, w, h, "rgba(0,0,0,0.07)", 3, rng);
+    speckle(g, x, y, w, h, "rgba(255,255,255,0.05)", 2, rng);
+  }
+}
+
+/* --- 2.7.3 广场：石头铺装（32px 方板 + 明暗交错 + 灰缝） --- */
+function paintPlazas(g, rng) {
+  for (const p of PLAZA) {
+    px(g, p.x, p.y, p.w, p.h, PLAZA_DARK);                       // 缝色打底
+    for (let y = p.y; y < p.y + p.h; y += 32)
+      for (let x = p.x; x < p.x + p.w; x += 32) {
+        const k = (rng() - 0.5) * 0.34;
+        const cw = Math.max(1, Math.min(30, p.x + p.w - x - 1));
+        const ch = Math.max(1, Math.min(30, p.y + p.h - y - 1));
+        px(g, x + 1, y + 1, cw, ch, shade(PLAZA_BASE, k));
+        px(g, x + 1, y + 1, cw, 1, shade(PLAZA_BASE, k + 0.10));  // 板面上棱微受光
+        px(g, x + 1, y + ch, cw, 1, "rgba(14,18,28,0.14)");
+        if (rng() < 0.22) px(g, x + 4 + rng() * 22, y + 4 + rng() * 22, 2, 2, "rgba(14,18,28,0.13)");
+      }
+    px(g, p.x, p.y, p.w, 2, shade(PLAZA_BASE, 0.26));            // 上缘受光
+    px(g, p.x, p.y + p.h - 3, p.w, 3, shade(PLAZA_BASE, -0.34)); // 下缘背光
+    px(g, p.x, p.y, 2, p.h, shade(PLAZA_BASE, 0.12));
+    px(g, p.x + p.w - 2, p.y, 2, p.h, shade(PLAZA_BASE, -0.24));
+  }
+}
+
+/* --- 2.7.4 校门：内外各铺 60px 车行道 + 白色斑马线 --- */
+function paintGateAprons(g, rng) {
+  for (const gt of GATES) {
+    if (gt.id === "G3") continue;              // 东南门是斜的，由围墙模块单独处理
+    const L = 120;
+    if (gt.dir === "h") {
+      px(g, gt.x - L, gt.y - 30, L * 2, 60, ASPHALT_RAMP[1]);
+      for (let i = -4; i <= 4; i++)
+        px(g, gt.x + i * 22 - 4, gt.y - 26, 8, 52, "rgba(240,240,235,0.55)");
+    } else {
+      px(g, gt.x - 30, gt.y - L, 60, L * 2, ASPHALT_RAMP[1]);
+      for (let i = -4; i <= 4; i++)
+        px(g, gt.x - 26, gt.y + i * 22 - 4, 52, 8, "rgba(240,240,235,0.55)");
+    }
+  }
+}
+
+/* --- 2.7.5 路缘石：路与非路的交界处 --- */
+function paintKerbs(g, rng) {
+  const isRoad = i => i >= 0 && i < CELLK.length && CELLK[i] === K.ROAD;
+  for (let cy = 0; cy < NH; cy++) {
+    for (let cx = 0; cx < NW; cx++) {
+      const i = cy * NW + cx;
+      if (CELLK[i] !== K.ROAD) continue;
+      if (ROADCLS[i] === 0) continue;                        // 小径不砌路缘石
+      const x = cx * CELL, y = cy * CELL;
+      const north = cy > 0 && !isRoad(i - NW), south = cy < NH - 1 && !isRoad(i + NW);
+      const west  = cx > 0 && !isRoad(i - 1),  east  = cx < NW - 1 && !isRoad(i + 1);
+      if (north) { px(g, x, y, CELL, 3, KERB_TOP); px(g, x, y + 3, CELL, 1, KERB_DARK); }
+      if (south) { px(g, x, y + CELL - 3, CELL, 3, KERB_LIT); px(g, x, y + CELL - 4, CELL, 1, KERB_DARK); }
+      if (west)  { px(g, x, y, 3, CELL, KERB_TOP); px(g, x + 3, y, 1, CELL, KERB_DARK); }
+      if (east)  { px(g, x + CELL - 3, y, 3, CELL, KERB_LIT); px(g, x + CELL - 4, y, 1, CELL, KERB_DARK); }
+    }
+  }
+}
+
+/* --- 2.7.6 标线：主干道双黄中线 + 车行道外缘白实线 ---
+   ⚠️ 广场（尤其"思源楼前广场"）与东西主路在 PPT 数据里是同一块面积，
+      广场是后画的，所以标线必须绕开广场 —— 否则一条双黄线会横穿石板地。 */
+const _plazaHit = (x, y) => PLAZA.some(p => x >= p.x - 2 && x <= p.x + p.w + 2 && y >= p.y - 2 && y <= p.y + p.h + 2);
+function paintMarkings(g, rng) {
+  const YEL = "#d8c34a";
+  for (const a of ARTERY) {
+    if (a.cls !== 2) continue;
+    const horiz = a.w >= a.h;
+    if (horiz) {
+      const y = Math.round(a.y + a.h / 2);
+      dashLine(g, a.x + 12, a.x + a.w - 12, y - 4, 1, YEL, rng);
+      dashLine(g, a.x + 12, a.x + a.w - 12, y + 3, 1, YEL, rng);
+      dashLine(g, a.x, a.x + a.w, a.y + 7, 2, "rgba(240,240,235,0.50)", rng);        // 外缘白线
+      dashLine(g, a.x, a.x + a.w, a.y + a.h - 9, 2, "rgba(240,240,235,0.50)", rng);
+    } else {
+      const x = Math.round(a.x + a.w / 2);
+      dashLineV(g, a.y + 12, a.y + a.h - 12, x - 4, 1, YEL, rng);
+      dashLineV(g, a.y + 12, a.y + a.h - 12, x + 3, 1, YEL, rng);
+      dashLineV(g, a.y, a.y + a.h, a.x + 7, 2, "rgba(240,240,235,0.50)", rng);
+      dashLineV(g, a.y, a.y + a.h, a.x + a.w - 9, 2, "rgba(240,240,235,0.50)", rng);
+    }
+  }
+}
+/* 实线：整段画 + 广场处断开（用短段拼，避免长线穿过石板地） */
+function solidH(g, x0, x1, y, th, col) {
+  for (let x = x0; x < x1; x += 8)
+    if (!_plazaHit(x + 4, y + th / 2)) px(g, x, y, Math.min(8, x1 - x), th, col);
+}
+function solidV(g, y0, y1, x, th, col) {
+  for (let y = y0; y < y1; y += 8)
+    if (!_plazaHit(x + th / 2, y + 4)) px(g, x, y, th, Math.min(8, y1 - y), col);
+}
+function dashLine(g, x0, x1, y, th, col, rng) {
+  for (let x = x0; x < x1; x += 26) {
+    if (rng() < 0.14) continue;                                 // 磨损缺口
+    if (_plazaHit(x + 8, y + th / 2)) continue;                 // 广场上不画
+    px(g, x, y, Math.min(16, x1 - x), th, col);
+  }
+}
+function dashLineV(g, y0, y1, x, th, col, rng) {
+  for (let y = y0; y < y1; y += 26) {
+    if (rng() < 0.14) continue;
+    if (_plazaHit(x + th / 2, y + 8)) continue;
+    px(g, x, y, th, Math.min(16, y1 - y), col);
+  }
+}
+
+/* --- 2.7.7 泥土过渡带：硬地与草地之间不做硬切 --- */
+function paintDirt(g, rng) {
+  const isRoad = i => i >= 0 && i < CELLK.length && CELLK[i] === K.ROAD;
+  const grit = "rgba(90,78,54,0.55)";
+  for (let cy = 0; cy < NH; cy++) {
+    for (let cx = 0; cx < NW; cx++) {
+      const i = cy * NW + cx;
+      if (CELLK[i] === K.ROAD || CELLK[i] === K.OUT) continue;
+      if (CELLK[i] !== K.GRASS) continue;
+      const x = cx * CELL, y = cy * CELL;
+      const band = mix(DIRT, GRASS_RAMP[0], 0.45);
+      if (cy > 0 && isRoad(i - NW)) { px(g, x, y, CELL, 3, band); speckle(g, x, y, CELL, 6, grit, 14, rng); }
+      if (cy < NH - 1 && isRoad(i + NW)) { px(g, x, y + CELL - 3, CELL, 3, band); speckle(g, x, y + CELL - 6, CELL, 6, grit, 14, rng); }
+      if (cx > 0 && isRoad(i - 1)) { px(g, x, y, 3, CELL, band); speckle(g, x, y, 6, CELL, grit, 14, rng); }
+      if (cx < NW - 1 && isRoad(i + 1)) { px(g, x + CELL - 3, y, 3, CELL, band); speckle(g, x + CELL - 6, y, 6, CELL, grit, 14, rng); }
+    }
+  }
+}
+
+/* 供场景装配使用 */
+buildOcc();
+classifyFree(distanceTransform());
+
+/* =========================================================
+   3. 建筑生成器（统一外形）
+   ---------------------------------------------------------
+   锚点 = 底部中心（落地线）。可见结构自上而下：
+   屋顶板 → 檐口 → 墙体（窗阵）→ 门 + 台阶 → 接地阴影带。
+   明暗一律服从 SUN：左上受光偏暖，右下背光偏冷。
+
+   层高 34 px（≈3.8 m，与思源楼精灵的窗排间距一致，见交接文档 §7.1）。
+   ========================================================= */
+const FLOOR_H = 34;
+const WIN_W = 16, WIN_H = 22, WIN_GAP = 12;
+
+/* --- 3.0 屋名标牌 ---------------------------------------------------
+   每栋楼在屋顶前沿挂一块深色牌子 + 奶油色字，与校门门楣（§4.6.4）同一套色语。
+
+   字形走思源楼题字（§3.5.6）那套：**系统字体渲染 → alpha 二值化 → 逐像素填色**。
+   好处是笔画永远 1px 硬边，放大 3 倍也不会有抗锯齿灰边；直接把 fillText 画进精灵
+   则会在放大后糊成一团。代价是字面尺寸只能量出来（不同字体左右留白差很多）。
+
+   字号**全楼统一**（SIGN_FS），不像素化才像招牌。最窄的楼 R.w ≈ 214 世界像素，
+   最长的名字 6 字 → 字面 ≈102 px + 20 px 边距 = 122 px 牌面，不到一半宽度，
+   所以不需要按楼缩字号（这条是数据不变量：CAMPUS 里最长的名字就是 6 字）。 */
+const SIGN_FS = 18;
+const _signCache = Object.create(null);        // name → {c, w, h}；重名楼共用一块牌
+function makeSign(name) {
+  if (name in _signCache) return _signCache[name];
+  const FONT = "bold " + SIGN_FS + "px 'Microsoft YaHei','SimHei','PingFang SC',sans-serif";
+  const t = mkCanvas(8, 8);
+  let tc = t.getContext("2d");
+  tc.font = FONT;
+  const tw = Math.ceil(tc.measureText(name).width) + 8, th = SIGN_FS + 10;
+  t.width = tw; t.height = th;                 // ⚠️ 改尺寸会重置上下文，必须重取
+  tc = t.getContext("2d");
+  tc.font = FONT;
+  tc.textBaseline = "top";
+  tc.fillStyle = "#000";
+  tc.fillText(name, 4, 4);
+  const d = tc.getImageData(0, 0, tw, th).data;
+  const pts = [];
+  let minX = tw, maxX = -1, minY = th, maxY = -1;
+  for (let y = 0; y < th; y++) {
+    for (let x = 0; x < tw; x++) {
+      if (d[(y * tw + x) * 4 + 3] > 100) {
+        pts.push(x, y);
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) return (_signCache[name] = null);   // 拿不到字形就不挂牌
+  const gw = maxX - minX + 1, gh = maxY - minY + 1; // 字面实际尺寸
+  const pw = gw + 20, ph = SIGN_FS + 9;             // 牌面：字面左右各留 10 px
+  const c = mkCanvas(pw, ph), g = c.getContext("2d");
+  px(g, 0, 1, pw, ph - 1, "#5d564a");               // 牌面
+  px(g, 0, 1, pw, 1, "#7d7669");                    // 上棱受光
+  px(g, 0, ph - 1, pw, 1, "#3a352c");               // 下棱背光
+  px(g, 0, 1, 1, ph - 1, "#6d6557");                // 左棱
+  px(g, pw - 1, 1, 1, ph - 1, "#443f35");           // 右棱
+  const ox = Math.round((pw - gw) / 2) - minX, oy = Math.round((ph - gh) / 2) - minY;
+  g.fillStyle = "#e8d9a8";
+  for (let i = 0; i < pts.length; i += 2) g.fillRect(ox + pts[i], oy + pts[i + 1], 1, 1);
+  return (_signCache[name] = { c: c, w: pw, h: ph });
+}
+/* 标牌矩形：屋顶前沿，牌底离檐口 8 px（留出檐口投影线，牌子才"站在屋面上"） */
+function signRect(sgn, x0, w, eaveY) {
+  if (!sgn) return null;
+  return { x: Math.round(x0 + (w - sgn.w) / 2), y: eaveY - 8 - sgn.h, w: sgn.w, h: sgn.h };
+}
+
+function makeBuilding(o) {
+  const rng    = makeRng(o.seed);
+  const w      = Math.round(o.w);
+  const depth  = o.depth || Math.round(w * 0.50);
+  const floors = o.floors || 3;
+  const wallH  = floors * FLOOR_H;
+  /* 屋顶板要"吃掉"平面进深：PPT 给的是建筑俯视轮廓，板画得够厚，
+     楼才压得住自己的 footprint —— 否则矩形北半边会露出一块空白基座。 */
+  const roofT  = clamp(Math.round(depth * 0.60), 20, 190);
+
+  const PADX = 26, PADT = 18;
+  const SHX = Math.round(-SUN.x * 26), SHY = Math.round(-SUN.y * 26);
+  const c = mkCanvas(w + PADX * 2, PADT + roofT + wallH + SHY + 14);
+  const g = c.getContext("2d");
+
+  const x0 = PADX, x1 = PADX + w;
+  const eaveY = PADT + roofT;              // 屋檐下沿 = 墙顶
+  const baseY = eaveY + wallH;             // 落地线
+  const wall = o.wall, roof = o.roof, glass = o.glass || "#8FB6D9";
+  const sgn = o.name ? makeSign(o.name) : null;      // 屋名标牌（可空）
+  const sg  = signRect(sgn, x0, w, eaveY);
+
+  /* --- 3.1 方向性投影：footprint 朝右下拉伸 --- */
+  shadowQuad(g, x0 + 2, baseY - Math.min(24, depth * 0.3), x1 - 2, baseY, SHX, SHY, 0.28, 4);
+
+  /* --- 3.2 屋面（俯视）：女儿墙 + 分坡脊 + 屋面设备 --- */
+  px(g, x0 - 3, PADT, w + 6, roofT, shade(roof, -0.34));            // 檐口外沿
+  px(g, x0, PADT + 2, w, roofT - 5, shade(roof, -0.04));            // 板面
+  px(g, x0, PADT + 2, w, 4, shade(roof, 0.26));                     // 女儿墙顶受光
+  px(g, x0, PADT + 6, w, 3, "rgba(14,18,28,0.34)");                 // 女儿墙内阴影
+  px(g, x0, PADT + 6, 4, roofT - 9, shade(roof, 0.14));             // 左内侧受光
+  px(g, x1 - 4, PADT + 6, 4, roofT - 9, "rgba(14,18,28,0.22)");     // 右内侧背光
+  for (let j = 1; j <= 3; j++)                                      // 分坡脊线
+    px(g, x0 + 5, PADT + Math.round((roofT - 12) * j / 4) + 6, w - 10, 1, "rgba(255,255,255,0.08)");
+  px(g, x0 - 3, PADT + roofT - 1, w + 6, 2, shade(roof, -0.60));    // 檐口投影线
+  if (roofT > 46) {                                                 // 屋面设备
+    const nb = 2 + ((rng() * 3) | 0);
+    for (let i = 0; i < nb; i++) {
+      const bw = 18 + rng() * 34, bh = 12 + rng() * 20;
+      const bx = Math.round(x0 + 14 + rng() * Math.max(1, w - 28 - bw));
+      const by = Math.round(PADT + 14 + rng() * Math.max(1, roofT - 28 - bh - bh * 0.5));
+      /* 让开屋名标牌：牌子压在设备之后画，重叠就是互相打架（设备的投影还会糊上牌面）。
+         ⚠️ 三个 rng() 都已取过再判，跳过也不改动随机序列 —— 否则全校园的屋面纹样会整体错位。 */
+      if (sg && bx < sg.x + sg.w + 6 && bx + bw + 6 > sg.x
+            && by < sg.y + sg.h + 3 && by + bh + 6 > sg.y) continue;
+      px(g, bx + 4, by + 4, bw, bh, "rgba(14,18,28,0.30)");         // 设备投影
+      px(g, bx, by + bh - 4, bw, 4, shade(roof, -0.38));            // 设备侧墙
+      px(g, bx, by, bw, bh, shade(roof, 0.16));
+      px(g, bx, by, bw, 3, shade(roof, 0.34));
+      px(g, bx, by + bh - 1, bw, 1, "rgba(14,18,28,0.30)");
+    }
+  }
+  speckle(g, x0 + 4, PADT + 7, w - 8, roofT - 12, "rgba(255,255,255,0.05)", (w / 3) | 0, rng);
+  speckle(g, x0 + 4, PADT + 7, w - 8, roofT - 12, "rgba(0,0,0,0.07)", (w / 4) | 0, rng);
+
+  /* --- 3.2.9 屋名标牌（画在斑点之后，压在屋面上；服从 SUN，投影朝右下） --- */
+  if (sg) {
+    px(g, sg.x + 3, sg.y + 3, sg.w, sg.h, "rgba(14,18,28,0.30)");
+    g.drawImage(sgn.c, sg.x, sg.y);
+  }
+
+  /* --- 3.3 墙体：砖纹 --- */
+  px(g, x0, eaveY + 2, w, wallH, shade(wall, -0.10));
+  for (let yy = eaveY + 7; yy < baseY; yy += 5) {
+    px(g, x0, yy, w, 1, "rgba(0,0,0,0.09)");
+    const off = ((((yy - eaveY) / 5) | 0) & 1) ? 4 : 0;
+    for (let xx = x0 + off; xx < x1; xx += 8) px(g, xx, yy - 5, 1, 5, "rgba(0,0,0,0.06)");
+  }
+  speckle(g, x0, eaveY + 3, w, wallH - 3, "rgba(255,255,255,0.05)", (w / 3) | 0, rng);
+  speckle(g, x0, eaveY + 3, w, wallH - 3, "rgba(0,0,0,0.09)", (w / 2) | 0, rng);
+  px(g, x0, eaveY + 2, 3, wallH, shade(wall, 0.18));                // 左棱受光
+  px(g, x1 - 4, eaveY + 2, 4, wallH, shade(wall, -0.30));           // 右棱背光
+  for (let i = 0; i < 10; i++)                                      // 檐下阴影带
+    px(g, x0, eaveY + 2 + i, w, 1, "rgba(14,18,28," + (0.34 * (1 - i / 10)).toFixed(3) + ")");
+  /* 楼层分隔线：每层一道浅浅的腰线 */
+  for (let f = 1; f < floors; f++)
+    px(g, x0, eaveY + f * FLOOR_H, w, 2, shade(wall, -0.20));
+
+  /* --- 3.4 门（先占位，供窗户避让） --- */
+  const dw = Math.min(70, Math.round(w * 0.18)), dh = 44;
+  const dcenter = x0 + w / 2 + (o.doorSide || 0) * Math.round(w * 0.22);
+  const dx = Math.round(dcenter - dw / 2), dy = baseY - dh;
+  const occ = [[dx - 10, dy - 16, dx + dw + 10, baseY + 10],
+               [x1 - 10, eaveY + 2, x1, baseY]];                  // 雨水管占位
+
+  /* --- 3.5 窗阵：行 = floors，列按宽度排 --- */
+  const margin = 22;
+  const cols = Math.max(1, Math.floor((w - margin * 2 + WIN_GAP) / (WIN_W + WIN_GAP)));
+  const stepX = (w - margin * 2 - cols * WIN_W) / (cols - 1 || 1);
+  const winAt = (wx, wy) => {
+    px(g, wx - 1, wy - 1, WIN_W + 2, WIN_H + 2, shade(wall, 0.12));       // 框外缘受光
+    px(g, wx + WIN_W, wy - 1, 1, WIN_H + 2, shade(wall, -0.34));          // 框右背光
+    px(g, wx, wy, WIN_W, WIN_H, "#2c3746");                               // 洞口
+    px(g, wx, wy, WIN_W, 2, "rgba(10,13,20,0.58)");                       // 洞口上内侧
+    px(g, wx, wy, 2, WIN_H, "rgba(10,13,20,0.44)");                       // 洞口左内侧
+    px(g, wx + 2, wy + 2, WIN_W - 6, 3, shade(glass, 0.28));              // 玻璃上高光
+    px(g, wx + 3, wy + 6, WIN_W - 9, 2, shade(glass, 0.12));
+    px(g, wx + 6, wy + 4, 1, WIN_H - 8, shade(wall, -0.52));              // 竖窗棂
+    px(g, wx + 2, wy + Math.round(WIN_H * 0.62), WIN_W - 4, Math.round(WIN_H * 0.34), shade(glass, -0.24));
+    px(g, wx - 2, wy + WIN_H, WIN_W + 4, 3, shade(wall, 0.24));           // 窗台顶面受光
+    px(g, wx - 2, wy + WIN_H + 3, WIN_W + 4, 1, "rgba(14,18,28,0.28)");   // 窗台投影
+  };
+  for (let f = 0; f < floors; f++) {
+    /* 首层窗整体上移 30px 给门让位；顶层贴檐口留 16px */
+    const wy = f === 0 ? baseY - 30 - WIN_H
+                       : eaveY + 16 + (f - 1) * FLOOR_H + Math.round((FLOOR_H - WIN_H) * 0.35);
+    if (wy + WIN_H > baseY - 8) continue;
+    for (let cn = 0; cn < cols; cn++) {
+      const wx = Math.round(margin + cn * (WIN_W + stepX));
+      const box = [wx - 3, wy - 2, wx + WIN_W + 3, wy + WIN_H + 5];
+      if (occ.some(b => !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]))) continue;
+      winAt(wx, wy);
+    }
+  }
+
+  /* --- 3.6 雨水管 --- */
+  const pipeX = x1 - 7;
+  px(g, pipeX, eaveY + 3, 3, baseY - eaveY - 3, shade(wall, -0.24));
+  px(g, pipeX, eaveY + 3, 1, baseY - eaveY - 3, shade(wall, 0.04));
+  px(g, pipeX - 1, Math.round((eaveY + baseY) / 2) - 5, 5, 2, shade("#8b8f96", -0.10));
+  px(g, pipeX - 1, baseY - 12, 5, 2, shade("#8b8f96", -0.22));
+
+  /* --- 3.7 雨棚 + 门 + 台阶 --- */
+  const cx0 = dx - 10, cx1 = dx + dw + 10, cy = dy - 13;
+  px(g, cx0, cy, cx1 - cx0, 3, shade(roof, 0.10));                  // 雨棚顶面
+  px(g, cx0, cy + 3, cx1 - cx0, 1, shade(roof, -0.50));
+  px(g, cx0, cy + 4, 2, 5, shade(roof, -0.28));
+  px(g, cx1 - 2, cy + 4, 2, 5, shade(roof, -0.56));
+  for (let i = 0; i < 5; i++)
+    px(g, dx - 6, cy + 6 + i, dw + 12, 1, "rgba(14,18,28," + (0.30 * (1 - i / 5)).toFixed(3) + ")");
+  px(g, dx - 1, dy - 1, dw + 2, dh + 1, shade(wall, -0.38));        // 门框
+  px(g, dx, dy, dw, dh, shade(o.door || "#6b4a2f", -0.16));
+  for (let i = 3; i < dw; i += 6) px(g, dx + i, dy + 2, 1, dh - 2, "rgba(0,0,0,0.22)");
+  px(g, dx, dy, dw, 1, "rgba(0,0,0,0.30)");
+  px(g, dx + Math.round(dw * 0.5) - 1, dy + Math.round(dh * 0.45), 2, 6, shade("#d8c07a", 0.12));  // 门把手
+  px(g, dx + 2, dy + 2, Math.round(dw * 0.42), dh - 4, "rgba(255,235,190,0.10)");                  // 门内暖光
+  for (let i = 0; i < 3; i++) {                                     // 台阶：自上而下逐级变宽
+    const sw = dw + 9 + i * 5, sx = Math.round(dcenter - sw / 2), sy = baseY + i * 3 - 2;
+    px(g, sx, sy, sw, 3, shade("#b9b3a6", 0.10 - i * 0.11));
+    px(g, sx, sy + 3, sw, 1, "rgba(14,18,28,0.26)");
+  }
+
+  /* --- 3.8 整栋外轮廓 + 接地最深窄带 --- */
+  px(g, x0 - 1, eaveY + 1, w + 2, 1, shade(wall, -0.44));
+  px(g, x0 - 1, eaveY + 1, 1, wallH + 2, shade(wall, -0.44));
+  px(g, x1, eaveY + 1, 1, wallH + 2, shade(wall, -0.44));
+  contactBand(g, x0 + 1, x1 - 1, baseY - 1, 2, 0.34);
+
+  return { canvas: c, ax: x0 + w / 2, ay: baseY, w: w, h: wallH + roofT };
+}
+
+/* =========================================================
+   3.5 思源楼 —— 校园地标（整体移植自《思源楼正面.html》）
+   ---------------------------------------------------------
+   浅灰白墙 + 中央蓝色玻璃幕墙 + 顶部红色题字 + 白色塔楼，
+   左右严格关于玻璃幕墙中心对称。
+   源码坐标系与原图一字不差（BL=60、BR=360、ROOF_Y=84、
+   WIN_TOP=100、WIN_BOT=232、GROUND_Y=262、TX=210），
+   统一乘 S 倍烘焙成一张精灵图；1px 细线在 1.5 倍下仍保持硬边。
+   锚点同样取「底部中心」，因而照常参与 baseY 深度排序：
+   角色走到楼前 → 晚于楼绘制，遮住楼体；
+   角色走到楼后 → 早于楼绘制，被楼体遮住。
+   ========================================================= */
+const SY_COL = {
+  WALL: "#e0ddd6", WALL_D: "#c5c2ba", WALL_L: "#f0ede6",
+  GLASS: "#2e5a7e", GLASS_HI: "#5a8aac", GLASS_D: "#1e3e5c",
+  WIN_D: "#1c2530", WIN_L: "#3a4a5e",
+  RED: "#c8281e", TOWER: "#eceae4", STATUE: "#d8d4cc"
+};
+function makeSiyuan(o) {
+  const S = (o && o.scale) || 1.5;
+  const C = SY_COL;
+  /* --- 源码几何 --- */
+  const BL = 60, BR = 360, ROOF_Y = 84, WIN_TOP = 100, WIN_BOT = 232, GROUND_Y = 262;
+  const GLASS_L = 196, GLASS_R = 222, GW = GLASS_R - GLASS_L;
+  const TX = (BL + BR) / 2;                 // 建筑水平中心（白塔 / 门楼中轴）
+  const GC = (GLASS_L + GLASS_R) / 2;       // 蓝色玻璃幕墙中心 = 左右镜像对称轴
+
+  /* --- 内容包围盒 → 画布（去掉了原图的天空 / 草地 / 飞鸟 / 成片的树）
+         右 / 下各留出方向性投影的余量，避免阴影被画布裁断 --- */
+  const SX0 = 56, SY0 = 14, SX1 = 384, SY1 = 288;
+  const c = mkCanvas(Math.round((SX1 - SX0) * S), Math.round((SY1 - SY0) * S));
+  const g = c.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  const X = x => (x - SX0) * S, Y = y => (y - SY0) * S;
+  const P = (x, y, w, h, col) => px(g, X(x), Y(y), w * S, h * S, col);
+
+  /* --- 3.5.1 方向性投影 + 接地最深窄带（服从全局 SUN） --- */
+  const SHX = Math.round(-SUN.x * 26 * S), SHY = Math.round(-SUN.y * 26 * S);
+  shadowQuad(g, X(BL + 2), Y(GROUND_Y - 14), X(BR - 2), Y(GROUND_Y), SHX, SHY, 0.26, 4);
+
+  /* --- 3.5.2 楼体（浅灰白，非满窗，留出大量瓷砖墙面） --- */
+  P(BL, ROOF_Y, BR - BL, GROUND_Y - ROOF_Y, C.WALL);
+  P(BL, ROOF_Y, BR - BL, 3, shade(C.WALL, -0.12));          // 顶部水平装饰带
+  P(BL, ROOF_Y + 3, BR - BL, 1, C.WALL_L);
+  for (let y = ROOF_Y + 16; y < WIN_BOT; y += 17)           // 横向瓷砖缝（楼板位置）
+    P(BL, y, BR - BL, 1, shade(C.WALL, -0.10));
+  for (let d = 15; d < (BR - BL) / 2; d += 30) {            // 竖向瓷砖缝（关于 GC 对称）
+    const hh = WIN_BOT - ROOF_Y - 6;
+    P(GC - d, ROOF_Y + 6, 1, hh, shade(C.WALL, -0.08));
+    P(GC + d, ROOF_Y + 6, 1, hh, shade(C.WALL, -0.08));
+  }
+
+  /* --- 3.5.3 顶部两侧小塔楼（右为准，左为镜像） --- */
+  const R_TL = BR - 26, L_TL = 2 * GC - (R_TL + 22);
+  P(R_TL, ROOF_Y - 20, 22, 20, C.WALL);
+  P(R_TL, ROOF_Y - 20, 22, 2, C.WALL_L);
+  P(R_TL, ROOF_Y - 20, 1, 20, C.WALL_L);
+  P(R_TL + 21, ROOF_Y - 20, 1, 20, C.WALL_D);
+  P(R_TL + 5, ROOF_Y - 15, 12, 4, C.WIN_D);
+  P(R_TL + 5, ROOF_Y - 9, 12, 3, C.WIN_D);
+  P(L_TL, ROOF_Y - 20, 22, 20, C.WALL);
+  P(L_TL, ROOF_Y - 20, 22, 2, C.WALL_L);
+  P(L_TL, ROOF_Y - 20, 1, 20, C.WALL_D);
+  P(L_TL + 21, ROOF_Y - 20, 1, 20, C.WALL_L);
+  P(L_TL + 5, ROOF_Y - 15, 12, 4, C.WIN_D);
+  P(L_TL + 5, ROOF_Y - 9, 12, 3, C.WIN_D);
+
+  /* --- 3.5.4 中央凸起门楼（承载题字，宽 26 = 玻璃幕墙宽） --- */
+  const MH_L = TX - 13, MH_R = TX + 13, MH_T = ROOF_Y - 43;
+  P(MH_L, MH_T, 26, ROOF_Y - MH_T, C.WALL);
+  P(MH_L, MH_T, 26, 2, C.WALL_L);                            // 顶部压顶
+  P(MH_L, MH_T + 2, 26, 1, shade(C.WALL, -0.12));
+  P(MH_L, MH_T, 1, ROOF_Y - MH_T, C.WALL_D);                 // 左右边缘（对称）
+  P(MH_R - 1, MH_T, 1, ROOF_Y - MH_T, C.WALL_D);
+  P(MH_L + 1, MH_T, 1, ROOF_Y - MH_T, shade(C.WALL, -0.06));
+  P(MH_R - 2, MH_T, 1, ROOF_Y - MH_T, shade(C.WALL, -0.06));
+
+  /* --- 3.5.5 中央白塔 + 天线（在题字上方，不能被字遮住） --- */
+  P(TX - 1, ROOF_Y - 62, 2, 3, "#555");                      // 塔针
+  P(TX, ROOF_Y - 64, 1, 2, "#c84030");                       // 塔尖红灯
+  for (let i = 0; i < 5; i++) {                              // 锥形塔顶：22px 收到 2px
+    const hw = [11, 8, 6, 3, 1][i];
+    P(TX - hw, ROOF_Y - 59 + i, hw * 2, 1, shade(C.TOWER, 0.12 - i * 0.04));
+  }
+  P(TX - 11, ROOF_Y - 54, 22, 7, C.TOWER);                   // 塔身（宽 22）
+  P(TX - 11, ROOF_Y - 54, 1, 7, "#fff");
+  P(TX + 10, ROOF_Y - 54, 1, 7, shade(C.TOWER, -0.12));
+  P(TX - 11, ROOF_Y - 51, 22, 1, shade(C.TOWER, -0.1));      // 塔身横缝
+  P(TX - 13, ROOF_Y - 47, 26, 4, C.TOWER);                   // 塔座（宽 26）
+  P(TX - 13, ROOF_Y - 47, 26, 1, "#fff");
+  P(TX - 13, ROOF_Y - 44, 26, 1, shade(C.TOWER, -0.1));
+
+  /* --- 3.5.6 红色题字"北京交通大学" ---
+     离屏用系统字体渲染真实字形 → alpha 二值化 → 逐像素填红，
+     字形必然正确；字号随 S 走，放大后笔画仍是 1px 硬边。 */
+  (function drawTitle() {
+    const txt = "北京交通大学";
+    const FS = Math.round(24 * S);
+    const FONT = "bold " + FS + "px 'Microsoft YaHei','SimHei','PingFang SC',sans-serif";
+    const t = mkCanvas(8, 8);
+    let tc = t.getContext("2d");
+    tc.font = FONT;
+    const tw = Math.ceil(tc.measureText(txt).width) + 10, th = FS + 12;
+    t.width = tw; t.height = th;
+    tc = t.getContext("2d");
+    tc.font = FONT;
+    tc.textBaseline = "top";
+    tc.fillStyle = "#000";
+    tc.fillText(txt, 5, 5);
+    const d = tc.getImageData(0, 0, tw, th).data;
+    const pts = [];
+    let minX = tw, maxX = -1, minY = th, maxY = -1;
+    for (let y = 0; y < th; y++) {
+      for (let x = 0; x < tw; x++) {
+        if (d[(y * tw + x) * 4 + 3] > 100) {
+          pts.push(x, y);
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX < 0) return;
+    const w = maxX - minX + 1;
+    const ox = Math.round(X(TX) - w / 2) - minX;             // 以白塔中轴居中
+    const oy = Math.round(Y(ROOF_Y - 32)) - minY;            // 白塔下方，留出完整塔身
+    g.fillStyle = C.RED;
+    for (let i = 0; i < pts.length; i += 2) g.fillRect(ox + pts[i], oy + pts[i + 1], 1, 1);
+  })();
+
+  /* --- 3.5.7 中央玻璃幕墙（垂直贯穿，蓝色反光） --- */
+  P(GLASS_L, WIN_TOP - 6, GW, GROUND_Y - WIN_TOP + 6, C.GLASS);
+  for (let i = 0; i < GW; i++)                               // 斜向反光
+    P(GLASS_L + i, WIN_TOP - 6 + i % 3, 1, GROUND_Y - WIN_TOP + 6,
+      i < GW / 2 ? C.GLASS_HI : shade(C.GLASS_HI, -0.1));
+  for (let y = WIN_TOP - 6; y < GROUND_Y; y += 14)           // 水平分格线
+    P(GLASS_L, y, GW, 1, C.GLASS_D);
+  P(GLASS_L + GW / 2, WIN_TOP - 6, 1, GROUND_Y - WIN_TOP + 6, C.GLASS_D);
+  P(GLASS_L, WIN_TOP - 8, GW, 2, shade(C.WALL, -0.1));       // 顶部收口
+
+  /* --- 3.5.8 窗户：幕墙左右各 4 列，列间留白色瓷砖带；左半为右半镜像 --- */
+  function drawWin(x, y, w, h) {
+    P(x, y, w, h, C.WIN_D);                                  // 窗洞
+    P(x + 1, y + 1, Math.floor(w / 2), 2, C.WIN_L);          // 左上反光
+    P(x + 1, y + 1, 2, Math.floor(h / 2), shade(C.WIN_L, -0.1));
+    P(x + Math.floor(w / 2), y, 1, h, "#0e141c");            // 窗格
+  }
+  (function drawWindows() {
+    const cols = 4, rows = 10, wW = 14, wH = 11, gX = 12, gY = 6;
+    const step = wW + gX, rightStart = GLASS_R + 10;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const wx = rightStart + c * step, wy = WIN_TOP + r * (wH + gY);
+        if (wx + wW > BR - 10) continue;
+        drawWin(wx, wy, wW, wH);
+      }
+    }
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const wx = 2 * GC - (rightStart + c * step + wW);     // 右列左缘的镜像
+        const wy = WIN_TOP + r * (wH + gY);
+        if (wx < BL + 10) continue;
+        drawWin(wx, wy, wW, wH);
+      }
+    }
+  })();
+
+  /* --- 3.5.9 底层入口：三角顶棚 + 玻璃门 --- */
+  P(BL, WIN_BOT, BR - BL, GROUND_Y - WIN_BOT, shade(C.WALL, -0.15));
+  const EX = TX, EY = WIN_BOT;
+  P(EX - 18, EY + 6, 36, GROUND_Y - EY - 6, C.WIN_D);
+  poly(g, [[X(EX - 26), Y(EY + 6)], [X(EX), Y(EY - 8)], [X(EX + 26), Y(EY + 6)]],
+    shade(C.WALL, -0.05));
+  poly(g, [[X(EX - 26), Y(EY + 6)], [X(EX), Y(EY - 8)], [X(EX - 2), Y(EY + 6)]], C.WALL_L);
+  poly(g, [[X(EX), Y(EY - 8)], [X(EX + 26), Y(EY + 6)], [X(EX + 2), Y(EY + 6)]], C.WALL_D);
+  P(EX - 16, EY + 8, 32, 2, C.GLASS_HI);
+  P(EX - 1, EY + 8, 1, GROUND_Y - EY - 8, "#0e141c");
+
+  /* --- 3.5.10 墙体左右边缘（严格对称） --- */
+  P(BL, ROOF_Y, 1, GROUND_Y - ROOF_Y, C.WALL_D);
+  P(BR - 1, ROOF_Y, 1, GROUND_Y - ROOF_Y, C.WALL_D);
+  P(BL + 1, ROOF_Y, 1, GROUND_Y - ROOF_Y, shade(C.WALL, -0.06));
+  P(BR - 2, ROOF_Y, 1, GROUND_Y - ROOF_Y, shade(C.WALL, -0.06));
+
+  /* --- 3.5.11 入口前白色雕塑 --- */
+  const sx = TX - 8;
+  P(sx - 2, GROUND_Y - 10, 20, 6, shade(C.STATUE, -0.1));
+  P(sx - 2, GROUND_Y - 10, 20, 1, C.STATUE);
+  P(sx, GROUND_Y - 22, 6, 12, C.STATUE);
+  P(sx + 8, GROUND_Y - 18, 6, 8, C.STATUE);
+  P(sx + 3, GROUND_Y - 20, 8, 4, shade(C.STATUE, 0.1));
+  P(sx, GROUND_Y - 22, 1, 12, "#fff");
+  P(sx + 8, GROUND_Y - 18, 1, 8, "#fff");
+  P(sx + 5, GROUND_Y - 22, 1, 12, shade(C.STATUE, -0.15));
+  P(sx + 13, GROUND_Y - 18, 1, 8, shade(C.STATUE, -0.15));
+
+  /* --- 3.5.12 接地最深窄带 --- */
+  contactBand(g, X(BL) + 1, X(BR) - 1, Y(GROUND_Y) - 2, 3, 0.34);
+
+  return { canvas: c, ax: X(TX), ay: Y(GROUND_Y), w: BR - BL, h: GROUND_Y - ROOF_Y };
+}
+/* =========================================================
+   3.6 图书馆 —— 切角不规则体 + 三角形石头广场
+   ---------------------------------------------------------
+   用户口述："长方体被切一刀，切掉的三角区域是广场"。
+
+   ⚠️ 已二次核验：PPT 里**不存在任何三角形**（无 custGeom / 无 prstGeom 三角）,
+   故此处按口述语义自建，不要再回 PPT 里找。
+   ========================================================= */
+const LIB = (() => {
+  const e = CAMPUS.find(c => c[1] === "library");
+  return { x: IX(e[2]), y: IX(e[3]), w: IX(e[4]), h: IX(e[5]) };
+})();
+const LIB_NAME = CAMPUS.find(c => c[1] === "library")[0];      // "图书馆"
+const LIB_CUTX = LIB.w * 0.46;
+const LIB_CUTY = LIB.h * 0.42;
+const LIB_TRI  = [                                   // 西南角被切掉的三角（可走广场）
+  [LIB.x, LIB.y + LIB.h],
+  [LIB.x + LIB_CUTX, LIB.y + LIB.h],
+  [LIB.x, LIB.y + LIB.h - LIB_CUTY]
+];
+
+/* 把三角从"建筑占用"里抠出来，标成广场 —— 路网与碰撞都要认它 */
+function stampLibraryPlaza() {
+  for (let cy = 0; cy < NH; cy++) {
+    for (let cx = 0; cx < NW; cx++) {
+      const x = cx * CELL + CELL / 2, y = cy * CELL + CELL / 2;
+      if (!inTri(x, y)) continue;
+      CELLK[cy * NW + cx] = K.PLAZA;
+    }
+  }
+}
+function inTri(x, y) {
+  const [a, b, c] = LIB_TRI;
+  const s = (p, q, r) => (p[0] - r[0]) * (q[1] - r[1]) - (q[0] - r[0]) * (p[1] - r[1]);
+  const d1 = s([x, y], a, b), d2 = s([x, y], b, c), d3 = s([x, y], c, a);
+  const neg = d1 < 0 || d2 < 0 || d3 < 0, pos = d1 > 0 || d2 > 0 || d3 > 0;
+  return !(neg && pos);
+}
+
+/* 三角广场：石头铺装（烘焙进地面） */
+function paintLibraryPlaza(g, rng) {
+  poly(g, LIB_TRI, PLAZA_BASE);
+  const [a, b, c] = LIB_TRI;
+  const x0 = a[0], x1 = b[0], y0 = c[1], y1 = a[1];
+  for (let y = y0; y < y1; y += 32)
+    for (let x = x0; x < x1; x += 32) {
+      const mid = x + 16;
+      const yEdge = a[1] - ((x0 + LIB_CUTX - Math.min(mid, x0 + LIB_CUTX)) / LIB_CUTX) * LIB_CUTY;
+      if (mid < x0 + LIB_CUTX && y + 16 > yEdge) continue;      // 出界（斜边外）
+      const col = shade(PLAZA_BASE, (rng() - 0.5) * 0.22);
+      px(g, x + 1, y + 1, 30, 30, col);
+    }
+  /* 斜边护角：3px 深色石材，强化"被切一刀" */
+  px(g, a[0], a[1] - 2, LIB_CUTX, 3, shade(PLAZA_DARK, -0.20));
+  for (let i = 0; i < LIB_CUTX; i++) {
+    const yy = a[1] - (i / LIB_CUTX) * LIB_CUTY;
+    px(g, a[0] + i, yy, 3, 2, "#4a4238");
+  }
+  /* 中央小圆形树池 */
+  const cx = a[0] + LIB_CUTX * 0.30, cy = a[1] - LIB_CUTY * 0.30;
+  circlePx(g, cx, cy, 16, shade(PLAZA_DARK, -0.18));
+  circlePx(g, cx, cy, 13, "#5b4a33");
+  circlePx(g, cx, cy, 11, "#3f3222");
+}
+
+/* 图书馆本体：左下角沿三角斜边削掉的不规则体 */
+function makeLibrary(o) {
+  const rng = makeRng(o.seed);
+  const w = Math.round(LIB.w), h = Math.round(LIB.h);
+  const floors = 4, wallH = floors * FLOOR_H;
+  const roofT = clamp(Math.round(h * 0.60), 20, 190);        // 同 makeBuilding：板厚吃掉进深
+  const PADX = 26, PADT = 18;
+  const SHX = Math.round(-SUN.x * 26), SHY = Math.round(-SUN.y * 26);
+  const c = mkCanvas(w + PADX * 2, PADT + roofT + wallH + SHY + 14);
+  const g = c.getContext("2d");
+
+  const x0 = PADX, x1 = PADX + w;
+  const eaveY = PADT + roofT, baseY = eaveY + wallH;
+  const cutX = Math.round(w * 0.46), cutY = Math.round(h * 0.42);
+  const wall = "#cdc6b6", roof = "#6f7f86", glass = "#8FB6D9";
+  const sgn = makeSign(LIB_NAME);                            // 屋名标牌（同 §3.0）
+  const sg  = signRect(sgn, x0, w, eaveY);
+
+  /* 地面投影先画（在裁剪之外，否则会被削角路径一起裁掉） */
+  shadowQuad(g, x0 + 2, baseY - 24, x1 - 2, baseY, SHX, SHY, 0.28, 4);
+
+  /* 削角裁剪路径：立面 + 屋顶共用 */
+  g.save();
+  g.beginPath();
+  g.moveTo(x0, PADT);
+  g.lineTo(x1, PADT);
+  g.lineTo(x1, baseY);
+  g.lineTo(x0 + cutX, baseY);
+  g.lineTo(x0, baseY - cutY);
+  g.closePath();
+  g.clip();
+
+  /* 屋面（俯视）：女儿墙 + 分坡脊 + 设备 */
+  px(g, x0 - 3, PADT, w + 6, roofT, shade(roof, -0.34));
+  px(g, x0, PADT + 2, w, roofT - 5, shade(roof, -0.04));
+  px(g, x0, PADT + 2, w, 4, shade(roof, 0.26));
+  px(g, x0, PADT + 6, w, 3, "rgba(14,18,28,0.34)");
+  px(g, x0, PADT + 6, 4, roofT - 9, shade(roof, 0.14));
+  px(g, x1 - 4, PADT + 6, 4, roofT - 9, "rgba(14,18,28,0.22)");
+  for (let j = 1; j <= 4; j++)
+    px(g, x0 + 5, PADT + Math.round((roofT - 12) * j / 5) + 6, w - 10, 1, "rgba(255,255,255,0.08)");
+  px(g, x0 - 3, PADT + roofT - 1, w + 6, 2, shade(roof, -0.60));
+  for (let i = 0; i < 4; i++) {                              // 中庭天窗带（图书馆特征）
+    px(g, x0 + 30 + i * Math.round((w - 60) / 4), PADT + Math.round(roofT * 0.34), 22, 16, "rgba(14,18,28,0.30)");
+    px(g, x0 + 30 + i * Math.round((w - 60) / 4), PADT + Math.round(roofT * 0.34), 22, 3, shade(glass, 0.20));
+  }
+  const nb = 2 + ((rng() * 3) | 0);
+  for (let i = 0; i < nb; i++) {
+    const bw = 20 + rng() * 34, bh = 12 + rng() * 18;
+    const bx = Math.round(x0 + 14 + rng() * Math.max(1, w - 28 - bw));
+    const by = Math.round(PADT + roofT * 0.62 + rng() * Math.max(1, roofT * 0.32 - bh));
+    if (sg && bx < sg.x + sg.w + 6 && bx + bw + 6 > sg.x                    // 让开屋名标牌
+          && by < sg.y + sg.h + 3 && by + bh + 6 > sg.y) continue;
+    px(g, bx + 4, by + 4, bw, bh, "rgba(14,18,28,0.30)");
+    px(g, bx, by + bh - 4, bw, 4, shade(roof, -0.38));
+    px(g, bx, by, bw, bh, shade(roof, 0.16));
+    px(g, bx, by, bw, 3, shade(roof, 0.34));
+  }
+
+  /* 屋名标牌（画在屋面设备之后，压在屋面上） */
+  if (sg) {
+    px(g, sg.x + 3, sg.y + 3, sg.w, sg.h, "rgba(14,18,28,0.30)");
+    g.drawImage(sgn.c, sg.x, sg.y);
+  }
+
+  /* 墙体 */
+  px(g, x0, eaveY, w, wallH, shade(wall, -0.10));
+  for (let yy = eaveY + 5; yy < baseY; yy += 5) {
+    px(g, x0, yy, w, 1, "rgba(0,0,0,0.09)");
+    const off = ((((yy - eaveY) / 5) | 0) & 1) ? 4 : 0;
+    for (let xx = x0 + off; xx < x1; xx += 8) px(g, xx, yy - 5, 1, 5, "rgba(0,0,0,0.06)");
+  }
+  speckle(g, x0, eaveY, w, wallH, "rgba(255,255,255,0.05)", (w / 3) | 0, rng);
+  speckle(g, x0, eaveY, w, wallH, "rgba(0,0,0,0.09)", (w / 2) | 0, rng);
+  px(g, x1 - 4, eaveY, 4, wallH, shade(wall, -0.30));
+  for (let i = 0; i < 10; i++)
+    px(g, x0, eaveY + i, w, 1, "rgba(14,18,28," + (0.34 * (1 - i / 10)).toFixed(3) + ")");
+  for (let f = 1; f < floors; f++) px(g, x0, eaveY + f * FLOOR_H, w, 2, shade(wall, -0.20));
+
+  /* 窗阵：避开左下削角区（窗格左边界随斜边右移） */
+  const cols = 5, WIN_W2 = 18, WIN_H2 = 24;
+  const stepX = (w - 40 - cols * WIN_W2) / (cols - 1);
+  for (let f = 0; f < floors; f++) {
+    const wy = eaveY + 16 + f * FLOOR_H + Math.round((FLOOR_H - WIN_H2) * 0.35);
+    if (wy + WIN_H2 > baseY - 6) continue;
+    for (let cn = 0; cn < cols; cn++) {
+      const wx = Math.round(20 + cn * (WIN_W2 + stepX));
+      /* 该窗左沿若落在斜边右侧的削角区内则跳过 */
+      const yTop = wy + WIN_H2, yBot = wy;
+      const need = (yy) => x0 + (yy > baseY - cutY ? ((baseY - yy) / cutY) * cutX : 0);
+      if (wx < need(yTop) || wx < need(yBot)) continue;
+      px(g, wx - 1, wy - 1, WIN_W2 + 2, WIN_H2 + 2, shade(wall, 0.12));
+      px(g, wx, wy, WIN_W2, WIN_H2, "#2c3746");
+      px(g, wx, wy, WIN_W2, 2, "rgba(10,13,20,0.58)");
+      px(g, wx + 2, wy + 2, WIN_W2 - 6, 3, shade(glass, 0.28));
+      px(g, wx + 7, wy + 4, 1, WIN_H2 - 8, shade(wall, -0.52));
+      px(g, wx + 2, wy + Math.round(WIN_H2 * 0.62), WIN_W2 - 4, Math.round(WIN_H2 * 0.34), shade(glass, -0.24));
+      px(g, wx - 2, wy + WIN_H2, WIN_W2 + 4, 3, shade(wall, 0.24));
+    }
+  }
+
+  /* 主入口：放在上半段正中偏右，避开削角 */
+  const dw = 56, dh = 44;
+  const dx = Math.round(x0 + w * 0.62 - dw / 2), dy = baseY - dh;
+  px(g, dx - 10, dy - 13, dw + 20, 3, shade(roof, 0.10));
+  px(g, dx - 10, dy - 10, dw + 20, 1, shade(roof, -0.50));
+  px(g, dx - 1, dy - 1, dw + 2, dh + 1, shade(wall, -0.38));
+  px(g, dx, dy, dw, dh, shade("#4a5560", -0.16));
+  for (let i = 3; i < dw; i += 7) px(g, dx + i, dy + 2, 1, dh - 2, "rgba(0,0,0,0.22)");
+  px(g, dx + 2, dy + 2, Math.round(dw * 0.42), dh - 4, "rgba(255,235,190,0.10)");
+  for (let i = 0; i < 3; i++) {
+    const sw = dw + 9 + i * 5, sx = Math.round(x0 + w * 0.62 - sw / 2), sy = baseY + i * 3 - 2;
+    px(g, sx, sy, sw, 3, shade("#b9b3a6", 0.10 - i * 0.11));
+    px(g, sx, sy + 3, sw, 1, "rgba(14,18,28,0.26)");
+  }
+  g.restore();
+
+  contactBand(g, x0 + 1, x1 - 1, baseY - 1, 2, 0.34);
+  return { canvas: c, ax: x0 + w / 2, ay: baseY, w: w, h: wallH + roofT };
+}
+
+/* =========================================================
+   3.7 运动区（全部烘焙进地面：球场/跑道是贴地的）
+   ---------------------------------------------------------
+   用户原话："中间是绿色足球场，周围是红色的好几圈跑道"；
+   "网球场、篮球场区域你可以自由，紧凑安排多个单元"。
+   ⚠️ PPT 的操场矩形放不下标准 400m 田径场（作图不按比例），
+      用户已默许运动区自由安排 —— **不要为此改标尺**。
+   ========================================================= */
+const LANE_RAMP = ["#a8453a", "#9a3e34", "#b04c40"];
+const BCOURT_BASE = "#a85a4a", BCOURT_LINE = "rgba(245,245,240,0.78)";
+const TCOURT_BASE = "#4f7f52", TCOURT_LINE = "rgba(245,245,240,0.80)";
+
+function zoneRect(e) { return { x: IX(e[2]), y: IX(e[3]), w: IX(e[4]), h: IX(e[5]) }; }
+
+function paintTracks(g, rng) {
+  for (const e of CAMPUS) if (e[1] === "track") paintTrack(g, rng, zoneRect(e));
+}
+
+function paintTrack(g, rng, R) {
+  const cx = Math.round(R.x + R.w / 2), cy = Math.round(R.y + R.h / 2);
+  const rx = Math.round(R.w / 2) - 6, ry = Math.round(R.h / 2) - 6;
+  const lanes = 6, inset = Math.max(26, Math.round(ry * 0.42));
+  const horiz = rx >= ry;
+
+  /* 1) 外圈深红跑道底 + 逐圈分道（交替明暗，做出"好几圈"的观感） */
+  ellipsePx(g, cx, cy, rx + 4, ry + 4, "#7f3229");
+  for (let i = 0; i <= lanes; i++) {
+    const shrink = Math.round((i / lanes) * inset);
+    ellipsePx(g, cx, cy, rx - shrink, ry - shrink, LANE_RAMP[i % 3]);
+    if (i > 0 && i < lanes) {                       // 分道白线（细）
+      ellipsePx(g, cx, cy, rx - shrink, ry - shrink, "rgba(255,255,255,0.10)");
+      ellipsePx(g, cx, cy, rx - shrink + 1, ry - shrink + 1, LANE_RAMP[i % 3]);
+    }
+  }
+  /* 2) 内圈绿色足球场 + 白色场地线 */
+  const fx = rx - inset, fy = ry - inset;
+  ellipsePx(g, cx, cy, fx, fy, "#4d8a3e");
+  ellipsePx(g, cx, cy, fx - 3, fy - 3, "#57974a");
+  const fieldR = Math.min(fx, fy) * 0.86;
+  if (fieldR > 20) {
+    if (horiz) {
+      px(g, cx, cy - Math.round(fy * 0.80), 2, Math.round(fy * 1.60), TCOURT_LINE);   // 中线
+      ellipseRing(g, cx, cy, Math.round(fieldR * 0.26), TCOURT_LINE);
+      rectLine(g, cx - Math.round(fx * 0.72), cy - Math.round(fy * 0.52), Math.round(fx * 0.22), Math.round(fy * 1.04), TCOURT_LINE);
+      rectLine(g, cx + Math.round(fx * 0.50), cy - Math.round(fy * 0.52), Math.round(fx * 0.22), Math.round(fy * 1.04), TCOURT_LINE);
+    } else {
+      px(g, cx - Math.round(fx * 0.80), cy, Math.round(fx * 1.60), 2, TCOURT_LINE);
+      ellipseRing(g, cx, cy, Math.round(fieldR * 0.26), TCOURT_LINE);
+      rectLine(g, cx - Math.round(fx * 0.52), cy - Math.round(fy * 0.72), Math.round(fx * 1.04), Math.round(fy * 0.22), TCOURT_LINE);
+      rectLine(g, cx - Math.round(fx * 0.52), cy + Math.round(fy * 0.50), Math.round(fx * 1.04), Math.round(fy * 0.22), TCOURT_LINE);
+    }
+  }
+  /* 3) 跑道与草坪之间的深色内沿 */
+  ellipseRing(g, cx, cy, fx + 1, "rgba(20,30,16,0.45)");
+}
+
+function rectLine(g, x, y, w, h, col) {
+  px(g, x, y, w, 2, col); px(g, x, y + h - 2, w, 2, col);
+  px(g, x, y, 2, h, col); px(g, x + w - 2, y, 2, h, col);
+}
+function ellipseRing(g, cx, cy, r, col) {
+  for (let a = 0; a < 360; a += 3) {
+    const t = (a * Math.PI) / 180;
+    px(g, cx + Math.cos(t) * r, cy + Math.sin(t) * r, 2, 2, col);
+  }
+}
+
+function paintCourts(g, rng) {
+  for (const e of CAMPUS) {
+    if (e[1] !== "bball" && e[1] !== "tennis") continue;
+    const R = zoneRect(e);
+    const vert = R.h > R.w * 2;                       // 细长区域 → 单元竖排
+    const isB = e[1] === "bball";
+    const n = vert ? (isB ? 3 : 3) : (isB ? 2 : 3);
+    px(g, R.x, R.y, R.w, R.h, isB ? "#8a6a52" : "#6b7a55");       // 场地底色（压住校外纹理）
+
+    for (let i = 0; i < n; i++) {
+      let ux, uy, uw, uh;
+      if (vert) { ux = R.x; uy = R.y + (R.h * i) / n; uw = R.w; uh = R.h / n; }
+      else      { ux = R.x + (R.w * i) / n; uy = R.y; uw = R.w / n; uh = R.h; }
+      /* 单元缓冲铺装 */
+      px(g, ux + 4, uy + 4, uw - 8, uh - 8, isB ? BCOURT_BASE : TCOURT_BASE);
+      px(g, ux + 4, uy + 4, uw - 8, 3, "rgba(255,255,255,0.10)");
+      px(g, ux + 4, uy + uh - 7, uw - 8, 3, "rgba(0,0,0,0.16)");
+
+      /* 场地线：按标准比例居中放进单元 */
+      const line = isB ? BCOURT_LINE : TCOURT_LINE;
+      const ratio = isB ? 28 / 15 : 23.77 / 10.97;
+      let cw, ch;
+      if (vert) { ch = (uh - 28); cw = ch / ratio; }
+      else      { cw = (uw - 22); ch = cw / ratio; }
+      if (cw > uw - 16) { cw = uw - 16; ch = cw / ratio; }
+      if (ch > uh - 16) { ch = uh - 16; cw = ch * ratio; }
+      const cx = Math.round(ux + uw / 2), cy = Math.round(uy + uh / 2);
+      const x0 = Math.round(cx - cw / 2), y0 = Math.round(cy - ch / 2);
+      rectLine(g, x0, y0, Math.round(cw), Math.round(ch), line);
+      if (isB) {
+        px(g, x0, cy - 1, Math.round(cw), 2, line);                    // 中线
+        ellipseRing(g, cx, cy, Math.round(Math.min(cw, ch) * 0.16), line);
+        const kw = Math.round(cw * 0.26), kh = Math.round(ch * 0.48);  // 罚球区
+        rectLine(g, x0, cy - Math.round(kh / 2), kw, kh, line);
+        rectLine(g, x0 + Math.round(cw) - kw, cy - Math.round(kh / 2), kw, kh, line);
+      } else {
+        const netX = Math.round(cx - cw * 0.06);
+        px(g, cx - 1, y0, 2, Math.round(ch), line);                    // 球网
+        px(g, x0, cy - 1, Math.round(cw), 2, line);
+        rectLine(g, x0, y0 + Math.round(ch * 0.22), Math.round(cw * 0.18), Math.round(ch * 0.56), line);
+        rectLine(g, x0 + Math.round(cw) - Math.round(cw * 0.18), y0 + Math.round(ch * 0.22),
+                 Math.round(cw * 0.18), Math.round(ch * 0.56), line);
+      }
+      /* 场地投影（左上光源 → 右下） */
+      px(g, ux + 4, uy + uh - 4, uw - 8, 4, "rgba(14,18,28,0.14)");
+    }
+  }
+}
+
+/* =========================================================
+   4. 自然与杂物
+   ---------------------------------------------------------
+   同样一条铁律：左上受光偏暖、右下背光偏冷；
+   底部一律有方向性投影 + 接地最深的接触阴影。
+   ========================================================= */
+
+/* --- 4.1 树：树皮纹理 + 三层树冠（暗底 / 中层 / 亮顶） --- */
+const LEAF_D = "#2c5622", LEAF_M = "#3d752d", LEAF_L = "#56983c";
+function makeTree(seed) {
+  const rng = makeRng(seed);
+  const W = 70, H = 88;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  const cx = W >> 1, gy = H - 5;
+  const trunkH = 19 + ((rng() * 6) | 0);
+  const tw = 7, tx = cx - (tw >> 1), ty = gy - trunkH;
+  const bark = "#6b4a2f";
+
+  shadowBlob(g, cx + 11, gy - 1, 23, 8, 0.32, 4);
+
+  /* 树根外扩 + 树干 */
+  px(g, tx - 2, gy - 4, tw + 4, 4, shade(bark, -0.14));
+  px(g, tx, ty, tw, trunkH, bark);
+  for (let i = 0; i < trunkH; i++) {
+    px(g, tx, ty + i, 2, 1, shade(bark, 0.16));                    // 左缘受光
+    px(g, tx + tw - 2, ty + i, 2, 1, shade(bark, -0.34));          // 右缘背光
+  }
+  for (let i = 0; i < trunkH; i += 4)                              // 树皮横向裂纹
+    px(g, tx + 1 + ((rng() * 3) | 0), ty + i, 3 + ((rng() * 2) | 0), 1, shade(bark, -0.26));
+  speckle(g, tx, ty, tw, trunkH, "rgba(0,0,0,0.22)", 14, rng);
+
+  /* 树冠：按 y 排序，靠下的先画 → 上层的叶簇压住下层，形成层次 */
+  const cyC = ty - 8, R = 26;
+  const clist = [];
+  for (let i = 0; i < 17; i++) {
+    const a = (i / 17) * Math.PI * 2 + rng() * 0.36;
+    const rr = R * (0.40 + rng() * 0.60);
+    clist.push({ x: cx + Math.cos(a) * rr, y: cyC + Math.sin(a) * rr * 0.78, r: 7 + rng() * 5.5 });
+  }
+  clist.sort((p, q) => p.y - q.y);
+  for (const cl of clist) {
+    const k = clamp(0.22 - ((cl.x - cx) / R * 0.55 + (cl.y - cyC) / R * 0.85) * 0.34, -0.32, 0.34);
+    circlePx(g, cl.x, cl.y, cl.r, shade(LEAF_M, k));
+  }
+  /* 右下暗部叶簇（背光） */
+  for (let i = 0; i < 7; i++) {
+    const a = 0.02 + rng() * 0.46;
+    const rr = R * (0.42 + rng() * 0.52);
+    circlePx(g, cx + Math.cos(a * Math.PI) * rr, cyC + Math.sin(a * Math.PI) * rr * 0.8,
+      4 + rng() * 4, shade(LEAF_D, -rng() * 0.16));
+  }
+  /* 左上亮部叶簇（迎光） */
+  for (let i = 0; i < 9; i++) {
+    const a = 0.72 + rng() * 0.54;
+    const rr = R * (0.34 + rng() * 0.52);
+    circlePx(g, cx + Math.cos(a * Math.PI) * rr, cyC + Math.sin(a * Math.PI) * rr * 0.8,
+      3.5 + rng() * 3.2, shade(LEAF_L, 0.10 + rng() * 0.22));
+  }
+  /* 叶面细颗粒：上亮下暗，避免大色块发死 */
+  const bx = cx - R - 4, by = cyC - R - 4, bw = R * 2 + 8, bh = R * 2 + 8;
+  speckle(g, bx, by, bw, bh, "rgba(0,0,0,0.16)", 130, rng);
+  speckle(g, bx, by, bw, bh, "rgba(190,235,150,0.13)", 90, rng);
+
+  /* 冠内镂空：几处深色缝隙，让轮廓不是一整块 */
+  for (let i = 0; i < 6; i++) {
+    const a = rng() * Math.PI * 2, rr = R * (0.30 + rng() * 0.60);
+    px(g, cx + Math.cos(a) * rr, cyC + Math.sin(a) * rr * 0.8, 2 + ((rng() * 3) | 0), 2, "rgba(20,34,18,0.35)");
+  }
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.2 灌木：矮、密、贴地，作为草地上的填充 --- */
+function makeBush(seed) {
+  const rng = makeRng(seed);
+  const W = 34, H = 26;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  const cx = W >> 1, gy = H - 3;
+  shadowBlob(g, cx + 5, gy - 1, 12, 4, 0.30, 3);
+  const cl = [];
+  for (let i = 0; i < 9; i++) {
+    cl.push({ x: cx + (rng() - 0.5) * 20, y: gy - 4 - rng() * 9, r: 4 + rng() * 3.6 });
+  }
+  cl.sort((p, q) => p.y - q.y);
+  for (const o of cl) {
+    const k = clamp(0.20 - ((o.x - cx) / 14 * 0.55 + (o.y - gy + 8) / 14 * 0.85) * 0.32, -0.34, 0.30);
+    circlePx(g, o.x, o.y, o.r, shade(LEAF_M, k - 0.06));
+  }
+  for (let i = 0; i < 5; i++)
+    circlePx(g, cx - 8 + rng() * 8, gy - 10 - rng() * 4, 2.2 + rng() * 2, shade(LEAF_L, 0.12 + rng() * 0.2));
+  speckle(g, 4, gy - 18, 26, 16, "rgba(0,0,0,0.16)", 40, rng);
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* 细线段 / 圆环：自行车等细长结构用得上 */
+function seg(g, x0, y0, x1, y1, col, th) {
+  g.fillStyle = col;
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    g.fillRect(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), th, th);
+  }
+}
+function ring(g, cx, cy, r, th, col) {
+  g.fillStyle = col;
+  for (let a = 0; a < 720; a++) {
+    const ra = a * Math.PI / 360;
+    for (let d = 0; d < th; d++)
+      g.fillRect(Math.round(cx + Math.cos(ra) * (r - d)), Math.round(cy + Math.sin(ra) * (r - d) * 0.98), 1, 1);
+  }
+}
+
+/* --- 4.3 路灯：金属高光 + 玻璃灯罩 --- */
+function makeLamp() {
+  const c = mkCanvas(32, 84), g = c.getContext("2d");
+  const cx = 16, gy = 80, metal = "#4a4f57";
+  shadowBlob(g, cx + 6, gy - 1, 12, 4.5, 0.32, 3);
+  px(g, cx - 6, gy - 6, 12, 6, shade(metal, -0.32));          // 基座
+  px(g, cx - 6, gy - 6, 12, 2, shade(metal, -0.02));
+  px(g, cx - 4, gy - 10, 8, 4, shade(metal, -0.24));
+  px(g, cx - 4, gy - 10, 8, 1, shade(metal, 0.06));
+  const pTop = gy - 62;
+  px(g, cx - 1, pTop, 3, gy - 12 - pTop, metal);              // 灯杆
+  px(g, cx - 1, pTop, 1, gy - 12 - pTop, shade(metal, 0.44)); // 金属高光
+  px(g, cx + 1, pTop, 1, gy - 12 - pTop, shade(metal, -0.38));
+  px(g, cx - 2, gy - 30, 5, 2, shade(metal, 0.16));           // 抱箍
+  px(g, cx - 2, gy - 48, 5, 2, shade(metal, 0.16));
+  px(g, cx - 8, pTop, 8, 2, shade(metal, -0.06));             // 悬臂（伸向迎光侧）
+  px(g, cx - 8, pTop, 8, 1, shade(metal, 0.30));
+  const hx = cx - 14, hy = pTop + 2;                          // 灯头
+  px(g, hx, hy, 12, 1, shade(metal, 0.28));
+  px(g, hx, hy + 1, 12, 2, shade(metal, -0.22));
+  px(g, hx + 1, hy + 3, 10, 7, "#5d6672");                    // 玻璃罩
+  px(g, hx + 1, hy + 3, 10, 2, "#8b96a5");                    // 上缘反光
+  px(g, hx + 2, hy + 5, 4, 3, "rgba(214,232,255,0.26)");
+  px(g, hx, hy + 10, 12, 1, shade(metal, 0.10));
+  px(g, hx, hy + 11, 12, 1, shade(metal, -0.40));
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.4 长椅：木纹板材 + 铁艺支腿 --- */
+function makeBench(seed) {
+  const rng = makeRng(seed);
+  const c = mkCanvas(48, 42), g = c.getContext("2d");
+  const cx = 24, gy = 36, wood = "#8a5f38", metal = "#4b5058";
+  shadowBlob(g, cx + 6, gy - 1, 22, 5, 0.32, 3);
+  px(g, cx - 19, 11, 3, 20, shade(wood, -0.30));              // 靠背立柱
+  px(g, cx + 16, 11, 3, 20, shade(wood, -0.36));
+  for (let i = 0; i < 3; i++) {                               // 靠背横板
+    const y = 12 + i * 5;
+    px(g, cx - 19, y, 38, 4, shade(wood, -0.14 + i * 0.03));
+    px(g, cx - 19, y, 38, 1, shade(wood, 0.26));
+    px(g, cx - 19, y + 3, 38, 1, shade(wood, -0.44));
+    speckle(g, cx - 19, y, 38, 4, "rgba(0,0,0,0.15)", 18, rng);
+  }
+  for (let i = 0; i < 2; i++) {                               // 坐板（向前挑出）
+    const y = 26 + i * 3;
+    px(g, cx - 21, y, 42, 3, shade(wood, -0.02 - i * 0.08));
+    px(g, cx - 21, y, 42, 1, shade(wood, 0.32 - i * 0.06));
+    speckle(g, cx - 21, y, 42, 3, "rgba(0,0,0,0.13)", 14, rng);
+  }
+  px(g, cx - 21, 32, 42, 1, shade(wood, -0.52));
+  for (const lx of [cx - 17, cx + 13]) {                      // 铁艺支腿
+    px(g, lx, 32, 4, 4, metal);
+    px(g, lx, 32, 1, 4, shade(metal, 0.36));
+    px(g, lx + 3, 32, 1, 4, shade(metal, -0.36));
+  }
+  contactBand(g, cx - 21, cx + 21, gy - 1, 2, 0.30);
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.5 花坛：砌块侧壁 + 土壤顶面 + 花 --- */
+const PETALS = ["#d8564f", "#e8b43f", "#d97bb0", "#e4e2d4", "#b4632f"];
+function makeFlowerBed(seed) {
+  const rng = makeRng(seed);
+  const W = 76, H = 46;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  const cx = W >> 1, gy = H - 6, kerb = "#b9b3a6";
+  shadowQuad(g, cx - 30, gy - 5, cx + 30, gy, 14, 18, 0.26, 3);
+  px(g, cx - 30, gy - 12, 60, 12, shade(kerb, -0.16));        // 侧壁
+  px(g, cx - 30, gy, 60, 2, shade(kerb, -0.36));
+  for (let i = -21; i <= 21; i += 8) px(g, cx + i, gy - 12, 1, 12, "rgba(0,0,0,0.11)");
+  speckle(g, cx - 30, gy - 12, 60, 12, "rgba(0,0,0,0.09)", 48, rng);
+  px(g, cx - 30, gy - 14, 60, 2, shade(kerb, 0.24));          // 顶沿受光
+  px(g, cx - 27, gy - 21, 54, 7, "#463725");                  // 土壤
+  speckle(g, cx - 27, gy - 21, 54, 7, "rgba(0,0,0,0.28)", 70, rng);
+  px(g, cx - 27, gy - 21, 54, 1, "rgba(14,18,28,0.30)");      // 内侧后缘阴影
+  for (let i = 0; i < 9; i++) {                               // 花：茎 + 花冠 + 落影
+    const fx = cx - 24 + rng() * 48, fy = gy - 18 - rng() * 3;
+    px(g, fx + 1, fy, 1, 4, shade(LEAF_M, -0.10));
+    px(g, fx + 1, fy + 4, 3, 1, "rgba(14,18,28,0.26)");
+    const col = PETALS[(rng() * PETALS.length) | 0];
+    circlePx(g, fx + 1, fy - 1, 2.4, shade(col, -0.20));
+    circlePx(g, fx + 0.6, fy - 1.4, 1.6, shade(col, 0.16));
+    px(g, fx, fy - 2, 1, 1, shade(col, 0.42));
+  }
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.6 垃圾桶 --- */
+function makeBin(seed) {
+  const rng = makeRng(seed);
+  const c = mkCanvas(24, 34), g = c.getContext("2d");
+  const cx = 12, gy = 30, body = "#3f5c3c";
+  shadowBlob(g, cx + 4, gy - 1, 9, 3.5, 0.32, 3);
+  px(g, cx - 7, gy - 14, 14, 14, shade(body, -0.10));
+  px(g, cx - 7, gy - 14, 2, 14, shade(body, 0.22));
+  px(g, cx + 5, gy - 14, 2, 14, shade(body, -0.34));
+  for (let i = -4; i <= 4; i += 4) px(g, cx + i, gy - 13, 1, 12, "rgba(0,0,0,0.18)");
+  speckle(g, cx - 7, gy - 14, 14, 14, "rgba(0,0,0,0.16)", 26, rng);
+  px(g, cx - 8, gy - 17, 16, 3, shade(body, -0.24));          // 盖
+  px(g, cx - 8, gy - 17, 16, 1, shade(body, 0.28));
+  px(g, cx - 8, gy, 16, 1, shade(body, -0.48));
+  px(g, cx - 2, gy - 19, 4, 2, shade(body, -0.32));           // 投口
+  px(g, cx - 1, gy - 19, 2, 1, "#1d241c");
+  contactBand(g, cx - 7, cx + 7, gy - 1, 2, 0.30);
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.7 自行车：细轮圈 + 车架 --- */
+function makeBike(seed) {
+  const rng = makeRng(seed);
+  const c = mkCanvas(44, 32), g = c.getContext("2d");
+  const gy = 26;
+  const rx0 = 10, rx1 = 33, wy = gy - 8;
+  const metal = "#565c66", tire = "#23262b";
+  shadowBlob(g, 22 + 5, gy - 1, 19, 3.4, 0.30, 3);
+  ring(g, rx0, wy, 8, 2, tire);                               // 后轮
+  ring(g, rx1, wy, 8, 2, tire);
+  ring(g, rx0, wy, 6, 1, shade(metal, 0.30));
+  ring(g, rx1, wy, 6, 1, shade(metal, 0.30));
+  seg(g, rx0, wy, 22, wy - 9, shade(metal, 0.10), 2);         // 车架
+  seg(g, rx1, wy, 22, wy - 9, shade(metal, -0.16), 2);
+  seg(g, rx0, wy, 17, wy, shade(metal, 0.02), 2);
+  seg(g, 17, wy, 19, wy - 12, shade(metal, -0.06), 2);
+  seg(g, 22, wy - 9, 19, wy - 12, shade(metal, 0.04), 2);
+  seg(g, 17, wy, 22, wy - 9, shade(metal, -0.22), 2);
+  px(g, 17, wy - 15, 5, 3, "#2f3237");                        // 车座
+  px(g, 17, wy - 15, 5, 1, "#5a606a");
+  seg(g, 19, wy - 12, 34, wy - 15, shade(metal, 0.16), 2);    // 前叉 + 车把
+  px(g, 33, wy - 17, 5, 1, shade(metal, 0.24));
+  px(g, 33, wy - 16, 1, 2, shade(metal, -0.20));
+  for (let i = 0; i < 6; i++) px(g, 21 + rng() * 4, wy - 6 + rng() * 4, 1, 1, "rgba(0,0,0,0.30)");
+  contactBand(g, rx0 - 7, rx1 + 7, gy - 1, 1, 0.24);
+  return { canvas: c, ax: 22, ay: gy };
+}
+/* =========================================================
+   4.5 水域
+   ---------------------------------------------------------
+   静态底烘焙进地面（paintWaterBase），动态层每帧现画（drawWater）：
+   正弦波纹 + 鱼影 + 鸭子划水。动态层插在地面之后、道具之前 ——
+   这样人物/树/建筑仍然压在水的上方，遮挡关系不掉。
+
+   水位不参与深度排序（是贴地层），所以这里必须严格限制在池内绘制。
+   ========================================================= */
+const WATER = CAMPUS.filter(e => e[1] === "water").map(e => ({
+  x: IX(e[2]), y: IX(e[3]), w: IX(e[4]), h: IX(e[5])
+}));
+let waterT = 0;
+const ducks = [];
+
+/* --- 4.5.1 静态底 --- */
+function paintWaterBase(g, rng) {
+  for (const R of WATER) {
+    const x = Math.round(R.x), y = Math.round(R.y), w = Math.round(R.w), h = Math.round(R.h);
+
+    /* 岸边湿土带（比水面外扩一圈） */
+    px(g, x - 7, y - 7, w + 14, h + 14, "#6d6151");
+    px(g, x - 4, y - 4, w + 8, h + 8, "#5d5344");
+
+    /* 水面：由外向内 4 圈浅化 */
+    px(g, x, y, w, h, "#2E6E9E");
+    const steps = 4, sx = [0.030, 0.058, 0.088, 0.116], sy = [0.045, 0.086, 0.130, 0.170];
+    for (let i = 0; i < steps; i++) {
+      const ix = Math.round(w * sx[i]), iy = Math.round(h * sy[i]);
+      px(g, x + ix, y + iy, w - ix * 2, h - iy * 2, mix("#2E6E9E", "#7FB4D8", 0.16 * (i + 1)));
+    }
+    /* 岸线：外侧亮、内侧暗 */
+    px(g, x, y, w, 2, "rgba(255,255,255,0.16)");
+    px(g, x, y, 2, h, "rgba(255,255,255,0.10)");
+    px(g, x, y + h - 3, w, 3, "rgba(8,22,36,0.40)");
+    px(g, x + w - 3, y, 3, h, "rgba(8,22,36,0.32)");
+
+    /* 静态鳞光（动态波浪之上还会叠亮线） */
+    for (let i = 0; i < (w * h) / 5200; i++) {
+      const px0 = x + 8 + rng() * (w - 16), py0 = y + 8 + rng() * (h - 16);
+      px(g, px0, py0, 3 + rng() * 7, 1, "rgba(200,230,245,0.30)");
+    }
+    /* 池心最深处压暗，做出"有深度" */
+    const cx = x + w / 2, cy = y + h / 2;
+    circlePx(g, cx, cy, Math.min(w, h) * 0.30, "rgba(16,48,76,0.16)");
+  }
+}
+
+/* --- 4.5.2 动态层（每帧） ---
+   ox/oy = 相机世界原点（主循环已取整），z = 缩放倍率。
+   本函数内部**一律用背板量纲**：世界值减 ox 之后乘 z。 */
+function drawWater(ox, oy, z) {
+  for (let k = 0; k < WATER.length; k++) {
+    const R = WATER[k];
+    const sx0 = Math.round((R.x - ox) * z), sy0 = Math.round((R.y - oy) * z);
+    const w = R.w * z, h = R.h * z;
+    if (sx0 > VIEW_W || sx0 + w < 0 || sy0 > VIEW_H || sy0 + h < 0) continue;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(sx0, sy0, w, h);
+    ctx.clip();
+
+    /* 正弦亮线。缩得很小时（<0.2×）行距会掉到 1.2px，几十条半透明亮线叠起来
+       只会把整池糊成一片灰白 —— 静态烘焙早就把湖色画好了，这一层直接省掉，只留鱼影。 */
+    if (z >= 0.2) {
+      const RP  = Math.max(3, 13 * z);              // 行距：缩小时不小于 3px，否则同样糊
+      const lw  = Math.max(1, Math.round(z));       // 线厚：原先恒 1px，放大后成了发丝
+      const step = 26 * z;
+      const rows = Math.ceil(h / RP) + 2;
+      const drift = (waterT * 5 * z) % RP;          // 相位周期必须跟行距同步，否则上浮会跳
+      for (let r = 0; r < rows; r++) {
+        const yy = Math.round(sy0 + r * RP + drift);
+        const a = 0.07 + 0.07 * Math.sin(waterT * 1.1 + r * 0.9);
+        if (a <= 0.02) continue;
+        ctx.fillStyle = "rgba(198,232,248," + a.toFixed(3) + ")";
+        for (let x = 0; x < w; x += step) {
+          const seg = (10 + 8 * Math.sin(waterT * 0.8 + r * 1.7 + x * 0.05)) * z;
+          const off = Math.round(6 * Math.sin(waterT * 0.45 + r * 0.6 + x * 0.02) * z);
+          ctx.fillRect(sx0 + x + off, yy, Math.max(1, seg), lw);
+        }
+      }
+    }
+
+    /* 鱼影：三组，沿椭圆轨迹游动，只露一团深色 */
+    const fw = Math.max(1, Math.round(7 * z)), fh = Math.max(1, Math.round(3 * z));
+    const tw = Math.max(1, Math.round(3 * z)), th = Math.max(1, Math.round(z));
+    for (let f = 0; f < 3; f++) {
+      const t = waterT * (0.20 + f * 0.05) + f * 2.1;
+      const fx = sx0 + w / 2 + Math.cos(t) * (w * 0.28);
+      const fy = sy0 + h / 2 + Math.sin(t * 1.3) * (h * 0.26);
+      ctx.fillStyle = "rgba(10,30,52,0.30)";
+      ctx.fillRect(Math.round(fx), Math.round(fy), fw, fh);
+      ctx.fillRect(Math.round(fx) + Math.round((Math.cos(t) > 0 ? 7 : -3) * z),
+                   Math.round(fy) + th, tw, th);
+    }
+    ctx.restore();
+  }
+}
+
+/* --- 4.5.3 鸭子（道具，参与深度排序） --- */
+function makeDuck(seed) {
+  const c = mkCanvas(16, 13), g = c.getContext("2d");
+  px(g, 1, 10, 13, 2, "rgba(8,22,36,0.34)");          // 水痕
+  px(g, 2, 5, 9, 6, "#e8e4d8");                        // 身
+  px(g, 3, 5, 7, 3, "#f4f1e8");
+  px(g, 2, 10, 9, 1, "#bfb9a8");
+  px(g, 9, 2, 5, 4, "#e8e4d8");                        // 头
+  px(g, 10, 3, 3, 2, "#f4f1e8");
+  px(g, 13, 3, 3, 2, "#d99a3c");                       // 喙
+  px(g, 13, 3, 3, 1, "#eab24f");
+  px(g, 11, 3, 1, 1, "#2c2b28");                       // 眼
+  px(g, 3, 7, 6, 1, "#cfc9b8");                        // 翅
+  return { canvas: c, ax: 8, ay: 11, w: 16, h: 13 };
+}
+
+function spawnDucks(rng) {
+  for (const R of WATER) {
+    for (let i = 0; i < 3; i++) {
+      const s = makeDuck(i * 7 + 1);
+      const d = {
+        img: s.canvas, imgR: s.canvas, imgL: flipH(s.canvas), ax: s.ax, ay: s.ay, w: s.w, h: s.h,
+        cx: R.x + R.w * (0.30 + 0.20 * i), cy: R.y + R.h * (0.28 + 0.22 * i),
+        rx: R.w * 0.24, ry: R.h * 0.22, ph: rng() * 6.28, sp: 0.16 + rng() * 0.12,
+        x: 0, y: 0, baseY: 0
+      };
+      d.x = d.cx; d.y = d.cy; d.baseY = d.cy;
+      ducks.push(d);
+    }
+  }
+}
+
+/* 每帧由主循环调用（补丁 4） */
+function animateWater(dt) {
+  waterT += dt;
+  for (const d of ducks) {
+    const t = waterT * d.sp + d.ph;
+    const nx = d.cx + Math.cos(t) * d.rx;
+    const ny = d.cy + Math.sin(t * 1.25) * d.ry;
+    d.img = Math.cos(t) > 0 ? d.imgR : d.imgL;                    // 朝游动方向
+    d.x = nx;
+    d.y = ny + Math.round(Math.sin(waterT * 2.2 + d.ph) * 1.2);   // 随波起伏
+    d.baseY = d.y;
+  }
+}
+
+/* =========================================================
+   4.6 围墙 + 五个校门
+   ---------------------------------------------------------
+   围墙沿 BOUND 闭合折线，遇校门留缺。墙体**烘焙进地面**：
+   玩家永远在校内（南侧），墙画在人物之下才是对的，同时省掉
+   一长串长条精灵的深度排序麻烦。门柱/门楣做成道具，压在人物之上。
+
+   碰撞：沿墙逐段切 90px 一块，取 AABB 进 solids；门口那块跳过。
+   ========================================================= */
+const WALL_H = 22;                       // 墙高（世界像素，≈2.4 m）
+
+function nearestGateDist(x, y) {
+  let best = 1e9;
+  for (const G of GATES) {
+    const d = Math.hypot(x - G.x, y - G.y) - G.w / 2;
+    if (d < best) best = d;
+  }
+  return best;
+}
+const inGate = (x, y) => nearestGateDist(x, y) < 0;
+
+/* --- 4.6.1 墙体（烘焙） --- */
+function paintWalls(g, rng) {
+  const P = BOUND;
+  let arc = 0, nextPillar = 76;
+  for (let i = 0; i < P.length; i++) {
+    const a = P[i], b = P[(i + 1) % P.length];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const L = Math.hypot(dx, dy);
+    const n = Math.max(1, Math.round(L / 2));
+    for (let k = 0; k <= n; k++) {
+      const x = a[0] + (dx * k) / n, y = a[1] + (dy * k) / n;
+      if (k > 0) arc += L / n;
+      if (inGate(x, y)) continue;                              // 门口留缺
+      wallColumn(g, x, y, rng);
+      if (arc >= nextPillar) {                                 // 每隔 76px 一根墙垛
+        nextPillar += 76;
+        px(g, Math.round(x) - 5, y - WALL_H - 5, 10, WALL_H + 5, "#b3ad9f");
+        px(g, Math.round(x) - 5, y - WALL_H - 5, 10, 3, "#d6d0c2");
+        px(g, Math.round(x) + 3, y - WALL_H - 5, 2, WALL_H + 5, "#807a6d");
+        px(g, Math.round(x) - 5, y + 2, 10, 2, "rgba(14,18,28,0.34)");
+      }
+    }
+  }
+  /* --- 4.6.2 碰撞盒：逐段切块（任一端点/中点落进门洞就整块跳过） --- */
+  for (let i = 0; i < P.length; i++) {
+    const a = P[i], b = P[(i + 1) % P.length];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const L = Math.hypot(dx, dy);
+    const n = Math.max(1, Math.round(L / 90));
+    for (let k = 0; k < n; k++) {
+      const x0 = a[0] + (dx * k) / n, y0 = a[1] + (dy * k) / n;
+      const x1 = a[0] + (dx * (k + 1)) / n, y1 = a[1] + (dy * (k + 1)) / n;
+      const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+      if (inGate(x0, y0) || inGate(x1, y1) || inGate(mx, my)) continue;
+      solids.push({
+        x: Math.min(x0, x1) - 5, y: Math.min(y0, y1) - 4,
+        w: Math.abs(x1 - x0) + 10, h: Math.abs(y1 - y0) + 8
+      });
+    }
+  }
+}
+
+function wallColumn(g, x, y, rng) {
+  const X = Math.round(x) - 3;
+  const Y = Math.round(y);
+  px(g, X, Y - WALL_H, 6, WALL_H + 2, "#b0a999");               // 墙身
+  px(g, X, Y - WALL_H + 3, 1, WALL_H - 4, "#c4bdac");           // 左棱受光
+  px(g, X + 4, Y - WALL_H + 3, 2, WALL_H - 4, "#8d8677");       // 右棱背光
+  for (let yy = Y - WALL_H + 5; yy < Y; yy += 6)                // 横向砖缝（读作砌体）
+    px(g, X, yy, 6, 1, "rgba(0,0,0,0.11)");
+  if (((x | 0) % 20) < 2) px(g, X + 1, Y - WALL_H + 3, 1, WALL_H - 5, "rgba(0,0,0,0.08)");
+  px(g, X - 1, Y - WALL_H - 2, 8, 4, "#cec7b6");                // 压顶（挑出 1px）
+  px(g, X - 1, Y - WALL_H + 2, 8, 1, "#7e7869");
+  px(g, X - 1, Y + 2, 8, 2, "rgba(14,18,28,0.34)");             // 接地影
+}
+
+/* --- 4.6.3 可行走判定：多边形内 + 离墙 11px --- */
+function distToBound(x, y) {
+  let best = 1e9;
+  const P = BOUND;
+  for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
+    const ax = P[j][0], ay = P[j][1], bx = P[i][0], by = P[i][1];
+    const vx = bx - ax, vy = by - ay;
+    const t = clamp(((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy || 1), 0, 1);
+    const d = Math.hypot(x - (ax + vx * t), y - (ay + vy * t));
+    if (d < best) best = d;
+  }
+  return best;
+}
+/* ⚠️ 门洞必须**内外都放行**：门洞落在边界线上，若一律要求"离边界 > 11px"，
+   会在每个校门上横出一道看不见的墙 —— 碰撞盒跳过了也没用，人停在门前 11px 处。
+   只放宽界外也不行，界内那一侧照样过不去。
+   d < 150 是防止从门洞一路逛到校外纹理区（门洞半径最大 G2 的 97.5px）。 */
+function canWalk(x, y) {
+  const d = distToBound(x, y);
+  if (inGate(x, y) && d < 150) return true;
+  return insideBoundary(x, y) && d > 11;
+}
+
+/* --- 4.6.4 门柱 / 门楣 / 门牌（道具） --- */
+function makeGatePillar(side) {
+  const c = mkCanvas(30, 74), g = c.getContext("2d");
+  px(g, 1, 68, 28, 5, "rgba(14,18,28,0.34)");                  // 接地影
+  px(g, 2, 6, 26, 64, "#bdb6a6");                              // 柱身
+  px(g, 2, 6, 4, 64, "#d8d2c4");                               // 左棱受光
+  px(g, 24, 6, 4, 64, "#8b8578");                              // 右棱背光
+  for (let y = 12; y < 68; y += 11) px(g, 2, y, 26, 1, "rgba(0,0,0,0.14)");
+  px(g, 0, 2, 30, 6, "#8b8578");                               // 柱头压顶
+  px(g, 0, 0, 30, 3, "#d8d2c4");
+  px(g, 4, 8, 22, 8, "#6f6a5e");                               // 嵌板
+  px(g, 5, 9, 20, 6, side ? "#a3452f" : "#2f4a6b");
+  px(g, 3, 70, 24, 2, "#6f6a5e");                              // 柱础
+  return { canvas: c, ax: 15, ay: 71, w: 30, h: 74 };
+}
+
+function makeGateBeam(len, name) {
+  const c = mkCanvas(len + 24, 30), g = c.getContext("2d");
+  px(g, 0, 4, len + 24, 13, "#bdb6a6");
+  px(g, 0, 4, len + 24, 3, "#d8d2c4");
+  px(g, 0, 15, len + 24, 2, "#8b8578");
+  const pw = Math.min(len, 150), px0 = Math.round((len + 24 - pw) / 2);
+  px(g, px0, 6, pw, 10, "#5d564a");
+  px(g, px0, 6, pw, 1, "#7d7669");
+  g.fillStyle = "#e8d9a8";
+  g.font = "8px monospace";
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillText(name, px0 + pw / 2, 12);
+  return { canvas: c, ax: (len + 24) / 2, ay: 20, w: len + 24, h: 30 };
+}
+
+/* 门楣一律横画 —— 3/4 视角里"沿 y 的门洞"没有可读的横梁，
+   竖排门洞改用「门牌挂在近端门柱上」的画法。 */
+function buildGates() {
+  for (const G of GATES) {
+    const vDir = G.dir === "v";                                // 墙沿 y → 门洞在 y 向
+    const a = vDir ? { x: G.x, y: G.y - G.w / 2 } : { x: G.x - G.w / 2, y: G.y };
+    const b = vDir ? { x: G.x, y: G.y + G.w / 2 } : { x: G.x + G.w / 2, y: G.y };
+    for (const p of [a, b]) {
+      const s = makeGatePillar(G.id === "G2");
+      props.push({ img: s.canvas, ax: s.ax, ay: s.ay, x: p.x, y: p.y, baseY: p.y });
+    }
+    if (vDir) {
+      /* 近端门柱（y 大的那根）顶上一块横匾 */
+      const bm = makeGateBeam(Math.min(150, G.w), G.name);
+      props.push({ img: bm.canvas, ax: bm.ax, ay: bm.ay, x: G.x, y: b.y - 66, baseY: b.y - 54 });
+    } else {
+      const bm = makeGateBeam(Math.abs(b.x - a.x), G.name);
+      props.push({ img: bm.canvas, ax: bm.ax, ay: bm.ay, x: G.x, y: a.y - 66, baseY: a.y - 54 });
+    }
+  }
+}
+
+/* =========================================================
+   4.7 植物多样化 —— 针叶 / 垂柳 / 开花树 + 行道树成行 / 广场树阵
+   ---------------------------------------------------------
+   为什么另开一个文件：树 / 灌木 / 灯的**原始生成器**躺在 demo 的
+   nature 段（805-1049），那是逐字节切片，一行不能改。所以新物种只能
+   另起一个 parts 文件，装配时插在 nature 之后。`anyTree()` 只做**分发**，
+   既有生成器一个字都没动。
+
+   ⚠️ 分发**不消耗随机数**：物种由 seed 的数值直接决定（`seed % 100`），
+   不是再摇一次随机 —— 所以把 scatter() 里的 `makeTree((n*131+11)|0)` 换成
+   `anyTree((n*131+11)|0, x, y)` 之后，**rngS 的序列一字不动**，全校园既有的
+   灯 / 灌木 / 长椅 / 花坛分布逐像素不变（和删自行车是同一手法）。
+   ⚠️ 行道树走**独立的 `makeRng(70707)`**，与 scatter() 的 rngS 完全隔离：
+   整段行道树逻辑以后被删掉，scatter() 的结果也不受任何影响。
+
+   三条既有铁律照旧：左上受光偏暖 / 右下背光偏冷；底部有方向性投影 +
+   接地接触阴影；新物种的锚点约定与 makeTree 一致（ax = cx, ay = 地面线），
+   调用点才能零改动。
+   ========================================================= */
+const PINE_D = "#1e3d1b", PINE_M = "#2f6129", PINE_L = "#4a8639";   // 针叶：比阔叶更冷更深
+const WIL_D  = "#3a5820", WIL_M  = "#557c2b", WIL_L  = "#8fb84a";   // 垂柳：偏黄绿
+const BL_D   = "#c58fa3", BL_M   = "#f0ccd8", BL_L   = "#fdf3f6";   // 开花树：粉白（不是桃红）
+
+/* --- 4.7.1 针叶树：窄而高的塔形，中心线随高度摇摆，每层底缘外扩成锯齿 --- */
+function makeConifer(seed) {
+  const rng = makeRng(seed);
+  const W = 54, H = 104;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  const cx = W >> 1, gy = H - 5;                       // 27, 99
+  const bark = "#5b4229";
+  const trunkH = 8 + ((rng() * 4) | 0);                // 露出裙摆下面的一小段
+  const top = gy - trunkH - 72, bot = gy - trunkH + 4;
+  const R = 21, hT = (bot - top) / 7;                  // 七层
+  const lean = rng() * 6.28;                           // 摇摆相位（每棵不同）
+
+  shadowBlob(g, cx + 7, gy - 1, 15, 6, 0.30, 4);
+
+  /* 树干：**从 top+12 起画**，别从 top 起 ——
+     冠顶那几行半宽只有 2~3，盖不住 6px 宽的树干，会从尖上冒出一截棕色
+     （5× 下非常显眼，像树尖上顶了个果子）。反正下面那截才是要露的。 */
+  const tw = 6, tx = cx - (tw >> 1), ttop = top + 12;
+  px(g, tx - 2, gy - 3, tw + 4, 3, shade(bark, -0.14));      // 根外扩
+  px(g, tx, ttop, tw, gy - ttop, bark);
+  for (let i = 0; i < gy - ttop; i++) {
+    px(g, tx, ttop + i, 2, 1, shade(bark, 0.16));
+    px(g, tx + tw - 2, ttop + i, 2, 1, shade(bark, -0.34));
+  }
+
+  /* 塔冠：逐行扫。三件事让它不像一个几何三角 ——
+     ① 中心线按 `sin(t*3.4 + lean)` 缓慢摇摆（针叶树没有笔直的中轴）
+     ② 半宽 ≈ 直线锥（pow 1.02）+ 层底外扩（锯齿缘）
+     ③ 逐行 1.8px 的随机抖动 */
+  for (let y = top; y <= bot; y++) {
+    const t = (y - top) / (bot - top);
+    const ring = ((y - top) % hT) / hT;                // 0 = 层顶，→1 = 层底
+    const cxo = cx + Math.round(Math.sin(t * 3.4 + lean) * 1.7);
+    const hw = Math.max(1, R * Math.pow(t, 1.02) + (1 - ring) * 2.8 + (rng() - 0.5) * 1.8);
+    const x0 = Math.round(cxo - hw), w = Math.max(2, Math.round(hw * 2));
+    let k = 0.24 - t * 0.38;                           // 上亮下暗
+    if (ring < 0.15) k -= 0.22;                        // 层底一条暗线 → 层叠可读
+    px(g, x0, y, w, 1, shade(PINE_M, k));
+    px(g, x0, y, 1, 1, shade(PINE_M, k + 0.28));       // 左缘受光
+    px(g, x0 + w - 1, y, 1, 1, shade(PINE_M, k - 0.32)); // 右缘背光
+  }
+  /* 冠内镂空：让轮廓不是一整块实心 */
+  for (let i = 0; i < 18; i++) {
+    const t = rng();
+    px(g, cx + (rng() * 2 - 1) * R * Math.pow(t, 1.02) * 0.7, top + t * (bot - top),
+       1 + ((rng() * 2) | 0), 1, "rgba(16,30,14,0.38)");
+  }
+  speckle(g, cx - R - 2, top, R * 2 + 4, bot - top, "rgba(0,0,0,0.16)", 80, rng);
+  speckle(g, cx - R - 2, top, R * 2 + 4, bot - top, "rgba(200,240,160,0.12)", 55, rng);
+
+  /* 顶芽：一根比冠顶高 3~6px 的尖，跟着中心线的相位摆 */
+  const tipx = cx + Math.round(Math.sin(lean) * 1.7);
+  px(g, tipx - 1, top - 3, 3, 4, shade(PINE_L, -0.12));
+  px(g, tipx, top - 6, 1, 4, shade(PINE_L, 0.10));
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.7.2 垂柳：高干 + 扁冠 + 前后两层垂条 ---
+   垂条**分前后两层**画：后层（暗）在树干之前、前层（亮）在冠之后 ——
+   这样树干会被夹在中间若隐若现，而不是"一根光杆顶个球"。 */
+function makeWillow(seed) {
+  const rng = makeRng(seed);
+  const W = 86, H = 88;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  const cx = W >> 1, gy = H - 5;                       // 43, 83
+  const bark = "#5f4730";
+  const trunkH = 40 + ((rng() * 6) | 0);
+  const tw = 7, tx = cx - (tw >> 1);
+  const ty = gy - trunkH, cyC = ty - 3, R = 27, RY = 17;
+
+  shadowBlob(g, cx + 10, gy - 1, 22, 7, 0.30, 4);
+
+  /* 垂条只有 26 根，且横向位置用 pow(0.55) **往两端挤**：
+     垂柳是外圈披下来，中间不会挂一帘子 —— 中间留白是这棵树读不读得出来的关键
+     （第一版 46 根均匀铺满，整棵糊成一丛草）。
+     ⚠️ 长度必须夹住 gy-1，否则垂条会穿过地面线、读成插进土里。 */
+  const st = [];
+  for (let i = 0; i < 26; i++) {
+    const u = (rng() < 0.5 ? -1 : 1) * Math.pow(rng(), 0.55);
+    const y0 = cyC + Math.sqrt(Math.max(0, 1 - u * u)) * RY * 0.95 + (rng() - 0.5) * 2;
+    st.push({ u: u, x: cx + u * R * 0.98, y0: y0,
+              len: Math.max(5, Math.min(gy - 1 - y0, 12 + rng() * 18 + (1 - Math.abs(u)) * 4) | 0),
+              th: Math.abs(u) > 0.62 ? 2 : 1,          // 外侧（离眼睛近）的条更粗
+              ph: rng() * 6.28, k: rng() });
+  }
+  const drawStrands = (dark) => {
+    for (const s of st) {
+      if ((s.k >= 0.46) !== dark) continue;            // 两层按 k 对半分
+      const col = dark ? shade(WIL_D, -0.06) : shade(WIL_M, 0.14);
+      const dir = s.u >= 0 ? 1 : -1;
+      for (let i = 0; i < s.len; i++) {
+        /* 摆幅随下垂长度增大 + 整体向外飘 → 是一条弧，不是一根直线 */
+        const wob = Math.sin(s.ph + i * 0.09) * (1.0 + i * 0.075) + dir * i * 0.05;
+        /* ⚠️ 是 s.y0 —— 这个对象上的字段叫 y0。写成 s.y 会得到 NaN，
+           px() 里的 fillRect 对 NaN 静默无效：**26 根垂条一根都画不出来**，
+           整棵读成"高干圆冠的阔叶"（浏览器不报错、探针也看不出来，
+           只有 12× 局部放大才发现那一格是空的）。 */
+        px(g, s.x + wob, s.y0 + i, i < s.len - 5 ? s.th : 1, 1,
+           i > s.len - 5 ? shade(WIL_L, 0.18) : (i < 3 ? shade(col, 0.12) : col));
+        if (!dark && i > 3 && i < s.len - 5 && i % 5 === 2)
+          px(g, s.x + wob + dir, s.y0 + i, 1, 1, shade(WIL_L, 0.22));
+      }
+    }
+  };
+  drawStrands(true);                                   // 后层（会被树干和冠压住大半）
+
+  /* 树干：带一点弯（垂柳少直干） */
+  px(g, tx - 2, gy - 4, tw + 4, 4, shade(bark, -0.14));
+  for (let i = 0; i < trunkH; i++) {
+    const xo = Math.round(Math.sin(i / trunkH * 2.1) * 1.6);
+    px(g, tx + xo, ty + i, tw, 1, bark);
+    px(g, tx + xo, ty + i, 1, 1, shade(bark, 0.18));
+    px(g, tx + xo + tw - 1, ty + i, 1, 1, shade(bark, -0.34));
+  }
+  /* 主枝：从干顶散开托住冠；大半会被冠压住，露出的梢在外面 */
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + (i / 4 - 0.5) * 2.2 + (rng() - 0.5) * 0.26;
+    const L = 13 + rng() * 9;
+    seg(g, cx, ty + 2, cx + Math.cos(a) * L, ty + 2 + Math.sin(a) * L * 0.92, shade(bark, -0.08), 2);
+  }
+
+  /* 冠：扁球（柳冠比阔叶扁、比针叶散）。**要够大够实** ——
+     垂条只是外圈的披挂，树体量得由冠撑起来。 */
+  const cl = [];
+  for (let i = 0; i < 17; i++) {
+    const a = rng() * Math.PI * 2, rr = 0.28 + rng() * 0.72;
+    cl.push({ x: cx + Math.cos(a) * R * rr, y: cyC + Math.sin(a) * RY * rr, r: 7 + rng() * 5 });
+  }
+  cl.sort((p, q) => p.y - q.y);
+  for (const o of cl) {
+    const k = clamp(0.20 - ((o.x - cx) / R * 0.5 + (o.y - cyC) / RY * 0.8) * 0.30, -0.30, 0.30);
+    circlePx(g, o.x, o.y, o.r, shade(WIL_M, k));
+  }
+  /* 冠的左上迎光叶簇 */
+  for (let i = 0; i < 9; i++)
+    circlePx(g, cx - R * 0.1 - rng() * R * 0.55, cyC - RY * 0.25 - rng() * RY * 0.6,
+      3 + rng() * 3.4, shade(WIL_L, 0.10 + rng() * 0.18));
+  /* 冠内镂空：几处深缝，别让冠成一整块实心 */
+  for (let i = 0; i < 7; i++) {
+    const a = rng() * Math.PI * 2, rr = R * (0.25 + rng() * 0.6);
+    px(g, cx + Math.cos(a) * rr, cyC + Math.sin(a) * rr * 0.8,
+       2 + ((rng() * 3) | 0), 2, "rgba(20,34,18,0.34)");
+  }
+
+  drawStrands(false);                                  // 前层（压在冠上，读作垂到前面）
+  speckle(g, cx - R - 2, cyC - RY, R * 2 + 4, gy - cyC + RY, "rgba(0,0,0,0.14)", 70, rng);
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.7.3 开花树：花团 + **压在上面的枝条**，冠内露枝 → 才不像一个粉球 --- */
+function makeBlossom(seed) {
+  const rng = makeRng(seed);
+  const W = 66, H = 78;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  const cx = W >> 1, gy = H - 5;                       // 33, 73
+  const bark = "#6b4a2f";
+  const trunkH = 18 + ((rng() * 5) | 0);
+  const tw = 7, tx = cx - (tw >> 1);
+  const ty = gy - trunkH, cyB = ty - 4, R = 24, RY = 15;   // 冠偏扁：樱花树不是正球
+
+  shadowBlob(g, cx + 10, gy - 1, 21, 7, 0.32, 4);
+  px(g, tx - 2, gy - 4, tw + 4, 4, shade(bark, -0.14));
+  px(g, tx, ty, tw, trunkH, bark);
+  for (let i = 0; i < trunkH; i++) {
+    px(g, tx, ty + i, 2, 1, shade(bark, 0.16));
+    px(g, tx + tw - 2, ty + i, 2, 1, shade(bark, -0.34));
+  }
+  speckle(g, tx, ty, tw, trunkH, "rgba(0,0,0,0.22)", 12, rng);
+
+  /* 主枝：先画一层（会被花团压住大半，枝梢留在花外面） */
+  const twig = [];
+  for (let i = 0; i < 6; i++) {
+    const a = -Math.PI / 2 + (i / 5 - 0.5) * 2.0 + (rng() - 0.5) * 0.24;
+    twig.push({ a: a, L: 15 + rng() * 11 });
+  }
+  for (const b of twig)
+    seg(g, cx, ty + 1, cx + Math.cos(b.a) * b.L, ty + 1 + Math.sin(b.a) * b.L * 0.9,
+        shade(bark, -0.10), 2);
+
+  /* 花团：**团要小**（r 4.5~8）—— 团一大就并成一颗球，看得出一个个花团
+     才有"开花"的样子。三遍：背光底（右下）/ 主体 / 迎光顶（左上）。 */
+  const cl = [];
+  for (let i = 0; i < 15; i++) {
+    const a = (i / 15) * Math.PI * 2 + rng() * 0.4;
+    const rr = 0.32 + rng() * 0.68;
+    cl.push({ x: cx + Math.cos(a) * R * rr, y: cyB + Math.sin(a) * RY * rr, r: 4.5 + rng() * 3.5 });
+  }
+  cl.sort((p, q) => p.y - q.y);
+  for (const o of cl) {
+    const k = clamp(0.14 - ((o.x - cx) / R * 0.5 + (o.y - cyB) / RY * 0.85) * 0.24, -0.26, 0.26);
+    circlePx(g, o.x, o.y, o.r, shade(BL_M, k));
+  }
+  for (let i = 0; i < 6; i++)                          // 右下背光（压深，略微溢出轮廓）
+    circlePx(g, cx + R * 0.26 + rng() * R * 0.62, cyB + RY * 0.20 + rng() * RY * 0.66,
+      3 + rng() * 3.6, shade(BL_D, -rng() * 0.12));
+  for (let i = 0; i < 10; i++)                         // 左上迎光（提亮）
+    circlePx(g, cx - R * 0.12 - rng() * R * 0.58, cyB - RY * 0.20 - rng() * RY * 0.66,
+      3 + rng() * 3.6, shade(BL_L, 0.04 + rng() * 0.14));
+
+  /* 压在花团**上面**的小枝：5 根 1px 深线，起点从 0.35R 起（不再挤在圆心）。
+     这是"粉球"与"花树"的分水岭 —— 花团没有枝在前面切一下，颜色再准也读成一坨。 */
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + (i / 4 - 0.5) * 2.3 + (rng() - 0.5) * 0.3;
+    const L = R * (0.62 + rng() * 0.48);
+    seg(g, cx + Math.cos(a) * R * 0.35, cyB + Math.sin(a) * RY * 0.35,
+        cx + Math.cos(a) * L, cyB + Math.sin(a) * L * 0.82,
+        "rgba(74,46,40,0.42)", 1);
+  }
+  /* 单朵花：1~2px 的亮点，把大色块打散成一簇簇花。
+     rr 刻意放到 1.12R —— 让一部分花**长到轮廓外面**，剪影才不是一条光滑的弧。 */
+  for (let i = 0; i < 30; i++) {
+    const a = rng() * Math.PI * 2, rr = R * (0.22 + rng() * 0.90);
+    const fx = cx + Math.cos(a) * rr, fy = cyB + Math.sin(a) * rr * 0.80;
+    const lit = (fx - cx) / R * -0.5 + (fy - cyB) / RY * -0.8 + 0.2;   // >0 = 偏迎光面
+    const r2 = rng();
+    /* ⚠️ 迎光侧的花点**不要**再提亮：BL_L 已经是近白 (#fdf3f6)，
+       再加 0.10 就是纯白，落在粉团上是一粒扎眼的雪点（12× 局部一眼就看见）。
+       迎光只给 2px（比背光少），否则白点比花团还跳。 */
+    circlePx(g, fx, fy, r2 < (lit > 0 ? 0.24 : 0.48) ? 2 : 1,
+      lit > 0 ? BL_L : shade(r2 < 0.5 ? BL_M : BL_D, r2 < 0.5 ? 0.10 : -0.08));
+  }
+  /* 落花：树下稀疏的粉点（避开树干正下方） */
+  for (let i = 0; i < 16; i++) {
+    const fx = (rng() - 0.5) * 42, fy = rng() * 9, cp = rng();
+    if (Math.abs(fx) < 6) continue;
+    px(g, cx + fx, gy - 2 - fy, 1, 1, cp < 0.5 ? rgba(BL_L, 0.85) : rgba(BL_M, 0.78));
+  }
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.7.4 物种分发（**不摇随机**：全靠 seed 的数值） --- */
+/* 水岸判定：查 ±3 格（≈±48 世界 px ≈ 5.3 m）而不是 ±1 格。
+   ⚠️ 一开始写的是 ±1 格，结果**全校园 0 棵柳**（柳成了死代码）：
+   `classifyFree` 把离水 25px 内的一圈格子全划成了 K.ROAD（贴水留白的走廊），
+   真正的 K.WATER 格被这圈走廊推远了 —— 最近的树离水格还有 2 格。 */
+function waterNear(x, y) {
+  const cx = (x / CELL) | 0, cy = (y / CELL) | 0;
+  for (let j = -3; j <= 3; j++)
+    for (let i = -3; i <= 3; i++) {
+      const a = cx + i, b = cy + j;
+      if (a < 0 || b < 0 || a >= NW || b >= NH) continue;
+      if (CELLK[b * NW + a] === K.WATER) return true;
+    }
+  return false;
+}
+function anyTree(seed, x, y) {
+  /* ⚠️ tag 是给**离线探针**用的（props_probe.py 靠它区分"树"与"路灯"）——
+     路灯也是 32×84 的细高精灵，只按尺寸判会把路灯当成树，
+     于是探针报出一堆假重叠。判定一律走 tag，不靠尺寸猜。 */
+  const t = waterNear(x, y) ? makeWillow(seed)         // 水边一律柳
+          : ((seed >>> 0) % 100) < 50 ? makeTree(seed) // 阔叶（原物种，占多数）
+          : ((seed >>> 0) % 100) < 78 ? makeConifer(seed)  // 针叶
+          :                             makeBlossom(seed); // 开花（≤22%：
+  t.tag = "tree";                                      //   开花的粉在 1× 下最跳）
+  return t;
+}
+
+/* --- 4.7.5 树坑：石框 + 土面。只画左右两片和两段前缘 ——
+   树干在正中，后缘（远侧）本来就该被树干挡住，画了反而压在树干上。 --- */
+function treePit(g, ax, ay) {
+  const KERB = "#a9a496", SOIL = "#4a3a28", SOILL = "#5d4a34";
+  for (const d of [-1, 1]) {
+    const x0 = ax + d * 5;
+    px(g, x0, ay - 5, 9, 5, SOIL);
+    px(g, x0, ay - 5, 9, 1, SOILL);                    // 土面受光的那一条
+    px(g, x0 + (d > 0 ? 8 : 0), ay - 6, 1, 7, KERB);   // 外侧石框
+    px(g, x0 + (d > 0 ? 8 : 0), ay - 6, 1, 2, shade(KERB, 0.20));
+    px(g, x0 + (d > 0 ? 8 : 0), ay - 1, 1, 2, shade(KERB, -0.26));
+  }
+  /* 前缘（近侧）石框：留出中间 10px 的缺口给树干落地 */
+  px(g, ax - 14, ay - 1, 10, 2, "#8a8779");
+  px(g, ax + 5,  ay - 1, 10, 2, "#8a8779");
+  px(g, ax - 14, ay - 1, 10, 1, KERB);
+  px(g, ax + 5,  ay - 1, 10, 1, KERB);
+}
+function makeStreetTree(seed, x, y) {
+  const t = anyTree(seed, x, y);                       // 每次都是新画布，可安全就地改
+  treePit(t.canvas.getContext("2d"), t.ax, t.ay);
+  return t;
+}
+
+/* --- 4.7.6 行道树 / 广场树阵 ---
+   做法：撒一张 ROW_SP 的**规则点阵**，每个点先试 (0,0)、再试一圈小偏移，
+   取第一个合法位置。因为绝大多数点都落在 (0,0) 上，树的间距就天然是
+   等距的 —— 这才有"沿路成行"的观感，而不是 scatter() 那种网格乱撒。 */
+const ROW_SP = 118;                                    // 行道树间距（世界像素）≈ 13 m
+function roadAt(cx, cy) {
+  if (cx < 0 || cy < 0 || cx >= NW || cy >= NH) return false;
+  return CELLK[cy * NW + cx] === K.ROAD;
+}
+function plazaClear(cx, cy) {
+  for (let j = -1; j <= 1; j++)
+    for (let i = -1; i <= 1; i++) {
+      const a = cx + i, b = cy + j;
+      if (a < 0 || b < 0 || a >= NW || b >= NH) return false;
+      if (CELLK[b * NW + a] !== K.PLAZA) return false;   // 离广场边 ≥16px 才种
+    }
+  return true;
+}
+function treeSpotOK(x, y) {
+  if (!insideBoundary(x, y) || distToBound(x, y) < 30) return false;
+  if (ptBlocked(x, y, 16, 11)) return false;
+  const cx = (x / CELL) | 0, cy = (y / CELL) | 0, k = cellAtSafe(x, y);
+  let ok = false;
+  if (k === K.GRASS) {
+    if (roadAt(cx - 1, cy) || roadAt(cx + 1, cy) ||
+        roadAt(cx, cy - 1) || roadAt(cx, cy + 1)) ok = true;      // 贴路缘 → 行道树
+    /* 湖岸那一圈也是"路"（classifyFree 会把贴水的留白划成走廊），
+       所以岸边自然长出成排的垂柳，不用单独写一套湖岸逻辑。 */
+  } else if (k === K.PLAZA) {
+    ok = plazaClear(cx, cy);                                      // 广场中央 → 树阵
+  }
+  if (!ok) return false;
+  /* 别和既有小道具撞在一起。⚠️ 三条判据缺一不可：
+     ① **拿美术盒判相交，不能拿"距离小于 N"** —— 树比垃圾桶高得多，一个落在树基
+        北侧 67px 的垃圾桶按距离算早就"够远"，实际上正好糊在树冠尖上，
+        实地看就是"树上挂了个箱子"。
+     ② **楼（宽 > 90）整个跳过** —— 楼在树基北侧时深度排序本来就把它画在树后面，
+        露在墙前的那排树是对的（实测过：不跳过的话行道树会被楼的美术盒全判掉，
+        79 棵只剩 10 棵）。
+     ③ **只查在树北侧（p.y ≤ y，即画在树之前）的道具** —— 南侧的道具遮住树干是
+        正确的遮挡关系，不算冲突。
+     树的盒取保守值（x±34、y-96 起）：树画布差异大（垂柳 86 宽、针叶 104 高），
+     为每个候选点现算一遍不划算。 */
+  for (const p of props) {
+    if (p.img.width > 90 || p.y > y + 4) continue;
+    const px0 = p.x - p.ax, py0 = p.y - p.ay;
+    if (px0 < x + 34 && px0 + p.img.width  > x - 34 &&
+        py0 < y - 10 && py0 + p.img.height > y - 96) return false;
+  }
+  return true;
+}
+const _rowUsed = [];
+function plantRows() {
+  const OFF = [[0, 0], [0, -7], [0, 7], [-7, 0], [7, 0], [-7, -7], [7, 7],
+               [-7, 7], [7, -7], [0, -14], [0, 14], [-14, 0], [14, 0]];
+  let n = 0;
+  for (let py = ROW_SP >> 1; py < WORLD_H; py += ROW_SP) {
+    for (let px = ROW_SP >> 1; px < WORLD_W; px += ROW_SP) {
+      for (const o of OFF) {
+        const x = px + o[0], y = py + o[1];
+        if (!treeSpotOK(x, y)) continue;
+        let near = false;
+        for (const u of _rowUsed)
+          if (Math.abs(u[0] - x) < 70 && Math.abs(u[1] - y) < 70) { near = true; break; }
+        if (near) continue;
+        addProp(Object.assign({}, makeStreetTree((n * 761 + 97) | 0, x, y), { x: x, y: y }));
+        _rowUsed.push([x, y]);
+        n++;
+        break;
+      }
+    }
+  }
+  return n;
+}
+
+/* =========================================================
+   2.8 地面 / 路面细节（第 3 项）
+   ---------------------------------------------------------
+   地面管线（§2.7）原本已经有：草地噪声、沥青、人行道砖缝、广场石板、
+   路缘石、标线、泥土过渡带。这一节只补**原本没有的四样**：
+
+     · brickTone + paintRoadCell(cls=1)  逐砖色差（原来只有整体噪声，
+       1× 下人行道是一片平色，读不出"砖"）
+     · paintManholes                      井盖
+     · paintWear                          斑马线磨损 + 车辙压痕
+     · paintLeafFall                      树下落花 / 落叶
+
+   ⚠️ 前三个走 buildGround 流水线（在 §2.7.6 标线之后、泥土带之前）。
+   ⚠️ paintLeafFall **不在流水线里** —— 要等 props 排好才知道树在哪，
+      由 60_assemble §6.6d 在 buildMips() **之前**调用（mip 是从地面画布降采样
+      出来的，晚于 mip 就再也进不去 mip 了）。
+   ⚠️ 一律不碰 solids / props 的坐标，只往地面画布上加像素。
+   ========================================================= */
+
+/* --- 2.8.0 "这里真的是沥青吗" -----------------------------------------
+   ⚠️ 别用 CELLK 判：`classifyFree` 把 ARTERY 矩形**整块**标成 K.ROAD，
+   连压着广场的那一段也标了；而广场是第 3 步画的、比路面亮得多。
+   直接读**已烘焙好的画布**取样最可靠：沥青 = 暗且近中性灰
+   （ramp #4b4b53…#606068；广场石板 #b3ada0 的 R≈168 会被挡住）。
+   取 5×5 均值，避开 speckle 的 1px 白点。 */
+function asphaltAt(g, x, y) {
+  const px0 = Math.min(Math.max(0, (x | 0) - 2), WORLD_W - 5);
+  const py0 = Math.min(Math.max(0, (y | 0) - 2), WORLD_H - 5);
+  const d = g.getImageData(px0, py0, 5, 5).data;
+  let r = 0, gg = 0, b = 0, n = 0;
+  for (let k = 0; k < d.length; k += 4) { r += d[k]; gg += d[k + 1]; b += d[k + 2]; n++; }
+  r /= n; gg /= n; b /= n;
+  const mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
+  return mx <= 130 && mx - mn <= 30;
+}
+/* 沿一条横/纵带按 12px 分段，只画"落在真沥青上"的那几段。
+   跨广场时带子自然断开 —— 这正是铺装广场该有的样子。 */
+function bandOnAsphalt(g, x, y, w, h, col) {
+  if (w >= h) { for (let t = 0; t < w; t += 12) { const sw = Math.min(12, w - t); if (asphaltAt(g, x + t + 6, y + (h >> 1))) px(g, x + t, y, sw, h, col); } }
+  else        { for (let t = 0; t < h; t += 12) { const sh = Math.min(12, h - t); if (asphaltAt(g, x + (w >> 1), y + t + 6)) px(g, x, y + t, w, sh, col); } }
+}
+
+/* --- 2.8.1 逐砖色差 --------------------------------------------------
+   ⚠️ 色调用**世界砖号的哈希**而不是 rng：一块 16×8 的砖常横跨两个 CELL，
+   而每个 CELL 是各画各的 —— 用 rng 的话同一块砖的两半会拿到不同色调，
+   在格子边界上留一条 16px 接缝（= 把 CELL 网格暴露出来）。
+   哈希与"谁在画"无关，跨格天然一致。 */
+function brickTone(bx, by) {
+  let h = Math.imul(bx, 73856093) ^ Math.imul(by, 19349663);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h >>> 8) & 255) / 255;
+}
+
+/* --- 2.8.2 井盖 ------------------------------------------------------
+   3/4 俯视：圆盖压成椭圆（rx6 / ry4）。只落主干道、且不落广场。 */
+const MH_RIM = "#4d4d54", MH_FACE = "#6b6b73";
+function manholeAt(g, cx, cy) {
+  const rx = 6, ry = 4;
+  ellipsePx(g, cx, cy + 2, rx + 1, ry, "rgba(14,18,28,0.16)");      // 接地影
+  ellipsePx(g, cx, cy, rx, ry, MH_RIM);                             // 铸铁框
+  ellipsePx(g, cx, cy - 1, rx, ry, shade(MH_FACE, -0.10));          // 盖面
+  ellipsePx(g, cx, cy - 1, rx - 3, ry - 2, shade(MH_FACE, 0.12));   // 内圈
+  for (let i = -1; i <= 1; i++)                                     // 盖面方格纹
+    px(g, cx - 3, cy - 2 + i, 7, 1, "rgba(14,18,28,0.26)");
+  px(g, cx - rx, cy - 1, rx * 2 + 1, 1, "rgba(255,255,255,0.15)");  // 上缘受光
+  px(g, cx - rx, cy + ry - 2, rx * 2 + 1, 1, "rgba(14,18,28,0.20)"); // 下缘背光
+}
+function paintManholes(g, rng) {
+  let n = 0;
+  for (const a of ARTERY) {
+    if (a.cls !== 2) continue;                     // 只落主干道
+    const horiz = a.w >= a.h, len = horiz ? a.w : a.h;
+    const half = (horiz ? a.h : a.w) / 2;
+    for (let t = 130; t < len - 90; t += 170 + ((rng() * 90) | 0)) {
+      /* ⚠️ 偏移量**必须避开正中**（±14px 起）：主干道正中是双黄中线，
+         偏移取 ±(0.42*half) 的旧写法会让井盖骑在黄线上。 */
+      const off = (rng() < 0.5 ? -1 : 1) * (14 + rng() * Math.min(16, half - 18));
+      const x = Math.round(horiz ? a.x + t : a.x + a.w / 2 + off);
+      const y = Math.round(horiz ? a.y + a.h / 2 + off : a.y + t);
+      if (x < 8 || y < 8 || x > WORLD_W - 8 || y > WORLD_H - 8) continue;
+      if (!asphaltAt(g, x, y)) continue;           // 只落在真沥青上
+      manholeAt(g, x, y);
+      n++;
+    }
+  }
+  return n;
+}
+
+/* --- 2.8.3 磨损：斑马线缺口 + 车辙压痕 -------------------------------
+   ⚠️ 补洞要用**路面底色**（ASPHALT_RAMP[1] = 校门车行道的整块填色），
+   不能用透明 —— 底下是烘焙好的地面，透明洞会露出上一层。 */
+function paintWear(g, rng) {
+  for (const gt of GATES) {
+    if (gt.id === "G3") continue;                  // 东南门是斜的，没铺车行道
+    if (gt.dir === "h") {
+      for (let i = -4; i <= 4; i++)
+        for (let k = 0; k < 3; k++)
+          px(g, Math.round(gt.x + i * 22 - 4 + rng() * 8), Math.round(gt.y - 26 + rng() * 50),
+             1 + ((rng() * 3) | 0), 1 + ((rng() * 5) | 0), ASPHALT_RAMP[1]);
+    } else {
+      for (let i = -4; i <= 4; i++)
+        for (let k = 0; k < 3; k++)
+          px(g, Math.round(gt.x - 26 + rng() * 50), Math.round(gt.y + i * 22 - 4 + rng() * 8),
+             1 + ((rng() * 5) | 0), 1 + ((rng() * 3) | 0), ASPHALT_RAMP[1]);
+    }
+  }
+  /* 车辙：主干道两条轮迹带（5.5% 黑，很淡，只是"这条路天天有人走"的暗示） */
+  for (const a of ARTERY) {
+    if (a.cls !== 2) continue;
+    const horiz = a.w >= a.h;
+    for (const f of [0.30, 0.70])
+      if (horiz) bandOnAsphalt(g, a.x, Math.round(a.y + a.h * f) - 1, a.w, 3, "rgba(14,18,28,0.055)");
+      else       bandOnAsphalt(g, Math.round(a.x + a.w * f) - 1, a.y, 3, a.h, "rgba(14,18,28,0.055)");
+  }
+}
+
+/* --- 2.8.4 树下落花 / 落叶 -------------------------------------------
+   ⚠️ 由 60_assemble §6.6d 在**所有 props 排好之后**调用；画在地面画布上。
+   开花树（66×78，四物种里唯一的 66 宽）落粉花瓣，其余树种掉黄绿落叶。
+   ⚠️ 第一版是"均匀撒 6 粒"—— 结果**根本看不出来**：草地本身就有满屏的黄绿
+   小点（nature 段的草纹），再撒几粒同色小点等于没画。改成**成簇**：
+   先取 3~4 个簇心（离树干 8~19px），每簇再挤 4~5 粒 —— 眼睛读到的是
+   "树下落了一小堆"，而不是又一层草地噪点。
+   落到水面 / 界外就跳过（落水里就脏了）。 */
+const FALL_BLOSSOM = ["#f2d3dd", "#e9bccb", "#dda8bb", "#c98ba4"];
+const FALL_LEAF    = ["#8fae55", "#a8bf68", "#c8b455", "#b07a33", "#8a6b2c"];
+function paintLeafFall(g, list, rng) {
+  let n = 0;
+  const put = (x, y, cols) => {
+    if (x < 2 || y < 2 || x > WORLD_W - 3 || y > WORLD_H - 3) return;
+    const cx = (x / CELL) | 0, cy = (y / CELL) | 0;
+    if (CELLK[cy * NW + cx] === K.WATER) return;      // 落水里就脏了
+    if (rng() < 0.22) px(g, x, y + 1, 2, 1, "rgba(14,18,28,0.13)");   // 先垫一点接地影
+    px(g, x, y, rng() < 0.34 ? 2 : 1, 1, cols[(rng() * cols.length) | 0]);
+  };
+  for (const p of list) {
+    if (p.tag !== "tree") continue;
+    const blossom = p.img.width === 66;
+    const cols = blossom ? FALL_BLOSSOM : FALL_LEAF;
+    const cl = blossom ? 4 : 3;                       // 簇数
+    for (let c = 0; c < cl; c++) {
+      const a = rng() * 6.2832, r = 8 + rng() * 11;   // 簇心：压在树冠投影内、避开树干
+      const bx = p.x + Math.cos(a) * r * 1.5, by = p.y + Math.sin(a) * r * 0.75;
+      const m = 3 + ((rng() * 3) | 0);                // 每簇 3~5 粒
+      for (let i = 0; i < m; i++)
+        put(Math.round(bx + (rng() - 0.5) * 7), Math.round(by + (rng() - 0.5) * 4), cols);
+    }
+    n++;
+  }
+  return n;
+}
+
+/* =========================================================
+   5. 角色：四向 × 六相位（重画版，A 档：头 6px / 4.3 头身）
+   ---------------------------------------------------------
+   ⚠️ 对外契约（**只有 step 的取值域变了**，别的与 demo §5 逐字相同）：
+        CH_W / CH_H / CH_AX / CH_AY           四个常量（值不变）
+        makeChar(dir, step) -> canvas         step 0..3 行走四帧 / 4..5 待机两帧
+        charSprite(dir, step)                 按 dir+step 缓存（键自动扩到 6 个相位）
+      唯一的调用点是主循环里的 drawList.push({... charSprite(player.dir, player.step) ...})，
+      锚点仍是 ax = CH_AX / ay = CH_AY，所以"脚踩在世界坐标 y 上"这件事没变。
+
+   与上一版的差别（这一步新做的三件事）：
+      A) **2 帧 → 4 帧行走**。原来 `& 1` 只有两个姿势，一个周期里身体只起伏一次，
+         看着像"整块人在弹"。现在走的是教科书四帧：接触（跨开）→ 通过（并立抬身）
+         → 接触（镜像）→ 通过（并立抬身）。
+      B) **待机呼吸帧**。站着不动时不再是死定格：2 帧、约 0.4 Hz，吸气时上身抬 1px。
+      C) **步态由"实际位移"驱动**（改在主循环补丁 11，不在本文件）：原来 `walk += dt`
+         顶着墙走也照常累加 → 人会原地踏步；现在顶墙位移为 0，脚立刻停。
+         步频也不再是硬编码的 `* 7`，而是每 WALK_STRIDE 世界像素走完一个周期。
+
+   为什么重画（对着 demo §5 逐条数出来的五个问题，前四个是代码/肉眼，第五个是实测）：
+     1) 头身比 3.4（头 8px / 全身 27px）—— Q 版娃娃。
+     2) 结构是"一摞方块"：躯干 = 一个 10×8 矩形，手臂/腿都是直条 ——
+        没有肩斜、肘、膝、腰。
+     3) 全画面只有它没有 1px 深色收边（楼有棱线、树有暗底叶簇、灌木有背光球）
+        → 剪影在草地/路面上发虚。
+     4) 明暗只有左右二分（左亮右暗），没有顶光、没有遮蔽（下巴/腋下/胯下）。
+     5) 【实测】朝右的精灵**接地影方向是反的**：demo 的 flipH() 用 translate+scale
+        画完后不 restore，变换留在返回画布的 context 上，末尾的 ellipsePx 影子
+        被又镜像了一次。实测影子重心相对身体重心的偏移：
+            现版 down +1.5 / left +1.0 / right **−1.0** / up +1.5
+        树、楼、灌木的影子全朝右下，只有"朝右的角色"逆着光。本版修了，四向一律 +1.5。
+
+   ⚠️ 头身比的取舍：真人 7.5 头身，但 30px 画布里头一缩小，脸就没了。
+      540 个像素撑不起写实，只能撑起"可读的真人剪影 + 真实的重心与节拍"。
+      这里取头 6px（4.3 头身）：脸留 4 行（眼/鼻/嘴/下颌），成年人骨架成立。
+      （头 8px 的 3.4 头身版本试过，脸会挤成一团络腮胡，且与现版同比例、没解决问题。）
+   ========================================================= */
+const CH_W = 18, CH_H = 30, CH_AX = 9, CH_AY = 27;
+
+/* --- 步态相位表 ---------------------------------------------------------
+   4 帧行走 + 2 帧待机，一个周期 = 左右各一步。
+   ⚠️ 两个视角要**分别**给参数，不能共用一个"腿相位"：
+      侧面看不到左右，只能看前后 → m（1 左腿跨在前 / 2 右腿跨在前 / 0 并立）；
+      正背面看不到前后，只能看左右 → fl（抬哪条腿：0 并立 / 1 抬左 / 2 抬右）+ spread（两腿分不分）。
+   踩过坑：两帧都用"并立"来当通过帧，正背面看这两帧的腿就一模一样，4 帧白给一帧
+   （只有手臂不同，远看就是同一张）。所以抬腿相位在两个通过帧里**交替**，
+   接触帧也各抬一条（在后的那条腿离镜头更远，画高 1px）。
+   bob 骨盆起伏（只抬腰以上，脚不离地）；sw 手臂摆相。 */
+const WALK_FRAMES = 4, IDLE_BASE = 4, IDLE_FRAMES = 2;
+const GAIT = [
+  { m: 1, fl: 2, spread: 1, bob: 0, sw: 0 },   // 0 接触：两腿分开、左腿在前（右腿远，抬 1px）
+  { m: 0, fl: 2, spread: 0, bob: 1, sw: 1 },   // 1 通过：并立抬身、右腿抬起经过
+  { m: 2, fl: 1, spread: 1, bob: 0, sw: 1 },   // 2 接触：两腿分开、右腿在前（左腿远，抬 1px）
+  { m: 0, fl: 1, spread: 0, bob: 1, sw: 0 },   // 3 通过：并立抬身、左腿抬起经过
+  { m: 0, fl: 0, spread: 0, bob: 0, sw: 0 },   // 4 待机：呼气
+  { m: 0, fl: 0, spread: 0, bob: 1, sw: 0 }    // 5 待机：吸气（上身抬 1px）
+];
+/* 一个完整步态周期走过的世界像素。1× 档速度 200 px/s → 200/160 = 1.25 周期/秒
+   = 2.5 步/秒（真人 1.8~2.0，游戏里略快是合适的）。3× 档世界速度减半，步频跟着慢下来。
+   ⚠️ 两个数都必须在这里声明：主循环补丁 11 要用，而主循环段排在角色段之后。 */
+const WALK_STRIDE = 160;
+const IDLE_HZ = 0.4;                   // 待机呼吸约 2.5 秒一个来回
+
+const A2 = {
+  skin:  "#e9bb92", skinD: "#c4906a", skinL: "#f7d3ae",
+  hair:  "#241d1a", hairL: "#3d3029", hairD: "#150f10",
+  coat:  "#3f6ea8", coatD: "#2b4d76", coatL: "#5d8cc4",
+  pant:  "#454c5a", pantD: "#2b303a", pantL: "#5c6474",   // 比现版提亮：描边(k=0.45)才读得出来
+  shoe:  "#26282e", shoeL: "#454a54",
+  pack:  "#b4552f", packD: "#8a3f22", packL: "#d1704a"
+};
+
+/* --- 自动描边：给精灵四周的透明像素补 1px 收边 ---------------------------
+   ⚠️ 不用"纯黑描边"（像素画里太硬、显脏），而是**取相邻实心像素的颜色压暗**
+   —— 这叫彩色描边：头发的边 = 更黑的头发、袖子的边 = 更深的蓝。剪影立刻清楚。
+   一次调用可给任何精灵加收边；给树/灌木加是同一行代码。
+   ⚠️ 必须画在接地影**之前**，否则影子会被描一圈边。
+   ⚠️⚠️ 必须先把变换复位成单位阵 —— flipH() 用 translate+scale 画完后**不 restore**，
+   返回的画布 context 上永久留着 translate(W,0) scale(-1,1)。
+   往这种画布上 fillRect(x,y,1,1) 会落到 W-1-x：描边跑到另一侧、原侧留空 1px，
+   镜像方向的精灵会多出"空格 + 外挂 1px"的鬼影（实测：右侧 24 个内部空洞，
+   左侧 0 个）。下面这行是必须的，不是防御性代码。 */
+function outlineSprite(c, k) {
+  const g = c.getContext("2d"), W = c.width, H = c.height;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  const d = g.getImageData(0, 0, W, H).data;
+  const src = (x, y) => (x >= 0 && y >= 0 && x < W && y < H && d[(y * W + x) * 4 + 3] > 40)
+    ? (y * W + x) * 4 : -1;
+  const NB = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const edge = [];
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (d[(y * W + x) * 4 + 3] > 40) continue;
+      for (let n = 0; n < 4; n++) {                 // 四邻即可：八邻会让四角鼓 1px
+        const j = src(x + NB[n][0], y + NB[n][1]);
+        if (j >= 0) { edge.push(x, y, j); break; }
+      }
+    }
+  }
+  for (let i = 0; i < edge.length; i += 3) {
+    const j = edge[i + 2];
+    g.fillStyle = "rgb(" + ((d[j] * k) | 0) + "," + ((d[j + 1] * k) | 0) + "," + ((d[j + 2] * k) | 0) + ")";
+    g.fillRect(edge[i], edge[i + 1], 1, 1);
+  }
+}
+
+/* =========================================================
+   参数化构建：HH = 头高（含发）。整个骨架由它推出来，改一处不散架。
+   ---------------------------------------------------------
+   纵向预算（画布 18×30，脚底线 gy = CH_AY = 27）：
+     y1 .. y1+HH-1   头
+     y1+HH           颈（1 行）
+     y1+HH+1         肩/躯干起
+     躯干 + 腿 平分剩下的行数（真人的肩-胯 ≈ 胯-脚底），鞋固定占 y25-26
+   bob 只抬"腰以上"：走路的真实构造是**骨盆起伏、脚不离地**。
+   现版是两帧整体平移（bob 直接加在全体），所以看着像"整块画在跳"。
+   ========================================================= */
+function buildChar(HH) {
+  const TOP = 1, SHOE_TOP = 25, cx = CH_AX, gy = CH_AY;
+  const NECK = TOP + HH, TOR = NECK + 1;
+  const bodyRows = SHOE_TOP - TOR;
+  const TORSO = Math.max(6, Math.round(bodyRows / 2));
+  const LEGT = TOR + TORSO, LEGR = SHOE_TOP - LEGT;          // 腿的行数（不含鞋）
+  const KNEE = LEGT + Math.max(2, Math.round(LEGR * 0.55));
+  const HW = HH >= 7 ? 8 : 7;                                // 头宽
+  const H2 = (HW - 1) >> 1;                                  // 头左右各伸出的像素数
+  const ARMR = Math.max(4, TORSO - 3);
+  const FACE = HH - 2;                                       // 脸的行数
+
+  return function (dir, step) {
+    const c = mkCanvas(CH_W, CH_H), g = c.getContext("2d");
+    const P = (x, y, w, h, col) => { if (w > 0 && h > 0) px(g, x, y, w, h, col); };
+    const F = GAIT[step] || GAIT[0];                         // 相位：0..3 行走 / 4..5 待机
+    const b = F.bob;                                         // 骨盆起伏 1px
+    const HY = TOP + b;                                      // 头顶（腰以上整体上移）
+    const ty = TOR + b, ly = LEGT + b;                       // 躯干起 / 髋
+
+    /* ---------- 头 ---------- */
+    function head(face) {
+      P(cx - H2 + 1, HY, HW - 2, 1, A2.hairL);               // 发顶受光（顶光层）
+      P(cx - H2, HY + 1, HW, 1, A2.hair);
+      if (!face) {                                           // 背向：后脑 + 左棱受光
+        P(cx - H2, HY + 2, HW, HH - 2, A2.hair);
+        P(cx - H2, HY + 1, 1, HH - 1, A2.hairL);
+        P(cx + H2, HY + 1, 1, HH - 1, A2.hairD);
+        P(cx - 1, HY + 2, 2, 1, shade(A2.hair, 0.20));       // 发旋小高光（不是横贯亮带）
+        return;
+      }
+      P(cx - H2, HY + 2, HW, FACE, A2.skin);                 // 脸
+      P(cx - H2, HY + 2, 1, FACE, A2.skinL);                 // 左颊受光（光自左上）
+      P(cx + H2, HY + 2, 1, FACE, A2.skinD);                 // 右颊背光
+      /* ⚠️ 五官一律以 HY（会随 bob 起伏）为基准，**不能用 TOP 绝对行号**：
+         b=1 时脸整体下移 1px，五官若留在原地就顶到刘海线上、嘴跑到眼睛下格，
+         整张脸糊成一条黑带（sprite.py 的"头块刚性"探针会实测出来）。 */
+      const EY = HY + 2 + (FACE >= 5 ? 2 : 1);               // 眼睛所在行
+      P(cx - 2, EY, 1, 1, A2.hairD);                         // 左眼
+      P(cx + 1, EY, 1, 1, A2.hairD);                         // 右眼（间距 2px）
+      if (FACE >= 5) P(cx, EY + 1, 1, 1, A2.skinD);          // 鼻影（脸够高才放得下）
+      P(cx - 1, HY + FACE, 3, 1, shade(A2.skinD, -0.28));    // 嘴（脸的倒数第二行）
+      P(cx - H2 + 1, HY + FACE + 1, HW - 2, 1, A2.skinD);    // 下颌收边（脸的最后一行）
+    }
+    /* ---------- 躯干（胸宽 9 → 腰宽 7 → 衣摆） ---------- */
+    function torso(back) {
+      P(cx - 4, ty, 9, 1, A2.coatL);                         // 肩顶受光
+      const chest = Math.max(2, TORSO - 3);
+      P(cx - 4, ty + 1, 9, chest, A2.coat);                  // 胸
+      P(cx - 3, ty + 1 + chest, 7, TORSO - 1 - chest, A2.coat);   // 腰（左右各收 1px）
+      P(cx - 4, ty + 1, 2, TORSO - 1, A2.coatL);             // 左侧受光面
+      P(cx + 3, ty + 1, 1, TORSO - 1, A2.coatD);             // 右侧背光面
+      P(cx - 4, ty + chest, 9, 1, "rgba(0,0,0,0.13)");       // 胸腰分界
+      P(cx - 3, ty + TORSO - 1, 7, 1, A2.coatD);             // 衣摆（压实腰线，与裤头对齐）
+      if (back) {
+        P(cx - 3, ty + 1, 7, TORSO - 4, A2.pack);            // 书包
+        P(cx - 3, ty + 1, 7, 1, A2.packL);
+        P(cx + 2, ty + 1, 1, TORSO - 4, A2.packD);
+        P(cx - 2, ty - 1, 5, 1, "rgba(0,0,0,0.26)");         // 背带压肩
+      } else {
+        P(cx, ty + 1, 1, TORSO - 2, A2.coatD);               // 前襟
+        P(cx - 2, ty + chest + 2, 4, 1, A2.coatD);           // 口袋线
+      }
+    }
+    /* ---------- 手臂（2px，肘内收 1px），左右反相摆动 ---------- */
+    function arms(sw, back) {
+      const aL = ty + 1 + sw, aR = ty + 1 + (sw ? 0 : 1);
+      P(cx - 6, aL, 2, ARMR, back ? A2.coat : A2.coatL);     // 左臂（受光侧）
+      P(cx - 6, aL + ((ARMR / 2) | 0), 1, 1, A2.coatD);      // 肘
+      P(cx - 6, aL + ARMR, 2, 2, A2.skin);                   // 左手
+      P(cx + 5, aR, 2, ARMR, A2.coatD);                      // 右臂（背光侧）
+      P(cx + 6, aR + ((ARMR / 2) | 0), 1, 1, A2.hairD);      // 肘
+      P(cx + 5, aR + ARMR, 2, 2, A2.skinD);                  // 右手
+    }
+    /* ---------- 腿（大腿 → 膝 → 小腿 → 鞋）----------
+       fl: 0 并立 / 1 抬左腿 / 2 抬右腿。抬腿 = 小腿与鞋整体上移 1px（在后的那条腿离镜头更远）。
+       spread: 接触帧两腿各外移 1px —— 正背面看"迈步"只能靠这个（前后是看不出来的）。
+       ⚠️ 小腿的**起点必须跟着上移到 knee**。老写法是"大腿缩短 1px、小腿仍从 KNEE 起"，
+          会在 KNEE-1 行留一条 1px 空洞 —— 描边会把这个洞填成一圈深色，肉眼看是腿中段断了一格。
+          现在大腿定长、小腿从 knee 起严丝合缝，膝线**显式画**出来（不再靠缝隙让描边去填）。 */
+    function legs(fl, spread) {
+      function one(x, shx, edge, edgeCol, up) {
+        const knee = KNEE - up, bot = SHOE_TOP - up;
+        P(x, ly, 3, KNEE - ly, A2.pant);                 // 大腿（定长，到 KNEE-1）
+        P(x + edge, ly, 1, KNEE - ly, edgeCol);          // 受光 / 背光边
+        P(x, ly, 3, 1, "rgba(0,0,0,0.18)");              // 胯下遮蔽
+        P(x, knee, 3, bot - knee, A2.pant);              // 小腿
+        P(x, knee, 3, 1, shade(A2.pant, -0.20));         // 膝线
+        P(shx, bot, 4, 2, A2.shoe);                      // 鞋（比腿宽 1px：脚是横的）
+        P(shx, bot, 4, 1, A2.shoeL);
+      }
+      const d = spread ? 1 : 0;
+      one(cx - 3 - d, cx - 4 - d, 0, A2.pantL, fl === 1 ? 1 : 0);   // 左腿（受光侧，亮边在左）
+      one(cx + 1 + d, cx + 1 + d, 2, A2.pantD, fl === 2 ? 1 : 0);   // 右腿（背光侧，暗边在右）
+    }
+    /* ---------- 侧视：额头-鼻-下巴的台阶 + 迈步的前后腿交叉 ----------
+       mode: 0 并立 / 1 左腿跨在前 / 2 右腿跨在前。侧面看不到左右，只有"前后"：
+       跨步靠**两条腿的横向错位**表达（前腿短 1px 显得更远、后腿长 1px 是蹬地踩实），
+       所以 mode 1/2 的差别不是几何而是**亮暗边换边**——哪条腿在前，亮边就跟到哪条腿上。
+       并立帧（mode 0）两腿重叠在同一列，这时由 sw 决定亮边露在哪一侧：
+       1 帧与 3 帧的**像素差别就只有这个**（不然两帧完全相同，4 帧白给一帧）。 */
+    function side(mode, sw) {
+      const s = mode === 0 ? 2 : 0;                      // 2 = 两腿并到同一列
+      const fx = cx - 3 + s, bx = cx + 1 - s;
+      const fl = mode === 1 || (mode === 0 && !sw);       // 跨在前的是不是左腿
+      const th = KNEE - ly;
+      P(fx, ly, 3, th, A2.pant);                         // 前腿（迈向前）
+      P(fx + (fl ? 0 : 2), ly, 1, th, fl ? A2.pantL : A2.pantD);
+      P(fx, KNEE, 3, SHOE_TOP - KNEE, A2.pant);
+      P(fx - 1, SHOE_TOP, 4, 2, A2.shoe);                // 前脚（脚尖朝行进方向）
+      P(fx - 1, SHOE_TOP, 4, 1, A2.shoeL);
+      P(bx, ly, 3, th + 1, A2.pant);                     // 后腿（蹬地，长 1px）
+      P(bx + (fl ? 2 : 0), ly, 1, th + 1, fl ? A2.pantD : A2.pantL);
+      P(bx, KNEE + 1, 3, SHOE_TOP - KNEE - 1, A2.pant);
+      P(bx, SHOE_TOP, 4, 2, A2.shoe);                    // 后脚
+      P(bx, SHOE_TOP, 4, 1, A2.shoeL);
+    }
+    /* ---------- 侧视的头与躯干（与相位无关，抽出来只为让 side() 读起来是"人"不是"色块"） ---------- */
+    function sideBody(sw) {
+      P(cx - H2 + 1, HY, HW - 2, 1, A2.hairL);
+      P(cx - H2, HY + 1, HW, 1, A2.hair);
+      P(cx - H2, HY + 2, HW, HH - 2, A2.skin);
+      P(cx + 1, HY + 2, 3, HH - 2, A2.hair);                 // 后脑
+      P(cx + H2, HY + 2, 1, HH - 2, A2.hairD);
+      P(cx - H2, HY + 2, H2 + 1, 1, A2.hair);                // 刘海压额（额头有台阶）
+      const EY = HY + 2 + (FACE >= 5 ? 2 : 1);               // 同正面：五官必须跟着 HY 走
+      P(cx - 2, EY, 1, 1, A2.hairD);                         // 眼
+      P(cx - H2, EY - 1, 1, 1, A2.skinL);                    // 额头受光
+      P(cx - H2, EY + 1, 1, 1, A2.skinL);                    // 鼻尖受光（侧脸第二个台阶）
+      P(cx - H2, HY + FACE, 2, 1, A2.skinD);                 // 下巴
+      P(cx - 3, ty, 6, 1, A2.coatL);                         // 肩顶
+      P(cx - 3, ty + 1, 6, TORSO - 1, A2.coat);              // 侧视厚度 6px（正/背面 9px）
+      P(cx - 3, ty + 1, 1, TORSO - 1, A2.coatL);             // 胸前受光
+      P(cx + 2, ty + 1, 1, TORSO - 1, A2.coatD);             // 后背背光
+      P(cx - 3, ty + TORSO - 1, 6, 1, A2.coatD);             // 衣摆
+      P(cx + 1, ty + 1, 3, TORSO - 3, A2.pack);              // 书包（侧视露在背后）
+      P(cx + 3, ty + 1, 1, TORSO - 3, A2.packD);
+      P(cx + 1, ty + 1, 3, 1, A2.packL);
+      /* ⚠️ 侧视摆臂**故意摆 2px**（正/背面只有 1px）：侧视的"通过帧"在几何上近乎对称，
+         两帧只能靠亮暗边换边 + 手臂位置区分，摆 1px 时两帧差异只有 ~20 像素、几乎看不出。
+         侧视里手臂是唯一能大幅表达节奏的部位，摆大一点整个步态才读得出来。 */
+      const ao = sw ? 2 : 0;
+      P(cx - 4, ty + 2 + ao, 2, ARMR, A2.coatL);             // 前臂摆到身前
+      P(cx - 4, ty + 2 + ao + ARMR, 2, 2, A2.skin);          // 手
+    }
+
+    if (dir === "up")        { head(false); torso(true);  arms(F.sw, true);  legs(F.fl, F.spread); }
+    else if (dir === "down") { head(true);  torso(false); arms(F.sw, false); legs(F.fl, F.spread); }
+    /* ⚠️ 顺序不能反：先头/躯干再腿，腿压在躯干上沿 —— 反过来衣摆会盖住大腿根。 */
+    else                     { sideBody(F.sw); side(F.m, F.sw); }
+
+    /* --- 后处理：镜像 → 描边 → 接地影（唯一一条出口）---
+       ⚠️ 镜像后必须复位变换（flipH 的 translate+scale 留在 context 上），
+       否则描边和接地影都会被**再镜像一次** —— 影子跑到左下（demo 现版朝右精灵就中招）。 */
+    let out = c;
+    if (dir === "right") { out = flipH(c); out.getContext("2d").setTransform(1, 0, 0, 1, 0, 0); }
+    outlineSprite(out, 0.45);
+    /* 接地影：朝右下（与树/楼/灌木同向，偏移 +1.5）。
+       ⚠️ 必须在描边之后画 —— 否则影子会被描一圈边。
+       ⚠️ 几何是量出来的，不是拍的：足迹必须落在 x6..16 / y27..29 内。
+          试过 (cx+3, rx=8)，会铺到 x4..20 —— 右端被画布硬切，
+          y29 在最右列留下一排 α54 的实心影子（肉眼是一条竖刀口）。 */
+    shadowBlob(out.getContext("2d"), cx + 2, gy + 1, 5, 2, 0.46, 3);
+    return out;
+  };
+}
+const makeChar = buildChar(6);       // A 档：头 6px（4.3 头身）
+
+/* 缓存键就是 dir + step。step 从布尔扩到 0..5 之后键自动变成 6 个相位，
+   四向 × 6 = 24 张，仍是一次性烘焙（每张 18×30，总共不到 13 KB）。 */
+const _chars = Object.create(null);
+function charSprite(dir, step) {
+  const k = dir + step;
+  if (!_chars[k]) _chars[k] = makeChar(dir, step);
+  return _chars[k];
+}
+
+/* =========================================================
+   6. 场景装配
+   ---------------------------------------------------------
+   ⚠️ solids / props 必须**先声明**再烘焙地面 —— 4.6 的围墙会把碰撞盒
+      直接推进 solids，而 buildGround() 里就调 paintWalls()。
+   ========================================================= */
+const solids = [];                           // 碰撞盒（世界坐标 AABB）
+const props  = [];                           // 可绘制物，最终按 baseY 排序
+
+/* `tag` 透传（可选）：目前只有树带 `"tree"`，供离线探针 props_probe.py 区分
+   「树」与「路灯」—— 路灯 32×84 也是细高精灵，按尺寸判会误判。 */
+function addProp(s)                      { props.push({ img: s.canvas, ax: s.ax, ay: s.ay, x: s.x, y: s.y, baseY: s.y, tag: s.tag }); }
+function addSolid(cx, by, w, d)          { solids.push({ x: cx - w / 2, y: by - d, w: w, h: d }); }
+function cellAt(x, y)                    { return CELLK[(((y / CELL) | 0) * NW) + ((x / CELL) | 0)] || 0; }
+function cellAtSafe(x, y) {
+  const cx = (x / CELL) | 0, cy = (y / CELL) | 0;
+  if (cx < 0 || cy < 0 || cx >= NW || cy >= NH) return 0;
+  return CELLK[cy * NW + cx];
+}
+function ptBlocked(x, y, hw, hh) {
+  hw = hw || 7; hh = hh || 5;
+  for (const s of solids)
+    if (x + hw > s.x && x - hw < s.x + s.w && y + hh > s.y && y - hh < s.y + s.h) return true;
+  return false;
+}
+
+/* --- 6.0 占用图 → 路网 → 地面（顺序不能动） --- */
+buildOcc();
+classifyFree(distanceTransform());
+stampLibraryPlaza();                         // 图书馆三角广场：从建筑里抠回可走
+const groundCanvas = buildGround();
+
+/* --- 6.0.1 地面 mip 金字塔（缩放用）→ **已挪到 §6.6d** ---
+   ÷2 / ÷4 / ÷8 各一层。缩小时取的层级 L = floor(log2(1/zoom))，保证 2^L <= 1/zoom：
+   于是**永远只做「1:1 或轻微缩小」，绝不放大 mip**（放大 mip 会糊）。
+   ⚠️ 位置不能再回到这里：§6.6d 的树下落叶要**最后**往地面画布上补像素，
+   而 mip 是那一刻从地面画布降采样出来的 —— 早一步建，落叶就进不去 mip。 */
+
+/* --- 6.0.2 缩放档位 --- */
+function mipLevelFor(z) {
+  if (z >= 1) return 0;
+  return Math.min(3, Math.max(0, Math.floor(Math.log2(1 / z))));
+}
+/* ⚠️ 这里写了 player.speed，所以**只能在主循环段声明 player 之后**调用（幂等，重复调无副作用）。 */
+function setZoom(i) {
+  zoomI = Math.max(0, Math.min(ZOOM_STEPS.length - 1, i));
+  zoom  = ZOOM_STEPS[zoomI];
+  viewW = VIEW_W / zoom;
+  viewH = VIEW_H / zoom;
+  /* 屏幕速度恒定：≥1× 时按倍率补偿，否则 4× 下 200 世界px/s = 800 屏px/s，0.6 秒横穿屏幕。
+     <1× 不补偿 —— 世界速度恒定，缩小时走得慢是符合直觉的。 */
+  player.speed = BASE_SPEED / Math.max(1, zoom);
+  /* 读数与滑条同步（滑条位置 = 档位下标）。滑条是离散的，用下标而不是倍率，
+     这样每一像素的拖动距离都对应"一档"，不会出现拖了没反应的空档。 */
+  const el = document.getElementById("zoomlv");
+  if (el) el.textContent = zoomI === 0 ? "全图"
+                                : zoom >= 1 ? (zoom + "×")
+                                : (Math.round(zoom * 100) + "%");
+  const rg = document.getElementById("zrng");
+  if (rg && Number(rg.value) !== zoomI) rg.value = zoomI;
+}
+
+/* --- 6.1 建筑样式：按名字归类 --- */
+const PALETTE = [
+  { wall: "#d2c9b4", roof: "#6c7f8c", glass: "#8FB6D9", door: "#5a3f2a" },   // 教学
+  { wall: "#d6c5ac", roof: "#7b5d4e", glass: "#9ec0dc", door: "#5a3f2a" },   // 宿舍
+  { wall: "#dbd0b8", roof: "#9a6a3e", glass: "#a8c8e0", door: "#6b4a2f" },   // 会堂 / 食堂
+  { wall: "#c8ced4", roof: "#5f7f8a", glass: "#8FB6D9", door: "#4a5560" },   // 实验 / 场馆
+  { wall: "#cfc6b2", roof: "#7d6a52", glass: "#a8c8e0", door: "#5a3f2a" }    // 其它
+];
+function styleOf(name) {
+  if (/宿舍/.test(name))                          return { p: 1, floors: 6 };
+  if (/食堂|餐厅/.test(name))                     return { p: 2, floors: 2 };
+  if (/会堂|校史馆|积秀园|服务中心|中心$/.test(name)) return { p: 2, floors: 2 };
+  if (/体育馆|实验|馆$/.test(name))               return { p: 3, floors: 3 };
+  if (/教学楼/.test(name))                        return { p: 0, floors: 4 };
+  return { p: 4, floors: 3 };
+}
+
+/* --- 6.2 批量生成建筑 --- */
+let bSeed = 7001;
+for (const e of CAMPUS) {
+  const name = e[0], kind = e[1];
+  if (kind === "siyuan" || kind === "library") continue;      // 这两栋单独处理
+  if (kind !== "bld") continue;
+  const R = zoneRect(e);
+  if (R.w < 40 || R.h < 40) continue;
+  const st = styleOf(name);
+  const pal = PALETTE[st.p];
+  const b = makeBuilding({
+    name: name,                                 // 屋顶正前方挂楼名牌（§3.0）
+    w: R.w, depth: R.h, floors: st.floors,
+    wall: pal.wall, roof: pal.roof, glass: pal.glass, door: pal.door,
+    doorSide: (bSeed % 2) ? 0.18 : -0.18,
+    seed: bSeed++
+  });
+  const ax = R.x + R.w / 2, ay = R.y + R.h;
+  addProp(Object.assign({}, b, { x: ax, y: ay }));
+  /* 碰撞：只取临街那一层（深度 34），保证能绕楼走 */
+  addSolid(ax, ay, b.w - 14, 34);
+}
+
+/* --- 6.3 思源楼：标尺原点，位置由 PPT 精确给出 --- */
+{
+  const e = CAMPUS.find(c => c[1] === "siyuan");
+  const R = zoneRect(e);
+  /* ⚠️ scale 是硬约束（交接 §3.1「scale:1.5 冻结」），也是标尺本身：
+     源码 BL=60→BR=360 宽 300 逻辑像素 × 1.5 = 450 世界像素 = 50 m。
+     改成 2.25 会让楼宽变 675 px，既破坏 §4.1 的推导链，也与 PPT 矩形对不上。 */
+  const ax = R.x + 450 / 2, ay = R.y + IX(e[5]);            // 2023.9, 1431.6
+  const s = makeSiyuan({ scale: 1.5 });                      // 300px → 450px
+  addProp(Object.assign({}, s, { x: ax, y: ay }));
+  addSolid(ax, ay, 450, 34);
+}
+
+/* --- 6.4 图书馆（切角体 + 三角广场） --- */
+{
+  const s = makeLibrary({ seed: 8801 });
+  addProp(Object.assign({}, s, { x: LIB.x + LIB.w / 2, y: LIB.y + LIB.h }));
+  /* 两个 AABB 拼成 L 形，缺的正是三角广场那一角 */
+  const cutX = LIB.w * 0.46, cutY = LIB.h * 0.42;
+  addSolid(LIB.x + LIB.w / 2, LIB.y + LIB.h - cutY, LIB.w - 14, 34);
+  addSolid(LIB.x + cutX + (LIB.w - cutX) / 2, LIB.y + LIB.h, LIB.w - cutX - 14, 34);
+}
+
+/* --- 6.5 围墙 + 校门 --- */
+buildGates();
+
+/* --- 6.6 绿化 / 路灯 / 长椅 / 花坛 / 垃圾桶 / 自行车 --- */
+const rngS = makeRng(31415926);
+function scatter() {
+  let n = 0;
+  for (let gy = 80; gy < WORLD_H - 60; gy += 92) {
+    for (let gx = 80; gx < WORLD_W - 60; gx += 92) {
+      const x = gx + (rngS() - 0.5) * 54, y = gy + (rngS() - 0.5) * 54;
+      if (!insideBoundary(x, y) || distToBound(x, y) < 30) continue;
+      if (ptBlocked(x, y, 13, 8)) continue;
+      const k = cellAtSafe(x, y);
+      const r = rngS();
+      n++;
+      /* ⚠️ 上面 `rngS()` 的调用次数必须逐字不变（每点一次，见 §6.6 头部）。
+         把 makeTree 换成 anyTree 只是**换分发**，物种由 seed 的数值决定、
+         不摇随机 —— 所以灯 / 灌木 / 长椅的分布逐像素不变。 */
+      if (k === K.GRASS) {
+        if (r < 0.34) addProp(Object.assign({}, anyTree((n * 131 + 11) | 0, x, y), { x: x, y: y }));
+        else if (r < 0.54) addProp(Object.assign({}, makeBush((n * 977 + 7) | 0), { x: x, y: y }));
+        else if (r < 0.60) addProp(Object.assign({}, makeFlowerBed((n * 89 + 3) | 0), { x: x, y: y }));
+        else if (r < 0.64) addProp(Object.assign({}, makeBench((n * 71 + 5) | 0), { x: x, y: y }));
+        else if (r < 0.67) addProp(Object.assign({}, makeBin((n * 53 + 2) | 0), { x: x, y: y }));
+      } else if (k === K.PLAZA) {
+        if (r < 0.16) addProp(Object.assign({}, anyTree((n * 131 + 23) | 0, x, y), { x: x, y: y }));
+        else if (r < 0.30) addProp(Object.assign({}, makeBench((n * 71 + 13) | 0), { x: x, y: y }));
+        else if (r < 0.36) addProp(Object.assign({}, makeBin((n * 53 + 17) | 0), { x: x, y: y }));
+      } else if (k === K.ROAD || k === K.FREE) {
+        if (r < 0.16) addProp(Object.assign({}, makeLamp(), { x: x, y: y }));
+        else if (r < 0.22) addProp(Object.assign({}, anyTree((n * 131 + 31) | 0, x, y), { x: x, y: y }));
+        /* ⚠️ 用户要求：画面里不出现自行车 —— 原 `else if (r < 0.25) makeBike(...)` 已删除。
+           删除**不扰动随机序列**：每个候选点只取一次 rngS()（上面的 `const r`），
+           分支本身不消耗随机数，所以灯/树的分布逐像素不变，只是原先中签的那 ~3% 点位留空。
+           demo 的 nature 段（805-1049）里 makeBike 的定义仍原样保留 —— 那是逐字节切片，
+           一行不能改 —— 但产物里已无任何调用点，属死代码。 */
+      }
+    }
+  }
+  /* 图书馆三角广场中央那棵大树（呼应参考图里的圆树池） */
+  const tx = LIB.x + LIB_CUTX * 0.30, ty = LIB.y + LIB.h - LIB_CUTY * 0.30;
+  addProp(Object.assign({}, makeTree(4242), { x: tx, y: ty, tag: "tree" }));
+}
+scatter();
+
+/* --- 6.6b 行道树 / 广场树阵（parts\47_plants.js） ---
+   与 scatter() 完全隔离：规则点阵 + 自己的 makeRng。scatter() 的 rngS
+   序列一个数都没动，所以草地上既有的灯 / 灌木 / 花坛位置逐像素不变。 */
+const rowTrees = plantRows();
+
+/* --- 6.6c 道具／树的视觉冲突清理 ---
+   散射是"各摆各的"：树和垃圾桶各自按网格点撒，偶尔出现「垃圾桶的接地线整个落在
+   树冠像素里、而树又排在它前面」—— 看起来就是垃圾桶挂在树尖上。
+   ⚠️ 三条要点：
+     ① 只删**小道具**（桶 / 椅 / 花坛 / 灯），树一律保留 —— 树是这一项的主角。
+     ② 判据必须看**像素**，不能看包围盒：包围盒相交的 22 对里大半是"长椅站在树影里"
+        "鸭子游在柳荫下"，都是对的（第一版按包围盒删，误伤一大片）。
+     ③ 必须要求**树排在道具前面**（baseY 更大 = 更靠南），并且道具的接地线要明显地
+        在树的北侧（≥40px）—— 否则"道具挨着树站着、脚被树干挡一点"是正常遮挡，
+        删掉反而是损失。
+   必须在 §6.7 鸭子下水**之前**跑：鸭子是 props 里的引用，删了会让鸭子消失。 */
+function footOnTree(p, t) {
+  const g = t.img.getContext("2d");
+  /* 道具接地线（锚点行上下各 1px）换算到树的画布坐标 */
+  const x0 = Math.round(p.x - (t.x - t.ax) - p.img.width / 2);
+  const y0 = Math.round(p.y - (t.y - t.ay)) - 1;
+  if (x0 + p.img.width < 0 || y0 + 3 < 0 || x0 >= t.img.width || y0 >= t.img.height) return false;
+  const sx = Math.max(0, x0), sy = Math.max(0, y0);
+  const sw = Math.min(t.img.width, x0 + p.img.width) - sx;
+  const sh = Math.min(t.img.height, y0 + 3) - sy;
+  if (sw <= 0 || sh <= 0) return false;
+  const d = g.getImageData(sx, sy, sw, sh).data;
+  let n = 0;
+  for (let k = 3; k < d.length; k += 4) if (d[k] > 40) n++;
+  return n >= 2;                                // 1px 擦边不算，要真盖住
+}
+function clearPropTreeClash() {
+  const keep = [];
+  let dropped = 0;
+  for (const p of props) {
+    if (p.tag) { keep.push(p); continue; }      // 树 / 鸭子：不动
+    let bad = false;
+    for (const t of props) {
+      if (t.tag !== "tree" || t.baseY <= p.baseY) continue;
+      if (p.y > t.y - 40) continue;             // 挨着站 = 正常遮挡，放行
+      if (footOnTree(p, t)) { bad = true; break; }
+    }
+    if (bad) dropped++; else keep.push(p);
+  }
+  props.length = 0;
+  for (const p of keep) props.push(p);
+  return dropped;
+}
+const clashDropped = clearPropTreeClash();
+
+/* --- 6.7 鸭子下水 --- */
+spawnDucks(makeRng(60607));
+for (const d of ducks) { d.tag = "duck"; props.push(d); }   // tag 仅供离线探针识别
+
+/* --- 6.6d 树下落花 / 落叶 + 地面 mip 金字塔 ---
+   ⚠️ 这一节**必须**排在所有 props 摆完之后（§6.6 散射 → §6.6c 冲突清理 → §6.7 鸭子）：
+   落叶要知道树在哪。而且它画的是**地面画布**，所以必须在 buildMips() 之前 ——
+   mip 是从地面画布降采样出来的，晚一步补的像素就永远进不去 mip
+   （缩小到 1/4 以下时落叶会整批消失）。 */
+/* ⚠️ 传的是 groundCanvas 的 **2d context**，不是 canvas 本身 ——
+   `px()` 第一件事就是 g.fillStyle = ...，传 canvas 进去会报
+   "g.fillRect is not a function"，而且是在**加载期**抛，整页 JS 全灭、
+   accept/verify 只打出一行静态标题（看着像"没跑"，其实是脚本死了）。 */
+const leafTrees = paintLeafFall(groundCanvas.getContext("2d"), props, makeRng(80808));
+
+(function buildMips() {
+  mips.push(groundCanvas);
+  for (let L = 1; L <= 3; L++) {
+    const p = mips[L - 1];
+    const m = mkCanvas(Math.ceil(WORLD_W / (1 << L)), Math.ceil(WORLD_H / (1 << L)));
+    const g = m.getContext("2d");
+    g.imageSmoothingEnabled = true;           // 降采样必须开平滑，否则会整行整列地丢
+    g.imageSmoothingQuality = "high";
+    g.drawImage(p, 0, 0, p.width, p.height, 0, 0, m.width, m.height);
+    mips.push(m);
+  }
+})();
+
+/* --- 6.8 出生点：南门（G2）门内，沿轴向校园里推进到第一个可走点 ---
+   ⚠️ 必须同时要求"界内 + 离墙 > 60"：门洞放行后 canWalk 在 d=0（门中心线上）
+   就是真，光判 canWalk 会把人直接生成在边界线上、半个身子在墙外。 */
+const SPAWN = (() => {
+  const G = GATES.find(g => g.id === "G2") || GATES[0];
+  for (let d = 60; d <= 480; d += 4) {
+    const y = G.y - d;
+    if (canWalk(G.x, y) && !ptBlocked(G.x, y) && insideBoundary(G.x, y) && distToBound(G.x, y) > 60)
+      return { x: G.x, y: y };
+  }
+  return { x: G.x, y: G.y - 200 };
+})();
+
+/* --- 6.9 HUD：最近地标 + 坐标 --- */
+const _hudEl = document.getElementById("hudpos");
+const _landmarks = CAMPUS.filter(e => e[1] === "bld" || e[1] === "siyuan" || e[1] === "library")
+  .map(e => ({ n: e[0], x: IX(e[2] + e[4] / 2), y: IX(e[3] + e[5]) }));
+function hudTick() {
+  if (!_hudEl) return;
+  let best = null, bd = 1e9;
+  for (const L of _landmarks) {
+    const d = (L.x - player.x) ** 2 + (L.y - player.y) ** 2;
+    if (d < bd) { bd = d; best = L; }
+  }
+  _hudEl.textContent = (best ? best.n + "  " : "")
+    + "(" + (player.x | 0) + ", " + (player.y | 0) + ")";
+}
+
+/* --- 6.10 自检（控制台可查） --- */
+console.log("[像素校园] 建筑 " + CAMPUS.filter(e => e[1] === "bld").length
+  + " 栋 · 标牌 " + Object.keys(_signCache).length + " 款（" + SIGN_FS + "px）"
+  + " · 行道树 " + rowTrees
+  + " · 冲突清理 " + clashDropped
+  + " · 落叶树 " + leafTrees
+  + " · 道具 " + props.length + " · 碰撞盒 " + solids.length
+  + " · 世界 " + WORLD_W + "×" + WORLD_H + " · 出生 (" + (SPAWN.x | 0) + ", " + (SPAWN.y | 0) + ")");
+
+/* =========================================================
+   7. 相机 / 输入 / 主循环
+   ========================================================= */
+const cv = document.getElementById("cv");
+cv.width = VIEW_W; cv.height = VIEW_H;
+const ctx = cv.getContext("2d");
+
+function resize() {                       // 只做整数倍放大，保证像素不糊
+  const s = Math.max(1, Math.floor(Math.min(window.innerWidth / VIEW_W, window.innerHeight / VIEW_H)));
+  cv.style.width = (VIEW_W * s) + "px";
+  cv.style.height = (VIEW_H * s) + "px";
+}
+window.addEventListener("resize", resize);
+resize();
+
+const player = { x: SPAWN.x, y: SPAWN.y, dir: "down", step: 0, idle: 0, walk: 0, speed: BASE_SPEED };
+const cam = { x: 0, y: 0 };
+setZoom(zoomI);                            // 缩放档位初始化（默认 1×）
+
+const keys = Object.create(null);
+const WATCHED = { arrowleft: 1, arrowright: 1, arrowup: 1, arrowdown: 1, a: 1, d: 1, w: 1, s: 1 };
+window.addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+  if (WATCHED[k]) { keys[k] = 1; e.preventDefault(); }
+});
+window.addEventListener("keyup", e => {
+  const k = e.key.toLowerCase();
+  if (WATCHED[k]) { keys[k] = 0; e.preventDefault(); }
+});
+window.addEventListener("blur", () => { for (const k in keys) keys[k] = 0; });
+
+/* 缩放输入。新挂监听而不是改上面的按键处理 —— 那段的 WATCHED 只管方向键，
+   而且 "+" 需要 Shift、各键盘布局不一致，单列一份更清楚。 */
+const _ZIN  = { "+": 1, "=": 1, "]": 1 };
+const _ZOUT = { "-": 1, "_": 1, "[": 1 };
+window.addEventListener("wheel", e => {
+  e.preventDefault();                                  // 阻止页面滚动，必须 passive:false
+  setZoom(zoomI + (e.deltaY < 0 ? 1 : -1));
+}, { passive: false });
+window.addEventListener("keydown", e => {
+  const k = e.key;
+  if      (_ZIN[k])    { setZoom(zoomI + 1); e.preventDefault(); }
+  else if (_ZOUT[k])   { setZoom(zoomI - 1); e.preventDefault(); }
+  else if (k === "0")  { setZoom(0);                     e.preventDefault(); }  // 看全图
+  else if (k === "1")  { setZoom(ZOOM_STEPS.indexOf(1)); e.preventDefault(); }  // 回原尺寸
+});
+for (const b of document.querySelectorAll("#zoom button"))
+  b.addEventListener("click", () => setZoom(zoomI + Number(b.dataset.z)));
+
+/* 滑条：位置 = 档位下标，step=1 → 拖动自动吸附到档位 */
+const _rng = document.getElementById("zrng");
+if (_rng) {
+  _rng.max = ZOOM_STEPS.length - 1;
+  _rng.value = zoomI;
+  _rng.addEventListener("input", () => setZoom(Number(_rng.value)));
+  /* ⚠️ 滑条聚焦时方向键要调缩放、不能同时去推人物：原生 range 响应方向键，
+     事件还会冒泡到 window 上那个移动监听。这里掐断传播，两者就不再打架。
+     点一下画布即可把焦点还给人物操作。 */
+  _rng.addEventListener("keydown", e => {
+    if (/^(Arrow|Home|End|Page)/.test(e.key)) e.stopPropagation();
+  });
+}
+
+function blocked(nx, ny) {                // 只测脚下一小块，避免"悬空卡住"
+  const hw = 6, hh = 4;
+  const x0 = nx - hw, x1 = nx + hw, y0 = ny - hh, y1 = ny + hh;
+  for (const s of solids)
+    if (x1 > s.x && x0 < s.x + s.w && y1 > s.y && y0 < s.y + s.h) return true;
+  return false;
+}
+
+function update(dt) {
+  let dx = 0, dy = 0;
+  if (keys.arrowleft || keys.a) dx -= 1;
+  if (keys.arrowright || keys.d) dx += 1;
+  if (keys.arrowup || keys.w) dy -= 1;
+  if (keys.arrowdown || keys.s) dy += 1;
+  if (dx || dy) {
+    const len = Math.hypot(dx, dy);
+    dx /= len; dy /= len;
+    if (Math.abs(dx) > Math.abs(dy)) player.dir = dx < 0 ? "left" : "right";
+    else player.dir = dy < 0 ? "up" : "down";
+    const d = player.speed * dt;
+    const nx = clamp(player.x + dx * d, 14, WORLD_W - 14);
+    const ny = clamp(player.y + dy * d, 60, WORLD_H - 16);
+    // 分轴滑动：撞墙能贴着走；canWalk 兜底（边界多边形 + 离墙 11px）
+    const _wx = player.x, _wy = player.y;              // 位移前的位置
+    if (!blocked(nx, player.y) && canWalk(nx, player.y)) player.x = nx;
+    if (!blocked(player.x, ny) && canWalk(player.x, ny)) player.y = ny;
+    /* 步态按**实际位移**推进，不是按时间 ——
+       ⚠️ 原版是 `player.walk += dt`：顶着墙走时它照常累加，人会原地踏步
+          （贴墙滑行时尤其明显）。改成累加碰撞后的真实位移，顶墙 → 位移 0 → 脚立刻停。
+       一个完整步态周期 = WALK_STRIDE 世界像素（4 帧 = 左右各一步），
+       所以档位越高（世界速度越慢）步频越低，屏幕上的节奏始终对得上。 */
+    player.idle = 0;
+    player.walk += Math.hypot(player.x - _wx, player.y - _wy);
+    player.step = (Math.floor(player.walk / WALK_STRIDE * WALK_FRAMES)) & (WALK_FRAMES - 1);
+  } else {
+    player.walk = 0;
+    player.idle = (player.idle || 0) + dt;              // 待机呼吸：慢速两帧
+    player.step = IDLE_BASE + (((player.idle * IDLE_HZ) | 0) & (IDLE_FRAMES - 1));
+  }
+  /* 可见世界尺寸随 zoom 变。⚠️ FIT 档下 viewH = 270/0.09217 = 2929.47 > WORLD_H = 2929，
+     上界 WORLD_H - viewH 是负数 → clamp 会返回负上界、把相机推到界外。
+     所以上界一律 max(0, …)：视口比世界大时相机老实待在原点。 */
+  cam.x = clamp(player.x - viewW / 2,    0, Math.max(0, WORLD_W - viewW));
+  cam.y = clamp(player.y - viewH * 0.62, 0, Math.max(0, WORLD_H - viewH));
+  animateWater(dt);                         // 水波 / 鱼影 / 鸭子
+  hudTick();                                // HUD：最近地标 + 坐标
+}
+
+const drawList = [];
+function render() {
+  const ox = Math.round(cam.x), oy = Math.round(cam.y);
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, VIEW_W, VIEW_H);
+  /* 地面取 mip。L 保证 2^L <= 1/zoom ⇒ 只做「1:1 或轻微缩小」，绝不放大 mip（会糊）。
+     源矩形按 WORLD 边界夹一次：FIT 档 viewH 比 WORLD_H 大 0.47px，不夹会在底边漏透明缝。
+     crisp（整数放大 / 精确 mip）关平滑走最近邻，其余开平滑。 */
+  const L = mipLevelFor(zoom), s = 1 << L;
+  const mw = mips[L].width, mh = mips[L].height;
+  const msw = Math.min(viewW, WORLD_W - ox) / s, msh = Math.min(viewH, WORLD_H - oy) / s;
+  const crisp = zoom >= 1 || zoom * s === 1;
+  let mox = ox / s, moy = oy / s;
+  if (crisp) { mox = Math.round(mox); moy = Math.round(moy); }   // 精确贴图：对齐 mip 网格
+  mox = Math.max(0, Math.min(mox, mw - msw));
+  moy = Math.max(0, Math.min(moy, mh - msh));
+  ctx.imageSmoothingEnabled = !crisp;
+  ctx.drawImage(mips[L], mox, moy, msw, msh, 0, 0, msw * s * zoom, msh * s * zoom);
+  drawWater(ox, oy, zoom);                  // 动态水层：地面之后、道具之前
+
+  drawList.length = 0;
+  for (const p of props) {                        // 视口裁剪
+    const sx = p.x - p.ax, sy = p.y - p.ay;
+    if (sx > ox + viewW || sx + p.img.width < ox) continue;      // 世界量纲 vs 世界视口
+    if (sy > oy + viewH || sy + p.img.height < oy) continue;
+    /* 缩得比 1.5 背板像素还小的道具（FIT 档下的树/花坛/垃圾桶）画出来也是亚像素点，
+       白费力气还可能因点采样忽隐忽现，直接过滤掉。 */
+    if (Math.max(p.img.width, p.img.height) * zoom < 1.5) continue;
+    drawList.push(p);
+  }
+  drawList.push({ img: charSprite(player.dir, player.step), ax: CH_AX, ay: CH_AY, x: player.x, y: player.y, baseY: player.y });
+  drawList.sort((a, b) => a.baseY - b.baseY);      // 3/4 视角：按落地线排序即得到正确遮挡
+  /* ⚠️ 取整必须在**背板空间**：先 round 世界坐标再乘 zoom，会把物体相对间距量化到
+     1/zoom 世界像素的网格上。宽高也必须显式传，否则 drawImage 不会放大。
+     缩小时开平滑，否则小精灵会被点采样整帧"抽没"（角色只有 1~2 背板像素宽）。 */
+  ctx.imageSmoothingEnabled = zoom < 1;
+  for (const it of drawList)
+    ctx.drawImage(it.img, Math.round((it.x - it.ax - ox) * zoom), Math.round((it.y - it.ay - oy) * zoom),
+                  it.img.width * zoom, it.img.height * zoom);
+}
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>

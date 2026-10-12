@@ -1,0 +1,2 @@
+onnxruntime-web 1.30.0（npm registry tarball 里抽的 5 个文件：webgpu bundle + 两套 wasm：jsep=有 SharedArrayBuffer 时用、asyncify=没有时用）
+重新落地：python tools/get_onnx_assets.py

@@ -1,0 +1,368 @@
+================================================================================
+  像素校园 · 服务器部署说明
+--------------------------------------------------------------------------------
+  版本：最终打包版（2026-10-12）
+  仓库：https://github.com/24301001/campus_game        分支：main（隔离分支）
+  原 README：本仓库根目录的 README.md 保持原样，一个字没动（那份讲的是地图演示）。
+             本文档讲的是「怎么把这整套东西装到一台服务器上跑起来」。
+================================================================================
+
+
+〖零〗30 秒版：这套东西到底是什么
+--------------------------------------------------------------------------------
+它不是一个大网站，是「一张网页地图 + 四个小服务」。
+
+    · 地图        一个单文件 HTML（像素校园_全校地图.html），玩家在校园里走动
+    · 算法哥      刷题平台          后端 8081（Java）+ 前端 3000（Vue）
+    · 学霸姐      教材问答          8010（Python）
+    · 保安老丁    保卫处            8000（Python）
+    · 食堂阿姨    校园食堂          8020（Python）
+
+地图本身不提供内容，它只是「一个壳」：走到谁跟前按 C，就把那个服务塞进抽屉里。
+
+⭐⭐ 最要紧的一条：四个服务必须和地图**同源**（同一个 域名:端口 出去）。
+   同源才能做到三件事：登录一次四处免登、按 Esc 关掉抽屉、探测服务在不在。
+   所以对外**只能开一个口**，中间站一个「总管」把四条路转进去：
+
+       /api  → 8081（刷题平台后端）
+       /xbg  → 8010（学霸姐）
+       /ld   → 8000（老丁）
+       /cmr  → 8020（食堂阿姨）
+
+   这个总管，开发时用 Vite（3000 端口自带的代理），上线时用 Nginx。见〖六〗。
+
+   如果你把四个服务分别挂到四个端口直接对外，地图照样能打开、能看，
+   但"一次登录四处免登 / Esc 退出 / 教材原件下载"会全部失效。这不是 bug，是浏览器规矩。
+
+
+〖一〗仓库里有什么、没有什么
+--------------------------------------------------------------------------------
+【有】四大模块的完整代码 + 配置 + 数据 + 文档、地图源文件与构建脚本、
+      四个模块各自的 README / DEPLOY / 接口契约、Windows 一键启动器。
+
+【没有，且是故意没放】—— 这些要么是垃圾，要么换机器要重装：
+
+  少了什么                          怎么办
+  ------------------------------    --------------------------------------------
+  campus_game/tools/（MinGW 939MB） Linux 上装系统编译器：apt install build-essential
+                                    只影响"判 C/C++ 题目"，不装就只判 Java/Python
+  campus_game/backend/target/*.jar  在服务器上现编：mvn package -DskipTests
+  frontend/node_modules              npm install
+  xueba-ge/kb/index/（向量索引 85MB） 在服务器上重建：python -m kb.build（见〖五〗7）
+  各家 *.log / Chrome 探针档案 /       本来就是本机垃圾，不用管
+  _bak_* / node_modules / .venv
+
+【明文的密钥都原样放着了】（按你的要求不做占位符）。它们在哪，见〖五〗第 8 条。
+  ⚠️ 本仓库是**公开**仓库，这些口令等于公开。上线后请到各家服务商后台轮换。
+
+
+〖二〗服务器要装什么
+--------------------------------------------------------------------------------
+  必需：
+    · JDK 8           后端是 Java 8 的工程（启动器里用的是 jdk1.8.0_202）
+    · MySQL 8         库名 coding_platform，默认 3306
+    · Node.js 18+     前端构建/运行
+    · Python 3.11+    三个 Python 服务（学霸姐实测 3.13 也跑得动）
+
+  可选：
+    · g++ / build-essential   要判 C/C++ 题目才需要
+    · Nginx                   上线做统一入口（见〖六〗）
+    · Docker + Compose        想用现成的 docker-compose.yml 走容器路线
+
+  端口占用一览（五个都得留着）：
+    3000  前端（地图也从这个口出去）      8010  学霸姐
+    8081  刷题平台后端（路径前缀 /api）   8000  老丁
+    3306  MySQL                          8020  食堂阿姨
+    ⚠️ 阿姨是 8020 不是 8000 —— 8000 是老丁的地盘。
+
+
+〖三〗目录结构
+--------------------------------------------------------------------------------
+  像素校园项目总目录/
+  ├─ 部署说明.txt                    ← 本文档
+  ├─ README.md                       ← 原来那份（地图演示），未改动
+  ├─ 启动像素校园.bat                 ← Windows 一键启动（开发用；Linux 照〖四〗手动做）
+  ├─ 安装协议.bat / 卸载协议.bat       ← 只对 Windows 有意义，服务器上不用
+  ├─ 像素校园_全校地图.html            ← 地图（根目录这份是给演示页用的副本）
+  ├─ 像素校园地图项目/                 ← 地图的**权威源**在 源码/ 下
+  │    ├─ 像素校园_全校地图.html       ⭐ 这份才是源，别改别处的副本
+  │    ├─ 源码/  (_build/parts/*.js = 真正的构建源码；build.py；_deliver.py)
+  │    ├─ 预览/ 建筑物照片/            ← 资料照片
+  │    └─ README.md → 436KB 的详版说明 ／ 像素校园地图_开发交接文档.md
+  ├─ campus_game/                    ← 刷题平台（后端 Java + 前端 Vue + 数据库脚本）
+  ├─ xueba-ge/                       ← 学霸姐
+  ├─ laoding/                        ← 保安老丁
+  ├─ campus_game_cmr/                ← 食堂阿姨（aunt/ 是她的应用）
+  ├─ mvp范围功能/ 概要说明书/ 需求分析与产品设计文档/   ← 课程文档
+  └─ 像素校园_系统总体设计文档_v2.md 等
+
+
+〖四〗部署步骤（照着做）
+--------------------------------------------------------------------------------
+--- 第 0 步：拉代码 ------------------------------------------------------
+    git clone -b main https://github.com/24301001/campus_game.git
+    cd campus_game          # 下面所有命令都从这个目录出发
+
+--- 第 1 步：数据库 ------------------------------------------------------
+    mysql -uroot -p -e "CREATE DATABASE IF NOT EXISTS coding_platform
+      DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    mysql -uroot -p coding_platform < campus_game/database/coding_platform-full.sql
+
+    这是一份整库导出（表结构 + 数据 + 预设账号）。若想从空库一步步来，也可以按
+    文件名顺序导 campus_game/sql/ 下的 00-init → 13-problem-similar。
+    跑完就有两个预设账号：admin / admin123（管理员）、user / user123（普通用户）。
+
+--- 第 2 步：后端（8081） -------------------------------------------------
+    cd campus_game/backend
+    vi src/main/resources/application.yml      # 见下方"要改的几处"
+    ./mvnw package -DskipTests                 # 没有 mvnw 就用 mvn package -DskipTests
+    java -jar target/coding-platform-1.0.0.jar
+
+    application.yml 里已经填了真实值（明文）。上生产前请按你的服务器替换：
+      spring.datasource.url      默认 127.0.0.1:3306/coding_platform
+      spring.datasource.username/password    数据库账号口令
+      spring.mail.host/username/password     发注册验证邮件用；不配也能跑，
+                                             只是邮箱验证那步发不出去
+      jwt.secret                 登录令牌签名密钥，建议换成一串新的随机字符
+      agent.llm.api-key          算法哥的讲解通道；留空则他只会给确定性数据、不多说
+      agent.search.api-key       算法哥"找类似题"的联网通道；留空就不联网
+      judge.work-dir             判题临时目录，**必须存在且可写**（默认 C:/coding_judge_tmp，
+                                 Linux 上请改成 /tmp/judge 之类）
+
+    接口前缀就是 /api（server.servlet.context-path: /api），
+    所以真实地址是 http://<服务器>:8081/api/...，健康检查可以用 GET /api/...
+
+--- 第 3 步：前端（3000）+ 铺地图 -----------------------------------------
+    cp 像素校园地图项目/像素校园_全校地图.html campus_game/frontend/public/campus.html
+    cd campus_game/frontend
+    npm install
+    npm run dev                 # 开发用（3000 端口；已配好四条代理）
+
+    ⭐ 那一句 cp 不能省、也不能反向改：地图的**权威源**是 像素校园地图项目/ 下那份，
+      frontend/public/campus.html 是**生成物**（换机器、更新地图都要重拷一次）。
+      改名 campus.html 是为了绕开中文文件名的 URL 编码问题。
+
+    浏览器打开 http://<服务器>:3000/campus.html —— 这就是完整入口。
+
+--- 第 4 步：学霸姐（8010） -----------------------------------------------
+    cd xueba-ge
+    python -m venv .venv && . .venv/bin/activate
+    pip install -r requirements.txt
+    export PYTHONUTF8=1 PYTHONIOENCODING=utf-8 NO_PROXY=127.0.0.1,localhost
+    export XBG_LLM_KEY=sk-...        # 不设也行：把 config/llm.json 的 provider 改成 "stub"
+    python -m kb.build               # ⭐ 索引没进仓库，第一次必须跑（3~7 分钟）
+    python -m uvicorn backend.app:app --host 127.0.0.1 --port 8010
+
+    索引那条命令有花销说明：默认 embedding 走 API（整库约 260 万 token）。
+    不想花钱就把 config/retrieval.json 的 embedding.provider 改成 "hash"（零依赖兜底，
+    语义检索会弱一些）或 "onnx"（先跑 tools/get_onnx_assets.py 拉权重）。
+    更多细节见 xueba-ge/DEPLOY.md 与 xueba-ge/README.md §11（上公网必读）。
+
+--- 第 5 步：老丁（8000） -------------------------------------------------
+    cd laoding
+    PYTHONPATH="$PWD/server_vendor" python server/app.py
+
+    依赖已经打在 server_vendor/ 里了，**不用 pip install**。
+    他的 qwen_key.txt 在仓库里（laoding/server/qwen_key.txt）；也可以改用环境变量
+    DASHSCOPE_API_KEY，环境变量优先。没有 Key 他就用本地规则答，不会崩。
+    账号库是 laoding/server/users.db（首次运行自动建表）。
+
+--- 第 6 步：食堂阿姨（8020） ---------------------------------------------
+    cd campus_game_cmr
+    python -m venv .venv && . .venv/bin/activate
+    pip install -r aunt/requirements.txt
+    python -m uvicorn aunt.server:app --host 127.0.0.1 --port 8020
+
+    数据库默认落在 aunt/data/aunt.sqlite3；要挪地方就设环境变量：
+      export AUNT_DB_PATH=/var/lib/campus_game/aunt.sqlite3
+    DeepSeek 通道可选：export DEEPSEEK_API_KEY=...（不设也能用本地资料答）
+    ⚠️ 她要求**单个 worker**（SQLite 单写），别开多进程。
+
+--- 第 7 步：打开 --------------------------------------------------------
+    http://<服务器>:3000/campus.html
+
+    进门后：
+      走到「计算机中心」按 F 进楼 → 找算法哥按 C 开刷题平台
+      走到「逸夫楼」按 F 进楼     → 找学霸姐按 C 开教材问答
+      老丁不用找，他一直在主干道上巡逻，走近按 C 就是保卫处
+      走到「学生1食堂」门口，走近按 C 开食堂
+      进去之后：按 Esc 退出抽屉 → 按 B 出门回地图
+
+
+〖五〗必须知道的 10 个坑
+--------------------------------------------------------------------------------
+  1) 同源！同源！同源！
+     直接双击 像素校园_全校地图.html 只能"看地图"，四个入口全是摆设。
+     必须从 3000 端口（或 Nginx 的那个域名）打开，走代理进去。
+
+  2) 四条代理**不许 rewrite 前缀**。
+     /api /xbg /ld /cmr 要原样带给后端（各家服务端有 PrefixStrip 中间件专门剥前缀）。
+     把前缀删掉 → 全线 404。
+
+  3) ⭐ /cmr 这一条代理的 changeOrigin 必须是 **false**（另外两家是 true）。
+     阿姨的服务端会拿浏览器的 Origin 去比自己的 Host；把 Host 改写成 127.0.0.1:8020
+     之后两边不相等 ⇒ 登录/发消息四个 POST 全部 403，症状是"页面打得开、一发消息就失败"。
+     Vite 的写法见 campus_game/frontend/vite.config.js（那段注释写得很细）；
+     Nginx 对应写法见〖六〗。
+
+  4) 端口别串：老丁 8000、阿姨 8020。两个都是 FastAPI，很容易搞混。
+
+  5) 食堂的密码**硬性要求 ≥8 位**，直接往库里塞短密码也绕不过（她会返回 422）。
+     所以进了地图用 user/user123（7 位）登录时，进食堂会弹她自己的登录框 ——
+     这是**既定行为不是故障**；管理员账号 admin/admin123 是 8 位，能静默进。
+     （地图侧的兜底就是：发现是你，就用 admin 那对去补登。）
+
+  6) 判题要编译器：判 C/C++ 题目时后端会调系统 g++，服务器上要先装好；
+     judge.work-dir 也要可写。装不上就只用 Java/Python 判题，平台本身不受影响。
+     （备注：在 Windows 上跑时，360 安全卫士的"主动防御"会拦 javac，报
+       CreateProcess error=5 —— 那是杀软注入 JVM，不是路径也不是权限问题；
+       把 javac/java 和判题目录加进信任区即可。Linux 上没这毛病。）
+
+  7) 学霸姐的向量索引 kb/index/（85MB）**没进仓库**，第一次必须 python -m kb.build。
+     急着上线又不缺钱：也可以把本机现成的 xueba-ge/kb/index/ 整个目录 scp 到服务器同路径，
+     省掉重建和 API 花销。
+
+  8) 明文密钥都在哪（按你的要求原样放着了，仓库是公开的，上线后记得轮换）：
+       campus_game/backend/src/main/resources/application.yml   MySQL 口令、邮箱口令、
+                                                                 jwt.secret、算法哥 LLM Key、
+                                                                 搜索 Key
+       campus_game/docker-compose.yml / docker-compose.dev.yml   MySQL 口令
+       campus_game/start.sh                                      MySQL 口令
+       laoding/server/qwen_key.txt                               老丁的 DashScope Key
+       xueba-ge/data/.llm_key                                    学霸姐的 DashScope Key
+     ⚠️ 这四个模块的 Git 历史里也带着旧值（老分支 wr 上早就有），轮换时请一并换掉。
+
+  9) HTTPS 有个额外坑：阿姨的 check_origin 比的是 Origin 与自身 base_url，
+     上了 HTTPS 之后 base_url 可能还是 http:// ⇒ 403。
+     解法：Nginx 转发时带 X-Forwarded-Proto，并且 uvicorn 加 --proxy-headers
+     （见〖六〗的 /cmr 段）。老丁和学霸姐没有这道校验。
+
+ 10) 别混用 localhost 和 127.0.0.1。同源判定按"主机名"算，
+     浏览器里 localhost 和 127.0.0.1 是**两个不同的源**，
+     一半用这个一半用那个，免登录和 Esc 都会莫名其妙地坏。
+     统一用一个（建议对外就用域名）。
+
+
+〖六〗上线（Nginx 版，把 dev 服务器换掉）
+--------------------------------------------------------------------------------
+  生产别跑 npm run dev。正确做法：前端构建成静态文件，用 Nginx 统一入口。
+
+    cd campus_game/frontend
+    cp ../../像素校园地图项目/像素校园_全校地图.html public/campus.html   # ⭐ 先拷再构建
+    npm install && npm run build        # 产物在 dist/（含 dist/campus.html）
+
+  然后 Nginx（示意，按你的域名/证书改）：
+
+    server {
+        listen 80;
+        server_name campus.example.com;
+        root /srv/pixel-campus/dist;      # 上面构建出来的 dist/
+        index index.html;
+
+        # 地图：http://campus.example.com/campus.html
+        location = /campus.html { try_files /campus.html =404; }
+
+        # 刷题平台后端（**不 rewrite**，后端 context-path 本身就是 /api）
+        location /api/ { proxy_pass http://127.0.0.1:8081/api/;
+                         proxy_set_header Host $host; }
+
+        # 学霸姐（不 rewrite；她要与页面同源）
+        location /xbg/ { proxy_pass http://127.0.0.1:8010/xbg/;
+                         proxy_set_header Host $host;
+                         proxy_buffering off;          # 流式回答别缓冲
+                         proxy_read_timeout 300s; }
+
+        # 老丁（不 rewrite）
+        location /ld/  { proxy_pass http://127.0.0.1:8000/ld/;
+                         proxy_set_header Host $host; }
+
+        # 食堂阿姨（不 rewrite；⚠️ Host 必须传原始域名，别写成 127.0.0.1:8020）
+        location /cmr/ { proxy_pass http://127.0.0.1:8020/cmr/;
+                         proxy_set_header Host $host;
+                         proxy_set_header X-Forwarded-Proto $scheme; }
+
+        # 前端单页应用兜底
+        location / { try_files $uri $uri/ /index.html; }
+    }
+
+  阿姨那边若走 HTTPS，请用带代理头的方式启动：
+    python -m uvicorn aunt.server:app --host 127.0.0.1 --port 8020 \
+        --proxy-headers --forwarded-allow-ips='127.0.0.1'
+
+  五个服务都建议交给 systemd / supervisor 托管（开机自起、崩了自拉），
+  数据要留在持久化目录：MySQL 数据目录、campus_game/uploads/、
+  laoding/server/users.db、xueba-ge/data/xueba.db、campus_game_cmr/aunt/data/*.sqlite3。
+  防火墙只放 80/443 出去，3000/8010/8000/8020/8081/3306 全绑 127.0.0.1。
+
+  【另一条路：Docker】仓库带了 campus_game/docker-compose.yml（MySQL + 后端 + 前端 三容器，
+  端口映射 3307→3306、8081、3000）；要不要走容器路线看你们习惯。
+  注意：容器版只覆盖刷题平台，三个 Python 服务还得单独起。
+
+
+〖七〗账号与"一次登录"
+--------------------------------------------------------------------------------
+  · 地图的登录门是**唯一**的账号入口，账号就是刷题平台数据库里的账号：
+        admin / admin123（管理员，登录框上点一下自动填）
+        user  / user123 （普通用户）
+  · 登录这一次之后，四个抽屉**都不该**再问你要密码 —— 靠的是同一套账号密码
+    在各家之间静默同步。
+  · ⚠️ 新服务器上，学霸姐 / 老丁 / 阿姨**各自的账号库是空的**。
+    想让"免登录"生效，就到那三家里各注册一个**同名同密码**的账号（比如 admin/admin123）；
+    没注册时不会崩，只是走到那家跟前会**如实**弹出它自己的登录框。
+    （食堂那家还有个 ≥8 位的硬要求，见〖五〗5。）
+  · 老会话/换浏览器之后，兜底靠地图本地存的凭据；连凭据都清了会如实要求重登 —— 这是设计。
+
+
+〖八〗常见故障对照表
+--------------------------------------------------------------------------------
+  现象                                  先查这里
+  ------------------------------------  --------------------------------------------
+  地图能开、按 C 没反应                  那个服务起来了吗？`ss -lntp | grep 端口`
+  抽屉里是白的 / 一直转                  同源没做对（是不是直接开了 HTML）
+  一登录就失败（页面却打得开）           /cmr 的 changeOrigin / Host 头写错了
+  接口全 404                             代理把 /api /xbg /ld /cmr 前缀 rewrite 掉了
+  登录一次后某一家还弹登录框             那家没有同名账号；或那家服务没起来
+  判 C/C++ 一直"编译失败"                服务器没装 g++；或 judge.work-dir 不可写
+  学霸姐答不出东西 / 启动报索引不存在     没跑 python -m kb.build（见〖五〗7）
+  学霸姐中文乱码                         PYTHONUTF8=1 PYTHONIOENCODING=utf-8 没设
+  注册收不到验证邮件                     spring.mail.* 没配；直接改库或用预设账号
+  算法哥只给数据不讲解                   agent.llm.api-key 空着
+  上传/头像 404                          file.upload-path 目录不存在或没权限
+
+
+〖九〗更新与备份
+--------------------------------------------------------------------------------
+  更新代码：git pull（本仓库 main 是隔离分支，不受其它分支影响）
+          地图换了要重跑〖四〗第 3 步那一句 cp（dev）或重跑 npm run build（生产）
+          前端依赖变了再 npm install；Python 依赖变了再 pip install -r
+
+  备份（数据库是唯一不可再生的东西）：
+      MySQL：mysqldump coding_platform > backup_$(date +%F).sql
+      老丁：laoding/server/users.db
+      学霸姐：xueba-ge/data/xueba.db
+      阿姨：campus_game_cmr/aunt/data/aunt.sqlite3
+      上传目录：campus_game/uploads/
+
+  重建地图（一般用不到；地图源码改了才需要）：
+      cd 像素校园地图项目/源码
+      python _build/build.py        # 构建，会跑一遍加载期断言
+      python _build/_deliver.py     # ⭐ 本项目铁律：必须跑，产出权威的那份地图
+
+
+〖十〗本机（Windows）怎么跑
+--------------------------------------------------------------------------------
+  服务器之外的日常开发，直接双击根目录的 启动像素校园.bat 就行，它会：
+    探 MySQL → 拉后端 8081 → 拉前端 3000 → 拉学霸姐 8010 → 拉老丁 8000 →
+    拉阿姨 8020 → 把地图拷进 frontend/public/campus.html → 等 3000 → 开浏览器
+  （那五个小窗口不能关，关一个就少一块功能）
+  它需要 JAVA_HOME 指向 JDK8、Node、Python；MinGW 在 campus_game/tools/ 下（没进仓库）。
+  安装协议.bat 只是注册 pixelcampus:// 这个自定义协议，让网页能唤起启动器，正常玩法用不到。
+
+================================================================================
+  有问题先看〖八〗那张表；四个模块各自还有更细的文档：
+    campus_game/README.md         刷题平台（含 360 主动防御那段的完整取证）
+    xueba-ge/DEPLOY.md            学霸姐（含上公网必读）
+    laoding/README.md、laoding/保安.md
+    campus_game_cmr/DEPLOY.md     食堂阿姨
+    像素校园地图项目/README.md、像素校园地图_开发交接文档.md
+================================================================================

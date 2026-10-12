@@ -1,0 +1,51 @@
+# =============================================================================
+#  像素校园 · 仓库根 .gitignore（2026-10-12 上线时加的）
+#  只挡"依赖 / 构建产物 / 运行时数据 / 本机专用"，别把该进仓库的东西挡了。
+#  ⚠️ 密钥文件（laoding/server/qwen_key.txt、xueba-ge/data/.llm_key）是**故意提交**的，
+#     这里不挡它们 —— 上线后记得轮换。
+# =============================================================================
+
+# ---- 依赖（换机器自己装）----
+node_modules/
+.venv/
+venv/
+
+# ---- 构建产物 ----
+target/
+dist/
+build/
+*.class
+*.jar
+!**/.mvn/wrapper/maven-wrapper.jar
+
+# ---- 缓存 / 日志 ----
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+*.log
+
+# ---- 运行时数据（数据库、上传件）----
+uploads/
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+*.db-shm
+*.db-wal
+.env
+
+# ---- 本机专用 / 大件（不进仓库）----
+# Windows 版 MinGW 939MB：Linux 上装 build-essential 代替
+/campus_game/tools/
+/campus_game/backend/tmp/
+# 地图生成物：权威源在 像素校园地图项目/像素校园_全校地图.html
+/campus_game/frontend/public/campus.html
+# 向量索引 85MB：服务器上 python -m kb.build 重建
+/xueba-ge/kb/index/
+/xueba-ge/.tmp/
+/laoding/_rollback_像素立绘/
+
+# ---- 系统垃圾 ----
+.DS_Store
+Thumbs.db
+desktop.ini

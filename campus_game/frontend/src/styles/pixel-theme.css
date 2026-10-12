@@ -1,0 +1,581 @@
+/* =========================================================
+   像素校园 · 平台像素主题
+   ---------------------------------------------------------
+   和地图共用一套配色（地图的 body #101216、面板 #1d2129、描边 #39404d、
+   正文 #e9e5d8、次要 #9fb4d0、高亮黄 #ffd76e）。
+
+   为什么做成「一个全局主题文件」而不是逐页改 scoped 样式：
+   平台用 Element Plus，界面 80% 是它的组件。改 CSS 变量 + 组件外观，
+   全站立刻统一；逐页改 scoped 样式要动十来个文件、还容易漏。
+   少数页面把渐变色硬编码在自己的 scoped 里（Home / Login / Profile 等），
+   那些规则用 !important 覆盖 —— 因为 scoped 样式多一个属性选择器，
+   全局同选择器拼不过它。
+
+   ⚠️ 想换配色只改下面 :root 里的变量即可，别去改组件规则。
+   ⚠️ 刻意没做的事：不加像素字体、不缩小字号、不 image-rendering:pixelated ——
+      要求是"别太低分辨率"，所以保留正常字号与清晰文字，只换质感。
+   ========================================================= */
+
+:root {
+  --px-bg:      #101216;
+  --px-panel:   #1d2129;
+  --px-panel-2: #22262f;
+  --px-sunken:  #15181e;
+  --px-line:    #39404d;
+  --px-line-2:  #2a2f39;
+  --px-text:    #e9e5d8;
+  --px-muted:   #9fb4d0;
+  --px-dim:     #6b7d92;
+  --px-accent:  #ffd76e;
+  --px-accent-d:#7a6320;
+  --px-ok:      #4ade80;
+  --px-warn:    #fbbf24;
+  --px-err:     #f87171;
+  --px-info:    #8fd0ff;
+
+  /* 等宽字打底（拉丁用等宽，中文回落到雅黑保证可读） */
+  --px-font: ui-monospace, Consolas, "Courier New", "Microsoft YaHei", monospace;
+  /* 像素风的招牌：0 模糊的硬阴影 */
+  --px-shadow: 3px 3px 0 rgba(0, 0, 0, .45);
+  --px-shadow-sm: 2px 2px 0 rgba(0, 0, 0, .4);
+}
+
+/* ---------------- 1. 接管 Element Plus 的变量 ---------------- */
+
+html.dark {
+  --el-color-primary: var(--px-accent);
+  --el-color-primary-light-3: #d9b95f;
+  --el-color-primary-light-5: #b39a52;
+  --el-color-primary-light-7: #8a7742;
+  --el-color-primary-light-8: #6b5c33;
+  --el-color-primary-light-9: #3a3220;
+  --el-color-primary-dark-2: #ffe08a;
+
+  --el-color-success: var(--px-ok);
+  --el-color-warning: var(--px-warn);
+  --el-color-danger: var(--px-err);
+  --el-color-error: var(--px-err);
+  --el-color-info: var(--px-muted);
+
+  --el-bg-color: var(--px-panel);
+  --el-bg-color-page: var(--px-bg);
+  --el-bg-color-overlay: var(--px-panel);
+
+  --el-text-color-primary: var(--px-text);
+  --el-text-color-regular: var(--px-text);
+  --el-text-color-secondary: var(--px-muted);
+  --el-text-color-placeholder: var(--px-dim);
+  --el-text-color-disabled: #5a6474;
+  --el-text-color-primary-light: var(--px-muted);
+
+  --el-border-color: var(--px-line);
+  --el-border-color-light: var(--px-line);
+  --el-border-color-lighter: var(--px-line-2);
+  --el-border-color-extra-light: var(--px-line-2);
+  --el-border-color-dark: #4a5364;
+  --el-border-color-darker: #59637a;
+
+  --el-fill-color: var(--px-panel-2);
+  --el-fill-color-light: #1a1f28;
+  --el-fill-color-lighter: #181d25;
+  --el-fill-color-extra-light: #161a22;
+  --el-fill-color-dark: #12161d;
+  --el-fill-color-blank: var(--px-sunken);
+
+  --el-mask-color: rgba(8, 10, 14, .82);
+  --el-mask-color-extra-light: rgba(8, 10, 14, .5);
+
+  /* 直角 + 0 模糊阴影 = 像素感 */
+  --el-border-radius-base: 0;
+  --el-border-radius-small: 0;
+  --el-border-radius-round: 0;
+  --el-border-radius-circle: 0;
+  --el-box-shadow: var(--px-shadow);
+  --el-box-shadow-light: var(--px-shadow-sm);
+  --el-box-shadow-lighter: var(--px-shadow-sm);
+  --el-box-shadow-dark: 4px 4px 0 rgba(0, 0, 0, .5);
+
+  --el-font-family: var(--px-font);
+  --el-font-size-base: 13px;
+  --el-transition-duration: .12s;
+}
+
+/* ---------------- 2. 全局底子 ---------------- */
+
+html, body {
+  background: var(--px-bg);
+  color: var(--px-text);
+  font-family: var(--px-font);
+}
+
+/* 淡点阵底纹（和地图聊天区同一个手法），压得很淡，不干扰阅读 */
+body {
+  background-image: radial-gradient(rgba(159, 180, 208, .055) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--px-font) !important;
+  letter-spacing: .5px;
+}
+
+::selection {
+  background: var(--px-accent);
+  color: #2a2410;
+}
+
+/* 滚动条：方头方脑，不要圆角 */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--px-bg); }
+::-webkit-scrollbar-thumb {
+  background: var(--px-line);
+  border: 2px solid var(--px-bg);
+}
+::-webkit-scrollbar-thumb:hover { background: #4a5364; }
+
+/* 键盘可达性：像素风也要看得见焦点 */
+:focus-visible {
+  outline: 2px solid var(--px-accent);
+  outline-offset: 1px;
+}
+
+/* ---------------- 3. Element Plus 组件外观 ---------------- */
+
+/* 按钮：平色 + 直角 + 按下位移，主按钮用黄底深字（同地图的按钮） */
+.el-button {
+  border-radius: 0 !important;
+  box-shadow: var(--px-shadow-sm);
+  font-weight: 600;
+  transition: none !important;
+}
+.el-button:hover { transform: translate(-1px, -1px); box-shadow: var(--px-shadow); }
+.el-button:active { transform: translate(2px, 2px); box-shadow: none; }
+.el-button:disabled,
+.el-button.is-disabled { transform: none; box-shadow: none; }
+.el-button--primary {
+  color: #2a2410 !important;
+  background: var(--px-accent);
+  border-color: var(--px-accent-d);
+}
+.el-button--primary:hover { background: #ffe08a; border-color: var(--px-accent-d); }
+.el-button--success { color: #08210f !important; }
+.el-button--warning { color: #2a2008 !important; }
+.el-button--danger { color: #2a0d0d !important; }
+.el-button--default {
+  background: var(--px-panel-2);
+  border-color: var(--px-line);
+  color: var(--px-text);
+}
+.el-button--default:hover {
+  background: #272d38;
+  border-color: var(--px-accent);
+  color: var(--px-accent);
+}
+.el-button.is-text,
+.el-button.is-link { box-shadow: none; }
+.el-button-group > .el-button { box-shadow: none; }
+
+/* 卡片：面板色 + 1px 描边 + 硬阴影 */
+.el-card {
+  background: var(--px-panel) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--px-shadow) !important;
+  color: var(--px-text);
+}
+.el-card__header {
+  border-bottom: 1px solid var(--px-line) !important;
+  background: var(--px-panel-2);
+  padding: 10px 14px;
+  font-weight: 600;
+  color: var(--px-text);
+}
+.el-card__body { color: var(--px-text); }
+
+/* 输入类：下沉底 + 直角，聚焦只换描边（不要柔光） */
+.el-input__wrapper,
+.el-textarea__inner {
+  background: var(--px-sunken) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 0 0 1px var(--px-line) inset !important;
+}
+.el-input__wrapper:hover,
+.el-textarea__inner:hover { box-shadow: 0 0 0 1px var(--px-dim) inset !important; }
+.el-input__wrapper.is-focus,
+.el-textarea__inner:focus { box-shadow: 0 0 0 2px var(--px-accent) inset !important; }
+.el-input__inner,
+.el-textarea__inner { color: var(--px-text) !important; }
+.el-input__inner::placeholder,
+.el-textarea__inner::placeholder { color: var(--px-dim); }
+
+/* 下拉面板 */
+.el-select-dropdown,
+.el-popper,
+.el-dropdown__popper {
+  background: var(--px-panel) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--px-shadow) !important;
+}
+.el-select-dropdown__item {
+  color: var(--px-text);
+  font-family: var(--px-font);
+}
+.el-select-dropdown__item.is-hovering { background: var(--px-panel-2) !important; }
+.el-select-dropdown__item.is-selected { color: var(--px-accent) !important; }
+.el-popper__arrow::before {
+  background: var(--px-panel) !important;
+  border-color: var(--px-line) !important;
+}
+
+/* 表格 */
+.el-table,
+.el-table__inner-wrapper { background: var(--px-panel); }
+.el-table th.el-table__cell {
+  background: var(--px-panel-2) !important;
+  color: var(--px-muted) !important;
+  font-weight: 600;
+  border-color: var(--px-line) !important;
+}
+.el-table td.el-table__cell {
+  border-color: var(--px-line-2) !important;
+  color: var(--px-text);
+}
+.el-table tr,
+.el-table__body tr:hover > td.el-table__cell {
+  background: var(--px-panel) !important;
+}
+.el-table__body tr:hover > td.el-table__cell { background: #242a35 !important; }
+.el-table--border::after,
+.el-table--group::after,
+.el-table::before { background-color: var(--px-line); }
+.el-table__empty-text { color: var(--px-dim); }
+
+/* 弹窗 / 抽屉 / 消息 */
+.el-dialog,
+.el-message-box {
+  background: var(--px-panel) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--px-shadow) !important;
+}
+.el-dialog__header,
+.el-message-box__header { border-bottom: 1px solid var(--px-line); margin-right: 0 !important; }
+.el-dialog__title, .el-message-box__title { color: var(--px-text) !important; font-weight: 600; }
+.el-dialog__body, .el-message-box__content { color: var(--px-text); }
+.el-drawer { background: var(--px-panel) !important; }
+.el-drawer__header { color: var(--px-text); border-bottom: 1px solid var(--px-line); margin-bottom: 0; }
+.el-message {
+  background: var(--px-panel) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--px-shadow) !important;
+}
+.el-message__content { color: var(--px-text) !important; }
+
+/* 侧边菜单：选中项用左侧一根黄条（同地图 HUD 的高亮手法） */
+.el-menu { background: transparent !important; border-right: none !important; }
+.el-menu-item,
+.el-sub-menu__title {
+  color: var(--px-muted) !important;
+  border-left: 3px solid transparent;
+}
+.el-menu-item:hover,
+.el-sub-menu__title:hover { background: var(--px-panel-2) !important; color: var(--px-text) !important; }
+.el-menu-item.is-active {
+  background: rgba(255, 215, 110, .1) !important;
+  color: var(--px-accent) !important;
+  border-left-color: var(--px-accent);
+  font-weight: 600;
+}
+
+/* 标签页 */
+.el-tabs__item { color: var(--px-muted); font-family: var(--px-font); }
+.el-tabs__item.is-active { color: var(--px-accent); }
+.el-tabs__active-bar { background-color: var(--px-accent); }
+.el-tabs__nav-wrap::after { background-color: var(--px-line); }
+
+/* 标签 / 徽标 / 进度条 */
+.el-tag {
+  border-radius: 0 !important;
+  border: 1px solid var(--px-line);
+  background: var(--px-panel-2);
+  color: var(--px-muted);
+  font-family: var(--px-font);
+}
+.el-tag--success { color: var(--px-ok); border-color: rgba(74, 222, 128, .4); }
+.el-tag--warning { color: var(--px-warn); border-color: rgba(251, 191, 36, .4); }
+.el-tag--danger  { color: var(--px-err);  border-color: rgba(248, 113, 113, .4); }
+.el-tag--primary { color: var(--px-accent); border-color: var(--px-accent-d); }
+.el-badge__content { border-radius: 0 !important; }
+.el-progress-bar__outer { background: var(--px-sunken); border-radius: 0; border: 1px solid var(--px-line); }
+.el-progress-bar__inner { background: var(--px-accent); border-radius: 0; }
+
+/* 分页 */
+.el-pagination button,
+.el-pager li {
+  background: var(--px-panel-2) !important;
+  color: var(--px-muted) !important;
+  border: 1px solid var(--px-line);
+  border-radius: 0 !important;
+  margin: 0 1px;
+}
+.el-pager li.is-active {
+  background: var(--px-accent) !important;
+  color: #2a2410 !important;
+  border-color: var(--px-accent-d);
+}
+
+/* 提示条 */
+.el-alert {
+  border-radius: 0 !important;
+  border: 1px solid var(--px-line);
+  background: var(--px-panel-2);
+}
+.el-alert--success, .el-alert--success .el-alert__title { color: var(--px-ok); }
+.el-alert--error,   .el-alert--error .el-alert__title   { color: var(--px-err); }
+.el-alert--warning, .el-alert--warning .el-alert__title { color: var(--px-warn); }
+.el-alert--info,    .el-alert--info .el-alert__title    { color: var(--px-info); }
+
+/* 日历（题库页的做题日历）+ 其他零碎 */
+.el-calendar { background: var(--px-panel); }
+.el-calendar-table td { border-color: var(--px-line-2) !important; }
+.el-calendar-table td.is-selected { background: rgba(255, 215, 110, .14) !important; }
+.el-calendar-table .el-calendar-day:hover { background: var(--px-panel-2) !important; }
+.el-calendar-table thead th { color: var(--px-muted); }
+.el-divider { border-color: var(--px-line-2) !important; }
+.el-divider__text { background: var(--px-panel); color: var(--px-muted); }
+.el-empty__description p { color: var(--px-dim); }
+.el-form-item__label { color: var(--px-muted); }
+.el-form-item__error { color: var(--px-err); }
+.el-descriptions__label { color: var(--px-muted) !important; }
+.el-descriptions__content { color: var(--px-text) !important; }
+.el-descriptions__body { background: var(--px-panel) !important; }
+.el-radio__label, .el-checkbox__label { color: var(--px-text); }
+.el-breadcrumb__inner { color: var(--px-muted) !important; }
+.el-avatar { border-radius: 0 !important; }
+
+/* ---------------- 4. 页面级：把硬编码的渐变/浅色拍平 ----------------
+   这些页面的样式写在自己的 scoped 里，所以必须 !important 才盖得住。 */
+
+/* 登录 / 注册 / 邮箱验证：紫色渐变背景 + 白色卡片 → 深底面板 */
+.login, .register, .verify-email {
+  background: var(--px-bg) !important;
+  background-image: radial-gradient(rgba(159, 180, 208, .06) 1px, transparent 0) !important;
+  background-size: 20px 20px !important;
+}
+.login-box, .register-box, .verify-box, .card {
+  background: var(--px-panel) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--px-shadow) !important;
+  color: var(--px-text) !important;
+}
+.login-box h2, .register-box h2, .verify-box h2 { color: var(--px-text) !important; }
+
+/* 题目详情 / 个人主页 / 个人中心的顶部条 */
+.el-header {
+  background: var(--px-panel) !important;
+  border-bottom: 1px solid var(--px-line) !important;
+  color: var(--px-text) !important;
+}
+.profile-page .header { background: var(--px-panel) !important; border-bottom: 1px solid var(--px-line) !important; }
+
+/* Home 落地页：靛紫渐变 + 两个浅色区块 */
+.home { background: var(--px-bg) !important; }
+.home .navbar, .home .navbar-scrolled {
+  background: rgba(16, 18, 22, .92) !important;
+  border-bottom: 1px solid var(--px-line);
+}
+.home .mobile-menu { background: var(--px-panel) !important; border-bottom: 1px solid var(--px-line); }
+.home .hero { background: var(--px-bg) !important; }
+.home .logo-icon, .home .btn-primary {
+  background: var(--px-accent) !important;
+  color: #2a2410 !important;
+  border: 1px solid var(--px-accent-d) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--px-shadow-sm);
+}
+.home .logo-icon svg { stroke: #2a2410; }
+.home .gradient-text {
+  background: none !important;
+  -webkit-text-fill-color: var(--px-accent);
+  color: var(--px-accent);
+}
+.home .btn, .home .btn-lg, .home .mobile-link { border-radius: 0 !important; }
+.home .btn-outline, .home .btn-ghost {
+  background: var(--px-panel-2) !important;
+  border: 1px solid var(--px-line) !important;
+  color: var(--px-text) !important;
+}
+.home .badge, .home .section-badge {
+  background: var(--px-panel-2) !important;
+  color: var(--px-accent) !important;
+  border: 1px solid var(--px-line);
+  border-radius: 0 !important;
+}
+.home .glow-1, .home .glow-2, .home .glow-3 {
+  background: radial-gradient(circle, rgba(255, 215, 110, .1), transparent 70%) !important;
+}
+.home .hero-visual .code-window, .home .code-window {
+  background: var(--px-panel) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--px-shadow) !important;
+}
+.home .features, .home .stats-section, .home .cta {
+  background: var(--px-bg) !important;
+}
+.home .stats-section { background: #0c0e12 !important; border-top: 1px solid var(--px-line); border-bottom: 1px solid var(--px-line); }
+.home .section-header h2 { color: var(--px-text) !important; }
+.home .section-header p { color: var(--px-muted) !important; }
+.home .feature-card {
+  background: var(--px-panel) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--px-shadow-sm);
+}
+.home .feature-card:hover { border-color: var(--px-accent) !important; }
+.home .feature-card h3 { color: var(--px-text) !important; }
+.home .feature-card p { color: var(--px-muted) !important; }
+.home .feature-icon-wrap {
+  background: var(--px-panel-2) !important;
+  color: var(--px-accent) !important;
+  border: 1px solid var(--px-line);
+  border-radius: 0 !important;
+}
+.home .stat-number { background: none !important; -webkit-text-fill-color: var(--px-accent); color: var(--px-accent) !important; }
+.home .stat-bar, .home .stat-card, .home .stats-grid > * {
+  border-radius: 0 !important;
+  background: var(--px-panel) !important;
+  border: 1px solid var(--px-line) !important;
+}
+.home .stat-bar-fill { background: var(--px-accent) !important; }
+.home .cta-card {
+  background: var(--px-panel) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--px-shadow) !important;
+}
+.home .cta-card h2, .home .cta-card p { color: var(--px-text) !important; }
+.home .section-divider { background: var(--px-line) !important; }
+.home .light-beam { opacity: .25 !important; }
+.home .hero-badge { border-radius: 0 !important; }
+
+/* 题库 / 题目详情 / 成就徽章 / 难度分布 */
+.problems .rate-fill { background: var(--px-accent) !important; border-radius: 0 !important; }
+.problem-detail .el-card, .problems .el-card { border-radius: 0 !important; }
+.badge-card {
+  background: var(--px-panel) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0 !important;
+}
+.badge-card.unlocked {
+  background: #26221a !important;
+  border-color: var(--px-accent-d) !important;
+}
+.easy .progress-fill { background: #3f9c52 !important; }
+.medium .progress-fill { background: #b8862a !important; }
+.hard .progress-fill { background: #a8433f !important; }
+.progress-fill { border-radius: 0 !important; }
+
+/* 个人中心 / 管理后台的侧边栏（原本是 #304156 蓝灰） */
+.el-aside {
+  background: var(--px-panel) !important;
+  border-right: 1px solid var(--px-line) !important;
+}
+.aside-header {
+  background: var(--px-panel-2) !important;
+  border-bottom: 1px solid var(--px-line) !important;
+}
+.logo, .user-name, .user-info-section { color: var(--px-text) !important; }
+.user-info-section { background: var(--px-panel-2) !important; }
+.user-info-section:hover { background: #272d38 !important; }
+.user-avatar { border-radius: 0 !important; background: var(--px-accent) !important; color: #2a2410 !important; }
+/* el-menu 的 background-color / text-color 是**内联样式**，
+   但带 !important 的样式表规则能盖过内联样式，所以上面的 .el-menu 规则够用。 */
+
+/* =========================================================
+   5. 首轮真机审查后的修复
+   ---------------------------------------------------------
+   每条都对应真机审查里发现的具体问题（现象写在注释里，方便对账）。
+   这一节大量用 !important：因为这些页面的样式写在 scoped 里，
+   多一个属性选择器，全局同选择器拼不过它。
+   ========================================================= */
+
+/* ① 落地页大标题「改变世界…」整行不可见。
+   原样式是渐变文字（background-clip:text + -webkit-text-fill-color:transparent），
+   上一节我把 background 置空之后，填充色仍是透明的 → 整行消失。 */
+.home .gradient-text {
+  -webkit-text-fill-color: var(--px-accent) !important;
+  color: var(--px-accent) !important;
+  background: none !important;
+}
+
+/* ② 题库页残留大片白色容器（根容器、搜索栏、表格外层、两张侧栏卡）。
+   日历日号和分页文字是浅色，压在白底上完全看不见（31 处）。 */
+.problems,
+.problems .search-bar,
+.problems-table-wrapper,
+.problems .sidebar-card,
+.problems .el-card {
+  background: var(--px-panel) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0 !important;
+  color: var(--px-text) !important;
+  box-shadow: var(--px-shadow-sm) !important;
+}
+.problems .search-bar { background: var(--px-panel-2) !important; }
+
+/* ③ 题目标题是 el-link，默认深板岩色（#2c3e50），在深底上几乎不可见（51 处） */
+.el-link, .el-link__inner, .problems .site-name {
+  color: var(--px-text) !important;
+}
+/* 侧栏公司名同样是 #2c3e50 深板岩色（10 处）；日历表头偏暗也一并提亮 */
+.company-name, .problems .calendar-header, .problems .calendar-weekday {
+  color: var(--px-muted) !important;
+}
+.el-link:hover, .el-link:hover .el-link__inner { color: var(--px-accent) !important; }
+.el-link.is-underline:hover:after { background-color: var(--px-accent) !important; }
+
+/* ④ 分类标签是浅灰底 + 20px 圆角（既违和又不符合像素风） */
+.category-tag {
+  background: var(--px-panel-2) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0 !important;
+  color: var(--px-muted) !important;
+}
+
+/* ⑤ 纯文字按钮太暗（#6c757d），以及残留的旧蓝色主色（#00a1d6） */
+.el-button.is-text, .el-button.is-link { color: var(--px-muted) !important; box-shadow: none !important; }
+.el-button.is-text:hover, .el-button.is-link:hover { color: var(--px-accent) !important; }
+.el-button--primary.is-text, .el-button--primary.is-link { color: var(--px-accent) !important; }
+
+/* ⑥ 题目详情的题面：标题 #333、正文 #444，在深底上看不见（8 处）；
+   示例值框是浅色块（#f6f8fa 底 + #333 字），也一并拍平。 */
+.problem-detail h1, .problem-detail h2, .problem-detail h3, .problem-detail h4,
+.problem-detail p { color: var(--px-text) !important; }
+.problem-detail pre {
+  background: var(--px-sunken) !important;
+  border: 1px solid var(--px-line) !important;
+  color: var(--px-info) !important;
+  border-radius: 0 !important;
+}
+
+/* ⑦ 落地页残留的靛紫色装饰与品牌字 */
+.home .logo-accent { color: var(--px-accent) !important; }
+/* 数字用了紫→青渐变文字，拍成纯高亮色 */
+.home .stat-card-number, .home .stat-number {
+  background: none !important;
+  -webkit-text-fill-color: var(--px-accent) !important;
+  color: var(--px-accent) !important;
+}
+.home .gradient-sphere, .home .center-glow, .home .cosmic-orb, .home .light-beam {
+  background: none !important;
+  opacity: .3 !important;
+}
+.home .stat-card::before { background: none !important; }
+/* 主按钮带着紫色柔光阴影（0 4px 15px），不符合硬阴影 */
+.home .btn-primary, .home .btn-primary:hover { box-shadow: var(--px-shadow-sm) !important; }
+
+

@@ -1,0 +1,65 @@
+{
+  "version": 2,
+  "note": "保安自带点位表：按北京交通大学主校区真实楼体命名录入（含官方简称与学生常用俗称），来源：学校官网/研究生选课说明/后勤通知/新生导航。坐标单位为米的独立期虚拟坐标（世界像素≈9px/米，按总体设计 §7 标尺），仅用于失物地点距离衰减；合体时 mapId 对齐 campus.json 的 places[].id 并替换为真实坐标，业务代码不动。",
+  "points": [
+    { "id": "nanmen",       "name": "南门",             "aliases": ["南校门", "南大门", "亚洲第一门"],   "x": 290, "y": 320, "mapId": null },
+    { "id": "ximen",        "name": "西门",             "aliases": ["西校门"],                           "x": 8,   "y": 150, "mapId": null },
+
+    { "id": "siyuanlou",    "name": "思源楼",           "aliases": ["主楼", "SY"],                       "x": 290, "y": 110, "mapId": null },
+    { "id": "siyuandong",   "name": "思源东楼",         "aliases": ["思东", "SD", "思源东区"],           "x": 320, "y": 110, "mapId": null },
+    { "id": "siyuanxi",     "name": "思源西楼",         "aliases": ["思西", "SX", "思源西区"],           "x": 260, "y": 110, "mapId": null },
+
+    { "id": "jx1",          "name": "第一教学楼",       "aliases": ["一教"],                             "x": 215, "y": 170, "mapId": null },
+    { "id": "jx2",          "name": "第二教学楼",       "aliases": ["二教"],                             "x": 255, "y": 205, "mapId": null },
+    { "id": "jx3",          "name": "第三教学楼",       "aliases": ["三教"],                             "x": 330, "y": 215, "mapId": null },
+    { "id": "jx4",          "name": "第四教学楼",       "aliases": ["四教"],                             "x": 360, "y": 230, "mapId": null },
+    { "id": "jx5",          "name": "第五教学楼",       "aliases": ["五教"],                             "x": 390, "y": 220, "mapId": null },
+    { "id": "jx6",          "name": "第六教学楼",       "aliases": ["六教"],                             "x": 410, "y": 195, "mapId": null },
+    { "id": "jx7",          "name": "第七教学楼",       "aliases": ["七教"],                             "x": 380, "y": 260, "mapId": null },
+    { "id": "jx8",          "name": "第八教学楼",       "aliases": ["八教"],                             "x": 420, "y": 240, "mapId": null },
+    { "id": "jx9",          "name": "第九教学楼",       "aliases": ["九教"],                             "x": 440, "y": 270, "mapId": null },
+    { "id": "jx10",         "name": "第十教学楼",       "aliases": ["十教", "逸夫楼", "逸夫教学楼", "YF"], "x": 460, "y": 225, "mapId": null },
+    { "id": "dq_jx1",       "name": "东校区第一教学楼", "aliases": ["东校区一教", "东区一教", "DQ"],     "x": 600, "y": 150, "mapId": null },
+    { "id": "dq_jx2",       "name": "东校区第二教学楼", "aliases": ["东校区二教", "东区二教", "DQ2"],    "x": 600, "y": 180, "mapId": null },
+
+    { "id": "jixie",        "name": "机械楼",           "aliases": ["机械工程楼"],                       "x": 270, "y": 250, "mapId": null },
+    { "id": "dianqi",       "name": "电气楼",           "aliases": ["电气工程楼"],                       "x": 340, "y": 290, "mapId": null },
+    { "id": "jianyi",       "name": "建筑艺术楼",       "aliases": ["建艺楼", "建筑与艺术楼"],           "x": 300, "y": 280, "mapId": null },
+    { "id": "xinxi",        "name": "信息中心楼",       "aliases": ["信息中心"],                         "x": 300, "y": 75,  "mapId": null },
+
+    { "id": "tushuguan",    "name": "图书馆",           "aliases": ["主区图书馆", "圆顶图书馆"],         "x": 380, "y": 130, "mapId": null },
+    { "id": "tianyou",      "name": "天佑会堂",         "aliases": ["大礼堂", "礼堂"],                   "x": 230, "y": 100, "mapId": null },
+    { "id": "kexue",        "name": "科学会堂",         "aliases": [],                                   "x": 230, "y": 140, "mapId": null },
+    { "id": "xuehuo",       "name": "学生活动服务中心", "aliases": ["学活", "学生活动中心"],             "x": 200, "y": 60,  "mapId": null },
+
+    { "id": "yikatong",     "name": "一卡通中心",       "aliases": ["卡务中心"],                         "x": 330, "y": 90,  "mapId": null },
+    { "id": "baoweichu",    "name": "保卫处",           "aliases": [],                                   "x": 250, "y": 130, "mapId": null },
+    { "id": "xiaoyiyuan",   "name": "校医院",           "aliases": ["医院"],                             "x": 180, "y": 250, "mapId": null },
+    { "id": "houqinlou",    "name": "后勤楼",           "aliases": ["后勤", "后勤集团", "校园服务港"],   "x": 490, "y": 95,  "mapId": null },
+    { "id": "xiaomai",      "name": "小麦公社",         "aliases": ["小麦"],                             "x": 240, "y": 290, "mapId": null },
+    { "id": "nanyouju",     "name": "南门邮局",         "aliases": ["邮局", "校内邮局"],                 "x": 310, "y": 300, "mapId": null },
+    { "id": "xiachen",      "name": "下沉广场",         "aliases": ["大坑"],                             "x": 180, "y": 120, "mapId": null },
+
+    { "id": "minghu",       "name": "明湖",             "aliases": ["明湖畔"],                           "x": 140, "y": 90,  "mapId": null },
+    { "id": "caochang",     "name": "西操场",           "aliases": ["操场", "田径场", "西操"],           "x": 470, "y": 250, "mapId": null },
+    { "id": "tiyuguan",     "name": "体育馆",           "aliases": ["老体育馆"],                         "x": 430, "y": 300, "mapId": null },
+    { "id": "lanqiuchang",  "name": "篮球场",           "aliases": ["球场"],                             "x": 505, "y": 205, "mapId": null },
+
+    { "id": "shitang2",     "name": "第二食堂",         "aliases": ["二食堂", "学活一层", "食堂"],       "x": 200, "y": 72,  "mapId": null },
+    { "id": "shitang3",     "name": "第三食堂",         "aliases": ["三食堂", "学活二楼", "学活食堂"],   "x": 200, "y": 48,  "mapId": null },
+    { "id": "qingzhen",     "name": "清真食堂",         "aliases": ["清真", "清真餐厅", "学活清真"],             "x": 225, "y": 78,  "mapId": null },
+    { "id": "canting_mh",   "name": "明湖餐厅",         "aliases": ["明湖食堂"],                         "x": 150, "y": 115, "mapId": null },
+    { "id": "liuyuan",      "name": "留园餐厅",         "aliases": ["留园", "留园食堂"],                 "x": 120, "y": 140, "mapId": null },
+    { "id": "shitang4",     "name": "学生第四食堂",     "aliases": ["四食堂", "第四食堂"],               "x": 430, "y": 130, "mapId": null },
+    { "id": "jiaozhigong",  "name": "教职工餐厅",       "aliases": ["教工食堂", "教工餐厅"],             "x": 350, "y": 170, "mapId": null },
+    { "id": "hongguoyuan",  "name": "红果园餐厅",       "aliases": ["红果园", "红果园饭店", "红果园宾馆"], "x": 150, "y": 210, "mapId": null },
+
+    { "id": "sushe",        "name": "学生宿舍区",       "aliases": ["宿舍", "宿舍楼"],                   "x": 100, "y": 200, "mapId": null },
+    { "id": "jiayuan",      "name": "嘉园",             "aliases": ["嘉园公寓", "嘉园宿舍"],             "x": 60,  "y": 160, "mapId": null },
+    { "id": "sushe19",      "name": "19号学生公寓",     "aliases": ["19号楼", "19号公寓", "十九号楼"],   "x": 255, "y": 295, "mapId": null },
+    { "id": "sushe12",      "name": "12号学生公寓",     "aliases": ["12号楼", "12号公寓", "十二号楼"],   "x": 225, "y": 275, "mapId": null },
+    { "id": "sushe22",      "name": "22号学生公寓",     "aliases": ["22号楼", "22号公寓", "公主楼"],     "x": 205, "y": 260, "mapId": null },
+    { "id": "xueyuan",      "name": "学苑公寓",         "aliases": ["学苑", "学苑区", "研究生公寓"],       "x": 560, "y": 120, "mapId": null },
+    { "id": "dongxiaoqu",   "name": "东校区",           "aliases": ["东区"],                             "x": 590, "y": 165, "mapId": null }
+  ]
+}

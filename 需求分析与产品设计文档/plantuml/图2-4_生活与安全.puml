@@ -1,0 +1,58 @@
+@startuml 图2-4 生活与安全
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 25
+skinparam ranksep 70
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 13
+skinparam actorStyle stickman
+skinparam Usecase {
+  BackgroundColor #F7F9FC
+  BorderColor #2F5D8C
+  FontSize 12
+}
+
+actor "全校师生" as A
+actor "阿姨 · 丙" as G1 #E8F3E8
+actor "保安 · 老丁" as G2 #E8F3E8
+
+rectangle "生活与安全" {
+  usecase "窗口与菜品查询" as U1
+  usecase "口碑问答" as U2
+  usecase "排队与实时状态" as U3
+  usecase "两层档口地图" as U4
+  usecase "打分" as U5
+  usecase "失物招领" as U6
+  usecase "以图搜物" as U7
+  usecase "证件识别与核对" as U8
+  usecase "报修与工单查询" as U9
+  usecase "呼叫保安到场" as U10
+}
+
+A -- U1
+A -- U2
+A -- U3
+A -- U4
+A -- U5
+A -- U6
+A -- U7
+A -- U8
+A -- U9
+A -- U10
+
+U1 -- G1
+U2 -- G1
+U3 -- G1
+U4 -- G1
+U5 -- G1
+U6 -- G2
+U7 -- G2
+U8 -- G2
+U9 -- G2
+U10 -- G2
+
+U7 ..> U6 : <<include>>
+U10 ..> U6 : <<extend>>
+
+@enduml

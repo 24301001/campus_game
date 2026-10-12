@@ -1,0 +1,24 @@
+图 1-4　校园地图漫游与场景切换类图
+============================================================
+【图形类型】类图（Class Diagram）
+【所在位置】1.2.1.1
+
+【图的内容】
+  给出本功能点涉及的核心类、属性、方法与相互关系，用于说明渲染循环与场景对象如何协作。
+
+【主要组件】
+  Player（玩家坐标、朝向、速度）；Camera（位置、缩放、边界收敛）；Scene（场景标识、地面画布、碰撞体、道具、宽高、门表）；SceneManager（当前场景、门表查询、场景切换）；CollisionDetector（碰撞检测）；TimeLayer（真实时间）；Renderer（渲染主循环、按落地线排序）。
+
+【组织方式】
+  以 SceneManager 与 Renderer 为中心：SceneManager 聚合多个 Scene 并保存当前场景；Renderer 依赖当前 Scene 与 Player、Camera；CollisionDetector 与 TimeLayer 作为被依赖的辅助类。
+
+【如何绘制】
+1) 画 Player、Camera 两个类，各自列出坐标与缩放等属性；
+2) 画 Scene 类，列出地面、碰撞体、道具、宽高、门表等属性；
+3) 画 SceneManager，用聚合关系（空心菱形）连到 Scene；
+4) 画 Renderer，用依赖关系（虚线箭头）指向 SceneManager、Player、Camera；
+5) 画 CollisionDetector、TimeLayer，用依赖关系连到 Renderer；
+6) 在各类的方法栏标出关键方法（如 checkDoors、goScene、drawFrame）。
+
+【注意事项】
+  “场景”是一个对象而非一组常量，这是本功能点的设计要点，类图上要能看出 Scene 被聚合管理；渲染循环的相关操作集中在 Renderer 上，不要在 Scene 里重复。

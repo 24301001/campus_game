@@ -1,0 +1,32 @@
+GT
+BOX 1560,2380 .. 2450,2560  cell=16  列号 x=1552..2448
+         
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      (每 5 格一个 
+)
+  2368ggggggg222222222PPPPPPPPP2222222222PPPPPPPPPPPP1ggggggggg
+  2384ggggggg222222222PPPPPPPPP2222222222PPPPPPPPPPPP1ggggggggg
+  2400ggggggg222222222PPPPPPPPP22222222211111111111111111111111
+  2416ggggggg222222222PPPPPPPPP22222222211111111111111111111111
+  2432ggggggg222222222PPPPPPPPP22222222211111111111111111111111
+  2448ggggggg222222222PPPPPPPPP22222222211111111111111111111111
+  2464ggggggg222222222PPPPPPPPP22222222211111111111111111111111
+  24801111111222222222PPPPPPPPP22222222211111111111111111111111
+  2496xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  2512xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  2528xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  2544xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  2560xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+南门入口广场:PLAZA138 ROAD242 GRASS0 other0 ; 西门内广场:PLAZA0 ROAD216 GRASS0 other0 ; 东门内广场:PLAZA144 ROAD48 GRASS0 other0 ; 北门内广场:PLAZA55 ROAD99 GRASS0 other0 ; 东南门内广场:PLAZA228 ROAD0 GRASS0 other0
+
+clean

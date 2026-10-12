@@ -1,0 +1,24 @@
+图 1-28　设施报修与工单查询类图
+============================================================
+【图形类型】类图（Class Diagram）
+【所在位置】1.2.3.3
+
+【图的内容】
+  给出报修功能的类结构，说明地点解析、工单生成与查询如何协作。
+
+【主要组件】
+  GuardAgent（角色入口）；RepairService（报修与查询服务）；AliasResolver（地点别称解析）；PlaceTable（点位表）；WorkOrderRepo（公共工单库）；WorkOrder（工单实体）；CallService（呼叫与到场服务）。
+
+【组织方式】
+  GuardAgent 持有 RepairService 与 CallService；RepairService 依赖 AliasResolver、PlaceTable、WorkOrderRepo；WorkOrderRepo 管理多个 WorkOrder；CallService 支撑“叫得动”的到场服务。
+
+【如何绘制】
+1) 画 GuardAgent，列出报修、查询、呼叫等方法；
+2) 画 RepairService，标注生成与查询两个方法；
+3) 画 AliasResolver 与 PlaceTable，用依赖关系连到 RepairService；
+4) 画 WorkOrderRepo，用聚合关系连到 WorkOrder；
+5) 画 WorkOrder，列出地点、问题、时间、状态、报修人等属性；
+6) 画 CallService，用依赖关系连到 GuardAgent。
+
+【注意事项】
+  工单实体要包含“状态”与“报修人”两个字段，前者支撑进度查询、后者支撑“我报的修好了吗”；WorkOrderRepo 要标注为公共可见。

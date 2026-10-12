@@ -1,0 +1,23 @@
+图 1-10　猫宠好感与互动类图
+============================================================
+【图形类型】类图（Class Diagram）
+【所在位置】1.2.1.3
+
+【图的内容】
+  给出猫宠智能体的配置结构与好感记忆的读写类，说明“猫也是智能体”这一同构设计。
+
+【主要组件】
+  CatAgent（标识、类型、领地、作息、脾气、动作表）；TerritoryRoam（领地游走）；ScheduleReader（作息读取）；AffinityMemory（写入、读取、结清衰减、累加）；TierMapper（分数映射档位）；ReactionTable（档位到动作）；Codex（图鉴）；CatSprite（精灵与帧动画）。
+
+【组织方式】
+  CatAgent 为聚合核心，聚合 TerritoryRoam、ScheduleReader、ReactionTable；AffinityMemory 按“玩家 + 猫 + 来源”为键被读写；TierMapper 依赖 AffinityMemory 的输出；CatSprite 与 Codex 作为表现与记录类。
+
+【如何绘制】
+1) 画 CatAgent 类，列出配置项（领地、作息、脾气、动作表）；
+2) 用聚合关系画出 TerritoryRoam、ScheduleReader、ReactionTable；
+3) 画 AffinityMemory，标注键为“玩家 + 猫 + 来源”，方法含结算与累加；
+4) 画 TierMapper，用依赖关系连到 AffinityMemory；
+5) 画 CatSprite（动作播放）与 Codex（认识一只点亮一格）。
+
+【注意事项】
+  类图要体现猫与其余五个角色“同构”——配置结构一致，差别只在配置内容；AffinityMemory 要标注“按覆盖方式写入、按周惰性衰减”。

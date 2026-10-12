@@ -1,0 +1,21 @@
+function cand(dx,dy,rx,ry,al,ly){
+  var c=mkCanvas(18,30),g=c.getContext('2d');
+  shadowBlob(g,CH_AX+dx,CH_AY+dy,rx,ry,al,ly);
+  var d=g.getImageData(0,0,18,30).data,rows=[],edge=[0,0],max=0;
+  for(var y=24;y<30;y++){
+    var x0=-1,x1=-1,pk=0;
+    for(var x=0;x<18;x++){var a=d[(y*18+x)*4+3];if(a>0){if(x0<0)x0=x;x1=x;if(a>pk)pk=a;}}
+    rows.push('y'+y+' '+(x0<0?'-':x0+'..'+x1)+'@'+pk);
+  }
+  for(var y2=24;y2<30;y2++){edge[0]=Math.max(edge[0],d[(y2*18)*4+3]);edge[1]=Math.max(edge[1],d[(y2*18+17)*4+3]);}
+  return 'c('+dx+','+dy+','+rx+','+ry+','+al+','+ly+') '+rows.join(' ')+' 边缘x0='+edge[0]+' x17='+edge[1];
+}
+(function(){
+  var t=[];
+  t.push('A '+cand(2,1,5,2,0.34,3));
+  t.push('B '+cand(2,1,5,2,0.40,4));
+  t.push('C '+cand(2,1,6,2,0.30,3));
+  t.push('D '+cand(2,1,5,2,0.46,3));
+  t.push('E '+cand(3,1,5,2,0.34,3));
+  document.documentElement.setAttribute('data-x',t.join('\n'));
+})();

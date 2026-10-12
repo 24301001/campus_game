@@ -1,0 +1,17 @@
+# 学霸哥 · 服务端依赖。检索层只用 numpy + 标准库，不需要 FAISS / 向量库 / torch。
+fastapi>=0.110
+uvicorn[standard]>=0.29
+numpy>=1.26
+jieba>=0.42.1
+pdfplumber>=0.11          # 只有 kb/extract.py 抽教材 PDF 时用得到
+requests>=2.31
+
+# —— embedding.provider = "onnx"（本地/端上同款那条腿）才需要 ——
+onnxruntime>=1.17         # backend/retrieval/onnx_embed.py 里是惰性 import：provider=api 时装不装都不影响
+# tokenizers>=0.14       # 只有 tools/dump_onnx_fixtures.py 重新生成基准向量时要（跑一次就够，运行期不依赖）
+# 权重不进仓库：`python tools/get_onnx_assets.py`（hf-mirror + npm tarball；带 --full 连 fp32）
+#
+# —— 刻意不装的东西，以及理由 ——
+# faiss-cpu     ：几千片暴力余弦更快，加 HNSW 是负收益（超过 10 万条再换，见 retrieval/vector.py）
+# langchain     ：本交付件的"智能体"= 模型选函数 + 我们执行，两百行，不需要框架
+# sentence-transformers + torch ：约 2 GB，只为算一个查询向量不划算；走 provider=api 或 onnx

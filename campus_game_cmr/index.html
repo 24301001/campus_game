@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>像素校园 · 北京交通大学 pixel campus</title>
+<meta name="description" content="用代码一砖一瓦画出来的北京交通大学像素校园：41 个地标、5 个校门、能走进去的楼、会带你走路的向导。">
+<style>
+  :root{
+    --bg:#0d0f13; --panel:#161a21; --line:#2b2f3a; --ink:#e9e5d8;
+    --dim:#9fb4d0; --gold:#ffd76e; --green:#7fd6c8; --red:#c0392b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:15px/1.9 ui-monospace,SFMono-Regular,Consolas,"Courier New",monospace;
+    letter-spacing:.4px;
+    background-image:
+      linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+    background-size:32px 32px;
+  }
+  a{color:var(--green);text-decoration:none}
+  a:hover{color:var(--gold)}
+  img{max-width:100%;display:block}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+
+  header{padding:72px 0 40px;text-align:center}
+  h1{
+    margin:0 0 6px; font-size:clamp(30px,6.4vw,58px); line-height:1.15; letter-spacing:2px;
+    background:linear-gradient(180deg,#fff 0%,#ffd76e 55%,#c9a13a 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 34px rgba(255,215,110,.22);
+  }
+  .sub{color:var(--dim);font-size:clamp(12px,2.2vw,15px);letter-spacing:3px}
+  .cursor{display:inline-block;width:10px;height:1.05em;vertical-align:-2px;
+    background:var(--gold);animation:bk 1.05s steps(1) infinite}
+  @keyframes bk{50%{opacity:0}}
+  .tagline{color:#c8c2b4;margin:20px auto 0;max-width:640px;font-size:14px}
+
+  .btns{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:34px 0 6px}
+  .btn{
+    display:inline-block;padding:12px 22px;border:1px solid var(--line);border-radius:6px;
+    background:var(--panel);color:var(--ink);font:inherit;font-weight:600;cursor:pointer;
+    transition:.16s; text-decoration:none;
+  }
+  .btn:hover{border-color:#5a6474;background:#1e232c;transform:translateY(-2px);text-decoration:none}
+  .btn.p{background:var(--gold);color:#1d2129;border-color:#7a6320}
+  .btn.p:hover{background:#ffe494}
+  .hint{color:#6f7a8c;font-size:12px;margin-top:14px}
+
+  .shot{
+    margin:38px 0; border:1px solid var(--line); border-radius:8px; overflow:hidden;
+    background:#0a0c10; box-shadow:0 22px 60px rgba(0,0,0,.6);
+  }
+  .shot img{width:100%;height:auto;image-rendering:pixelated}
+  .shot .cap{padding:9px 14px;border-top:1px solid var(--line);color:var(--dim);font-size:12.5px}
+  .shot .cap b{color:var(--gold);font-weight:600}
+
+  h2{
+    margin:64px 0 8px;font-size:20px;letter-spacing:2px;
+    border-left:3px solid var(--gold);padding-left:12px;
+  }
+  h2 span{color:var(--dim);font-size:13px;letter-spacing:1px;font-weight:400}
+  p{margin:12px 0}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px}
+  .card h3{margin:0 0 6px;font-size:14px;color:var(--gold);letter-spacing:1px}
+  .card p{margin:0;color:#c8c2b4;font-size:13px;line-height:1.8}
+  .k{color:var(--green)}
+
+  .gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:18px}
+  .gal figure{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#0a0c10}
+  .gal img{width:100%;image-rendering:pixelated}
+  .gal figcaption{padding:8px 12px;font-size:12.5px;color:var(--dim);border-top:1px solid var(--line)}
+  .gal figcaption b{color:var(--ink);font-weight:600}
+
+  table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+  th{color:var(--gold);font-weight:600;letter-spacing:1px}
+  td code{background:#1e232c;border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--gold)}
+  tr:hover td{background:#14181f}
+
+  footer{margin:72px 0 48px;padding-top:22px;border-top:1px solid var(--line);
+    color:#6f7a8c;font-size:12.5px;text-align:center;line-height:2}
+  @media (prefers-reduced-motion:reduce){.cursor{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>像素校园<small style="font-size:.42em;color:#9fb4d0;letter-spacing:4px"> PIXEL CAMPUS</small></h1>
+    <div class="sub">北京交通大学 · 一砖一瓦用代码画出来的校园<span class="cursor"></span></div>
+    <p class="tagline">
+      一整个单文件网页：<b>41 个地标</b>、<b>5 个校门</b>、能走进去的机房、会带你走路的向导。
+      没有引擎、没有素材图、没有依赖 —— 只有一张 <span class="k">canvas</span> 和一万八千行代码。
+    </p>
+    <div class="btns">
+      <a class="btn p" href="play.html">🎮 进校园逛逛</a>
+      <a class="btn" href="siyuan.html">🏛 思源楼场景</a>
+      <a class="btn" href="像素校园_全校地图.html">📄 直接打开地图</a>
+    </div>
+    <div class="hint">建议用电脑打开，需要键盘。手机也能看，但走不动。</div>
+  </header>
+
+  <div class="shot">
+    <img src="assets/siyuan-walk.gif" alt="思源楼前，像素人物来回走动">
+    <div class="cap"><b>思源楼</b> · 楼前马路上来回走动的像素人物（这段是脚本录的，真人操作见「进校园逛逛」）</div>
+  </div>
+
+  <h2>校园全景 <span>THE WHOLE THING，5208 × 2929 世界像素</span></h2>
+  <div class="shot">
+    <img src="assets/overview.png" alt="北京交通大学像素校园全景">
+    <div class="cap">一次截完的整幅校园：西边老操场、中间明湖与楼群、东边田径场与逸夫楼</div>
+  </div>
+
+  <h2>它长什么样 <span>SCENERY</span></h2>
+  <div class="gal">
+    <figure><img src="assets/landmark-09.png" alt="第九教学楼">
+      <figcaption><b>第九教学楼</b> · 口字形天井、金门洞，旁边是校名石和詹天佑像</figcaption></figure>
+    <figure><img src="assets/landmark-library.png" alt="图书馆与明湖">
+      <figcaption><b>图书馆</b> · 明湖、小船、雕像，旁边一排网球场</figcaption></figure>
+    <figure><img src="assets/landmark-tianyou.png" alt="天佑会堂">
+      <figcaption><b>天佑会堂</b> · 玻璃门厅，背后是积秀园</figcaption></figure>
+    <figure><img src="assets/landmark-kexue.png" alt="科学会堂">
+      <figcaption><b>科学会堂</b> · 明湖东岸那一栋</figcaption></figure>
+    <figure><img src="assets/landmark-yifu.png" alt="逸夫楼">
+      <figcaption><b>逸夫楼</b> · 整面红瓷砖，可以走进去</figcaption></figure>
+    <figure><img src="assets/landmark-gym.png" alt="新体育馆">
+      <figcaption><b>新体育馆</b> · 大屋顶，外面一圈球场</figcaption></figure>
+    <figure><img src="assets/landmark-center.png" alt="计算机中心">
+      <figcaption><b>计算机中心</b> · 进门就是机房教室，教室里的电脑能打开刷题平台</figcaption></figure>
+  </div>
+
+  <h2>能玩什么 <span>FEATURES</span></h2>
+  <div class="grid">
+    <div class="card">
+      <h3>🚶 真的能走</h3>
+      <p>方向键 / WASD 自由行走，鞋底踩着地面而不是飘着；碰到楼、树、围墙、湖统统走不过去。</p>
+    </div>
+    <div class="card">
+      <h3>🔍 九档缩放</h3>
+      <p>从「一屏看完整座校园」到 3× 贴着看，滚轮或右下角滑条都行。按 <code>0</code> 看全图、按 <code>1</code> 回原尺寸。</p>
+    </div>
+    <div class="card">
+      <h3>🌫 走到楼后楼会虚化</h3>
+      <p>人被楼挡住的时候，那栋楼自动淡下去，你能一直看见自己在哪。</p>
+    </div>
+    <div class="card">
+      <h3>🧭 向导「小北」</h3>
+      <p>南门口那位红马甲志愿者。按 <code>E</code> 跟她说话，说一句「带我去图书馆」，她真的会沿着路把你走过去。</p>
+    </div>
+    <div class="card">
+      <h3>🖥 楼能走进去</h3>
+      <p>计算机中心和逸夫楼有室内场景：进教室坐下，桌上的电脑能直接打开刷题平台。</p>
+    </div>
+    <div class="card">
+      <h3>📦 一个文件装下全部</h3>
+      <p>整个校园就是一个 <code>.html</code>，双击即开，不联网也能跑。楼、树、人、路面全是代码当场画的。</p>
+    </div>
+  </div>
+
+  <h2>在线试玩 <span>PLAY</span></h2>
+  <p>下面两段是自动录的演示动画；想自己走，点上面的按钮。</p>
+  <div class="shot">
+    <img src="assets/campus-tour.gif" alt="镜头从西往东扫过校园">
+    <div class="cap"><b>校园巡游</b> · 镜头自西向东平移：宿舍区 → 思源楼 → 明湖 → 图书馆</div>
+  </div>
+  <div class="shot">
+    <img src="assets/walk-4way.gif" alt="像素人物四个方向行走">
+    <div class="cap"><b>四向行走</b> · 1× 档贴脸看：四个方向各走一段，走完回到原点（所以能无缝循环）</div>
+  </div>
+
+  <h2>怎么操作 <span>CONTROLS</span></h2>
+  <table>
+    <tr><th>动作</th><th>键盘</th></tr>
+    <tr><td>左右移动</td><td><code>←</code> <code>→</code> 或 <code>A</code> <code>D</code></td></tr>
+    <tr><td>前后移动</td><td><code>↑</code> <code>↓</code> 或 <code>W</code> <code>S</code></td></tr>
+    <tr><td>缩放</td><td><code>滚轮</code> / <code>+</code> <code>−</code> / 右下角滑条</td></tr>
+    <tr><td>看全图 / 回原尺寸</td><td><code>0</code> / <code>1</code></td></tr>
+    <tr><td>和向导说话</td><td>走到小北旁边按 <code>E</code></td></tr>
+    <tr><td>走进楼里</td><td>走到门口按 <code>F</code></td></tr>
+    <tr><td>室内 · 跟人说话 / 出门</td><td><code>C</code> / <code>B</code></td></tr>
+  </table>
+
+  <h2>同门兄弟 <span>SIBLINGS</span></h2>
+  <p>本仓库不止这一张地图，另外几个分支各有各的模块：</p>
+  <table>
+    <tr><th>分支</th><th>是什么</th></tr>
+    <tr><td><code>main</code></td><td>像素校园全校地图（就是本页这个）</td></tr>
+    <tr><td><code>wr</code></td><td>算法刷题平台：题库、判题机、后端 8081</td></tr>
+    <tr><td><code>hjy</code></td><td>保安老丁：出入管理的服务模块</td></tr>
+    <tr><td><code>xueba-jie</code></td><td>学霸：能查教材、能一步步讲题的课程助手</td></tr>
+  </table>
+
+  <h2>自己跑一份 <span>RUN LOCALLY</span></h2>
+  <p>
+    把这个仓库拖到本地，双击 <code>像素校园_全校地图.html</code> 就能玩 —— 不需要装任何东西。
+    想看清楚点，用本地服务器打开更稳（浏览器对 <code>file://</code> 有些限制）：
+  </p>
+  <p><code>python -m http.server 8000</code> &nbsp;然后访问 <code>http://localhost:8000</code></p>
+  <p style="color:#6f7a8c;font-size:13px">
+    ⚠️ 向导「小北」的自然语言理解要调用大模型，需要自备 API Key，存在浏览器本地、不会上传到仓库。
+    不填也能正常逛，只是她听不懂话。
+  </p>
+
+  <footer>
+    像素校园 · 北京交通大学 ｜ 页面里的每一栋楼、每一棵树、每一个像素都是代码画的<br>
+    本页展示的是 <b>main</b> 分支 ｜ <a href="https://github.com/24301001/campus_game">github.com/24301001/campus_game</a>
+  </footer>
+
+</div>
+</body>
+</html>

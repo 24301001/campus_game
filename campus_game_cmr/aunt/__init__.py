@@ -1,0 +1,1 @@
+"""Standalone canteen aunt demo."""

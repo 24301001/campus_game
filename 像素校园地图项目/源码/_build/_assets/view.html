@@ -1,0 +1,23 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#1b1f27;color:#c9d4e2;font:12px Consolas,monospace;padding:10px}
+canvas{image-rendering:pixelated;display:block}
+div{display:inline-block;margin:0 18px 18px 0}
+</style></head><body>
+<div><canvas id="a"></canvas><div>na_ninja.png 64x112 @8x</div></div>
+<div><canvas id="b"></canvas><div>na_samurai.png 64x112 @8x</div></div>
+<script>
+function show(id,src,S){
+  var img=new Image();
+  img.onload=function(){
+    var c=document.getElementById(id);
+    c.width=img.width*S;c.height=img.height*S;
+    var g=c.getContext('2d');g.imageSmoothingEnabled=false;
+    g.drawImage(img,0,0,c.width,c.height);
+    g.strokeStyle='rgba(255,255,255,0.25)';g.lineWidth=1;
+    for(var x=16*S;x<c.width;x+=16*S){g.beginPath();g.moveTo(x,0);g.lineTo(x,c.height);g.stroke();}
+    for(var y=16*S;y<c.height;y+=16*S){g.beginPath();g.moveTo(0,y);g.lineTo(c.width,y);g.stroke();}
+  };
+  img.src=src;
+}
+show('a','na_ninja.png',8);show('b','na_samurai.png',8);
+</script></body></html>

@@ -1,0 +1,2727 @@
+{
+  "sha": "6ac78232d5aedcc85ce5f27d060ea92366f7c24a",
+  "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/6ac78232d5aedcc85ce5f27d060ea92366f7c24a",
+  "tree": [
+    {
+      "path": ".gitattributes",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8ad74f78d9c9b9b8f3d68772c6d5aa0cb3fe47e9",
+      "size": 80,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/8ad74f78d9c9b9b8f3d68772c6d5aa0cb3fe47e9"
+    },
+    {
+      "path": ".gitignore",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4709183670ac629a32ff7df40816c79c7c932daa",
+      "size": 36,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/4709183670ac629a32ff7df40816c79c7c932daa"
+    },
+    {
+      "path": "audio",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "f383ff75650f5c4c7353462c00bf48dc9e27391f",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/f383ff75650f5c4c7353462c00bf48dc9e27391f"
+    },
+    {
+      "path": "audio/music",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "70765b6b8d3c14f269cccf124bf7653ecc1b95da",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/70765b6b8d3c14f269cccf124bf7653ecc1b95da"
+    },
+    {
+      "path": "audio/music/theme_dream.ogg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9deab37d3c77f4a058dcd2d963f974c9095aadea",
+      "size": 2333929,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/9deab37d3c77f4a058dcd2d963f974c9095aadea"
+    },
+    {
+      "path": "audio/music/theme_dream.ogg.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "03326624ca1a08ae14bcc6748454b72d6961c349",
+      "size": 404,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/03326624ca1a08ae14bcc6748454b72d6961c349"
+    },
+    {
+      "path": "audio/music/theme_lost_village.ogg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "da205fc4c86ab32c413f66217ed1b7fcf63c2b2d",
+      "size": 877853,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/da205fc4c86ab32c413f66217ed1b7fcf63c2b2d"
+    },
+    {
+      "path": "audio/music/theme_lost_village.ogg.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6bc807ccca899f0a1c5b5c556230dfad6da9b5b1",
+      "size": 425,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/6bc807ccca899f0a1c5b5c556230dfad6da9b5b1"
+    },
+    {
+      "path": "audio/music/theme_plain.ogg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "57e89319e550e645bad5ed250cc4f5aa441e425f",
+      "size": 974899,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/57e89319e550e645bad5ed250cc4f5aa441e425f"
+    },
+    {
+      "path": "audio/music/theme_plain.ogg.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "57edd3310b938c7406e3e5dc90f9002554920440",
+      "size": 404,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/57edd3310b938c7406e3e5dc90f9002554920440"
+    },
+    {
+      "path": "audio/music/theme_swamp.ogg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "818c8e9241088a7da5ea76033989e194f4866de9",
+      "size": 1460020,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/818c8e9241088a7da5ea76033989e194f4866de9"
+    },
+    {
+      "path": "audio/music/theme_swamp.ogg.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1d60bf3a07e8162ff1a09f2ed49971b53f9617bd",
+      "size": 401,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/1d60bf3a07e8162ff1a09f2ed49971b53f9617bd"
+    },
+    {
+      "path": "content",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "7e1612ac786393dd269606951b85e38e25b6aa35",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/7e1612ac786393dd269606951b85e38e25b6aa35"
+    },
+    {
+      "path": "content/behavior",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "a355f5b742315397dcfe87e0aa5c55a4901c11da",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/a355f5b742315397dcfe87e0aa5c55a4901c11da"
+    },
+    {
+      "path": "content/behavior/behavior_enemy.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "22e89a7e71174776c830d9e6aa604376f7b56f77",
+      "size": 656,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/22e89a7e71174776c830d9e6aa604376f7b56f77"
+    },
+    {
+      "path": "content/character",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "1fa5941d7c8ae66f348b3fe2918709100479de8d",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/1fa5941d7c8ae66f348b3fe2918709100479de8d"
+    },
+    {
+      "path": "content/character/Shadow.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "29de4b811b5c4ef3139928f78c57a3a29ecda48e",
+      "size": 123,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/29de4b811b5c4ef3139928f78c57a3a29ecda48e"
+    },
+    {
+      "path": "content/character/Shadow.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8583545dfed79f11cc1a2f8d36ad021de502b237",
+      "size": 770,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/8583545dfed79f11cc1a2f8d36ad021de502b237"
+    },
+    {
+      "path": "content/character/ninja_blue",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "a75edbcc80aadbec57fd8efcbd747ecfbba61d16",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/a75edbcc80aadbec57fd8efcbd747ecfbba61d16"
+    },
+    {
+      "path": "content/character/ninja_blue/blue_ninja.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cdb90b19e335e1e8804d4d73f95681f26b280705",
+      "size": 793,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/cdb90b19e335e1e8804d4d73f95681f26b280705"
+    },
+    {
+      "path": "content/character/ninja_blue/ninja_blue.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bd0d29d6238f9400890eff8134ae6da9e76b4418",
+      "size": 1005,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/bd0d29d6238f9400890eff8134ae6da9e76b4418"
+    },
+    {
+      "path": "content/character/ninja_blue/sprite.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "943b76421027181b24ff19d647fbb92c5f5f293b",
+      "size": 6139,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/943b76421027181b24ff19d647fbb92c5f5f293b"
+    },
+    {
+      "path": "content/character/ninja_blue/sprite.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6bedb873bac2fe1502ec21c75454240b56463993",
+      "size": 781,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/6bedb873bac2fe1502ec21c75454240b56463993"
+    },
+    {
+      "path": "content/character/pig",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "00f3eb09d4f98fc6f16f7d021f93ee445cb644a0",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/00f3eb09d4f98fc6f16f7d021f93ee445cb644a0"
+    },
+    {
+      "path": "content/character/pig/pig.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "966805941074ee54fc961ce858d633af7c35a5ff",
+      "size": 353,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/966805941074ee54fc961ce858d633af7c35a5ff"
+    },
+    {
+      "path": "content/character/pig/pig.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "17a94f17d7c3cd32d2b78a62989544a6325b9ae9",
+      "size": 765,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/17a94f17d7c3cd32d2b78a62989544a6325b9ae9"
+    },
+    {
+      "path": "content/character/pig/pig.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ea4075cb7c74728b58031b0f1b37d9ce96bfffdd",
+      "size": 508,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/ea4075cb7c74728b58031b0f1b37d9ce96bfffdd"
+    },
+    {
+      "path": "content/character/samurai_blue",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "b626ecec4430ca75f92d683bfc1eabe9e6de2d88",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/b626ecec4430ca75f92d683bfc1eabe9e6de2d88"
+    },
+    {
+      "path": "content/character/samurai_blue/samurai_blue.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a5a477ec91390069d589fcecad4d5489bc2ab89b",
+      "size": 437,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/a5a477ec91390069d589fcecad4d5489bc2ab89b"
+    },
+    {
+      "path": "content/character/samurai_blue/sprite.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "62f0913c0411f9b760b11d9c78dde664dc229af2",
+      "size": 5536,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/62f0913c0411f9b760b11d9c78dde664dc229af2"
+    },
+    {
+      "path": "content/character/samurai_blue/sprite.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0d6f8c2a9638370c3b328a75b7e9c40f9ded9c56",
+      "size": 782,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/0d6f8c2a9638370c3b328a75b7e9c40f9ded9c56"
+    },
+    {
+      "path": "content/character/samurai_green",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "28bf6dc2f4b6b7151dd4be2b2e2e5b37da099de4",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/28bf6dc2f4b6b7151dd4be2b2e2e5b37da099de4"
+    },
+    {
+      "path": "content/character/samurai_green/samurai_green.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b8ccbfe5a0b1400c6f1ef3eb46e88dad67556601",
+      "size": 4784,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/b8ccbfe5a0b1400c6f1ef3eb46e88dad67556601"
+    },
+    {
+      "path": "content/character/samurai_green/samurai_green.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6550549c8c9231f1bf05bd332d244638e1439b52",
+      "size": 805,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/6550549c8c9231f1bf05bd332d244638e1439b52"
+    },
+    {
+      "path": "content/character/samurai_green/samurai_green.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "41ac2625921d7be8ed3ab1886f3745e4475261bc",
+      "size": 460,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/41ac2625921d7be8ed3ab1886f3745e4475261bc"
+    },
+    {
+      "path": "content/destroyable",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "adffedcc0df6378004c8ffd4f6c129b910438c31",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/adffedcc0df6378004c8ffd4f6c129b910438c31"
+    },
+    {
+      "path": "content/destroyable/crate.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b7d80cfd85e88dedb35a527aa5627fe8d8ac6143",
+      "size": 228,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/b7d80cfd85e88dedb35a527aa5627fe8d8ac6143"
+    },
+    {
+      "path": "content/destroyable/crate.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f2c2d3c3fe03cb15fcdab2325d3cb96bdbc022c8",
+      "size": 768,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/f2c2d3c3fe03cb15fcdab2325d3cb96bdbc022c8"
+    },
+    {
+      "path": "content/destroyable/crate.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "de78066d798609d8fd399db134aa6356a1bcb4cf",
+      "size": 727,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/de78066d798609d8fd399db134aa6356a1bcb4cf"
+    },
+    {
+      "path": "content/destroyable/grass.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "910a1dd61176e651003beab079435c81c7e5991f",
+      "size": 261,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/910a1dd61176e651003beab079435c81c7e5991f"
+    },
+    {
+      "path": "content/destroyable/grass.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f8130fec2b0b0be6d6652df3851611616442d892",
+      "size": 769,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/f8130fec2b0b0be6d6652df3851611616442d892"
+    },
+    {
+      "path": "content/destroyable/grass.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dd2a4e102fce05a2b96a349bbf930b232e6b5d48",
+      "size": 1322,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/dd2a4e102fce05a2b96a349bbf930b232e6b5d48"
+    },
+    {
+      "path": "content/destroyable/pot.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7acb7cf86ee4f5df7884ee2e0d612ad99f927fca",
+      "size": 275,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/7acb7cf86ee4f5df7884ee2e0d612ad99f927fca"
+    },
+    {
+      "path": "content/destroyable/pot.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7a00cbc9acbb50638983f877d238e82207d6748e",
+      "size": 763,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/7a00cbc9acbb50638983f877d238e82207d6748e"
+    },
+    {
+      "path": "content/destroyable/pot.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b6df2369656158b1e2de757165be484568dce2ef",
+      "size": 1315,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/b6df2369656158b1e2de757165be484568dce2ef"
+    },
+    {
+      "path": "content/environment",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "6d3fbb1961bc7afb2499626ddd8cb3c2ddb58687",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/6d3fbb1961bc7afb2499626ddd8cb3c2ddb58687"
+    },
+    {
+      "path": "content/environment/autumn",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "ec79730555974287608e0581a6d01197a68572f7",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/ec79730555974287608e0581a6d01197a68572f7"
+    },
+    {
+      "path": "content/environment/autumn/environment.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3fad62f0e19ead3d49610804d91233a171a5f6a6",
+      "size": 288,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/3fad62f0e19ead3d49610804d91233a171a5f6a6"
+    },
+    {
+      "path": "content/environment/autumn/gradient.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9a73e27a42f62acb132682e98bc066b1e3bb9a79",
+      "size": 449,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/9a73e27a42f62acb132682e98bc066b1e3bb9a79"
+    },
+    {
+      "path": "content/environment/swamp",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "34cb40c0ed817728b9680121c780e5489e72b110",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/34cb40c0ed817728b9680121c780e5489e72b110"
+    },
+    {
+      "path": "content/environment/swamp/environment.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "75722b2ed290bac511c0745f8e239798ed70c8b6",
+      "size": 600,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/75722b2ed290bac511c0745f8e239798ed70c8b6"
+    },
+    {
+      "path": "content/environment/swamp/gradient.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2ca53733397f63b027ebc1b317775a78ff0f333c",
+      "size": 476,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2ca53733397f63b027ebc1b317775a78ff0f333c"
+    },
+    {
+      "path": "content/map",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "de66e223bc731e18f2f7aa47b69cbe0649e7e416",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/de66e223bc731e18f2f7aa47b69cbe0649e7e416"
+    },
+    {
+      "path": "content/map/map1F7E.tmp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d4293f7b947d08d144a49be7d756a3016eea6d3e",
+      "size": 60205,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/d4293f7b947d08d144a49be7d756a3016eea6d3e"
+    },
+    {
+      "path": "content/map/map_village.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8a8edd779fe8a4ad577d65d46d8e6bba26941be0",
+      "size": 72744,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/8a8edd779fe8a4ad577d65d46d8e6bba26941be0"
+    },
+    {
+      "path": "content/map/tileset.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a073b5d5fa5cccec089fe391cbc4eff4b01a0c2f",
+      "size": 171371,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/a073b5d5fa5cccec089fe391cbc4eff4b01a0c2f"
+    },
+    {
+      "path": "content/map/tileset_animated.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "30e681efb862dc7584b853056ff68ab8121aecca",
+      "size": 691,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/30e681efb862dc7584b853056ff68ab8121aecca"
+    },
+    {
+      "path": "content/map/tileset_animated.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2f6bd8a259aece76872489ed30651592f1793dec",
+      "size": 793,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2f6bd8a259aece76872489ed30651592f1793dec"
+    },
+    {
+      "path": "content/map/tileset_floor.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "abba7bfb065e989962dd1fc74cd1786c613881c9",
+      "size": 29615,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/abba7bfb065e989962dd1fc74cd1786c613881c9"
+    },
+    {
+      "path": "content/map/tileset_floor.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fff0d66fb00d18e65c7cf5e3531d1e70fa1e2c0e",
+      "size": 785,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/fff0d66fb00d18e65c7cf5e3531d1e70fa1e2c0e"
+    },
+    {
+      "path": "content/map/tileset_interior_floor.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "10371122942cff37d809e191b57b702e7fdfb74b",
+      "size": 13012,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/10371122942cff37d809e191b57b702e7fdfb74b"
+    },
+    {
+      "path": "content/map/tileset_interior_floor.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bef24fabd4d0b671185f9aab81f8273df0edd750",
+      "size": 812,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/bef24fabd4d0b671185f9aab81f8273df0edd750"
+    },
+    {
+      "path": "content/map/tileset_village_abandoned.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "541b26a8567f4c130af1ee6e1b855b609dbd0e1f",
+      "size": 31779,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/541b26a8567f4c130af1ee6e1b855b609dbd0e1f"
+    },
+    {
+      "path": "content/map/tileset_village_abandoned.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2f8ecbd236d900bc670f899391eafd025d3e1512",
+      "size": 821,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2f8ecbd236d900bc670f899391eafd025d3e1512"
+    },
+    {
+      "path": "content/map/tileset_wall_simple.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f1c08fe1ceea5802c375108bf187884820556d44",
+      "size": 5149,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/f1c08fe1ceea5802c375108bf187884820556d44"
+    },
+    {
+      "path": "content/map/tileset_wall_simple.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "275e4570f2b6d602d15abf8a4425c5e44d1c7aed",
+      "size": 803,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/275e4570f2b6d602d15abf8a4425c5e44d1c7aed"
+    },
+    {
+      "path": "content/menu",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "3e7dc27769dad6df2688c8672d3cb7fdc2ab54d6",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/3e7dc27769dad6df2688c8672d3cb7fdc2ab54d6"
+    },
+    {
+      "path": "content/menu/title_screen.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2be747574aa582020a00f785a4c0c5ec9414d393",
+      "size": 907,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2be747574aa582020a00f785a4c0c5ec9414d393"
+    },
+    {
+      "path": "content/particle",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "2b290c0fb70e2a6aa2c298f8d78293821dba510b",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/2b290c0fb70e2a6aa2c298f8d78293821dba510b"
+    },
+    {
+      "path": "content/particle/particle_grass.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a7bda5b4fe925cdd701271ef1e90f25f2fc65e67",
+      "size": 476,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/a7bda5b4fe925cdd701271ef1e90f25f2fc65e67"
+    },
+    {
+      "path": "content/particle/particle_grass.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "62f2bff7a104dc8b6e9fb5daa4f48b8ceebfe9eb",
+      "size": 793,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/62f2bff7a104dc8b6e9fb5daa4f48b8ceebfe9eb"
+    },
+    {
+      "path": "content/particle/particle_grass.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "578fb79c642e59ce2e4e709ff8098e09377c05ac",
+      "size": 423,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/578fb79c642e59ce2e4e709ff8098e09377c05ac"
+    },
+    {
+      "path": "content/particle/particle_leaf_pink.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "37aedf52dfc3b3d0d1a83fc9761d21f652bf7b3e",
+      "size": 293,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/37aedf52dfc3b3d0d1a83fc9761d21f652bf7b3e"
+    },
+    {
+      "path": "content/particle/particle_leaf_pink.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1a93214bdd726918a5db93630d5c0d345da3ca04",
+      "size": 804,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/1a93214bdd726918a5db93630d5c0d345da3ca04"
+    },
+    {
+      "path": "content/particle/particle_leaf_pink.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8e28e6046a1fe917ad6578f54bb8597a402bf96e",
+      "size": 427,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/8e28e6046a1fe917ad6578f54bb8597a402bf96e"
+    },
+    {
+      "path": "content/particle/particle_pot.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c5893610936fb1244e402f90db1dead48bc0b0dd",
+      "size": 552,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/c5893610936fb1244e402f90db1dead48bc0b0dd"
+    },
+    {
+      "path": "content/particle/particle_pot.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9cd1876c1942904fa66a0af8a291f9db4cbdd8eb",
+      "size": 787,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/9cd1876c1942904fa66a0af8a291f9db4cbdd8eb"
+    },
+    {
+      "path": "content/particle/particle_pot.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e692d2a01157f68a3415aa7995266575ba6fbe63",
+      "size": 422,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/e692d2a01157f68a3415aa7995266575ba6fbe63"
+    },
+    {
+      "path": "content/particle/particle_rock.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bc692df6001b70f81812d86ab539f09b72ab081a",
+      "size": 567,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/bc692df6001b70f81812d86ab539f09b72ab081a"
+    },
+    {
+      "path": "content/particle/particle_rock.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4973b11118ecdd57217d763f3cc8f64fb33829fd",
+      "size": 790,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/4973b11118ecdd57217d763f3cc8f64fb33829fd"
+    },
+    {
+      "path": "content/particle/particle_rock.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "25ad5ff3834ccd134b606b5e230ecdff9c79bbfc",
+      "size": 422,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/25ad5ff3834ccd134b606b5e230ecdff9c79bbfc"
+    },
+    {
+      "path": "content/particle/particle_wood.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a260cd8206522120435116149fd96b4d01a69caa",
+      "size": 540,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/a260cd8206522120435116149fd96b4d01a69caa"
+    },
+    {
+      "path": "content/particle/particle_wood.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a3649bc5e03179653b24ea3f1976fded297fe593",
+      "size": 789,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/a3649bc5e03179653b24ea3f1976fded297fe593"
+    },
+    {
+      "path": "content/particle/particle_wood.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f33708a55de3d2aa77c379ea25834822c620be90",
+      "size": 422,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/f33708a55de3d2aa77c379ea25834822c620be90"
+    },
+    {
+      "path": "content/stat",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "2629c7c11d91563e6b8e883673d793afb8513835",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/2629c7c11d91563e6b8e883673d793afb8513835"
+    },
+    {
+      "path": "content/stat/one_life.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "823f06524d03f4db1ef056509f118cdc95df068e",
+      "size": 301,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/823f06524d03f4db1ef056509f118cdc95df068e"
+    },
+    {
+      "path": "content/team",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "14a269ddc60a939283cd50ba2ad2930cc8195655",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/14a269ddc60a939283cd50ba2ad2930cc8195655"
+    },
+    {
+      "path": "content/team/enemy_team.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7eb9b99825a27e312002e2931c2912179034e830",
+      "size": 308,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/7eb9b99825a27e312002e2931c2912179034e830"
+    },
+    {
+      "path": "content/team/neutral_team.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "15aaf1a91ac3275ac391c8fe170bbff32e09c6f8",
+      "size": 357,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/15aaf1a91ac3275ac391c8fe170bbff32e09c6f8"
+    },
+    {
+      "path": "content/team/npc_team.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f45b34f129c63ba217446425cc31fcab91b3eb11",
+      "size": 308,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/f45b34f129c63ba217446425cc31fcab91b3eb11"
+    },
+    {
+      "path": "content/team/player_team.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f8dc4eab756f3b1fe4b0cbc9ea7e64dcaccabe98",
+      "size": 308,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/f8dc4eab756f3b1fe4b0cbc9ea7e64dcaccabe98"
+    },
+    {
+      "path": "content/ui",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "025414e09b9397fc0764bff26c16d62f2e905c36",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/025414e09b9397fc0764bff26c16d62f2e905c36"
+    },
+    {
+      "path": "content/ui/heart.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "006472f856799806b687197d90e5500418f7f52d",
+      "size": 3125,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/006472f856799806b687197d90e5500418f7f52d"
+    },
+    {
+      "path": "content/ui/heart.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "03a32d44f5645bc4f3415c27eaea9fd311ed7cd4",
+      "size": 760,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/03a32d44f5645bc4f3415c27eaea9fd311ed7cd4"
+    },
+    {
+      "path": "content/ui/heart_2.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "15e0fa6c114e69f6c68f01fc75579ccbf5ef3d30",
+      "size": 290,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/15e0fa6c114e69f6c68f01fc75579ccbf5ef3d30"
+    },
+    {
+      "path": "content/ui/heart_2.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5bc90279b4f35e55018f40b60cca5788671f37fb",
+      "size": 766,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/5bc90279b4f35e55018f40b60cca5788671f37fb"
+    },
+    {
+      "path": "content/ui/heart_3.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7dafdc8d093284292a88ddef43d6fb693094f4e7",
+      "size": 399,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/7dafdc8d093284292a88ddef43d6fb693094f4e7"
+    },
+    {
+      "path": "content/ui/heart_3.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a500f336156b8faae2ffbf4c01bbe1136fb8b1ed",
+      "size": 765,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/a500f336156b8faae2ffbf4c01bbe1136fb8b1ed"
+    },
+    {
+      "path": "content/weapon",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "e4fec2f8e018ca6659d1e4eddda4359d75a717ed",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/e4fec2f8e018ca6659d1e4eddda4359d75a717ed"
+    },
+    {
+      "path": "content/weapon/axe",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "4d9fa55488374a132cc7297baafb62154c3df11b",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/4d9fa55488374a132cc7297baafb62154c3df11b"
+    },
+    {
+      "path": "content/weapon/axe/in_hand.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8f9751f2c442e2bdb56c406a2ac677011f1d3ed1",
+      "size": 2815,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/8f9751f2c442e2bdb56c406a2ac677011f1d3ed1"
+    },
+    {
+      "path": "content/weapon/axe/in_hand.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "628a8f8801262afd7bc0d7e5f7625903db2f8d45",
+      "size": 774,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/628a8f8801262afd7bc0d7e5f7625903db2f8d45"
+    },
+    {
+      "path": "content/weapon/axe/sprite.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "308c22947dd182c7c89196c8f7777cf91361f81d",
+      "size": 252,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/308c22947dd182c7c89196c8f7777cf91361f81d"
+    },
+    {
+      "path": "content/weapon/axe/sprite.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "80a4034fa57cb00306ab504d1445ad7fb89b2dcb",
+      "size": 771,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/80a4034fa57cb00306ab504d1445ad7fb89b2dcb"
+    },
+    {
+      "path": "content/weapon/big_sword",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "52b75c2066ae9ad32a66c7348fdcf5d224507e6c",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/52b75c2066ae9ad32a66c7348fdcf5d224507e6c"
+    },
+    {
+      "path": "content/weapon/big_sword/in_hand.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "09268fd9509409aff6b2276ff8200c7d1b1f0fde",
+      "size": 197,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/09268fd9509409aff6b2276ff8200c7d1b1f0fde"
+    },
+    {
+      "path": "content/weapon/big_sword/in_hand.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "12b5ac8877440943a9706f201e5be9a560f406f6",
+      "size": 780,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/12b5ac8877440943a9706f201e5be9a560f406f6"
+    },
+    {
+      "path": "content/weapon/big_sword/sprite.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "df5202f18ba83887c34d5123af70f8314c17a08b",
+      "size": 222,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/df5202f18ba83887c34d5123af70f8314c17a08b"
+    },
+    {
+      "path": "content/weapon/big_sword/sprite.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "da3db763785207293e12b065e454696b8f03397f",
+      "size": 776,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/da3db763785207293e12b065e454696b8f03397f"
+    },
+    {
+      "path": "content/weapon/bone",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "66e21d9ded1b877035ec3a027e9557761f131fba",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/66e21d9ded1b877035ec3a027e9557761f131fba"
+    },
+    {
+      "path": "content/weapon/bone/in_hand.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6b25072d4193484b6457c42beb514f2eecf32370",
+      "size": 153,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/6b25072d4193484b6457c42beb514f2eecf32370"
+    },
+    {
+      "path": "content/weapon/bone/in_hand.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fac5e8dd1400538daf4d9a9895d72db8b68d0b51",
+      "size": 775,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/fac5e8dd1400538daf4d9a9895d72db8b68d0b51"
+    },
+    {
+      "path": "content/weapon/bone/sprite.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d5b713ea62494f050aa22044a9862499e62bf650",
+      "size": 147,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/d5b713ea62494f050aa22044a9862499e62bf650"
+    },
+    {
+      "path": "content/weapon/bone/sprite.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c751398bcb4bfd4e8cab81563ba5466884bc3d78",
+      "size": 772,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/c751398bcb4bfd4e8cab81563ba5466884bc3d78"
+    },
+    {
+      "path": "content/weapon/book",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "433d3901f48d4b0060e98a2015d0613a2b7832b0",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/433d3901f48d4b0060e98a2015d0613a2b7832b0"
+    },
+    {
+      "path": "content/weapon/book/in_hand.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "039d87ff79163644c0ae7d29899861376bf10adc",
+      "size": 238,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/039d87ff79163644c0ae7d29899861376bf10adc"
+    },
+    {
+      "path": "content/weapon/book/in_hand.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5f89dc31a065f1583697fae64651eda53b383d21",
+      "size": 774,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/5f89dc31a065f1583697fae64651eda53b383d21"
+    },
+    {
+      "path": "content/weapon/book/sprite.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "23493c44c0ec3058a36dc1ab820316ff49a6f3c3",
+      "size": 162,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/23493c44c0ec3058a36dc1ab820316ff49a6f3c3"
+    },
+    {
+      "path": "content/weapon/book/sprite.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "be4b3179ee887ccc646f87872f9a85f6cde2016b",
+      "size": 772,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/be4b3179ee887ccc646f87872f9a85f6cde2016b"
+    },
+    {
+      "path": "content/weapon/club",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "84de0330f10f2ac5fde01895e8c26ba33794c175",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/84de0330f10f2ac5fde01895e8c26ba33794c175"
+    },
+    {
+      "path": "content/weapon/club/club.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8f5b0bb3c1e9a9746e4dbcc4653c9044b1edf050",
+      "size": 795,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/8f5b0bb3c1e9a9746e4dbcc4653c9044b1edf050"
+    },
+    {
+      "path": "content/weapon/club/in_hand.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "04d91cb57900075195cd8c2212dd16735a6a3aa0",
+      "size": 193,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/04d91cb57900075195cd8c2212dd16735a6a3aa0"
+    },
+    {
+      "path": "content/weapon/club/in_hand.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6357a4a3ead15ccc379ab7593da7bb0dd2014423",
+      "size": 775,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/6357a4a3ead15ccc379ab7593da7bb0dd2014423"
+    },
+    {
+      "path": "content/weapon/club/sprite.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c38844d728fe80b0c52bba917bea26ebd465e1c3",
+      "size": 212,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/c38844d728fe80b0c52bba917bea26ebd465e1c3"
+    },
+    {
+      "path": "content/weapon/club/sprite.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d0ea8d50d8ab2c6bfc0de942757ef6c7db478a7d",
+      "size": 772,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/d0ea8d50d8ab2c6bfc0de942757ef6c7db478a7d"
+    },
+    {
+      "path": "default_bus_layout.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "041934ee8d5a14af23d2f67aacd07fd5e9583f01",
+      "size": 368,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/041934ee8d5a14af23d2f67aacd07fd5e9583f01"
+    },
+    {
+      "path": "icon.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "654aa858c94b53b9677ff09453462e6cc2f22115",
+      "size": 727,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/654aa858c94b53b9677ff09453462e6cc2f22115"
+    },
+    {
+      "path": "icon.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "03bf5c048cae1d702018a845715e26c7505f3eab",
+      "size": 746,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/03bf5c048cae1d702018a845715e26c7505f3eab"
+    },
+    {
+      "path": "main.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3199b554692925a2675ef9975f1ade6e031d6302",
+      "size": 516,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/3199b554692925a2675ef9975f1ade6e031d6302"
+    },
+    {
+      "path": "main.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "41908bf537a5d9435475afdaf3bbef4e4819352c",
+      "size": 205,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/41908bf537a5d9435475afdaf3bbef4e4819352c"
+    },
+    {
+      "path": "project.godot",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c97ec500ccea1abdaa0c462323dbde2fbb704968",
+      "size": 3568,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/c97ec500ccea1abdaa0c462323dbde2fbb704968"
+    },
+    {
+      "path": "system",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "dfed30f3b2d30993e2953d92ef6f4eb00b7e7326",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/dfed30f3b2d30993e2953d92ef6f4eb00b7e7326"
+    },
+    {
+      "path": "system/behavior",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "b3be6c08adabe07e3c92e793c75bb0ccf5dce5e3",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/b3be6c08adabe07e3c92e793c75bb0ccf5dce5e3"
+    },
+    {
+      "path": "system/behavior/area_target_finder.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4fc9adfa17d0a0de78f17e8803502a6ade522bd0",
+      "size": 373,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/4fc9adfa17d0a0de78f17e8803502a6ade522bd0"
+    },
+    {
+      "path": "system/behavior/behavior_follow.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "02a1fe30618fd2d6995c5fd6293ba7b51806ced4",
+      "size": 1475,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/02a1fe30618fd2d6995c5fd6293ba7b51806ced4"
+    },
+    {
+      "path": "system/behavior/behavior_follow_path.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "41fb15f6dec4addacb0d2bdcfc6677ccd77cc99d",
+      "size": 3813,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/41fb15f6dec4addacb0d2bdcfc6677ccd77cc99d"
+    },
+    {
+      "path": "system/behavior/behavior_follow_path.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b7a67beae6596397eb2307823e9d0f0f2b5547e1",
+      "size": 94,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/b7a67beae6596397eb2307823e9d0f0f2b5547e1"
+    },
+    {
+      "path": "system/behavior/icon_area_target_finder.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b87b6455dd4e34ecf1b78a43f7bd3f30ab3896ba",
+      "size": 214,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/b87b6455dd4e34ecf1b78a43f7bd3f30ab3896ba"
+    },
+    {
+      "path": "system/behavior/icon_area_target_finder.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "66699529f2f113106e68180c2c5b6bffdcd158aa",
+      "size": 819,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/66699529f2f113106e68180c2c5b6bffdcd158aa"
+    },
+    {
+      "path": "system/behavior/icon_behavior_follow.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "15f18574a13586e5404fed5120e7c4d5443992d9",
+      "size": 187,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/15f18574a13586e5404fed5120e7c4d5443992d9"
+    },
+    {
+      "path": "system/behavior/icon_behavior_follow.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5596d0e8839124ea083c1a64c96f7b20b755bd98",
+      "size": 810,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/5596d0e8839124ea083c1a64c96f7b20b755bd98"
+    },
+    {
+      "path": "system/behavior/icon_behavior_path_follow.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7a7a7d8eb40b0a8a827d948874bcb0c64750fdc4",
+      "size": 199,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/7a7a7d8eb40b0a8a827d948874bcb0c64750fdc4"
+    },
+    {
+      "path": "system/behavior/icon_behavior_path_follow.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b4d9c34da250cc5660a505b15e8a73769678799f",
+      "size": 824,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/b4d9c34da250cc5660a505b15e8a73769678799f"
+    },
+    {
+      "path": "system/camera",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "5c44757d15103faeb1a22867ccbe087a9ac8a595",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/5c44757d15103faeb1a22867ccbe087a9ac8a595"
+    },
+    {
+      "path": "system/camera/camera_grid.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "04fd8d1ab08daf4aa400eb5d7e71b426302ed8d3",
+      "size": 2191,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/04fd8d1ab08daf4aa400eb5d7e71b426302ed8d3"
+    },
+    {
+      "path": "system/camera/icon_camera_grid.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2e0b94c81adc5d8fe7920cee513748c830aee975",
+      "size": 201,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2e0b94c81adc5d8fe7920cee513748c830aee975"
+    },
+    {
+      "path": "system/camera/icon_camera_grid.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "67a827afe47eafd10c5b50baa3a73f8017aea48a",
+      "size": 795,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/67a827afe47eafd10c5b50baa3a73f8017aea48a"
+    },
+    {
+      "path": "system/character",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "609da89f28873d9d69ebae7b3ccecbeb597e3ece",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/609da89f28873d9d69ebae7b3ccecbeb597e3ece"
+    },
+    {
+      "path": "system/character/actor_sprite.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d03186b62051b277906471a5bed912469556a1ee",
+      "size": 1067,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/d03186b62051b277906471a5bed912469556a1ee"
+    },
+    {
+      "path": "system/character/actor_sprite.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "877d143c0bbaa0113f59ee18d253735594cedd57",
+      "size": 976,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/877d143c0bbaa0113f59ee18d253735594cedd57"
+    },
+    {
+      "path": "system/character/animal.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2801ce0c0f183e4bca71bf798d354de51c4f871d",
+      "size": 1268,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2801ce0c0f183e4bca71bf798d354de51c4f871d"
+    },
+    {
+      "path": "system/character/animal.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2997d53f956f0e22f09259b1801d5d4abe081b26",
+      "size": 491,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2997d53f956f0e22f09259b1801d5d4abe081b26"
+    },
+    {
+      "path": "system/character/character.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d96f59476eaae298698dc2367076aa4ef8baba5d",
+      "size": 1551,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/d96f59476eaae298698dc2367076aa4ef8baba5d"
+    },
+    {
+      "path": "system/character/character.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bc16d324e3fd6d435c4765c55c9359186363075d",
+      "size": 1183,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/bc16d324e3fd6d435c4765c55c9359186363075d"
+    },
+    {
+      "path": "system/character/icon_character.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0dc9fe9566017e6f3778f772948665869c5e8a2e",
+      "size": 189,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/0dc9fe9566017e6f3778f772948665869c5e8a2e"
+    },
+    {
+      "path": "system/character/icon_character.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2e2886de84afc0da02f13688719627b152c40bc4",
+      "size": 792,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2e2886de84afc0da02f13688719627b152c40bc4"
+    },
+    {
+      "path": "system/character/life_bar.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "418a80fe92d62c7a7e968ae5c0be830f667844fa",
+      "size": 383,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/418a80fe92d62c7a7e968ae5c0be830f667844fa"
+    },
+    {
+      "path": "system/character/pla6C6F.tmp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "523342826f8f382f517c940d84b10ec0db48e343",
+      "size": 2699,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/523342826f8f382f517c940d84b10ec0db48e343"
+    },
+    {
+      "path": "system/character/resource_character.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cdfa72b37dee2cb1fe17b66dc20b9bfa10fa1c96",
+      "size": 77,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/cdfa72b37dee2cb1fe17b66dc20b9bfa10fa1c96"
+    },
+    {
+      "path": "system/character/sprite_character.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "87d8962a954168f910f6335ffdf9af58a653eaf9",
+      "size": 1456,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/87d8962a954168f910f6335ffdf9af58a653eaf9"
+    },
+    {
+      "path": "system/color_correction",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "ca30b3faf9fbd373eec3c23502de25c086ea967e",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/ca30b3faf9fbd373eec3c23502de25c086ea967e"
+    },
+    {
+      "path": "system/color_correction/color_correction.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "100cb3b4ac60c4590eb010743fea6e3573388ac9",
+      "size": 756,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/100cb3b4ac60c4590eb010743fea6e3573388ac9"
+    },
+    {
+      "path": "system/color_correction/gradient_neutral.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bd89f34c256f414454a428b72c472a3c1315e2e5",
+      "size": 192,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/bd89f34c256f414454a428b72c472a3c1315e2e5"
+    },
+    {
+      "path": "system/color_correction/icon_color_correction.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "93164d92143250f69e804781cab6f8c6227a4214",
+      "size": 200,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/93164d92143250f69e804781cab6f8c6227a4214"
+    },
+    {
+      "path": "system/color_correction/icon_color_correction.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "46669ce752d0ecab313fd8f8f2cab900ad2a7c10",
+      "size": 821,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/46669ce752d0ecab313fd8f8f2cab900ad2a7c10"
+    },
+    {
+      "path": "system/color_correction/material.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c852fc13281c8d37952ed7b5b1a5972a34ffed50",
+      "size": 699,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/c852fc13281c8d37952ed7b5b1a5972a34ffed50"
+    },
+    {
+      "path": "system/color_correction/shader_color_correction.gdshader",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9c589ea302ed7982366305dd5613d9b64078c189",
+      "size": 792,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/9c589ea302ed7982366305dd5613d9b64078c189"
+    },
+    {
+      "path": "system/damage",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "c3751bc930a51891c98d98e3fd81b1f7c3098bee",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/c3751bc930a51891c98d98e3fd81b1f7c3098bee"
+    },
+    {
+      "path": "system/damage/damage_area.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dd23fd714491d621449b3ecd3f18de82a1022fb9",
+      "size": 519,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/dd23fd714491d621449b3ecd3f18de82a1022fb9"
+    },
+    {
+      "path": "system/damage/hitbox.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ab57175f880c9581a734278f45a9e0044038115f",
+      "size": 455,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/ab57175f880c9581a734278f45a9e0044038115f"
+    },
+    {
+      "path": "system/damage/icon_damage_area.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cc3cc18d8a32f2c120e8fe47152041f48eb58ac3",
+      "size": 199,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/cc3cc18d8a32f2c120e8fe47152041f48eb58ac3"
+    },
+    {
+      "path": "system/damage/icon_damage_area.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5f43c7864572311ec47918806ea4f3380361da44",
+      "size": 796,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/5f43c7864572311ec47918806ea4f3380361da44"
+    },
+    {
+      "path": "system/damage/icon_damage_team.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e02aa5f5c16a95cbfb80d2518c9ddf977035edec",
+      "size": 207,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/e02aa5f5c16a95cbfb80d2518c9ddf977035edec"
+    },
+    {
+      "path": "system/damage/icon_damage_team.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "38af61f1a5794abc81cd8b1373644a1655ce43c9",
+      "size": 796,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/38af61f1a5794abc81cd8b1373644a1655ce43c9"
+    },
+    {
+      "path": "system/damage/icon_hitbox.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4335dbfbb65b6328fd9729ef34a00b1c930630b7",
+      "size": 226,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/4335dbfbb65b6328fd9729ef34a00b1c930630b7"
+    },
+    {
+      "path": "system/damage/icon_hitbox.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1d06bd5060dbb7e34217b8d972208301c8613ec9",
+      "size": 781,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/1d06bd5060dbb7e34217b8d972208301c8613ec9"
+    },
+    {
+      "path": "system/damage/icon_resource_damage.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "def8d6fc9f9a75259f05771c0f663e97c81f1ab7",
+      "size": 167,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/def8d6fc9f9a75259f05771c0f663e97c81f1ab7"
+    },
+    {
+      "path": "system/damage/icon_resource_damage.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9bd75d72772ca5840f761e6a701ed81aa18ac2d1",
+      "size": 808,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/9bd75d72772ca5840f761e6a701ed81aa18ac2d1"
+    },
+    {
+      "path": "system/damage/resource_damage.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c1b2b431424e05f70c60f235885590e9739613d6",
+      "size": 141,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/c1b2b431424e05f70c60f235885590e9739613d6"
+    },
+    {
+      "path": "system/damage/resource_damage_team.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f631e6e442804fbaccd90d6199d94ac54a7a966c",
+      "size": 416,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/f631e6e442804fbaccd90d6199d94ac54a7a966c"
+    },
+    {
+      "path": "system/destroyable",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "0ee660af02aaf8f0276fa444289fefb81da901c0",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/0ee660af02aaf8f0276fa444289fefb81da901c0"
+    },
+    {
+      "path": "system/destroyable/destroyable.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "62067d9d13ffecc7cffbd443593cf49bcbb8b175",
+      "size": 1525,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/62067d9d13ffecc7cffbd443593cf49bcbb8b175"
+    },
+    {
+      "path": "system/destroyable/destroyable.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "41927f31ef0df268f6d28061e2cdc36f718c2cb2",
+      "size": 2196,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/41927f31ef0df268f6d28061e2cdc36f718c2cb2"
+    },
+    {
+      "path": "system/destroyable/icon_destroyable.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dfedf6ab3bd0bbf4d35ca4a6adf43e2ffcc5db29",
+      "size": 243,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/dfedf6ab3bd0bbf4d35ca4a6adf43e2ffcc5db29"
+    },
+    {
+      "path": "system/destroyable/icon_destroyable.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a57f16aa9cefb5049c46f540c3fee58e337b0256",
+      "size": 801,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/a57f16aa9cefb5049c46f540c3fee58e337b0256"
+    },
+    {
+      "path": "system/destroyable/resource_destroyable.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3ff71e807d60c4e03b20d96e4fe1cdb998c24a9b",
+      "size": 148,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/3ff71e807d60c4e03b20d96e4fe1cdb998c24a9b"
+    },
+    {
+      "path": "system/environment",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "0fbc4539fd18a25f93dd486a626a1bb78f008a2f",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/0fbc4539fd18a25f93dd486a626a1bb78f008a2f"
+    },
+    {
+      "path": "system/environment/environment_area.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "246ab84e37baf50ea69db6cd8ccdfdae72add1f7",
+      "size": 573,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/246ab84e37baf50ea69db6cd8ccdfdae72add1f7"
+    },
+    {
+      "path": "system/environment/environment_shape.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e3c4afcb9ac9b8762944aa73ea3cc2c2fe21b304",
+      "size": 730,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/e3c4afcb9ac9b8762944aa73ea3cc2c2fe21b304"
+    },
+    {
+      "path": "system/environment/fog.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ecb0eb8047689b7b2a051cfa1b13d11a4a4944b3",
+      "size": 335,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/ecb0eb8047689b7b2a051cfa1b13d11a4a4944b3"
+    },
+    {
+      "path": "system/environment/fx",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "6072bf6c748fca7e3cb6c4de51a774b4e5095d28",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/6072bf6c748fca7e3cb6c4de51a774b4e5095d28"
+    },
+    {
+      "path": "system/environment/fx/cloud.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5c489b619008956fa54d295105e3ca7e7bf9ff87",
+      "size": 325,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/5c489b619008956fa54d295105e3ca7e7bf9ff87"
+    },
+    {
+      "path": "system/environment/fx/cloud.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "07f47701b9b24780776d3be7585258becc26cb97",
+      "size": 770,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/07f47701b9b24780776d3be7585258becc26cb97"
+    },
+    {
+      "path": "system/environment/fx/fog.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "93d330b494b6f1c7fd45c8ba2ab3ebeef61dea53",
+      "size": 1971,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/93d330b494b6f1c7fd45c8ba2ab3ebeef61dea53"
+    },
+    {
+      "path": "system/environment/fx/fog.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d2e2fdd0c747815841ed819e69e5ea6999ac2cfa",
+      "size": 765,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/d2e2fdd0c747815841ed819e69e5ea6999ac2cfa"
+    },
+    {
+      "path": "system/environment/fx/leaf.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "536d2adf486c972013eae8e2dd3929656fa19bac",
+      "size": 287,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/536d2adf486c972013eae8e2dd3929656fa19bac"
+    },
+    {
+      "path": "system/environment/fx/leaf.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9af44e8e872667fcb943f30167dbb7461baa732f",
+      "size": 768,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/9af44e8e872667fcb943f30167dbb7461baa732f"
+    },
+    {
+      "path": "system/environment/fx/rain.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "eea8e4f7b88bd7ac027e04757944d0d250294f4a",
+      "size": 98,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/eea8e4f7b88bd7ac027e04757944d0d250294f4a"
+    },
+    {
+      "path": "system/environment/fx/rain.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9b2e1c7c68f4f568e8ca8564277f6df43818ead7",
+      "size": 768,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/9b2e1c7c68f4f568e8ca8564277f6df43818ead7"
+    },
+    {
+      "path": "system/environment/fx/rain_on_floor.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6911fde257b4215b7a2c6935ca4d47805f230cfd",
+      "size": 148,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/6911fde257b4215b7a2c6935ca4d47805f230cfd"
+    },
+    {
+      "path": "system/environment/fx/rain_on_floor.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6a3b4ea8a13ea1e5d02082b9df9e7d1540a26097",
+      "size": 795,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/6a3b4ea8a13ea1e5d02082b9df9e7d1540a26097"
+    },
+    {
+      "path": "system/environment/fx/raylight.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ada046c2a01837c97a2739fda259215532962d5f",
+      "size": 1032,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/ada046c2a01837c97a2739fda259215532962d5f"
+    },
+    {
+      "path": "system/environment/fx/raylight.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fe4c6bb196731c4d2841b3ec3e2745fb931b36da",
+      "size": 780,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/fe4c6bb196731c4d2841b3ec3e2745fb931b36da"
+    },
+    {
+      "path": "system/environment/fx/raylight_big.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e03db7f375d34a52b498daf67cb3917730789528",
+      "size": 556,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/e03db7f375d34a52b498daf67cb3917730789528"
+    },
+    {
+      "path": "system/environment/fx/raylight_big.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ed173bb599d3f8ff7ca9c00756e430ec0cbce0d4",
+      "size": 792,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/ed173bb599d3f8ff7ca9c00756e430ec0cbce0d4"
+    },
+    {
+      "path": "system/environment/fx/snow.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a36401e62fc3610d6833227a4c2a87e60ea0ae62",
+      "size": 156,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/a36401e62fc3610d6833227a4c2a87e60ea0ae62"
+    },
+    {
+      "path": "system/environment/fx/snow.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "61ed1c4cf551ad02b1e9eeb08fca7d9ff94f5d4b",
+      "size": 768,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/61ed1c4cf551ad02b1e9eeb08fca7d9ff94f5d4b"
+    },
+    {
+      "path": "system/environment/icon_environment_area.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f9d2128f0b3f61f57933a5690283433b5be9f6b4",
+      "size": 197,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/f9d2128f0b3f61f57933a5690283433b5be9f6b4"
+    },
+    {
+      "path": "system/environment/icon_environment_area.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "13890a548f83bee3de7f4ba85ad7ba10094b4b89",
+      "size": 816,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/13890a548f83bee3de7f4ba85ad7ba10094b4b89"
+    },
+    {
+      "path": "system/environment/icon_environment_shape.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6152bd41fc5010eb7229f3b4d6f537b4aa04be63",
+      "size": 219,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/6152bd41fc5010eb7229f3b4d6f537b4aa04be63"
+    },
+    {
+      "path": "system/environment/icon_environment_shape.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "76982c8346a6a85e5a9687866259ecbc186b831d",
+      "size": 819,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/76982c8346a6a85e5a9687866259ecbc186b831d"
+    },
+    {
+      "path": "system/environment/resource_environment.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cb3297e4fcfaaf2655e01d977c4c41ce43852fff",
+      "size": 664,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/cb3297e4fcfaaf2655e01d977c4c41ce43852fff"
+    },
+    {
+      "path": "system/input",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "be87eeb350f58c822bc8ab18bf58cb3b1403a874",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/be87eeb350f58c822bc8ab18bf58cb3b1403a874"
+    },
+    {
+      "path": "system/input/human_controller.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "39803a3296165328844f8e06d75e97d3f4da4700",
+      "size": 608,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/39803a3296165328844f8e06d75e97d3f4da4700"
+    },
+    {
+      "path": "system/map",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "382935c71f64f37bf2e9d5c1249013bb107ffb33",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/382935c71f64f37bf2e9d5c1249013bb107ffb33"
+    },
+    {
+      "path": "system/map/icon_map.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d53d1fbd5b97c813a727b794f4c630457feb1c07",
+      "size": 300,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/d53d1fbd5b97c813a727b794f4c630457feb1c07"
+    },
+    {
+      "path": "system/map/icon_map.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2e1c5fa6cf0f8f4db5d5bc7507f99ad88ae24ef4",
+      "size": 769,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2e1c5fa6cf0f8f4db5d5bc7507f99ad88ae24ef4"
+    },
+    {
+      "path": "system/map/map.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2e5a6bf32413105f8c0fd504d6032c79d4bca879",
+      "size": 243,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2e5a6bf32413105f8c0fd504d6032c79d4bca879"
+    },
+    {
+      "path": "system/map/map.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "07b9ab917335cbb9a26acd2febc427dc83953297",
+      "size": 1681,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/07b9ab917335cbb9a26acd2febc427dc83953297"
+    },
+    {
+      "path": "system/map/map26FD.tmp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "aaf2034985d2bd4d9329744d142cdc7bde455f39",
+      "size": 73693,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/aaf2034985d2bd4d9329744d142cdc7bde455f39"
+    },
+    {
+      "path": "system/map/mapA638.tmp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ce2fcad14d677aae6739c00bb9858fcd6b42be1f",
+      "size": 71010,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/ce2fcad14d677aae6739c00bb9858fcd6b42be1f"
+    },
+    {
+      "path": "system/map/map_size_bg.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "78618dd0f71d0fbd3cd467f9de79dc8359bba05a",
+      "size": 697,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/78618dd0f71d0fbd3cd467f9de79dc8359bba05a"
+    },
+    {
+      "path": "system/map/map_size_bg.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "590c6053dee1c45bc7c133aec7bd61c7aaac52ed",
+      "size": 778,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/590c6053dee1c45bc7c133aec7bd61c7aaac52ed"
+    },
+    {
+      "path": "system/music.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e247db841c004aae39c56797c017e32585c4d827",
+      "size": 569,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/e247db841c004aae39c56797c017e32585c4d827"
+    },
+    {
+      "path": "system/particle",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "2cf433a7095151138e261e350f1ecb43590d9819",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/2cf433a7095151138e261e350f1ecb43590d9819"
+    },
+    {
+      "path": "system/particle/icon_particle.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8c549cda24a99928e734c39ce3e019af1e77ae1b",
+      "size": 217,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/8c549cda24a99928e734c39ce3e019af1e77ae1b"
+    },
+    {
+      "path": "system/particle/icon_particle.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7e175976300da69bc25f0c45ee54dc79240e3d55",
+      "size": 789,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/7e175976300da69bc25f0c45ee54dc79240e3d55"
+    },
+    {
+      "path": "system/particle/icon_resource_particle.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "df9aa55b1cc68e230c679abec913a06a8228dee9",
+      "size": 163,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/df9aa55b1cc68e230c679abec913a06a8228dee9"
+    },
+    {
+      "path": "system/particle/icon_resource_particle.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9098a6687a057dce71ee7097ee45c610cc555aac",
+      "size": 816,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/9098a6687a057dce71ee7097ee45c610cc555aac"
+    },
+    {
+      "path": "system/particle/particle.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c7ae0760515a6e3afa488d009dbbb6278d4f16c2",
+      "size": 490,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/c7ae0760515a6e3afa488d009dbbb6278d4f16c2"
+    },
+    {
+      "path": "system/particle/particle_process_explosion.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2cb2015f275185dc318a1adb22cbbef429047578",
+      "size": 1215,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2cb2015f275185dc318a1adb22cbbef429047578"
+    },
+    {
+      "path": "system/particle/resource_particle.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2cb77933ab882f2f4cec042e855ac5fdcbfe2c82",
+      "size": 668,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2cb77933ab882f2f4cec042e855ac5fdcbfe2c82"
+    },
+    {
+      "path": "system/player_assignor.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2865a64773c3ccf8615afa4db822ae3cb8654189",
+      "size": 456,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2865a64773c3ccf8615afa4db822ae3cb8654189"
+    },
+    {
+      "path": "system/shader",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "7adcbd2a63414612bdfa659dfe8b8dd478f960cd",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/7adcbd2a63414612bdfa659dfe8b8dd478f960cd"
+    },
+    {
+      "path": "system/shader/shader_moving_texture.gdshader",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1bded007f080e392be2490860056ec83edfe5387",
+      "size": 336,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/1bded007f080e392be2490860056ec83edfe5387"
+    },
+    {
+      "path": "system/stat",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "476c637cfd19379159b13ebd4a805aa1054a6f90",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/476c637cfd19379159b13ebd4a805aa1054a6f90"
+    },
+    {
+      "path": "system/stat/icon.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "123a79808ee74f929e56dc2dcadbe07b29443d91",
+      "size": 169,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/123a79808ee74f929e56dc2dcadbe07b29443d91"
+    },
+    {
+      "path": "system/stat/icon.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cfaedfa40ac1860f81d07453474f50b6499b6e45",
+      "size": 758,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/cfaedfa40ac1860f81d07453474f50b6499b6e45"
+    },
+    {
+      "path": "system/stat/life",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "0519e4b990852970d18d5642f3594224e11c10ff",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/0519e4b990852970d18d5642f3594224e11c10ff"
+    },
+    {
+      "path": "system/stat/life/icon.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7c6825d7b56007872b4c353c0f9743f74a805b66",
+      "size": 229,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/7c6825d7b56007872b4c353c0f9743f74a805b66"
+    },
+    {
+      "path": "system/stat/life/icon.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "739d30209b2dd630f05a9802ac6f1a851f72b2c6",
+      "size": 763,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/739d30209b2dd630f05a9802ac6f1a851f72b2c6"
+    },
+    {
+      "path": "system/stat/life/icon_life_bar.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "de15ca4792f2a50c995be25c8c0c0d77e9709823",
+      "size": 147,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/de15ca4792f2a50c995be25c8c0c0d77e9709823"
+    },
+    {
+      "path": "system/stat/life/icon_life_bar.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "988386f487dfc04beb6147440cad787b879666b8",
+      "size": 790,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/988386f487dfc04beb6147440cad787b879666b8"
+    },
+    {
+      "path": "system/stat/life/icon_resource.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "43f3478e166729f130251fbabef4b5cb86eda65c",
+      "size": 169,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/43f3478e166729f130251fbabef4b5cb86eda65c"
+    },
+    {
+      "path": "system/stat/life/icon_resource.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2368b69e56543e32d94afc59ff1f1278a6bf7862",
+      "size": 788,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2368b69e56543e32d94afc59ff1f1278a6bf7862"
+    },
+    {
+      "path": "system/stat/life/resource_life.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c30149c095f1425095f44e9d4381401db58208be",
+      "size": 918,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/c30149c095f1425095f44e9d4381401db58208be"
+    },
+    {
+      "path": "system/stat/resource_stat.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ebd07ecca50dede7568fdceddf93b8e346109799",
+      "size": 209,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/ebd07ecca50dede7568fdceddf93b8e346109799"
+    },
+    {
+      "path": "system/teleporter",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "00e2a66e82f52711bafbc7b6b216e8d2a06ce144",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/00e2a66e82f52711bafbc7b6b216e8d2a06ce144"
+    },
+    {
+      "path": "system/teleporter/icon_teleporter.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e2b14fa7eca3b416053124dc497027edd2006d64",
+      "size": 250,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/e2b14fa7eca3b416053124dc497027edd2006d64"
+    },
+    {
+      "path": "system/teleporter/icon_teleporter.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0025e15e66326374f0a4767c2f2f1812756a7889",
+      "size": 796,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/0025e15e66326374f0a4767c2f2f1812756a7889"
+    },
+    {
+      "path": "system/teleporter/teleporter.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fc13cffaf0d362e0b1539216c1d97f90475dbabb",
+      "size": 1772,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/fc13cffaf0d362e0b1539216c1d97f90475dbabb"
+    },
+    {
+      "path": "system/teleporter/teleporter_arrow.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "20e6b26ab9b237aed950c6397b79ff8e56e0f3db",
+      "size": 132,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/20e6b26ab9b237aed950c6397b79ff8e56e0f3db"
+    },
+    {
+      "path": "system/teleporter/teleporter_arrow.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "af5805d6696cba9062fffb58f632a8130b077178",
+      "size": 800,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/af5805d6696cba9062fffb58f632a8130b077178"
+    },
+    {
+      "path": "system/transition",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "0374d487b535c40c2b6dbf898915b35cc8215bf2",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/0374d487b535c40c2b6dbf898915b35cc8215bf2"
+    },
+    {
+      "path": "system/transition/transition.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4b89b34b83ed8a90f745c5bef2d2df332228dec9",
+      "size": 639,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/4b89b34b83ed8a90f745c5bef2d2df332228dec9"
+    },
+    {
+      "path": "system/ui",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "bb00e33ffcdfc07dab54d329fd48ed8786a3b628",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/bb00e33ffcdfc07dab54d329fd48ed8786a3b628"
+    },
+    {
+      "path": "system/ui/life_bar",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "347f6e6207f55d2dfc2d2ae7db2526a6ee765b11",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/347f6e6207f55d2dfc2d2ae7db2526a6ee765b11"
+    },
+    {
+      "path": "system/ui/life_bar/life_bar.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a9197a09a7c58f2daeb2943b74d003909217b4d6",
+      "size": 121,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/a9197a09a7c58f2daeb2943b74d003909217b4d6"
+    },
+    {
+      "path": "system/ui/life_bar/life_bar.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f077a8da32b774154951bce82f5b27ca7a6b0690",
+      "size": 776,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/f077a8da32b774154951bce82f5b27ca7a6b0690"
+    },
+    {
+      "path": "system/ui/life_bar/life_bar_bg.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d03993303c9710908074c1f42fefaae6db1c8be0",
+      "size": 121,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/d03993303c9710908074c1f42fefaae6db1c8be0"
+    },
+    {
+      "path": "system/ui/life_bar/life_bar_bg.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e06520308ac2b9ee3e038e49f3053c782bb0396a",
+      "size": 786,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/e06520308ac2b9ee3e038e49f3053c782bb0396a"
+    },
+    {
+      "path": "system/ui/player_ui.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4f88ab204fdc1b1fc1aec7e2e80262428753b38f",
+      "size": 308,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/4f88ab204fdc1b1fc1aec7e2e80262428753b38f"
+    },
+    {
+      "path": "system/ui/player_ui.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e0bc519df2cdb4c354774814f0d9eea77faf46f4",
+      "size": 843,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/e0bc519df2cdb4c354774814f0d9eea77faf46f4"
+    },
+    {
+      "path": "system/ui/receptacle_bar",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "d19a8deae69639540b689e6aaedcaca2ab9ed1c3",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/d19a8deae69639540b689e6aaedcaca2ab9ed1c3"
+    },
+    {
+      "path": "system/ui/receptacle_bar/icon_receptacle_bar.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "23754cfcf6a1b9ef885ce3247f107c04d9896150",
+      "size": 248,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/23754cfcf6a1b9ef885ce3247f107c04d9896150"
+    },
+    {
+      "path": "system/ui/receptacle_bar/icon_receptacle_bar.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "31588e2085030feb8f31f182316203ab194ad685",
+      "size": 816,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/31588e2085030feb8f31f182316203ab194ad685"
+    },
+    {
+      "path": "system/ui/receptacle_bar/receptacle_bar.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e277e58a5dcbb62a90e4c81ef3c9b8b9f340a826",
+      "size": 1182,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/e277e58a5dcbb62a90e4c81ef3c9b8b9f340a826"
+    },
+    {
+      "path": "system/ui/theme_tester.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b41c6a669061e187a44246c6a8e4d4e31350dc31",
+      "size": 3464,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/b41c6a669061e187a44246c6a8e4d4e31350dc31"
+    },
+    {
+      "path": "system/weapon",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "917c6e77525a60008d5634f15350df721422138d",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/917c6e77525a60008d5634f15350df721422138d"
+    },
+    {
+      "path": "system/weapon/icon_weapon.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "023023b5a1a91940f6d89708926676c2692ea4a8",
+      "size": 278,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/023023b5a1a91940f6d89708926676c2692ea4a8"
+    },
+    {
+      "path": "system/weapon/icon_weapon.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "31d7e4c15b0b10498a80f44423c4114e83ccd396",
+      "size": 781,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/31d7e4c15b0b10498a80f44423c4114e83ccd396"
+    },
+    {
+      "path": "system/weapon/resource_weapon.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "219be21bc883b063c88e796ff72aa3faa9c0eda9",
+      "size": 246,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/219be21bc883b063c88e796ff72aa3faa9c0eda9"
+    },
+    {
+      "path": "system/weapon/weapon.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b7f3a5279aae0c1be8e03077d84f6a82a7ef2a5d",
+      "size": 1266,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/b7f3a5279aae0c1be8e03077d84f6a82a7ef2a5d"
+    },
+    {
+      "path": "system/weapon/weapon.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "080e8b30f992768613c1a2ace57e573bf2604385",
+      "size": 753,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/080e8b30f992768613c1a2ace57e573bf2604385"
+    },
+    {
+      "path": "tes4A3E.tmp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "58a3ab4d71c682d9c34b51062621139bdcf995ca",
+      "size": 671,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/58a3ab4d71c682d9c34b51062621139bdcf995ca"
+    },
+    {
+      "path": "theme",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "686c43d7ea83294299832ef22e081b4a5b089280",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/686c43d7ea83294299832ef22e081b4a5b089280"
+    },
+    {
+      "path": "theme/font_normal.ttf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "284f68479b3dc1b7935dfec7d8a5076717caa8bc",
+      "size": 20944,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/284f68479b3dc1b7935dfec7d8a5076717caa8bc"
+    },
+    {
+      "path": "theme/font_normal.ttf.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "857fa5a18aef67266960bd941a1962d86c9b7df3",
+      "size": 821,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/857fa5a18aef67266960bd941a1962d86c9b7df3"
+    },
+    {
+      "path": "theme/nine_path_10.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "97b011636b49fd9d0e97653e10f1a5a8feebdd15",
+      "size": 245,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/97b011636b49fd9d0e97653e10f1a5a8feebdd15"
+    },
+    {
+      "path": "theme/nine_path_10.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d96e93c2182d5c2fbf07735ec0780749b6f885ba",
+      "size": 776,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/d96e93c2182d5c2fbf07735ec0780749b6f885ba"
+    },
+    {
+      "path": "theme/nine_path_11.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "eaee7ca3ecade2b29f542b1355df8ce16a0d7227",
+      "size": 254,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/eaee7ca3ecade2b29f542b1355df8ce16a0d7227"
+    },
+    {
+      "path": "theme/nine_path_11.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6e1dc66854c0684c127786bbb316b1f02e2093eb",
+      "size": 776,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/6e1dc66854c0684c127786bbb316b1f02e2093eb"
+    },
+    {
+      "path": "theme/nine_path_12.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3310e7cb2e407bb8a3d6fbea9e23c9cbb3d34c03",
+      "size": 252,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/3310e7cb2e407bb8a3d6fbea9e23c9cbb3d34c03"
+    },
+    {
+      "path": "theme/nine_path_12.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7f5d61e643724b40ecea73871cb99136cde70e71",
+      "size": 776,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/7f5d61e643724b40ecea73871cb99136cde70e71"
+    },
+    {
+      "path": "theme/nine_path_2.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "defd94c664107c2ef774bd5cb7b1c5ad0a530dad",
+      "size": 231,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/defd94c664107c2ef774bd5cb7b1c5ad0a530dad"
+    },
+    {
+      "path": "theme/nine_path_2.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ecc40329fc0d0328171b06e828949551cc639adc",
+      "size": 773,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/ecc40329fc0d0328171b06e828949551cc639adc"
+    },
+    {
+      "path": "theme/nine_path_3.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "76d8618e8a44ed4642819c2683894d6a36db9369",
+      "size": 220,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/76d8618e8a44ed4642819c2683894d6a36db9369"
+    },
+    {
+      "path": "theme/nine_path_3.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cd376335974a7b73a80a4ac82158b1c455255d51",
+      "size": 773,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/cd376335974a7b73a80a4ac82158b1c455255d51"
+    },
+    {
+      "path": "theme/nine_path_4.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "21f874cc36a5e7b083a4ecf63f7a7b4bd2ec436c",
+      "size": 282,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/21f874cc36a5e7b083a4ecf63f7a7b4bd2ec436c"
+    },
+    {
+      "path": "theme/nine_path_4.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2038f3bdf61c9db49ba7280e0da4deaae3ed312e",
+      "size": 773,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2038f3bdf61c9db49ba7280e0da4deaae3ed312e"
+    },
+    {
+      "path": "theme/nine_path_5.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4af12b5d607b4f789b85da722f4fadb75179570a",
+      "size": 250,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/4af12b5d607b4f789b85da722f4fadb75179570a"
+    },
+    {
+      "path": "theme/nine_path_5.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "02634558ad031d6fc400aae5b86d3e6e167fdf1a",
+      "size": 773,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/02634558ad031d6fc400aae5b86d3e6e167fdf1a"
+    },
+    {
+      "path": "theme/nine_path_6.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ceba6627c5dbce0fd209861b52448f55c28de166",
+      "size": 314,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/ceba6627c5dbce0fd209861b52448f55c28de166"
+    },
+    {
+      "path": "theme/nine_path_6.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "264c635a3879f6db90e38a32b48acc732b44d563",
+      "size": 772,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/264c635a3879f6db90e38a32b48acc732b44d563"
+    },
+    {
+      "path": "theme/nine_path_7.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e876255daf42f9c786b50d3e399f3c3f39238268",
+      "size": 340,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/e876255daf42f9c786b50d3e399f3c3f39238268"
+    },
+    {
+      "path": "theme/nine_path_7.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "def9600788aa056f4c0c06b6ede051a0aa2357ea",
+      "size": 773,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/def9600788aa056f4c0c06b6ede051a0aa2357ea"
+    },
+    {
+      "path": "theme/nine_path_8.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "03bb338313618d7bf3159c0e8b1515a1f7163bf5",
+      "size": 194,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/03bb338313618d7bf3159c0e8b1515a1f7163bf5"
+    },
+    {
+      "path": "theme/nine_path_8.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "88b14d13a6204662187ac2773ef397475890ecb5",
+      "size": 772,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/88b14d13a6204662187ac2773ef397475890ecb5"
+    },
+    {
+      "path": "theme/nine_path_9.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8a7f5c5fc58b5afe8e0b9daa769807d0d5d0b0b6",
+      "size": 244,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/8a7f5c5fc58b5afe8e0b9daa769807d0d5d0b0b6"
+    },
+    {
+      "path": "theme/nine_path_9.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "61e7ceee6fdb289ca824595cee96e74ba9febe19",
+      "size": 772,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/61e7ceee6fdb289ca824595cee96e74ba9febe19"
+    },
+    {
+      "path": "theme/theme_1",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "4448a2aa6611ddade29bfa8f31f3c7d85197d3c8",
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/trees/4448a2aa6611ddade29bfa8f31f3c7d85197d3c8"
+    },
+    {
+      "path": "theme/theme_1/button_disabled.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b6d03847c65f7f18b4bfae2aca5bce063dbd9dac",
+      "size": 175,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/b6d03847c65f7f18b4bfae2aca5bce063dbd9dac"
+    },
+    {
+      "path": "theme/theme_1/button_disabled.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c09fbf8122ae5e500872ed5810d99840ae75a9f1",
+      "size": 792,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/c09fbf8122ae5e500872ed5810d99840ae75a9f1"
+    },
+    {
+      "path": "theme/theme_1/button_hover.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "07d52b6f8d3d49fc0a67acc8c4805184080a0389",
+      "size": 179,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/07d52b6f8d3d49fc0a67acc8c4805184080a0389"
+    },
+    {
+      "path": "theme/theme_1/button_hover.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "18d178790083e5bbe78456bfd51f7a62d11dc3a3",
+      "size": 784,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/18d178790083e5bbe78456bfd51f7a62d11dc3a3"
+    },
+    {
+      "path": "theme/theme_1/button_normal.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2a79264b0983bb828292d93030ec12bd3322b7e0",
+      "size": 177,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2a79264b0983bb828292d93030ec12bd3322b7e0"
+    },
+    {
+      "path": "theme/theme_1/button_normal.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2b8247bf45ec65110f9825dfa94806fd5e81e1f0",
+      "size": 787,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/2b8247bf45ec65110f9825dfa94806fd5e81e1f0"
+    },
+    {
+      "path": "theme/theme_1/button_pressed.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "62af8029fc8a5a0649120db19ccb5a1caeecaf74",
+      "size": 164,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/62af8029fc8a5a0649120db19ccb5a1caeecaf74"
+    },
+    {
+      "path": "theme/theme_1/button_pressed.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9426bff6dda8bffab38d2f76b34331d65b5cc71a",
+      "size": 789,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/9426bff6dda8bffab38d2f76b34331d65b5cc71a"
+    },
+    {
+      "path": "theme/theme_1/checked.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "14bf683dd17f5e13001a2aa84c77f84b047efa2d",
+      "size": 315,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/14bf683dd17f5e13001a2aa84c77f84b047efa2d"
+    },
+    {
+      "path": "theme/theme_1/checked.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5aa739256ad0beec3c0fbdf8407f12ee0b319985",
+      "size": 769,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/5aa739256ad0beec3c0fbdf8407f12ee0b319985"
+    },
+    {
+      "path": "theme/theme_1/checked_disabled.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5502da4578ded8c7ffbc354989d1afd7022c3b88",
+      "size": 237,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/5502da4578ded8c7ffbc354989d1afd7022c3b88"
+    },
+    {
+      "path": "theme/theme_1/checked_disabled.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c858d1a7064353e8224d36b1e69c78012e6dad77",
+      "size": 796,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/c858d1a7064353e8224d36b1e69c78012e6dad77"
+    },
+    {
+      "path": "theme/theme_1/h_slidder_grabber.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a5b5513989efe277605508db1f80d78208a66b94",
+      "size": 186,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/a5b5513989efe277605508db1f80d78208a66b94"
+    },
+    {
+      "path": "theme/theme_1/h_slidder_grabber.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5803f845350f086d2bed3cbe388abb2da8267ed1",
+      "size": 799,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/5803f845350f086d2bed3cbe388abb2da8267ed1"
+    },
+    {
+      "path": "theme/theme_1/h_slidder_grabber_disabled.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "85b5c1c8e55a908f98f213db49d99469c7a34e03",
+      "size": 183,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/85b5c1c8e55a908f98f213db49d99469c7a34e03"
+    },
+    {
+      "path": "theme/theme_1/h_slidder_grabber_disabled.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "43b42649533ca14f41abae2d8560f3cd5ceefafa",
+      "size": 826,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/43b42649533ca14f41abae2d8560f3cd5ceefafa"
+    },
+    {
+      "path": "theme/theme_1/h_slidder_grabber_hover.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4c20338b8528f555e3c7a8cc7570220b15458d0a",
+      "size": 185,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/4c20338b8528f555e3c7a8cc7570220b15458d0a"
+    },
+    {
+      "path": "theme/theme_1/h_slidder_grabber_hover.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5f219e6d6398e099c24bd29e1da85622f19a45eb",
+      "size": 817,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/5f219e6d6398e099c24bd29e1da85622f19a45eb"
+    },
+    {
+      "path": "theme/theme_1/nine_path_bg.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "34d3bc9b2ae5c9ac95d67415d8e6f8aa35eaa869",
+      "size": 155,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/34d3bc9b2ae5c9ac95d67415d8e6f8aa35eaa869"
+    },
+    {
+      "path": "theme/theme_1/nine_path_bg.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e6d86458afa96b69b77093428e2b4eee816ba3da",
+      "size": 784,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/e6d86458afa96b69b77093428e2b4eee816ba3da"
+    },
+    {
+      "path": "theme/theme_1/nine_path_bg_2.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0c39005ef8c42b6ecd4237df63a61962b903b1a8",
+      "size": 155,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/0c39005ef8c42b6ecd4237df63a61962b903b1a8"
+    },
+    {
+      "path": "theme/theme_1/nine_path_bg_2.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bbf68e3cd575313eff20b0f1a0ba05d61446fbeb",
+      "size": 789,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/bbf68e3cd575313eff20b0f1a0ba05d61446fbeb"
+    },
+    {
+      "path": "theme/theme_1/nine_path_focus.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fca0aa3c6c2fdf465b4c164e2e85116fa20a87b4",
+      "size": 170,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/fca0aa3c6c2fdf465b4c164e2e85116fa20a87b4"
+    },
+    {
+      "path": "theme/theme_1/nine_path_focus.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "523982b2d13566bd4de806ec994707104827331c",
+      "size": 793,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/523982b2d13566bd4de806ec994707104827331c"
+    },
+    {
+      "path": "theme/theme_1/nine_path_panel.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "93dfd9c1a97eee83213c83ff0ec0bbbc2ed4b971",
+      "size": 238,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/93dfd9c1a97eee83213c83ff0ec0bbbc2ed4b971"
+    },
+    {
+      "path": "theme/theme_1/nine_path_panel.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0d302bfd6316f1fea2ecc3c12ac9024085e384e6",
+      "size": 793,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/0d302bfd6316f1fea2ecc3c12ac9024085e384e6"
+    },
+    {
+      "path": "theme/theme_1/slider_progress.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "45b6db46302bb2d2a5a1c8a163c8dfef99a15e76",
+      "size": 180,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/45b6db46302bb2d2a5a1c8a163c8dfef99a15e76"
+    },
+    {
+      "path": "theme/theme_1/slider_progress.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3bf11027f2c4d02c2b35907fbbe876a4412373e5",
+      "size": 793,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/3bf11027f2c4d02c2b35907fbbe876a4412373e5"
+    },
+    {
+      "path": "theme/theme_1/slider_progress_hover.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "79729911dff12e89c5b009ffe04dda4a75dfd980",
+      "size": 176,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/79729911dff12e89c5b009ffe04dda4a75dfd980"
+    },
+    {
+      "path": "theme/theme_1/slider_progress_hover.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1c242d3b15a0f63e245eea814b42afdaf3361a40",
+      "size": 810,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/1c242d3b15a0f63e245eea814b42afdaf3361a40"
+    },
+    {
+      "path": "theme/theme_1/theme_1.tres",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c3377be7723f5587f14044740e1901dca2fad548",
+      "size": 13081,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/c3377be7723f5587f14044740e1901dca2fad548"
+    },
+    {
+      "path": "theme/theme_1/unchecked.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3162d8a3c3324a28f8f7b8d0622a9529a7df4009",
+      "size": 187,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/3162d8a3c3324a28f8f7b8d0622a9529a7df4009"
+    },
+    {
+      "path": "theme/theme_1/unchecked.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4fd03202a01f5ef6f5c8df390f516a3f539a5c6b",
+      "size": 775,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/4fd03202a01f5ef6f5c8df390f516a3f539a5c6b"
+    },
+    {
+      "path": "theme/theme_1/unchecked_disabled.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8afe822f889c06062a3153c8836cc2e928b6dbe6",
+      "size": 175,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/8afe822f889c06062a3153c8836cc2e928b6dbe6"
+    },
+    {
+      "path": "theme/theme_1/unchecked_disabled.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "597585f66ab05d786c961c93a4a684f6de0c4698",
+      "size": 802,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/597585f66ab05d786c961c93a4a684f6de0c4698"
+    },
+    {
+      "path": "theme/theme_1/v_slidder_grabber.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f0212bf8930bf3f8b60ad0bea4926941397a9e3e",
+      "size": 189,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/f0212bf8930bf3f8b60ad0bea4926941397a9e3e"
+    },
+    {
+      "path": "theme/theme_1/v_slidder_grabber.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "48cb86d8ba42e1f0aaab05f9ed836d0e89ae8644",
+      "size": 798,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/48cb86d8ba42e1f0aaab05f9ed836d0e89ae8644"
+    },
+    {
+      "path": "theme/theme_1/v_slidder_grabber_disabled.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fdc5b69b50b4d51b063be052160d081338d5a43b",
+      "size": 191,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/fdc5b69b50b4d51b063be052160d081338d5a43b"
+    },
+    {
+      "path": "theme/theme_1/v_slidder_grabber_disabled.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cb216cbffb5904f78ccb68f1222a0e7fdea89c20",
+      "size": 826,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/cb216cbffb5904f78ccb68f1222a0e7fdea89c20"
+    },
+    {
+      "path": "theme/theme_1/v_slidder_grabber_hover.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "973743998e80d245f2b18414a4e262b411ede59c",
+      "size": 189,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/973743998e80d245f2b18414a4e262b411ede59c"
+    },
+    {
+      "path": "theme/theme_1/v_slidder_grabber_hover.png.import",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5f2c1423b4be904e15181e766f978ffb422519ec",
+      "size": 817,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/5f2c1423b4be904e15181e766f978ffb422519ec"
+    },
+    {
+      "path": "wor5D6.tmp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b3a79c253cbbc4f9a86c6943f9bd81a969abad13",
+      "size": 9768,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/b3a79c253cbbc4f9a86c6943f9bd81a969abad13"
+    },
+    {
+      "path": "wor7648.tmp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b3a79c253cbbc4f9a86c6943f9bd81a969abad13",
+      "size": 9768,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/b3a79c253cbbc4f9a86c6943f9bd81a969abad13"
+    },
+    {
+      "path": "world.gd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "15b1f2e9a7d515afb35752f1b838fd164104775e",
+      "size": 1913,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/15b1f2e9a7d515afb35752f1b838fd164104775e"
+    },
+    {
+      "path": "world.tscn",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "686039b362eb0e076c54d4a3a004987d9862f244",
+      "size": 10246,
+      "url": "https://api.github.com/repos/pixel-boy/NinjaAdventure/git/blobs/686039b362eb0e076c54d4a3a004987d9862f244"
+    }
+  ],
+  "truncated": false
+}

@@ -1,0 +1,791 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>plants</title>
+<style>
+  html,body{margin:0;background:#1b1f27;color:#c9d4e2;font:12px/1.5 Consolas,monospace}
+  h2{margin:16px 0 6px 14px;font-size:13px;color:#8fb6d9;font-weight:normal}
+  .row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;padding:0 14px}
+  .cell{text-align:center}
+  .cell canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#3d752d}
+  .lab{opacity:.66;margin-top:3px}
+  .k{color:#e8d9a8}
+</style></head><body>
+<script>const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const wrapi = (i, m) => ((i % m) + m) % m;
+
+function mkCanvas(w, h) {
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  return c;
+}
+function px(g, x, y, w, h, col) {
+  g.fillStyle = col;
+  g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+}
+function makeRng(seed) {                     // 确定性随机，保证每次刷新一致
+  let s = seed >>> 0;
+  return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+}
+function circlePx(g, cx, cy, r, col) {
+  g.fillStyle = col;
+  for (let y = -r; y <= r; y++) {
+    const t = r * r - y * y;
+    if (t < 0) continue;
+    const dx = Math.floor(Math.sqrt(t));
+    g.fillRect(Math.round(cx - dx), Math.round(cy + y), dx * 2 + 1, 1);
+  }
+}
+function ellipsePx(g, cx, cy, rx, ry, col) {
+  g.fillStyle = col;
+  for (let y = -ry; y <= ry; y++) {
+    const t = 1 - (y * y) / (ry * ry);
+    if (t <= 0) continue;
+    const dx = Math.floor(rx * Math.sqrt(t));
+    g.fillRect(Math.round(cx - dx), Math.round(cy + y), dx * 2 + 1, 1);
+  }
+}
+function poly(g, pts, col) {
+  g.fillStyle = col;
+  g.beginPath();
+  g.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
+  g.closePath();
+  g.fill();
+}
+function flipH(src) {                        // 水平镜像（右侧角色 = 左侧镜像）
+  const c = mkCanvas(src.width, src.height);
+  const g = c.getContext("2d");
+  g.translate(src.width, 0);
+  g.scale(-1, 1);
+  g.drawImage(src, 0, 0);
+  return c;
+}
+function speckle(g, x, y, w, h, col, count, rng) {   // 颗粒 / 磨损 / 灰尘
+  g.fillStyle = col;
+  for (let i = 0; i < count; i++) g.fillRect(x + ((rng() * w) | 0), y + ((rng() * h) | 0), 1, 1);
+}
+
+/* ---------------------------------------------------------
+   1.1 颜色运算 —— 真实感的核心
+   统一光源要求：受光面偏暖、背光面偏冷，
+   而不是简单叠一层半透明黑。
+   --------------------------------------------------------- */
+const _hc = Object.create(null);
+function rgb(hex) {
+  let v = _hc[hex];
+  if (v === undefined) {
+    v = [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+    _hc[hex] = v;
+  }
+  return v;
+}
+function rgba(hex, a) {
+  const c = rgb(hex);
+  return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")";
+}
+/* k > 0 提亮（偏暖）；k < 0 压暗（偏冷） */
+function shade(hex, k) {
+  const c = rgb(hex);
+  let r, g, b;
+  if (k >= 0) {
+    r = c[0] + (255 - c[0]) * k;
+    g = c[1] + (255 - c[1]) * (k * 0.93);
+    b = c[2] + (255 - c[2]) * (k * 0.80);
+  } else {
+    const t = -k;
+    r = c[0] * (1 - t * 1.08);
+    g = c[1] * (1 - t * 1.00);
+    b = c[2] * (1 - t * 0.86);
+  }
+  return "rgb(" + (r | 0) + "," + (g | 0) + "," + (b | 0) + ")";
+}
+function mix(hexA, hexB, t) {
+  const A = rgb(hexA), B = rgb(hexB);
+  return "rgb(" + ((A[0] + (B[0] - A[0]) * t) | 0) + ","
+                 + ((A[1] + (B[1] - A[1]) * t) | 0) + ","
+                 + ((A[2] + (B[2] - A[2]) * t) | 0) + ")";
+}
+
+/* ---------------------------------------------------------
+   1.2 值噪声 —— 让地面出现"成片的深浅"而不是纯随机噪点
+   --------------------------------------------------------- */
+function makeNoise(seed, gw, gh) {
+  const r = makeRng(seed), v = new Float32Array(gw * gh);
+  for (let i = 0; i < v.length; i++) v[i] = r();
+  return { gw, gh, v };
+}
+function noiseAt(n, x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  let tx = x - xi, ty = y - yi;
+  tx = tx * tx * (3 - 2 * tx);
+  ty = ty * ty * (3 - 2 * ty);
+  const at = (a, b) => n.v[wrapi(b, n.gh) * n.gw + wrapi(a, n.gw)];
+  const v00 = at(xi, yi), v10 = at(xi + 1, yi), v01 = at(xi, yi + 1), v11 = at(xi + 1, yi + 1);
+  return (v00 * (1 - tx) + v10 * tx) * (1 - ty) + (v01 * (1 - tx) + v11 * tx) * ty;
+}
+function fbm2(nA, nB, x, y) {               // 双倍频，返回 0..1
+  return noiseAt(nA, x, y) * 0.62 + noiseAt(nB, x, y) * 0.38;
+}
+
+/* ---------------------------------------------------------
+   1.3 阴影系统
+   --------------------------------------------------------- */
+/* 软阴影：多层同心椭圆，做出像素风的柔和边缘 */
+function shadowBlob(g, cx, cy, rx, ry, alpha, layers) {
+  const L = layers || 4, step = alpha / L;
+  for (let i = L; i >= 1; i--) {
+    const t = i / L;
+    ellipsePx(g, cx, cy, Math.max(1, Math.round(rx * t)), Math.max(1, Math.round(ry * t)),
+      "rgba(14,18,28," + step.toFixed(3) + ")");
+  }
+}
+/* 方向性投影：矩形 footprint 朝背离光源方向拉伸出的凸包。
+   多层不同拉伸量叠加 → 靠物体处最深，向外渐淡。 */
+function shadowQuad(g, x0, y0, x1, y1, dx, dy, alpha, layers) {
+  const L = layers || 4, step = alpha / L;
+  for (let i = L; i >= 1; i--) {
+    const t = i / L, ox = dx * t, oy = dy * t;
+    poly(g, [[x0, y0], [x1, y0], [x1 + ox, y0 + oy], [x1 + ox, y1 + oy], [x0 + ox, y1 + oy], [x0, y1]],
+      "rgba(14,18,28," + step.toFixed(3) + ")");
+  }
+}
+/* 接触阴影：物体与地面交接处那条最深的窄带 */
+function contactBand(g, x0, x1, y, h, alpha) {
+  const w = x1 - x0, e = w * 0.16;
+  px(g, x0, y, w, h, "rgba(14,18,28," + alpha + ")");
+  px(g, x0, y, e, h, "rgba(14,18,28," + (alpha * 0.45) + ")");
+  px(g, x1 - e, y, e, h, "rgba(14,18,28," + (alpha * 0.45) + ")");
+}
+const LEAF_D = "#2c5622", LEAF_M = "#3d752d", LEAF_L = "#56983c";
+function makeTree(seed) {
+  const rng = makeRng(seed);
+  const W = 70, H = 88;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  const cx = W >> 1, gy = H - 5;
+  const trunkH = 19 + ((rng() * 6) | 0);
+  const tw = 7, tx = cx - (tw >> 1), ty = gy - trunkH;
+  const bark = "#6b4a2f";
+
+  shadowBlob(g, cx + 11, gy - 1, 23, 8, 0.32, 4);
+
+  /* 树根外扩 + 树干 */
+  px(g, tx - 2, gy - 4, tw + 4, 4, shade(bark, -0.14));
+  px(g, tx, ty, tw, trunkH, bark);
+  for (let i = 0; i < trunkH; i++) {
+    px(g, tx, ty + i, 2, 1, shade(bark, 0.16));                    // 左缘受光
+    px(g, tx + tw - 2, ty + i, 2, 1, shade(bark, -0.34));          // 右缘背光
+  }
+  for (let i = 0; i < trunkH; i += 4)                              // 树皮横向裂纹
+    px(g, tx + 1 + ((rng() * 3) | 0), ty + i, 3 + ((rng() * 2) | 0), 1, shade(bark, -0.26));
+  speckle(g, tx, ty, tw, trunkH, "rgba(0,0,0,0.22)", 14, rng);
+
+  /* 树冠：按 y 排序，靠下的先画 → 上层的叶簇压住下层，形成层次 */
+  const cyC = ty - 8, R = 26;
+  const clist = [];
+  for (let i = 0; i < 17; i++) {
+    const a = (i / 17) * Math.PI * 2 + rng() * 0.36;
+    const rr = R * (0.40 + rng() * 0.60);
+    clist.push({ x: cx + Math.cos(a) * rr, y: cyC + Math.sin(a) * rr * 0.78, r: 7 + rng() * 5.5 });
+  }
+  clist.sort((p, q) => p.y - q.y);
+  for (const cl of clist) {
+    const k = clamp(0.22 - ((cl.x - cx) / R * 0.55 + (cl.y - cyC) / R * 0.85) * 0.34, -0.32, 0.34);
+    circlePx(g, cl.x, cl.y, cl.r, shade(LEAF_M, k));
+  }
+  /* 右下暗部叶簇（背光） */
+  for (let i = 0; i < 7; i++) {
+    const a = 0.02 + rng() * 0.46;
+    const rr = R * (0.42 + rng() * 0.52);
+    circlePx(g, cx + Math.cos(a * Math.PI) * rr, cyC + Math.sin(a * Math.PI) * rr * 0.8,
+      4 + rng() * 4, shade(LEAF_D, -rng() * 0.16));
+  }
+  /* 左上亮部叶簇（迎光） */
+  for (let i = 0; i < 9; i++) {
+    const a = 0.72 + rng() * 0.54;
+    const rr = R * (0.34 + rng() * 0.52);
+    circlePx(g, cx + Math.cos(a * Math.PI) * rr, cyC + Math.sin(a * Math.PI) * rr * 0.8,
+      3.5 + rng() * 3.2, shade(LEAF_L, 0.10 + rng() * 0.22));
+  }
+  /* 叶面细颗粒：上亮下暗，避免大色块发死 */
+  const bx = cx - R - 4, by = cyC - R - 4, bw = R * 2 + 8, bh = R * 2 + 8;
+  speckle(g, bx, by, bw, bh, "rgba(0,0,0,0.16)", 130, rng);
+  speckle(g, bx, by, bw, bh, "rgba(190,235,150,0.13)", 90, rng);
+
+  /* 冠内镂空：几处深色缝隙，让轮廓不是一整块 */
+  for (let i = 0; i < 6; i++) {
+    const a = rng() * Math.PI * 2, rr = R * (0.30 + rng() * 0.60);
+    px(g, cx + Math.cos(a) * rr, cyC + Math.sin(a) * rr * 0.8, 2 + ((rng() * 3) | 0), 2, "rgba(20,34,18,0.35)");
+  }
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.2 灌木：矮、密、贴地，作为草地上的填充 --- */
+function makeBush(seed) {
+  const rng = makeRng(seed);
+  const W = 34, H = 26;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  const cx = W >> 1, gy = H - 3;
+  shadowBlob(g, cx + 5, gy - 1, 12, 4, 0.30, 3);
+  const cl = [];
+  for (let i = 0; i < 9; i++) {
+    cl.push({ x: cx + (rng() - 0.5) * 20, y: gy - 4 - rng() * 9, r: 4 + rng() * 3.6 });
+  }
+  cl.sort((p, q) => p.y - q.y);
+  for (const o of cl) {
+    const k = clamp(0.20 - ((o.x - cx) / 14 * 0.55 + (o.y - gy + 8) / 14 * 0.85) * 0.32, -0.34, 0.30);
+    circlePx(g, o.x, o.y, o.r, shade(LEAF_M, k - 0.06));
+  }
+  for (let i = 0; i < 5; i++)
+    circlePx(g, cx - 8 + rng() * 8, gy - 10 - rng() * 4, 2.2 + rng() * 2, shade(LEAF_L, 0.12 + rng() * 0.2));
+  speckle(g, 4, gy - 18, 26, 16, "rgba(0,0,0,0.16)", 40, rng);
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* 细线段 / 圆环：自行车等细长结构用得上 */
+function seg(g, x0, y0, x1, y1, col, th) {
+  g.fillStyle = col;
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    g.fillRect(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), th, th);
+  }
+}
+function ring(g, cx, cy, r, th, col) {
+  g.fillStyle = col;
+  for (let a = 0; a < 720; a++) {
+    const ra = a * Math.PI / 360;
+    for (let d = 0; d < th; d++)
+      g.fillRect(Math.round(cx + Math.cos(ra) * (r - d)), Math.round(cy + Math.sin(ra) * (r - d) * 0.98), 1, 1);
+  }
+}
+/* =========================================================
+   4.7 植物多样化 —— 针叶 / 垂柳 / 开花树 + 行道树成行 / 广场树阵
+   ---------------------------------------------------------
+   为什么另开一个文件：树 / 灌木 / 灯的**原始生成器**躺在 demo 的
+   nature 段（805-1049），那是逐字节切片，一行不能改。所以新物种只能
+   另起一个 parts 文件，装配时插在 nature 之后。`anyTree()` 只做**分发**，
+   既有生成器一个字都没动。
+
+   ⚠️ 分发**不消耗随机数**：物种由 seed 的数值直接决定（`seed % 100`），
+   不是再摇一次随机 —— 所以把 scatter() 里的 `makeTree((n*131+11)|0)` 换成
+   `anyTree((n*131+11)|0, x, y)` 之后，**rngS 的序列一字不动**，全校园既有的
+   灯 / 灌木 / 长椅 / 花坛分布逐像素不变（和删自行车是同一手法）。
+   ⚠️ 行道树走**独立的 `makeRng(70707)`**，与 scatter() 的 rngS 完全隔离：
+   整段行道树逻辑以后被删掉，scatter() 的结果也不受任何影响。
+
+   三条既有铁律照旧：左上受光偏暖 / 右下背光偏冷；底部有方向性投影 +
+   接地接触阴影；新物种的锚点约定与 makeTree 一致（ax = cx, ay = 地面线），
+   调用点才能零改动。
+   ========================================================= */
+const PINE_D = "#1e3d1b", PINE_M = "#2f6129", PINE_L = "#4a8639";   // 针叶：比阔叶更冷更深
+const WIL_D  = "#3a5820", WIL_M  = "#557c2b", WIL_L  = "#8fb84a";   // 垂柳：偏黄绿
+const BL_D   = "#c58fa3", BL_M   = "#f0ccd8", BL_L   = "#fdf3f6";   // 开花树：粉白（不是桃红）
+
+/* --- 4.7.1 针叶树：窄而高的塔形，中心线随高度摇摆，每层底缘外扩成锯齿 --- */
+function makeConifer(seed) {
+  const rng = makeRng(seed);
+  const W = 54, H = 104;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  const cx = W >> 1, gy = H - 5;                       // 27, 99
+  const bark = "#5b4229";
+  const trunkH = 8 + ((rng() * 4) | 0);                // 露出裙摆下面的一小段
+  const top = gy - trunkH - 72, bot = gy - trunkH + 4;
+  const R = 21, hT = (bot - top) / 7;                  // 七层
+  const lean = rng() * 6.28;                           // 摇摆相位（每棵不同）
+
+  shadowBlob(g, cx + 7, gy - 1, 15, 6, 0.30, 4);
+
+  /* 树干：**从 top+12 起画**，别从 top 起 ——
+     冠顶那几行半宽只有 2~3，盖不住 6px 宽的树干，会从尖上冒出一截棕色
+     （5× 下非常显眼，像树尖上顶了个果子）。反正下面那截才是要露的。 */
+  const tw = 6, tx = cx - (tw >> 1), ttop = top + 12;
+  px(g, tx - 2, gy - 3, tw + 4, 3, shade(bark, -0.14));      // 根外扩
+  px(g, tx, ttop, tw, gy - ttop, bark);
+  for (let i = 0; i < gy - ttop; i++) {
+    px(g, tx, ttop + i, 2, 1, shade(bark, 0.16));
+    px(g, tx + tw - 2, ttop + i, 2, 1, shade(bark, -0.34));
+  }
+
+  /* 塔冠：逐行扫。三件事让它不像一个几何三角 ——
+     ① 中心线按 `sin(t*3.4 + lean)` 缓慢摇摆（针叶树没有笔直的中轴）
+     ② 半宽 ≈ 直线锥（pow 1.02）+ 层底外扩（锯齿缘）
+     ③ 逐行 1.8px 的随机抖动 */
+  for (let y = top; y <= bot; y++) {
+    const t = (y - top) / (bot - top);
+    const ring = ((y - top) % hT) / hT;                // 0 = 层顶，→1 = 层底
+    const cxo = cx + Math.round(Math.sin(t * 3.4 + lean) * 1.7);
+    const hw = Math.max(1, R * Math.pow(t, 1.02) + (1 - ring) * 2.8 + (rng() - 0.5) * 1.8);
+    const x0 = Math.round(cxo - hw), w = Math.max(2, Math.round(hw * 2));
+    let k = 0.24 - t * 0.38;                           // 上亮下暗
+    if (ring < 0.15) k -= 0.22;                        // 层底一条暗线 → 层叠可读
+    px(g, x0, y, w, 1, shade(PINE_M, k));
+    px(g, x0, y, 1, 1, shade(PINE_M, k + 0.28));       // 左缘受光
+    px(g, x0 + w - 1, y, 1, 1, shade(PINE_M, k - 0.32)); // 右缘背光
+  }
+  /* 冠内镂空：让轮廓不是一整块实心 */
+  for (let i = 0; i < 18; i++) {
+    const t = rng();
+    px(g, cx + (rng() * 2 - 1) * R * Math.pow(t, 1.02) * 0.7, top + t * (bot - top),
+       1 + ((rng() * 2) | 0), 1, "rgba(16,30,14,0.38)");
+  }
+  speckle(g, cx - R - 2, top, R * 2 + 4, bot - top, "rgba(0,0,0,0.16)", 80, rng);
+  speckle(g, cx - R - 2, top, R * 2 + 4, bot - top, "rgba(200,240,160,0.12)", 55, rng);
+
+  /* 顶芽：一根比冠顶高 3~6px 的尖，跟着中心线的相位摆 */
+  const tipx = cx + Math.round(Math.sin(lean) * 1.7);
+  px(g, tipx - 1, top - 3, 3, 4, shade(PINE_L, -0.12));
+  px(g, tipx, top - 6, 1, 4, shade(PINE_L, 0.10));
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.7.2 垂柳：高干 + 扁冠 + 前后两层垂条 ---
+   垂条**分前后两层**画：后层（暗）在树干之前、前层（亮）在冠之后 ——
+   这样树干会被夹在中间若隐若现，而不是"一根光杆顶个球"。 */
+function makeWillow(seed) {
+  const rng = makeRng(seed);
+  const W = 86, H = 88;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  const cx = W >> 1, gy = H - 5;                       // 43, 83
+  const bark = "#5f4730";
+  const trunkH = 40 + ((rng() * 6) | 0);
+  const tw = 7, tx = cx - (tw >> 1);
+  const ty = gy - trunkH, cyC = ty - 3, R = 27, RY = 17;
+
+  shadowBlob(g, cx + 10, gy - 1, 22, 7, 0.30, 4);
+
+  /* 垂条只有 26 根，且横向位置用 pow(0.55) **往两端挤**：
+     垂柳是外圈披下来，中间不会挂一帘子 —— 中间留白是这棵树读不读得出来的关键
+     （第一版 46 根均匀铺满，整棵糊成一丛草）。
+     ⚠️ 长度必须夹住 gy-1，否则垂条会穿过地面线、读成插进土里。 */
+  const st = [];
+  for (let i = 0; i < 26; i++) {
+    const u = (rng() < 0.5 ? -1 : 1) * Math.pow(rng(), 0.55);
+    const y0 = cyC + Math.sqrt(Math.max(0, 1 - u * u)) * RY * 0.95 + (rng() - 0.5) * 2;
+    st.push({ u: u, x: cx + u * R * 0.98, y0: y0,
+              len: Math.max(5, Math.min(gy - 1 - y0, 12 + rng() * 18 + (1 - Math.abs(u)) * 4) | 0),
+              th: Math.abs(u) > 0.62 ? 2 : 1,          // 外侧（离眼睛近）的条更粗
+              ph: rng() * 6.28, k: rng() });
+  }
+  const drawStrands = (dark) => {
+    for (const s of st) {
+      if ((s.k >= 0.46) !== dark) continue;            // 两层按 k 对半分
+      const col = dark ? shade(WIL_D, -0.06) : shade(WIL_M, 0.14);
+      const dir = s.u >= 0 ? 1 : -1;
+      for (let i = 0; i < s.len; i++) {
+        /* 摆幅随下垂长度增大 + 整体向外飘 → 是一条弧，不是一根直线 */
+        const wob = Math.sin(s.ph + i * 0.09) * (1.0 + i * 0.075) + dir * i * 0.05;
+        /* ⚠️ 是 s.y0 —— 这个对象上的字段叫 y0。写成 s.y 会得到 NaN，
+           px() 里的 fillRect 对 NaN 静默无效：**26 根垂条一根都画不出来**，
+           整棵读成"高干圆冠的阔叶"（浏览器不报错、探针也看不出来，
+           只有 12× 局部放大才发现那一格是空的）。 */
+        px(g, s.x + wob, s.y0 + i, i < s.len - 5 ? s.th : 1, 1,
+           i > s.len - 5 ? shade(WIL_L, 0.18) : (i < 3 ? shade(col, 0.12) : col));
+        if (!dark && i > 3 && i < s.len - 5 && i % 5 === 2)
+          px(g, s.x + wob + dir, s.y0 + i, 1, 1, shade(WIL_L, 0.22));
+      }
+    }
+  };
+  drawStrands(true);                                   // 后层（会被树干和冠压住大半）
+
+  /* 树干：带一点弯（垂柳少直干） */
+  px(g, tx - 2, gy - 4, tw + 4, 4, shade(bark, -0.14));
+  for (let i = 0; i < trunkH; i++) {
+    const xo = Math.round(Math.sin(i / trunkH * 2.1) * 1.6);
+    px(g, tx + xo, ty + i, tw, 1, bark);
+    px(g, tx + xo, ty + i, 1, 1, shade(bark, 0.18));
+    px(g, tx + xo + tw - 1, ty + i, 1, 1, shade(bark, -0.34));
+  }
+  /* 主枝：从干顶散开托住冠；大半会被冠压住，露出的梢在外面 */
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + (i / 4 - 0.5) * 2.2 + (rng() - 0.5) * 0.26;
+    const L = 13 + rng() * 9;
+    seg(g, cx, ty + 2, cx + Math.cos(a) * L, ty + 2 + Math.sin(a) * L * 0.92, shade(bark, -0.08), 2);
+  }
+
+  /* 冠：扁球（柳冠比阔叶扁、比针叶散）。**要够大够实** ——
+     垂条只是外圈的披挂，树体量得由冠撑起来。 */
+  const cl = [];
+  for (let i = 0; i < 17; i++) {
+    const a = rng() * Math.PI * 2, rr = 0.28 + rng() * 0.72;
+    cl.push({ x: cx + Math.cos(a) * R * rr, y: cyC + Math.sin(a) * RY * rr, r: 7 + rng() * 5 });
+  }
+  cl.sort((p, q) => p.y - q.y);
+  for (const o of cl) {
+    const k = clamp(0.20 - ((o.x - cx) / R * 0.5 + (o.y - cyC) / RY * 0.8) * 0.30, -0.30, 0.30);
+    circlePx(g, o.x, o.y, o.r, shade(WIL_M, k));
+  }
+  /* 冠的左上迎光叶簇 */
+  for (let i = 0; i < 9; i++)
+    circlePx(g, cx - R * 0.1 - rng() * R * 0.55, cyC - RY * 0.25 - rng() * RY * 0.6,
+      3 + rng() * 3.4, shade(WIL_L, 0.10 + rng() * 0.18));
+  /* 冠内镂空：几处深缝，别让冠成一整块实心 */
+  for (let i = 0; i < 7; i++) {
+    const a = rng() * Math.PI * 2, rr = R * (0.25 + rng() * 0.6);
+    px(g, cx + Math.cos(a) * rr, cyC + Math.sin(a) * rr * 0.8,
+       2 + ((rng() * 3) | 0), 2, "rgba(20,34,18,0.34)");
+  }
+
+  drawStrands(false);                                  // 前层（压在冠上，读作垂到前面）
+  speckle(g, cx - R - 2, cyC - RY, R * 2 + 4, gy - cyC + RY, "rgba(0,0,0,0.14)", 70, rng);
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.7.3 开花树：花团 + **压在上面的枝条**，冠内露枝 → 才不像一个粉球 --- */
+function makeBlossom(seed) {
+  const rng = makeRng(seed);
+  const W = 66, H = 78;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  const cx = W >> 1, gy = H - 5;                       // 33, 73
+  const bark = "#6b4a2f";
+  const trunkH = 18 + ((rng() * 5) | 0);
+  const tw = 7, tx = cx - (tw >> 1);
+  const ty = gy - trunkH, cyB = ty - 4, R = 24, RY = 15;   // 冠偏扁：樱花树不是正球
+
+  shadowBlob(g, cx + 10, gy - 1, 21, 7, 0.32, 4);
+  px(g, tx - 2, gy - 4, tw + 4, 4, shade(bark, -0.14));
+  px(g, tx, ty, tw, trunkH, bark);
+  for (let i = 0; i < trunkH; i++) {
+    px(g, tx, ty + i, 2, 1, shade(bark, 0.16));
+    px(g, tx + tw - 2, ty + i, 2, 1, shade(bark, -0.34));
+  }
+  speckle(g, tx, ty, tw, trunkH, "rgba(0,0,0,0.22)", 12, rng);
+
+  /* 主枝：先画一层（会被花团压住大半，枝梢留在花外面） */
+  const twig = [];
+  for (let i = 0; i < 6; i++) {
+    const a = -Math.PI / 2 + (i / 5 - 0.5) * 2.0 + (rng() - 0.5) * 0.24;
+    twig.push({ a: a, L: 15 + rng() * 11 });
+  }
+  for (const b of twig)
+    seg(g, cx, ty + 1, cx + Math.cos(b.a) * b.L, ty + 1 + Math.sin(b.a) * b.L * 0.9,
+        shade(bark, -0.10), 2);
+
+  /* 花团：**团要小**（r 4.5~8）—— 团一大就并成一颗球，看得出一个个花团
+     才有"开花"的样子。三遍：背光底（右下）/ 主体 / 迎光顶（左上）。 */
+  const cl = [];
+  for (let i = 0; i < 15; i++) {
+    const a = (i / 15) * Math.PI * 2 + rng() * 0.4;
+    const rr = 0.32 + rng() * 0.68;
+    cl.push({ x: cx + Math.cos(a) * R * rr, y: cyB + Math.sin(a) * RY * rr, r: 4.5 + rng() * 3.5 });
+  }
+  cl.sort((p, q) => p.y - q.y);
+  for (const o of cl) {
+    const k = clamp(0.14 - ((o.x - cx) / R * 0.5 + (o.y - cyB) / RY * 0.85) * 0.24, -0.26, 0.26);
+    circlePx(g, o.x, o.y, o.r, shade(BL_M, k));
+  }
+  for (let i = 0; i < 6; i++)                          // 右下背光（压深，略微溢出轮廓）
+    circlePx(g, cx + R * 0.26 + rng() * R * 0.62, cyB + RY * 0.20 + rng() * RY * 0.66,
+      3 + rng() * 3.6, shade(BL_D, -rng() * 0.12));
+  for (let i = 0; i < 10; i++)                         // 左上迎光（提亮）
+    circlePx(g, cx - R * 0.12 - rng() * R * 0.58, cyB - RY * 0.20 - rng() * RY * 0.66,
+      3 + rng() * 3.6, shade(BL_L, 0.04 + rng() * 0.14));
+
+  /* 压在花团**上面**的小枝：5 根 1px 深线，起点从 0.35R 起（不再挤在圆心）。
+     这是"粉球"与"花树"的分水岭 —— 花团没有枝在前面切一下，颜色再准也读成一坨。 */
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + (i / 4 - 0.5) * 2.3 + (rng() - 0.5) * 0.3;
+    const L = R * (0.62 + rng() * 0.48);
+    seg(g, cx + Math.cos(a) * R * 0.35, cyB + Math.sin(a) * RY * 0.35,
+        cx + Math.cos(a) * L, cyB + Math.sin(a) * L * 0.82,
+        "rgba(74,46,40,0.42)", 1);
+  }
+  /* 单朵花：1~2px 的亮点，把大色块打散成一簇簇花。
+     rr 刻意放到 1.12R —— 让一部分花**长到轮廓外面**，剪影才不是一条光滑的弧。 */
+  for (let i = 0; i < 30; i++) {
+    const a = rng() * Math.PI * 2, rr = R * (0.22 + rng() * 0.90);
+    const fx = cx + Math.cos(a) * rr, fy = cyB + Math.sin(a) * rr * 0.80;
+    const lit = (fx - cx) / R * -0.5 + (fy - cyB) / RY * -0.8 + 0.2;   // >0 = 偏迎光面
+    const r2 = rng();
+    /* ⚠️ 迎光侧的花点**不要**再提亮：BL_L 已经是近白 (#fdf3f6)，
+       再加 0.10 就是纯白，落在粉团上是一粒扎眼的雪点（12× 局部一眼就看见）。
+       迎光只给 2px（比背光少），否则白点比花团还跳。 */
+    circlePx(g, fx, fy, r2 < (lit > 0 ? 0.24 : 0.48) ? 2 : 1,
+      lit > 0 ? BL_L : shade(r2 < 0.5 ? BL_M : BL_D, r2 < 0.5 ? 0.10 : -0.08));
+  }
+  /* 落花：树下稀疏的粉点（避开树干正下方） */
+  for (let i = 0; i < 16; i++) {
+    const fx = (rng() - 0.5) * 42, fy = rng() * 9, cp = rng();
+    if (Math.abs(fx) < 6) continue;
+    px(g, cx + fx, gy - 2 - fy, 1, 1, cp < 0.5 ? rgba(BL_L, 0.85) : rgba(BL_M, 0.78));
+  }
+  return { canvas: c, ax: cx, ay: gy };
+}
+
+/* --- 4.7.4 物种分发（**不摇随机**：全靠 seed 的数值） --- */
+/* 水岸判定：查 ±3 格（≈±48 世界 px ≈ 5.3 m）而不是 ±1 格。
+   ⚠️ 一开始写的是 ±1 格，结果**全校园 0 棵柳**（柳成了死代码）：
+   `classifyFree` 把离水 25px 内的一圈格子全划成了 K.ROAD（贴水留白的走廊），
+   真正的 K.WATER 格被这圈走廊推远了 —— 最近的树离水格还有 2 格。 */
+function waterNear(x, y) {
+  const cx = (x / CELL) | 0, cy = (y / CELL) | 0;
+  for (let j = -3; j <= 3; j++)
+    for (let i = -3; i <= 3; i++) {
+      const a = cx + i, b = cy + j;
+      if (a < 0 || b < 0 || a >= NW || b >= NH) continue;
+      if (CELLK[b * NW + a] === K.WATER) return true;
+    }
+  return false;
+}
+function anyTree(seed, x, y) {
+  /* ⚠️ tag 是给**离线探针**用的（props_probe.py 靠它区分"树"与"路灯"）——
+     路灯也是 32×84 的细高精灵，只按尺寸判会把路灯当成树，
+     于是探针报出一堆假重叠。判定一律走 tag，不靠尺寸猜。 */
+  const t = waterNear(x, y) ? makeWillow(seed)         // 水边一律柳
+          : ((seed >>> 0) % 100) < 50 ? makeTree(seed) // 阔叶（原物种，占多数）
+          : ((seed >>> 0) % 100) < 78 ? makeConifer(seed)  // 针叶
+          :                             makeBlossom(seed); // 开花（≤22%：
+  t.tag = "tree";                                      //   开花的粉在 1× 下最跳）
+  return t;
+}
+
+/* --- 4.7.5 树坑：石框 + 土面。只画左右两片和两段前缘 ——
+   树干在正中，后缘（远侧）本来就该被树干挡住，画了反而压在树干上。 --- */
+function treePit(g, ax, ay) {
+  const KERB = "#a9a496", SOIL = "#4a3a28", SOILL = "#5d4a34";
+  for (const d of [-1, 1]) {
+    const x0 = ax + d * 5;
+    px(g, x0, ay - 5, 9, 5, SOIL);
+    px(g, x0, ay - 5, 9, 1, SOILL);                    // 土面受光的那一条
+    px(g, x0 + (d > 0 ? 8 : 0), ay - 6, 1, 7, KERB);   // 外侧石框
+    px(g, x0 + (d > 0 ? 8 : 0), ay - 6, 1, 2, shade(KERB, 0.20));
+    px(g, x0 + (d > 0 ? 8 : 0), ay - 1, 1, 2, shade(KERB, -0.26));
+  }
+  /* 前缘（近侧）石框：留出中间 10px 的缺口给树干落地 */
+  px(g, ax - 14, ay - 1, 10, 2, "#8a8779");
+  px(g, ax + 5,  ay - 1, 10, 2, "#8a8779");
+  px(g, ax - 14, ay - 1, 10, 1, KERB);
+  px(g, ax + 5,  ay - 1, 10, 1, KERB);
+}
+function makeStreetTree(seed, x, y) {
+  const t = anyTree(seed, x, y);                       // 每次都是新画布，可安全就地改
+  treePit(t.canvas.getContext("2d"), t.ax, t.ay);
+  return t;
+}
+
+/* --- 4.7.6 行道树 / 广场树阵 ---
+   做法：撒一张 ROW_SP 的**规则点阵**，每个点先试 (0,0)、再试一圈小偏移，
+   取第一个合法位置。因为绝大多数点都落在 (0,0) 上，树的间距就天然是
+   等距的 —— 这才有"沿路成行"的观感，而不是 scatter() 那种网格乱撒。 */
+const ROW_SP = 118;                                    // 行道树间距（世界像素）≈ 13 m
+function roadAt(cx, cy) {
+  if (cx < 0 || cy < 0 || cx >= NW || cy >= NH) return false;
+  return CELLK[cy * NW + cx] === K.ROAD;
+}
+function plazaClear(cx, cy) {
+  for (let j = -1; j <= 1; j++)
+    for (let i = -1; i <= 1; i++) {
+      const a = cx + i, b = cy + j;
+      if (a < 0 || b < 0 || a >= NW || b >= NH) return false;
+      if (CELLK[b * NW + a] !== K.PLAZA) return false;   // 离广场边 ≥16px 才种
+    }
+  return true;
+}
+function treeSpotOK(x, y) {
+  if (!insideBoundary(x, y) || distToBound(x, y) < 30) return false;
+  if (ptBlocked(x, y, 16, 11)) return false;
+  const cx = (x / CELL) | 0, cy = (y / CELL) | 0, k = cellAtSafe(x, y);
+  let ok = false;
+  if (k === K.GRASS) {
+    if (roadAt(cx - 1, cy) || roadAt(cx + 1, cy) ||
+        roadAt(cx, cy - 1) || roadAt(cx, cy + 1)) ok = true;      // 贴路缘 → 行道树
+    /* 湖岸那一圈也是"路"（classifyFree 会把贴水的留白划成走廊），
+       所以岸边自然长出成排的垂柳，不用单独写一套湖岸逻辑。 */
+  } else if (k === K.PLAZA) {
+    ok = plazaClear(cx, cy);                                      // 广场中央 → 树阵
+  }
+  if (!ok) return false;
+  /* 别和既有小道具撞在一起。⚠️ 三条判据缺一不可：
+     ① **拿美术盒判相交，不能拿"距离小于 N"** —— 树比垃圾桶高得多，一个落在树基
+        北侧 67px 的垃圾桶按距离算早就"够远"，实际上正好糊在树冠尖上，
+        实地看就是"树上挂了个箱子"。
+     ② **楼（宽 > 90）整个跳过** —— 楼在树基北侧时深度排序本来就把它画在树后面，
+        露在墙前的那排树是对的（实测过：不跳过的话行道树会被楼的美术盒全判掉，
+        79 棵只剩 10 棵）。
+     ③ **只查在树北侧（p.y ≤ y，即画在树之前）的道具** —— 南侧的道具遮住树干是
+        正确的遮挡关系，不算冲突。
+     树的盒取保守值（x±34、y-96 起）：树画布差异大（垂柳 86 宽、针叶 104 高），
+     为每个候选点现算一遍不划算。 */
+  for (const p of props) {
+    if (p.img.width > 90 || p.y > y + 4) continue;
+    const px0 = p.x - p.ax, py0 = p.y - p.ay;
+    if (px0 < x + 34 && px0 + p.img.width  > x - 34 &&
+        py0 < y - 10 && py0 + p.img.height > y - 96) return false;
+  }
+  return true;
+}
+const _rowUsed = [];
+function plantRows() {
+  const OFF = [[0, 0], [0, -7], [0, 7], [-7, 0], [7, 0], [-7, -7], [7, 7],
+               [-7, 7], [7, -7], [0, -14], [0, 14], [-14, 0], [14, 0]];
+  let n = 0;
+  for (let py = ROW_SP >> 1; py < WORLD_H; py += ROW_SP) {
+    for (let px = ROW_SP >> 1; px < WORLD_W; px += ROW_SP) {
+      for (const o of OFF) {
+        const x = px + o[0], y = py + o[1];
+        if (!treeSpotOK(x, y)) continue;
+        let near = false;
+        for (const u of _rowUsed)
+          if (Math.abs(u[0] - x) < 70 && Math.abs(u[1] - y) < 70) { near = true; break; }
+        if (near) continue;
+        addProp(Object.assign({}, makeStreetTree((n * 761 + 97) | 0, x, y), { x: x, y: y }));
+        _rowUsed.push([x, y]);
+        n++;
+        break;
+      }
+    }
+  }
+  return n;
+}
+</script>
+<script>
+window.__diag=[];
+window.onerror=function(m,s,l,c){window.__diag.push('ERR '+m+' @'+l+':'+c);};
+var SPECIES=[
+  {k:'阔叶(原)', fn:makeTree,    col:'#7bbf6a'},
+  {k:'针叶',     fn:makeConifer, col:'#5f9e4a'},
+  {k:'垂柳',     fn:makeWillow,  col:'#a8c95e'},
+  {k:'开花',     fn:makeBlossom, col:'#e0a4bb'}
+];
+/* 一格：让**精灵自己的画布**按 S 倍放大画出来（不裁、不补），
+   四周留 1px 参考线 → 一眼看出物体有没有贴边或被切。 */
+function cell(fn,seed,S,bg,pit){
+  var s = fn(seed);
+  if(pit) treePit(s.canvas.getContext('2d'), s.ax, s.ay);
+  var W=s.canvas.width, H=s.canvas.height;
+  var cv=document.createElement('canvas');
+  cv.width=(W+2)*S; cv.height=(H+2)*S;
+  var g=cv.getContext('2d'); g.imageSmoothingEnabled=false;
+  g.fillStyle='#2a3038'; g.fillRect(0,0,cv.width,cv.height);
+  if(bg){ g.fillStyle=bg; g.fillRect(S,S,W*S,H*S); }
+  g.drawImage(s.canvas, S, S, W*S, H*S);
+  /* 锚点（ax, ay）= 精灵的"脚"：绿十字必须落在地面线上 */
+  g.fillStyle='rgba(0,255,0,0.9)';
+  g.fillRect(S+s.ax*S-1, S+s.ay*S, 3, 1);
+  g.fillRect(S+s.ax*S, S+s.ay*S-1, 1, 3);
+  var box=document.createElement('div'); box.className='cell';
+  box.appendChild(cv);
+  var L=document.createElement('div'); L.className='lab';
+  L.innerHTML='<span class="k">'+fn.name.replace('make','')+'</span> '+W+'×'+H
+            + '<br>ay='+s.ay+(pit?' +坑':'');
+  box.appendChild(L);
+  return box;
+}
+function row(title,seeds,S,bg,pit){
+  var d=document.createElement('div'); d.innerHTML='<h2>'+title+'</h2>';
+  var r=document.createElement('div'); r.className='row';
+  SPECIES.forEach(function(sp, i){
+    seeds.forEach(function(sd){
+      var w=document.createElement('div');
+      w.appendChild(cell(sp.fn,sd,S,bg,pit));
+      r.appendChild(w);
+    });
+  });
+  d.appendChild(r); return d;
+}
+/* --- 实地场景：一条路 + 路缘行道树成行 + 树坑 ------------------------
+   直接按 ROW_SP 的间距摆一行，看"成行"到底成不成 —— 这是这一项的核心观感。 */
+function streetScene(S){
+  var N=4, PITCH=118;
+  var cv=document.createElement('canvas');
+  cv.width=(N*PITCH+80)*S/4; cv.height=(150)*S/4;
+  var g=cv.getContext('2d'); g.imageSmoothingEnabled=false;
+  var k=S/4;
+  function R(x,y,w,h,c){g.fillStyle=c;g.fillRect(x*k,y*k,w*k,h*k);}
+  R(0,0,cv.width,150,'#3d752d');
+  R(cv.width*0.42,0,cv.width*0.58,150,'#8f8878');            /* 路 */
+  R(cv.width*0.42,0,2,150,'#6e6a5c');
+  /* ⚠️ 不能走 makeStreetTree：它经 anyTree → waterNear，那条链依赖 CELL/CELLK/NW
+     （产物里才有），对比页里没有 → "CELL is not defined"。这里直接按物种下标取。 */
+  var PICK=[makeTree,makeConifer,makeWillow,makeBlossom];
+  for(var i=0;i<4;i++){
+    var s=PICK[i](1000+i*761);
+    treePit(s.canvas.getContext('2d'), s.ax, s.ay);
+    var x=(40+i*PITCH)*k, y=126*k;
+    g.drawImage(s.canvas, x-s.ax*k, y-s.ay*k, s.canvas.width*k, s.canvas.height*k);
+  }
+  var box=document.createElement('div'); box.className='cell';
+  box.appendChild(cv);
+  var L=document.createElement('div'); L.className='lab';
+  L.innerHTML='间距 '+PITCH+' 世界px（≈13 m）· 由小到大 = 阔叶/针叶/垂柳/开花';
+  box.appendChild(L);
+  return box;
+}
+/* --- 局部放大：把精灵的某一块挖出来放大，用来看清"那到底是什么" ---
+   （全图缩到 1700px 宽之后，5px 的小东西根本认不出；这一格是查证工具） */
+function cropRow(items){
+  var d=document.createElement('div'); d.innerHTML='<h2>⑤ 12× 局部（挖出来看）</h2>';
+  var r=document.createElement('div'); r.className='row';
+  items.forEach(function(it){
+    var s=it.fn(it.seed), S=12;
+    var cv=document.createElement('canvas');
+    cv.width=it.w*S; cv.height=it.h*S;
+    var g=cv.getContext('2d'); g.imageSmoothingEnabled=false;
+    g.fillStyle='#2a3038'; g.fillRect(0,0,cv.width,cv.height);
+    g.drawImage(s.canvas, -it.x*S, -it.y*S, s.canvas.width*S, s.canvas.height*S);
+    var box=document.createElement('div'); box.className='cell'; box.appendChild(cv);
+    var L=document.createElement('div'); L.className='lab'; L.innerHTML=it.label;
+    box.appendChild(L); r.appendChild(box);
+  });
+  d.appendChild(r); return d;
+}
+var root=document.body;
+/* ⚠️ 摆版的每一段都套 try/catch 并把异常推给 __diag ——
+   这一段只要抛一次错，后面的 title 就永远设不上，页面看起来像"JS 没跑"，
+   与"重复声明 const 导致整页不执行"几乎无法区分（plants.py 自己踩过）。 */
+function guard(fn){ try{ fn(); }catch(e){ window.__diag.push('BUILD '+e.message); } }
+guard(function(){
+  root.appendChild(row('① 3× —— 屏幕观感（每个物种两种种子，看形态差异）',[11,7331],3,'#3d752d',false));
+  root.appendChild(row('② 5× —— 像素级审视（冠内层次 / 枝条 / 镂空）',[11,7331],5,'#3d752d',false));
+  root.appendChild(row('③ 3× —— 行道树（带树坑；绿十字 = 锚点，必须落在地面线上）',[11,7331],3,'#8f8878',true));
+  var sc=document.createElement('div');
+  sc.innerHTML='<h2>④ 4× —— 实地场景：一条路，行道树等距成行</h2>';
+  var sw=document.createElement('div'); sw.className='row';
+  sw.appendChild(streetScene(4));
+  sc.appendChild(sw); root.appendChild(sc);
+  root.appendChild(cropRow([
+    {fn:makeConifer, seed:11, x:14, y:2,  w:26, h:26, label:'针叶尖（冠顶 26×26）'},
+    {fn:makeConifer, seed:11, x:2,  y:88, w:26, h:16, label:'针叶根（裙摆 + 树干）'},
+    {fn:makeBlossom, seed:11, x:16, y:24, w:30, h:30, label:'开花冠心（枝 / 团 / 单朵）'},
+    {fn:makeWillow,  seed:11, x:12, y:16, w:30, h:26, label:'柳冠 + 垂条根'},
+    {fn:makeWillow,  seed:11, x:12, y:66, w:30, h:20, label:'柳垂条梢 + 根'}
+  ]));
+});
+
+/* --- DIAG：空洞扫描（洪水填充找被实心像素围住的透明像素） --- */
+function holes(fn,seed,pit){
+  var s=fn(seed);
+  if(pit) treePit(s.canvas.getContext('2d'),s.ax,s.ay);
+  var W=s.canvas.width,H=s.canvas.height,g=s.canvas.getContext('2d');
+  var d=g.getImageData(0,0,W,H).data;
+  var op=function(x,y){return d[(y*W+x)*4+3]>40;};
+  var seen=new Uint8Array(W*H),q=[];
+  for(var x=0;x<W;x++){q.push(x,0);q.push(x,H-1);}
+  for(var y=0;y<H;y++){q.push(0,y);q.push(W-1,y);}
+  while(q.length){
+    var yy=q.pop(),xx=q.pop(),i=yy*W+xx;
+    if(xx<0||yy<0||xx>=W||yy>=H||seen[i]||op(xx,yy))continue;
+    seen[i]=1;q.push(xx+1,yy);q.push(xx-1,yy);q.push(xx,yy+1);q.push(xx,yy-1);
+  }
+  var out=[];
+  for(var y2=0;y2<H;y2++)for(var x2=0;x2<W;x2++){
+    var i2=y2*W+x2;
+    if(!seen[i2]&&!op(x2,y2))out.push(x2+','+y2+'(a'+d[(y2*W+x2)*4+3]+')');
+  }
+  return out;
+}
+/* 落地检查：地面线以下（y > ay）不允许有实心像素 —— 有就是"插进土里" */
+function below(fn,seed){
+  var s=fn(seed),W=s.canvas.width,H=s.canvas.height;
+  var d=s.canvas.getContext('2d').getImageData(0,0,W,H).data,n=0,deep=0;
+  for(var y=s.ay+1;y<H;y++)for(var x=0;x<W;x++)
+    if(d[(y*W+x)*4+3]>60){n++; if(y>s.ay+2) deep++;}
+  return n?n+(deep?'/'+deep+'(深!)':''):'0';
+}
+(function(){
+  var t=[];
+  SPECIES.forEach(function(sp){
+    t.push(sp.k+' 空洞='+(holes(sp.fn,11,false).length||'0')
+         + ' 坑后空洞='+(holes(sp.fn,11,true).length||'0')
+         + ' 地面线以下='+below(sp.fn,11));
+  });
+  document.title='DIAG|'+t.join(' | ')+'|'+(window.__diag.join('||')||'clean');
+})();
+</script></body></html>

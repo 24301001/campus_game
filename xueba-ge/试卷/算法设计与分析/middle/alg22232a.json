@@ -1,0 +1,1555 @@
+{
+  "metadata": {
+    "file_suffix": "pdf",
+    "producer": {
+      "name": "mineru",
+      "version": "4.0.0"
+    },
+    "document": {
+      "title": "北 京 交 通 大 学 考 试 试 题",
+      "authors": [
+        "d"
+      ],
+      "languages": [
+        "zh-CN"
+      ],
+      "created_at": "2023-06-28T10:48:04+08:00",
+      "modified_at": "2023-06-28T10:48:04+08:00",
+      "creator_application": "Microsoft® Word 2016",
+      "producer_application": "Microsoft® Word 2016",
+      "page_count": 6,
+      "page_count_kind": "physical"
+    }
+  },
+  "extensions": {
+    "mineru": {
+      "tier": "basic",
+      "parse_mode": "ocr"
+    },
+    "docvortex_layout": {
+      "version": 1,
+      "pages": [
+        {
+          "page_idx": 0,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 1,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 2,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 3,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 4,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        },
+        {
+          "page_idx": 5,
+          "width_pt": 516.0,
+          "height_pt": 728.6400146484375
+        }
+      ]
+    }
+  },
+  "pages": [
+    {
+      "page_idx": 0,
+      "blocks": [
+        {
+          "type": "paragraph_title",
+          "index": 0,
+          "bbox": [
+            0.228,
+            0.086,
+            0.755,
+            0.111
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "北京交通大学考试试题(A卷)"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.099,
+            0.126,
+            0.879,
+            0.147
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "课程名称:算法设计与分析学年学期:2022—2023学年第2学期"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.097,
+            0.158,
+            0.882,
+            0.179
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "课程编号:M210004B开课学院:软件学院出题教师:刘铎，李令昆，吴睿智"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.098,
+            0.19,
+            0.874,
+            0.212
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "学生姓名: 学号: 任课教师:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.098,
+            0.223,
+            0.595,
+            0.243
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "学生学院: 班级:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.101,
+            0.259,
+            0.894,
+            0.288
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "ノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノノ注意事项:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.125,
+            0.292,
+            0.305,
+            0.309
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "① 填涂清楚学号。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.124,
+            0.313,
+            0.754,
+            0.331
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "②必须回答在答题卡指定位置内，不在指定位置内的答题内容无效。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.124,
+            0.334,
+            0.794,
+            0.352
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "③如无特殊说明，论证和解答过程必须详尽、写清依据，不得随意省略。"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 9,
+          "bbox": [
+            0.105,
+            0.375,
+            0.877,
+            0.399
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第一部分、单项选择题。请选择最适合的答案，并填涂到答题卡上。"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.109,
+            0.413,
+            0.23,
+            0.434
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(共 20 分)"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.114,
+            0.45,
+            0.686,
+            0.6
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(1)下列表述中，（）是不正确的。A. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "n ^ { 2 } / 2 + 2 ^ { n }"
+            },
+            {
+              "type": "text",
+              "content": " 的渐近表达式的上界函数之一是 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "O ( 2 ^ { n } )"
+            },
+            {
+              "type": "text",
+              "content": " B. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "n ^ { 2 } / 2 + 2 ^ { n }"
+            },
+            {
+              "type": "text",
+              "content": " 的渐近表达式的下界函数之一是 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\Omega ( 2 ^ { n } )"
+            },
+            {
+              "type": "text",
+              "content": " C. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\log n ^ { 3 }"
+            },
+            {
+              "type": "text",
+              "content": " 的渐近表达式的上界函数之一是0(logn) D. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\log n ^ { 3 }"
+            },
+            {
+              "type": "text",
+              "content": " 的渐近表达式的下界函数之一是 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\Omega ( n ^ { 3 } )"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.115,
+            0.61,
+            0.728,
+            0.663
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(2) 当输入规模为 n的时候，算法增长率最大的是（ )。A. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "5 ^ { n }"
+            },
+            {
+              "type": "text",
+              "content": " B. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "2 0 \\log _ { 2 } n"
+            },
+            {
+              "type": "text",
+              "content": " C. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "2 n ^ { 2 }"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 13,
+          "bbox": [
+            0.115,
+            0.675,
+            0.862,
+            0.728
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(3) T(n)表示当输入规模为 n时的算法效率，以下算法效率最优的是（）A. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T(n) = T(n - 1) + 1,   T(1) = 1"
+            },
+            {
+              "type": "text",
+              "content": " B. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T ( n ) { = } 2 n ^ { 2 }"
+            },
+            {
+              "type": "text",
+              "content": " C. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T(n) = T(n/2) + 1,   T(1) = 1"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 14,
+          "bbox": [
+            0.115,
+            0.739,
+            0.739,
+            0.888
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(4)以下关于NP问题的说法中，（ ）目前确定是正确的。A.NP问题都是不可能解决的问题B.P类问题包含在 NP问题中C.NP完全问题是P类问题的子集D.NP类问题包含在P类问题中"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 15,
+          "bbox": [
+            0.481,
+            0.918,
+            0.519,
+            0.931
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "1/6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 1,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.114,
+            0.079,
+            0.881,
+            0.26
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(5)在寻找n个元素中第k小元素的问题中，若使用快速排序思想，运用分治算法对n个元素进行划分，以下解释中最合理的是（)。A. 应随机选取一个作为划分基准。B. 应取第一个元素作为划分基准。C. 应取中位数作为划分基准。D. 以上方法皆可行，但不同方法，算法的执行时间也可能有所不同。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.114,
+            0.271,
+            0.882,
+            0.451
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(6)假定X,Y,Z都是判定性问题且X≤pY，Y≤pZ，则以下说法中（）是不正确的。（X≤pY意为X可多项式时间归约到Y) A. 若Y可以在多项式时间内求解，则X也可以在多项式时间内求解B. 若X可以在多项式时间内求解，则Y也可以在多项式时间内求解C. 若X不能在多项式时间内求解，则Y也不能在多项式时间内求解D.X≤PZ"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.114,
+            0.461,
+            0.882,
+            0.706
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(7)对于下列NP完全性的表述中，（）目前确定是正确的。A. 若存在一个NP类的问题可以被一个多项式时间复杂度的算法解决，则 P=NP。B. 所有NP-hard（NP困难）问题都是NP-Complete（NP完全）问题。C. 若一个判定问题 Q可以多项式时间归约到某个 NP-Complete（NP完全）问题，则Q是一个NP-Complete（NP完全）问题。D. 若一个判定问题Q是 NP-Complete（NP完全）问题，则Q可以被多项式时间归约到其它任何一个NP-Complete（NP完全）问题。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.114,
+            0.718,
+            0.883,
+            0.867
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(8)假设X是判定性问题，则当（）时，X不一定存在多项式时间验证器/证书（即对X的一个实例和该实例的一个“解”，可以验证该解的正确性的一个算法)。A.X是P类问题 B.X是NP 类问题C.X是NP困难问题 D.X是NP完全问题"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 4,
+          "bbox": [
+            0.48,
+            0.917,
+            0.52,
+            0.931
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2 /6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 2,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.114,
+            0.078,
+            0.88,
+            0.132
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(9) 要求算法必须可以终止指的是算法的（)。A. 有效性 B. 有限性 C. 健壮性 D. 正确性"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.114,
+            0.142,
+            0.881,
+            0.198
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(10)对于一个算法而言，（）是第一位的。A. 有效性 B. 最优性 C. 健壮性 D. 正确性"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 2,
+          "bbox": [
+            0.105,
+            0.231,
+            0.479,
+            0.255
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第二部分、计算题。（共30分）"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.105,
+            0.268,
+            0.894,
+            0.355
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "11.（共12分）由非负整数构成的数字三角形排列形式如图1所示。每一行的数只有两条边可以分别通向下一行的两个数。目的是计算出从顶层到底层某一个数的一条道路，并且使得该道路上的数之和达到最小。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.138,
+            0.364,
+            0.555,
+            0.386
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "针对以上问题，写出它的线性规划模型。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.138,
+            0.397,
+            0.81,
+            0.418
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "要求:详细写出变量定义、优化目标、变量类型限制和不等式组。"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 6,
+          "bbox": [
+            0.384,
+            0.427,
+            0.614,
+            0.515
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 6,
+              "bbox": [
+                0.384,
+                0.427,
+                0.614,
+                0.515
+              ],
+              "content": ""
+            },
+            {
+              "type": "image_caption",
+              "index": 7,
+              "bbox": [
+                0.421,
+                0.521,
+                0.578,
+                0.541
+              ],
+              "content": [
+                {
+                  "type": "text",
+                  "content": "图 1 题 11 用图"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.105,
+            0.575,
+            0.895,
+            0.66
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "12.（共10分）给定一个无序序列A=[65,158,170,155,239,300,207,389]。A的子序列X中，如果有i<j，则 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "X [ i ] < X [ j ]"
+            },
+            {
+              "type": "text",
+              "content": " ，此时称X是A的单调递增子序列。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.138,
+            0.671,
+            0.881,
+            0.692
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "使用动态规划算法(而不是递归方法)找出序列A的最长单调递增子序列。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.149,
+            0.703,
+            0.805,
+            0.725
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（1）请给出目标函数和标记函数的定义/表示、递推关系和初值。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.104,
+            0.735,
+            0.895,
+            0.789
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（2）请给出详细的计算过程，包括目标函数数组（备忘录）和标记函数数组的具体值。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.15,
+            0.799,
+            0.612,
+            0.82
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（3）请详细说明具体的最长单调递增子序列。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 13,
+          "bbox": [
+            0.105,
+            0.86,
+            0.894,
+            0.913
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "13.（共8分）小明和小红要进行两个n阶方阵的乘法，此处认为n的值充分大，即可以不断除以3和/或除以5。"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 14,
+          "bbox": [
+            0.48,
+            0.917,
+            0.52,
+            0.932
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "3/6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 3,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.104,
+            0.079,
+            0.894,
+            0.164
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "小明先设计了一个分治算法A:可以使用k次矩阵元素的乘法完成两个 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "5 { \\times } 5"
+            },
+            {
+              "type": "text",
+              "content": "的矩阵相乘。小明进而又设计了一个分治算法 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "A \\mathbf { p u s }"
+            },
+            {
+              "type": "text",
+              "content": " :将n×n 矩阵顺序划分成"
+            },
+            {
+              "type": "equation_inline",
+              "content": "( n / 5 ) { \\times } ( n / 5 )"
+            },
+            {
+              "type": "text",
+              "content": " 块，每块为5×5的小矩阵。之后再不断调用算法A和算法 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "A \\mathbf { p u s }"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.104,
+            0.175,
+            0.894,
+            0.26
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "小红先设计了一个分治算法B:可以使用t次矩阵元素的乘法完成两个 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "4 { \\times } 4"
+            },
+            {
+              "type": "text",
+              "content": "的矩阵相乘。小红进而又设计了一个分治算法 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\pmb { B } _ { \\mathbf { p l u s } }"
+            },
+            {
+              "type": "text",
+              "content": " :将n×n矩阵顺序划分成"
+            },
+            {
+              "type": "equation_inline",
+              "content": "( n / 4 ) { \\times } ( n / 4 )"
+            },
+            {
+              "type": "text",
+              "content": " 块，每块为4×4的小矩阵。之后再不断调用算法B和算法 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\pmb { B _ { \\mathrm { p l u s } } }"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.138,
+            0.271,
+            0.756,
+            0.29
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "此处k和t是大于1的常数，并忽略矩阵加法的时间复杂度。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.103,
+            0.303,
+            0.893,
+            0.356
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "用函数 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T _ { A } ( n )"
+            },
+            {
+              "type": "text",
+              "content": " 和 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T _ { B } ( n )"
+            },
+            {
+              "type": "text",
+              "content": " 分别表示使用算法 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "A \\mathbf { p u s }"
+            },
+            {
+              "type": "text",
+              "content": " 和 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\pmb { B } _ { \\mathbf { p l u s } }"
+            },
+            {
+              "type": "text",
+              "content": " 计算两个n阶实数方阵X,Y乘积时的矩阵元素（实数）乘法次数。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.15,
+            0.367,
+            0.653,
+            0.387
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（1）列出关于 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T _ { A } ( n )"
+            },
+            {
+              "type": "text",
+              "content": " 的递推方程并估计 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T _ { A } ( n )"
+            },
+            {
+              "type": "text",
+              "content": " 的阶。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.15,
+            0.399,
+            0.653,
+            0.419
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(2) 列出关于 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T _ { B } ( n )"
+            },
+            {
+              "type": "text",
+              "content": " 的递推方程并估计 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T _ { B } ( n )"
+            },
+            {
+              "type": "text",
+              "content": " 的阶。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.151,
+            0.431,
+            0.873,
+            0.452
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（3）当k和t满足什么条件时，算法 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "A _ { \\mathbf { p u s } }"
+            },
+            {
+              "type": "text",
+              "content": " 的时间复杂性将优于 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\pmb { B } _ { \\mathbf { p u s } }"
+            },
+            {
+              "type": "text",
+              "content": " 的。"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 7,
+          "bbox": [
+            0.105,
+            0.491,
+            0.533,
+            0.514
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第三部分、综合分析题。（共50分）"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.105,
+            0.529,
+            0.893,
+            0.614
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "14.（共12分）已知一个长度为n的有序字符串序列/数组A（下标为1~n），其字符串都由小写英文字母构成，排序方法为自然的（从小到大）字典序/词典序（可参看下文示例）。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.103,
+            0.625,
+            0.894,
+            0.743
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "给定一个长为 m 的英文字符串 prefix，求数组 A 中前缀为 prefix 的字符串的个数。例如，对于A=[“aaa”,“ba”,“bac”,“bat”,“batbat”,“batq”,“bta”,“c”]，"
+            },
+            {
+              "type": "equation_inline",
+              "content": "p r e f i x = \\text { \\text { } } \\text { b a t }"
+            },
+            {
+              "type": "text",
+              "content": " ，A中前缀为 prefix 的字符串有3个（“bat”,“batbat”，“batq”)，因此要求的结果为3。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.103,
+            0.754,
+            0.891,
+            0.807
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "请为之设计一个时间复杂度为O(mlgn)的算法COUNT-PREFIX(A, prefix)。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.105,
+            0.817,
+            0.893,
+            0.871
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（1）写出算法的伪代码，即不得使用具体程序设计语言的实际编码，不可以调用任何库函数。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.15,
+            0.881,
+            0.779,
+            0.902
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（2）论证（1）中算法的复杂度满足要求，即的确为0(mlgn)。"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 13,
+          "bbox": [
+            0.481,
+            0.918,
+            0.519,
+            0.931
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "4/6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 4,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.105,
+            0.079,
+            0.895,
+            0.229
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "15.（共12分）在某个VR游戏中，n只大怪兽正在袭击某村庄，且第i只怪兽在每个单位时间内都可以对村庄产生值为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "D _ { i }"
+            },
+            {
+              "type": "text",
+              "content": " 的破坏 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "( 1 \\leq i \\leq n )"
+            },
+            {
+              "type": "text",
+              "content": " 。假设你在游戏中扮演“勇者”，勇者的能力固然可以击败所有怪兽，但需要不中断地花费 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T _ { i }"
+            },
+            {
+              "type": "text",
+              "content": " 时间才能击败第i只怪兽（期间怪兽忙于应对勇者而无暇对村庄造成破坏），且之后才能（开始）去击败下一只怪兽。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.139,
+            0.239,
+            0.81,
+            0.259
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "勇者希望能够确定击败怪兽的顺序，使得村庄受到的总破坏最小。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.104,
+            0.271,
+            0.894,
+            0.389
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "例如，共有两只怪兽， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "T_{1}=3,\\ D_{1}=5,\\ T_{2}=5,\\ D_{2}=3"
+            },
+            {
+              "type": "text",
+              "content": " 。如果选择先击败怪兽1，再击败怪兽2，村庄受到的总破坏为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\begin{aligned}& ! 0 \\times D_{1} + T_{1} \\times D_{2} = 3 \\times 3 = 9\\end{aligned}"
+            },
+            {
+              "type": "text",
+              "content": " ；而如果选择先击败怪兽2，再击败怪兽1，则村庄受到的总破坏为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "0 \\times D _ { 2 } + T _ { 2 } \\times"
+            },
+            {
+              "type": "text",
+              "content": " "
+            },
+            {
+              "type": "equation_inline",
+              "content": "D _ { 1 } = 5 \\times 5 = 2 5"
+            },
+            {
+              "type": "text",
+              "content": " 。因此，勇者应该先击败怪兽1，再击败怪兽2。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.138,
+            0.399,
+            0.832,
+            0.42
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "现在需要你基于贪婪策略，设计一个确定击败怪兽最优顺序的算法。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.15,
+            0.431,
+            0.519,
+            0.452
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（1）请描述所用到的贪心选择性质。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.105,
+            0.463,
+            0.895,
+            0.548
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（2）请写出你的算法伪代码，不得使用具体程序设计语言的实际编码，不可以调用任何库函数，但可以直接使用排序函数并按照你所定义的排序方式进行排序。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.15,
+            0.559,
+            0.635,
+            0.58
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（3）请证明你所用到的贪心选择性质的正确性。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.106,
+            0.612,
+            0.894,
+            0.73
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "16. （共13 分）尽可能公平的拔河游戏某科研团队共有n人，体重分别是w1，"
+            },
+            {
+              "type": "equation_inline",
+              "content": "w _ { 2 } , \\cdots , w _ { n }"
+            },
+            {
+              "type": "text",
+              "content": " (都是正整数)。为增进成员感情，该团队决定组织一场友谊拔河赛。考虑到其中或有“横推八马倒，倒曳九牛回”的大力士，因此这场友谊拔河赛不要求双方人数相当，而是希望两边的总体重差达到最小。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.105,
+            0.741,
+            0.893,
+            0.794
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "例如4个人的体重分别是200、90、90、90时，可以将他们分为体重分别为200和90、90、90的两队，体重差为70。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.149,
+            0.804,
+            0.775,
+            0.826
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（1）请为之设计一个动态规划算法，计算可能的最小体重差。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.138,
+            0.837,
+            0.893,
+            0.858
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "要求:给出目标函数的定义表示和算法伪代码（需要给出最终的返回值）。"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 11,
+          "bbox": [
+            0.48,
+            0.917,
+            0.52,
+            0.932
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "5/6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 5,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.104,
+            0.079,
+            0.895,
+            0.164
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（2）针对输入实例 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "n=5,w_{1}=11,w_{2}=5,w_{3}=4,w_{4}=3,w_{5}=3"
+            },
+            {
+              "type": "text",
+              "content": " ，根据（1）中设计的算法，给出求解的详细计算过程（用清楚明确的表格表示即可），并给出最小体重差（仅有该结果者此部分不得分）。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.106,
+            0.203,
+            0.882,
+            0.255
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "17. （共13分)问题背景与具体输入实例 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "(n=5,w_{1}=11,w_{2}=5,w_{3}=4,w_{4}=3,w_{5}=3)"
+            },
+            {
+              "type": "text",
+              "content": "同题16。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.139,
+            0.267,
+            0.461,
+            0.287
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "请为之设计一个分支限界算法。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.149,
+            0.299,
+            0.612,
+            0.32
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（1）请详细写出具体的估界函数和剪枝依据。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.105,
+            0.331,
+            0.893,
+            0.385
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（2）请针对此输入实例详细画出剪枝后的（部分）搜索树。注意:必须对界进行估计；必须在图中标明剪枝依据。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.149,
+            0.395,
+            0.879,
+            0.416
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "（3）请针对此输入实例给出最小体重差（仅有该结果者此题目不得分）。"
+            }
+          ]
+        },
+        {
+          "type": "page_footnote",
+          "index": 6,
+          "bbox": [
+            0.104,
+            0.9,
+            0.453,
+            0.918
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "①为计算方便，此处对数值规模进行了缩小。"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 7,
+          "bbox": [
+            0.48,
+            0.918,
+            0.52,
+            0.932
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "6/6"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "is_full_document": true,
+  "schema": "docvortex.middle",
+  "schema_version": "2.0"
+}

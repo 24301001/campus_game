@@ -1,0 +1,12 @@
+.venv/
+.tmp/
+__pycache__/
+*.pyc
+data/
+kb/index/
+.DS_Store
+
+# 端上/本地推理的资产：都不进仓库，一条 `python tools/get_onnx_assets.py` + 一次 kb.build 就能重建
+models/                   # bge-small-zh-v1.5 权重 23–95 MB
+web/vendor/onnxruntime/   # ORT-Web 的 .mjs + .wasm 约 45 MB
+kb/index_onnx/            # 用 onnx 那条腿重建的另一份索引（4.4 分钟 / 48 MB 向量）

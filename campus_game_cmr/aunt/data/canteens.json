@@ -1,0 +1,116 @@
+{
+  "dataStatus": "researched",
+  "asOf": "2026-10-01",
+  "notice": "资料只核实了楼层功能与部分历史菜单、价格和时段；室内原始平面图、具体档口坐标和当前价格尚未核验。",
+  "sources": {
+    "R": {"title": "北京交通大学食堂真实调研资料汇编（2026-10-01）", "url": null},
+    "S2": {"title": "2025级 BJTU 专属美食指南", "url": "https://www.sohu.com/a/930501419_121106842"},
+    "S4": {"title": "Apple Maps / Dianping 学生一餐厅商户页", "url": "https://maps.apple.com/place?_provider=57879&place-id=H2710I3F80D1D7A2B17"},
+    "S5": {"title": "Apple Maps / Dianping 学生四食堂商户页", "url": "https://maps.apple.com/place?place-id=H2710I3F80D1D8E99EC&_provider=57879"},
+    "S8": {"title": "Trip.com 留园餐厅商户页", "url": "https://www.trip.com/restaurant/china/beijing/detail/restaurant-31452976/"},
+    "S9": {"title": "携程 学苑餐厅商户页", "url": "https://gs.ctrip.com/html5/you/foods/beijing1/15459078.html"},
+    "S10": {"title": "北京旅游网 北京高校食堂合集", "url": "https://www.visitbeijing.com.cn/article/4MKEZ61fjuC"},
+    "S11": {"title": "北京交通大学学生活动服务中心楼层功能介绍", "url": "https://cs.bjtu.edu.cn/jdxw/202300631.htm"}
+  },
+  "reviewPoolNotice": "公开平台显示的评价总量超过 500，但本项目尚未取得 500 条可追溯的逐条正文，因此不把数量当作已采集评论，也不生成初始评分。",
+  "canteens": [
+    {
+      "id": "xuehuo", "name": "学活", "aliases": ["学活食堂", "学生活动服务中心", "学二", "学三"],
+      "location": "主校区西侧，靠近西门", "floorplanStatus": "unverified",
+      "floors": [
+        {"level": 1, "label": "1F", "summary": "学二基本伙；西北侧另有西式快餐", "size": [32, 20], "auntStallId": "xh-1-xueer", "stalls": [
+          {"id": "xh-1-xueer", "name": "学二餐厅", "kind": "section", "rect": null, "summary": "基本伙，饺子、米饭、面条和小份菜", "hours": [{"text": "早餐 07:00–09:00；午餐 11:00–13:00；晚餐 17:00–19:00", "evidence": ["R"]}], "dishes": [{"name": "饺子", "price": null}, {"name": "米饭", "price": null}, {"name": "面条", "price": null}]},
+          {"id": "xh-1-west", "name": "西式快餐厅", "kind": "section", "rect": null, "summary": "一层西北侧；披萨、意面、汉堡等", "hours": [{"text": "10:00 起，至 21:00（学生指南口径）", "evidence": ["R"]}], "dishes": [{"name": "咖喱鸡肉饭", "price": 8, "evidence": ["R"]}, {"name": "黑椒牛柳意面", "price": null}, {"name": "半价披萨", "price": null, "priceNote": "活动价，非固定价"}]}
+        ]},
+        {"level": 2, "label": "2F", "summary": "学三风味餐厅", "size": [32, 20], "auntStallId": "xh-2-xuesan", "stalls": [
+          {"id": "xh-2-xuesan", "name": "学三餐厅", "kind": "section", "rect": null, "summary": "风味餐厅，菜品随档口变化", "hours": [{"text": "07:00–14:00；17:00–21:00（学生指南口径）", "evidence": ["R"]}], "dishes": [{"name": "油泼面", "price": null}, {"name": "重庆嗦粉", "price": null}, {"name": "三杯鸡", "price": null}, {"name": "渔粉", "price": null}, {"name": "炒酸奶", "price": null}, {"name": "麻辣烫", "price": null}]}
+        ]},
+        {"level": 3, "label": "3F", "summary": "清真餐厅", "size": [32, 20], "auntStallId": "xh-3-halal", "stalls": [
+          {"id": "xh-3-halal", "name": "清真餐厅", "kind": "section", "rect": null, "summary": "民族特色菜", "hours": [{"text": "早餐 07:00–09:00；午餐 11:00–13:00；晚餐 17:00–19:00", "evidence": ["R"]}], "dishes": [{"name": "酸辣粉", "price": 6, "evidence": ["S2"], "priceNote": "2025 美食指南提及，现价待核"}, {"name": "手抓饭", "price": null}, {"name": "丁丁面", "price": null}]}
+        ]}
+      ],
+      "menu": [{"name": "煎饼", "price": 5, "evidence": ["R"], "priceNote": "历史截图价，具体窗口未核"}, {"name": "麻辣香锅", "price": null, "evidence": ["R"], "priceNote": "公开推荐菜，价格未显示"}],
+      "reviewSummary": [{"tone": "mixed", "topic": "选择与价格", "text": "公开评价提到一层价格较低、二楼风味选择较多；饭点可能拥挤。不同档口口味差异明显。", "evidence": ["R"]}]
+    },
+    {
+      "id": "minghu", "name": "明湖", "aliases": ["明湖餐厅", "学生一餐厅", "学生1食堂", "东快"],
+      "location": "明湖东北侧，靠近图书馆与第八教学楼", "floorplanStatus": "unverified",
+      "floors": [
+        {"level": 1, "label": "1F", "summary": "学生一餐厅，基本伙", "size": [32, 20], "auntStallId": "mh-1-xueyi", "stalls": [
+          {"id": "mh-1-xueyi", "name": "学生一餐厅", "kind": "section", "rect": null, "summary": "主食、打菜、汤粥和小份菜", "hours": [{"text": "早餐 07:00–09:00；午餐 11:00–13:00；晚餐 17:00–19:00", "evidence": ["R"]}], "dishes": [{"name": "旋转小火锅", "price": 20, "evidence": ["S4"]}, {"name": "酥肉罐罐土豆粉", "price": 16, "evidence": ["S4"]}, {"name": "牛肉汤", "price": 14, "evidence": ["S4"]}, {"name": "水果披萨", "price": 8, "evidence": ["S4"]}]}
+        ]},
+        {"level": 2, "label": "2F", "summary": "东快餐厅", "size": [32, 20], "auntStallId": "mh-2-dongkuai", "stalls": [
+          {"id": "mh-2-dongkuai", "name": "东快餐厅", "kind": "section", "rect": null, "summary": "烤鸭、烤肉、分米鸡、麻辣烫等", "hours": [{"text": "午餐 10:00–14:00；晚餐 16:30–20:30", "evidence": ["R"]}], "dishes": [{"name": "烤鸭", "price": null, "priceNote": "旧截图 16.8 元，后续学生留言称 23 元；当前价有冲突", "evidence": ["R"]}, {"name": "分米鸡", "price": null}, {"name": "麻辣烫", "price": null}]}
+        ]},
+        {"level": 3, "label": "3F", "summary": "明湖餐厅，南方风味", "size": [32, 20], "auntStallId": "mh-3-south", "stalls": [
+          {"id": "mh-3-south", "name": "明湖餐厅三层", "kind": "section", "rect": null, "summary": "南方风味与点菜类", "hours": [{"text": "午餐 10:30–13:30；晚餐 16:00–20:00", "evidence": ["R"]}], "dishes": [{"name": "海南鸡饭", "price": null}, {"name": "广式烧腊饭", "price": null}, {"name": "重庆小面", "price": null}]}
+        ]}
+      ],
+      "menu": [{"name": "宫保鸡丁", "price": 8, "evidence": ["R"], "priceNote": "历史推荐菜截图，具体窗口未核"}],
+      "reviewSummary": [{"tone": "mixed", "topic": "性价比与排队", "text": "公开评价多提便宜大碗、烤鸭有特色；也有人反馈饭点拥挤、等候较久。", "evidence": ["R", "S4"]}]
+    },
+    {
+      "id": "xuesi", "name": "学四", "aliases": ["学四食堂", "学生四食堂"],
+      "location": "主校区东南角，嘉园公寓东侧", "floorplanStatus": "unverified",
+      "floors": [
+        {"level": 1, "label": "1F", "summary": "学生四餐厅，基本伙", "size": [32, 20], "auntStallId": "xs-1-basic", "stalls": [
+          {"id": "xs-1-basic", "name": "学生四餐厅", "kind": "section", "rect": null, "summary": "家常菜与早餐", "hours": [{"text": "早餐 07:00–09:00；午餐 11:00–13:00；晚餐 17:00–19:00（学生指南）", "evidence": ["R"]}, {"text": "午餐至 14:00（平台商户页；与学生指南冲突）", "evidence": ["S5"]}], "dishes": [{"name": "燕麦粥", "price": 1.5, "evidence": ["R"]}]}
+        ]},
+        {"level": 2, "label": "2F", "summary": "风味餐厅", "size": [32, 20], "auntStallId": "xs-2-flavor", "stalls": [
+          {"id": "xs-2-flavor", "name": "学四风味餐厅", "kind": "section", "rect": null, "summary": "香锅、烤鱼、面食、拌饭", "hours": [{"text": "07:00–13:30；17:00–19:30（学生指南口径）", "evidence": ["R"]}], "dishes": [{"name": "麻辣香锅", "price": 30, "evidence": ["R", "S5"]}, {"name": "肉末酸豆角米线", "price": 6, "evidence": ["R", "S5"]}, {"name": "碎肉拌面", "price": 12, "evidence": ["S5"]}, {"name": "大盘鸡拌面", "price": null}]}
+        ]}
+      ],
+      "menu": [], "reviewSummary": [{"tone": "mixed", "topic": "风味与空间", "text": "公开评价偏好面食和二层风味，也有人觉得部分菜偏油偏咸、桌距较密。", "evidence": ["R"]}]
+    },
+    {
+      "id": "liuyuan", "name": "留园", "aliases": ["留园餐厅"],
+      "location": "学四北侧，靠近逸夫楼与教学科研区", "floorplanStatus": "unverified",
+      "floors": [
+        {"level": 1, "label": "1F", "summary": "打菜与餐饮窗口；工作日午餐使用限制待现场确认", "size": [32, 20], "auntStallId": "ly-1", "stalls": [
+          {"id": "ly-1", "name": "留园一层", "kind": "section", "rect": null, "summary": "打菜窗口，具体档口未核", "hours": [{"text": "早餐 07:00–09:00；午餐 11:00–13:00；晚餐 17:00–19:00（学生指南）", "evidence": ["R"]}, {"text": "平台展示 07:00–19:30 连续时段；与分餐口径不同", "evidence": ["S8"]}], "dishes": []}
+        ]},
+        {"level": 2, "label": "2F", "summary": "打菜与小份菜", "size": [32, 20], "auntStallId": "ly-2", "stalls": [
+          {"id": "ly-2", "name": "留园二层", "kind": "section", "rect": null, "summary": "小份菜口碑较好；具体档口未核", "hours": [{"text": "早餐 07:00–09:00；午餐 11:00–13:00；晚餐 17:00–19:00（学生指南）", "evidence": ["R"]}], "dishes": []}
+        ]}
+      ],
+      "menu": [{"name": "红烧茄子", "price": null, "evidence": ["R"]}, {"name": "宫保鸡丁", "price": null, "evidence": ["R"]}, {"name": "西红柿鸡蛋", "price": null, "evidence": ["R"]}, {"name": "土豆牛肉", "price": null, "evidence": ["R"]}, {"name": "饺子", "price": null, "evidence": ["R"]}],
+      "reviewSummary": [{"tone": "mixed", "topic": "环境与价格", "text": "公开评论认为环境较舒适、份量够；相对基本伙可能贵一些。工作日午餐使用限制需现场确认。", "evidence": ["R", "S8"]}]
+    },
+    {
+      "id": "dongqu", "name": "东区餐厅", "aliases": ["东校区餐厅", "东区食堂"],
+      "location": "东校区，靠近东区操场", "floorplanStatus": "unverified",
+      "floors": [
+        {"level": 1, "label": "1F", "summary": "大伙、中快、清真三个分区；相互方位资料有冲突", "size": [32, 20], "auntStallId": "dq-1-basic", "stalls": [
+          {"id": "dq-1-basic", "name": "东区大伙", "kind": "section", "rect": null, "summary": "基本伙", "hours": [{"text": "早餐 07:00–09:00；午餐 11:00–13:00；晚餐 17:00–19:00", "evidence": ["R"]}], "dishes": [{"name": "紫薯南瓜饼", "price": null}, {"name": "菠萝小丸子", "price": null}]},
+          {"id": "dq-1-fast", "name": "东区中快", "kind": "section", "rect": null, "summary": "风味快餐", "hours": [{"text": "早餐 06:30–08:30；午餐 11:00–13:30；晚餐 16:00–19:30", "evidence": ["R"]}], "dishes": [{"name": "牛肉面", "price": null}]},
+          {"id": "dq-1-halal", "name": "东区清真", "kind": "section", "rect": null, "summary": "清真餐饮分区", "hours": [{"text": "早餐 07:00–09:00；午餐 11:00–13:00；晚餐 17:00–19:00", "evidence": ["R"]}], "dishes": [{"name": "豆花时蔬", "price": null}, {"name": "牛肉爆三丁", "price": null}]}
+        ]}
+      ],
+      "menu": [], "reviewSummary": [{"tone": "mixed", "topic": "价格与环境", "text": "学生材料认为价格实惠、性价比较高；也有人反馈夏季可能偏闷。", "evidence": ["R"]}]
+    },
+    {
+      "id": "xueyuan", "name": "学苑餐厅", "aliases": ["学苑食堂"],
+      "location": "学苑公寓 9 号楼地下一层", "floorplanStatus": "unverified",
+      "floors": [
+        {"level": -1, "label": "B1", "summary": "美食厅、风味厅、清真厅；近期材料另列西餐厅", "size": [32, 20], "auntStallId": "xy-b1-food", "stalls": [
+          {"id": "xy-b1-food", "name": "美食厅", "kind": "section", "rect": null, "summary": "基本伙与多种小吃", "hours": [{"text": "早餐 07:00–09:00；午餐 11:00–13:00；晚餐 17:00–19:00", "evidence": ["R"]}], "dishes": []},
+          {"id": "xy-b1-flavor", "name": "风味厅", "kind": "section", "rect": null, "summary": "风味餐饮", "hours": [{"text": "早餐 07:00–09:00；午餐 11:00–13:30；晚餐 17:00–20:00", "evidence": ["R"]}], "dishes": []},
+          {"id": "xy-b1-halal", "name": "清真厅", "kind": "section", "rect": null, "summary": "清真餐饮", "hours": [{"text": "早餐 07:00–09:00；午餐 11:00–13:00；晚餐 17:00–19:00", "evidence": ["R"]}], "dishes": []},
+          {"id": "xy-b1-west", "name": "西餐厅", "kind": "section", "rect": null, "summary": "近期学生材料列出，2025 美食指南未单列", "hours": [{"text": "午餐 10:00–13:30；晚餐 17:00–20:00", "evidence": ["R"]}], "dishes": []}
+        ]}
+      ],
+      "menu": [{"name": "麻辣香锅", "price": null, "evidence": ["S2"]}, {"name": "现包水饺", "price": null, "evidence": ["S2"]}, {"name": "烤肉拌饭", "price": null, "evidence": ["S2"]}, {"name": "热干面", "price": null, "evidence": ["S2"]}, {"name": "小笼包", "price": null, "evidence": ["S9"]}],
+      "reviewSummary": [{"tone": "positive", "topic": "选择丰富", "text": "公开评论强调空间较宽敞、窗口和小吃选择较多；无法据此推定单个档口评分。", "evidence": ["R", "S9"]}]
+    },
+    {
+      "id": "yimin", "name": "益民餐厅", "aliases": ["益民餐厅（交通大学店）"],
+      "location": "东门外家属区", "floorplanStatus": "unverified",
+      "floors": [
+        {"level": 1, "label": "营业区", "summary": "家常炒菜、盖饭、面食和早餐小吃；楼层平面未公开", "size": [32, 20], "auntStallId": "ym-main", "stalls": [
+          {"id": "ym-main", "name": "益民餐厅营业区", "kind": "section", "rect": null, "summary": "具体档口和内部楼层未核", "hours": [{"text": "06:00–14:00；16:00–20:30（学生指南）", "evidence": ["R"]}, {"text": "06:00 起，午间休息，至 21:00（北京旅游网）", "evidence": ["S10"]}], "dishes": [{"name": "豆腐脑", "price": 3, "evidence": ["R"]}, {"name": "烤串", "price": 3, "evidence": ["R"]}, {"name": "糖油饼", "price": 2, "evidence": ["R"]}, {"name": "油泼面", "price": 10, "evidence": ["R"]}, {"name": "小炒肉盖饭", "price": 14, "evidence": ["R"]}]}
+        ]}
+      ],
+      "menu": [], "reviewSummary": [{"tone": "mixed", "topic": "家常与环境", "text": "公开材料常提价格实惠、家常菜多；也有夏天偏热、设施普通的个体反馈。", "evidence": ["R"]}]
+    }
+  ]
+}

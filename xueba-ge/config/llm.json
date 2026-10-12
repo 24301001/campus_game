@@ -1,0 +1,30 @@
+{
+  "_说明": "生成层。provider=stub 不需要任何密钥，只用来验证链路（别拿它答辩）；provider=api 走 OpenAI 兼容口，下面这份是 DashScope 的实测配置。",
+  "provider": "api",
+  "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "model": "qwen3.8-flash",
+  "key_env": "XBG_LLM_KEY",
+  "key_file": ".llm_key",
+  "_密钥说明": "三处来源按优先级：环境变量 XBG_LLM_KEY -> 本文件里的 key -> data/.llm_key。data/ 已在 .gitignore 里。服务器上只设环境变量，不要把 .llm_key 带上去。",
+  "extra_body": {
+    "enable_thinking": false
+  },
+  "_extra_body说明": "服务商特有参数原样透传。enable_thinking 必须关着：qwen3.8-flash 开着思考时首字 18.6s、输出 951 token 且 max_tokens 封不住思考 token；关掉后首字 0.85s、437 token。",
+  "temperature": 0.3,
+  "max_tokens": 1200,
+  "history_turns": 6,
+  "timeout": 60,
+  "stream": true,
+  "prompt_cache": true,
+  "_prompt_cache说明": "课本片段作为固定前缀，配合服务商的自动前缀缓存；关掉它只是每条请求多带一份长前缀。实测该参数被接口接受且能命中 cached_tokens。",
+  "vision": {
+    "model": "",
+    "max_mb": 6,
+    "max_tokens": 900,
+    "max_chars": 4000,
+    "timeout": 45,
+    "_说明": "拍照提问（backend/vision.py -> POST /api/vision）。model 留空 = 沿用上面的 model：实测 qwen3.8-flash 自己就吃 image_url，一张题目图 188 image_tokens、2.9~3.4 s、in=288 / out=220 token，不必另开 qwen3-vl-flash 那份账（组长 2026-09-22 口径）。timeout 单列：识别是一次性调用，不该跟着正文那条 60 s。max_mb 只截题目那一块，整屏截图会被 413 挡回来。",
+    "_换模型": "填成 qwen3-vl-flash 也能跑（同一把 Key，实测 2.9 s、识别结果逐字一致且不带 reasoning token），只是另算一份视觉模型的账。"
+  },
+  "_实测成本": "一次问答 in=632 / out=437 token、14.5s 出完；工具路由 in=883 / out=41、2.1s。"
+}

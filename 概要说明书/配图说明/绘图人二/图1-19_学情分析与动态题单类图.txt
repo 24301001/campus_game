@@ -1,0 +1,24 @@
+图 1-19　学情分析与动态题单类图
+============================================================
+【图形类型】类图（Class Diagram）
+【所在位置】1.2.2.3
+
+【图的内容】
+  给出学情分析与题单生成的类结构，说明“确定性的统计聚合”与“智能化的表述”如何分工。
+
+【主要组件】
+  ProgressAnalyzer（分析编排）；SubmissionRepo（提交记录）；ProfileBuilder（标签 / 难度画像）；AttributionEngine（错误类型归因）；StudyPlanGenerator（题单生成）；KnowledgeDAG（知识点依赖）；RankBoard（榜单）；LLMClient（结论与理由表述）。
+
+【组织方式】
+  ProgressAnalyzer 持有 ProfileBuilder 与 AttributionEngine，二者依赖 SubmissionRepo；StudyPlanGenerator 依赖 ProfileBuilder 的输出与 KnowledgeDAG；ProgressAnalyzer 与 StudyPlanGenerator 依赖 LLMClient 仅用于表述；RankBoard 提供同行对比。
+
+【如何绘制】
+1) 画 ProgressAnalyzer 类，列出分析方法；
+2) 画 SubmissionRepo，用依赖关系连到 ProfileBuilder 与 AttributionEngine；
+3) 画 ProfileBuilder、AttributionEngine，用组合关系连到 ProgressAnalyzer；
+4) 画 StudyPlanGenerator，用依赖关系连到 ProfileBuilder 与 KnowledgeDAG；
+5) 画 RankBoard，用依赖关系连到 ProgressAnalyzer（取同行对比）；
+6) 画 LLMClient，用依赖关系连到分析与生成两类，并标注“仅用于表述”。
+
+【注意事项】
+  类图要体现“统计聚合是确定性的”，语言模型只在结论措辞与入选理由两处出现；KnowledgeDAG 是题单有序性的依据，不能省略。
