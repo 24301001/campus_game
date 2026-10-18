@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>声音延迟自测</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #121212; color: #eaeaea; overflow: hidden; }
+  body {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    font-family: "Microsoft YaHei", system-ui, sans-serif;
+  }
+  h1 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: .08em; }
+  p { margin: 0; font-size: 14px; color: #a8a29a; max-width: 760px; text-align: center; line-height: 1.8; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  button {
+    font: 16px "Microsoft YaHei", system-ui, sans-serif; color: #1a1a1a; background: #e8e2d7;
+    border: 0; border-radius: 9px; padding: 12px 26px; cursor: pointer;
+  }
+  button.off { background: #3a3a3a; color: #ccc; }
+  #big { font-size: 52px; font-weight: 700; color: #7fe0c0; min-height: 64px; letter-spacing: .04em; }
+  #out { font-size: 15px; line-height: 1.9; color: #cfc8bd; text-align: center; }
+  #out b { color: #fff; font-weight: 600; }
+  #drift {
+    font: 17px/1.9 Consolas, "Courier New", monospace; font-weight: 700;
+    color: #8fb6d9; background: rgba(255,255,255,.06);
+    padding: 8px 18px; border-radius: 6px;
+  }
+  #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div id="flash"></div>
+
+<h1>声音延迟自测</h1>
+<p>
+  点「测一次」：屏幕会白一下，同时「嗒」一声。<b>正常应该同时</b>（人耳差 50 毫秒以内基本听不出）。<br>
+  如果声音明显晚于白闪，说明延迟出在电脑的声音通道，不在网页。
+</p>
+
+<div class="row">
+  <button id="go">测一次（网页音频）</button>
+  <button id="beat" class="off">自动节拍：关</button>
+  <button id="mic" class="off">麦克风自动测：关</button>
+</div>
+<div class="row">
+  <button id="html5">用普通音频测一次</button>
+  <button id="long">持续音 5 秒</button>
+  <button id="reset">重建声音引擎再测</button>
+</div>
+
+<div id="big">—</div>
+<div id="out">还没开始</div>
+<div id="drift">声音时钟未启动</div>
+
+<audio id="beep" src="./assets/audio/sfx/pistol1.ogg" preload="auto"></audio>
+
+<script>
+const flashEl = document.getElementById('flash');
+const bigEl = document.getElementById('big');
+const outEl = document.getElementById('out');
+const goEl = document.getElementById('go');
+const beatEl = document.getElementById('beat');
+const micEl = document.getElementById('mic');
+
+let ctx = null;
+let beatOn = false;
+let beatId = 0;
+
+function makeCtx() {
+  if (ctx) return ctx;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  ctx = new AC({ latencyHint: 'interactive' });
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+
+function beep(t0) {
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'square';
+  o.frequency.value = 880;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.4, t0 + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
+  o.connect(g);
+  g.connect(ctx.destination);
+  o.start(t0);
+  o.stop(t0 + 0.07);
+}
+
+function flash() {
+  flashEl.style.transition = 'none';
+  flashEl.style.opacity = '0.9';
+  requestAnimationFrame(() => {
+    flashEl.style.transition = 'opacity .18s';
+    flashEl.style.opacity = '0';
+  });
+}
+
+function describe() {
+  const base = ((ctx.baseLatency || 0) * 1000).toFixed(1);
+  const out = ((ctx.outputLatency || 0) * 1000).toFixed(1);
+  return `状态 <b>${ctx.state}</b> · 采样率 <b>${ctx.sampleRate}</b> · ` +
+         `基础缓冲 <b>${base} ms</b> · 输出缓冲 <b>${out} ms</b>`;
+}
+
+// ---------------- 麦克风自动测量 ----------------
+let analyser = null;
+let micBuf = null;
+let micArmed = false;
+let micT0 = 0;
+let micDeadline = 0;
+let micBase = 0;
+let micBaseUntil = 0;
+
+async function enableMic() {
+  makeCtx();
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+    });
+    const src = ctx.createMediaStreamSource(stream);
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = 1024;
+    src.connect(analyser);
+    micBuf = new Float32Array(analyser.fftSize);
+    micEl.textContent = '麦克风自动测：开';
+    micEl.classList.remove('off');
+    outEl.innerHTML = describe() + '<br>麦克风已打开，点「测一次」会自动算出声音晚多少毫秒';
+  } catch (e) {
+    micEl.textContent = '麦克风打不开';
+    outEl.textContent = '麦克风不可用：' + e.message + '（可以直接用白闪对比）';
+  }
+}
+
+function rmsNow() {
+  analyser.getFloatTimeDomainData(micBuf);
+  let s = 0;
+  for (let i = 0; i < micBuf.length; i++) s += micBuf[i] * micBuf[i];
+  return Math.sqrt(s / micBuf.length);
+}
+
+function poll() {
+  requestAnimationFrame(poll);
+  if (!analyser) return;
+  const now = performance.now();
+  const r = rmsNow();
+  if (now < micBaseUntil) {
+    micBase = Math.max(micBase, r);
+    return;
+  }
+  if (micArmed) {
+    if (r > Math.max(micBase * 4, 0.012)) {
+      micArmed = false;
+      const ms = now - micT0;
+      bigEl.textContent = ms.toFixed(0) + ' 毫秒';
+      outEl.innerHTML = describe() +
+        '<br>这个数字里含麦克风自己的输入延迟（约 10~30 毫秒），' +
+        '所以 <b>超过 100 毫秒就是真的慢</b>';
+    } else if (now > micDeadline) {
+      micArmed = false;
+      bigEl.textContent = '没听到';
+      outEl.innerHTML = describe() + '<br>麦克风没捕捉到「嗒」声（可能太轻或扬声器音量太低），直接看白闪对比';
+    }
+  }
+}
+poll();
+
+// ---------------- 声音时钟 vs 页面时钟 ----------------
+// 如果「声音时钟」明显比「页面时钟」慢，说明浏览器根本没在实时渲染声音，
+// 声音全堆在后面排队 —— 这就能解释「晚 10 秒」。
+const driftEl = document.getElementById('drift');
+let driftPerf0 = 0;
+let driftCtx0 = 0;
+let driftReady = false;
+
+function driftTick() {
+  requestAnimationFrame(driftTick);
+  if (!ctx) return;
+  if (!driftReady) {
+    if (ctx.state !== 'running') return;
+    driftPerf0 = performance.now();
+    driftCtx0 = ctx.currentTime;
+    driftReady = true;
+    return;
+  }
+  const wall = (performance.now() - driftPerf0) / 1000;
+  const snd = ctx.currentTime - driftCtx0;
+  const d = wall - snd;
+  const shown = Math.max(0, d);
+  driftEl.textContent =
+    `页面时钟 ${wall.toFixed(1)} 秒 · 声音时钟 ${snd.toFixed(1)} 秒 · 声音慢 ${shown.toFixed(1)} 秒`;
+  driftEl.style.color = d > 0.3 ? '#ff8a7a' : '#8fb6d9';
+}
+driftTick();
+
+// ---------------- 事件 ----------------
+goEl.addEventListener('click', () => {
+  makeCtx();
+  outEl.innerHTML = describe();
+
+  if (!analyser) {
+    flash();
+    beep(ctx.currentTime);
+    return;
+  }
+
+  // 先量 0.24 秒本底噪声，再在同一时刻白闪 + 出声（这样两边的时间点是同一个）
+  micBase = 0;
+  micBaseUntil = performance.now() + 240;
+  bigEl.textContent = '准备…';
+  setTimeout(() => {
+    micT0 = performance.now();
+    micDeadline = micT0 + 15000;
+    micArmed = true;
+    bigEl.textContent = '测量中…';
+    flash();
+    beep(ctx.currentTime);
+  }, 280);
+});
+
+beatEl.addEventListener('click', () => {
+  makeCtx();
+  beatOn = !beatOn;
+  beatEl.textContent = '自动节拍：' + (beatOn ? '开' : '关');
+  beatEl.classList.toggle('off', !beatOn);
+  clearInterval(beatId);
+  if (beatOn) {
+    const tick = () => { flash(); beep(ctx.currentTime); };
+    tick();
+    beatId = setInterval(tick, 1000);   // 每秒一次，看白闪和声音是否叠在一起
+  }
+});
+
+micEl.addEventListener('click', () => {
+  if (analyser) return;
+  enableMic();
+});
+
+// 普通 <audio> 播放同一个音效：如果这个正常、网页音频慢，就是 WebAudio 这条路的问题
+const beepEl = document.getElementById('beep');
+document.getElementById('html5').addEventListener('click', () => {
+  flash();
+  try {
+    beepEl.currentTime = 0;
+    beepEl.play();
+  } catch (e) {
+    outEl.textContent = '普通音频播放失败：' + e.message;
+  }
+});
+
+// 重建声音引擎：把旧的出声通道整个扔掉，重新开一条，再立刻响一声。
+// 如果重建之后不慢了，说明是那条通道里的东西越堆越多（积压），可以当临时救急用。
+document.getElementById('reset').addEventListener('click', async () => {
+  const old = ctx;
+  ctx = null;
+  analyser = null;
+  micBuf = null;
+  micArmed = false;
+  driftReady = false;
+  if (old) { try { await old.close(); } catch (e) { } }
+  makeCtx();
+  driftEl.textContent = '声音时钟已重开，正在重新对时…';
+  flash();
+  beep(ctx.currentTime);
+  outEl.innerHTML = describe() + '<br>已重开一次声音通道，刚才那声如果立刻响了，就是「积压」问题';
+  micEl.textContent = '麦克风自动测：关';
+  micEl.classList.add('off');
+});
+
+// 5 秒持续音：容易判断「是什么时候开始的、有没有断」
+document.getElementById('long').addEventListener('click', () => {
+  makeCtx();
+  const t = ctx.currentTime;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'sine';
+  o.frequency.value = 440;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+  g.gain.setValueAtTime(0.22, t + 4.9);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 5.0);
+  o.connect(g);
+  g.connect(ctx.destination);
+  o.start(t);
+  o.stop(t + 5.05);
+  flash();
+  outEl.innerHTML = describe() + '<br>已经安排了一段 5 秒的 440Hz 持续音';
+});
+</script>
+</body>
+</html>

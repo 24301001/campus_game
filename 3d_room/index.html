@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D 房间 · 照镜子</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+  canvas { display: block; }
+
+  #overlay {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 18px; cursor: pointer; user-select: none;
+    background: radial-gradient(circle at 50% 40%, rgba(30,28,26,.78), rgba(0,0,0,.92));
+    color: #f2ece2; font-family: "Microsoft YaHei", system-ui, sans-serif;
+    transition: opacity .25s;
+  }
+  #overlay.hidden { opacity: 0; pointer-events: none; }
+  #overlay h1 { margin: 0; font-size: 30px; font-weight: 600; letter-spacing: .12em; }
+  #overlay .sub { font-size: 14px; color: #b9b0a4; letter-spacing: .08em; }
+  #overlay .keys { display: flex; gap: 22px; margin-top: 10px; font-size: 13px; color: #8f887e; }
+  #overlay kbd {
+    display: inline-block; min-width: 18px; padding: 2px 6px; margin-right: 5px;
+    border: 1px solid #55504a; border-radius: 4px; background: #262320;
+    font-family: inherit; font-size: 12px; color: #d8d0c4; text-align: center;
+  }
+
+  #hud {
+    position: fixed; left: 16px; bottom: 14px; z-index: 5; pointer-events: none;
+    font: 12px/1.7 "Microsoft YaHei", system-ui, sans-serif;
+    color: rgba(255,255,255,.42); letter-spacing: .06em;
+  }
+
+  #crosshair {
+    position: fixed; left: 50%; top: 50%; z-index: 6; pointer-events: none;
+    width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%;
+    background: rgba(255,255,255,.8);
+    box-shadow: 0 0 0 1px rgba(0,0,0,.55), 0 0 6px rgba(0,0,0,.6);
+  }
+
+  #ammo {
+    position: fixed; right: 20px; bottom: 14px; z-index: 6; pointer-events: none;
+    font: 14px/1.6 "Microsoft YaHei", system-ui, sans-serif;
+    letter-spacing: .12em; color: rgba(255,255,255,.72);
+    text-shadow: 0 1px 3px rgba(0,0,0,.8); text-align: right;
+  }
+  #ammo.empty { color: #ff7a68; }
+
+  #health {
+    position: fixed; left: 16px; bottom: 44px; z-index: 6; pointer-events: none;
+    font: 12px/1.4 "Microsoft YaHei", system-ui, sans-serif;
+    color: rgba(255,255,255,.62); letter-spacing: .06em;
+  }
+  #healthBar {
+    margin-top: 5px; width: 150px; height: 7px; border-radius: 4px; overflow: hidden;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16);
+  }
+  #healthFill { display: block; height: 100%; width: 100%; background: linear-gradient(90deg,#4f9c46,#8ec06a); }
+
+  #hurt {
+    position: fixed; inset: 0; z-index: 7; pointer-events: none; opacity: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(120,0,0,0) 30%, rgba(150,12,8,.85) 100%);
+  }
+
+  #prompt {
+    position: fixed; left: 50%; top: 58%; transform: translateX(-50%); z-index: 6;
+    pointer-events: none;
+    font: 14px/1.6 "Microsoft YaHei", system-ui, sans-serif;
+    letter-spacing: .12em; color: rgba(255,255,255,.85);
+    text-shadow: 0 1px 4px rgba(0,0,0,.9);
+  }
+
+  /* 声音延迟诊断面板：开枪后自动出现几秒，或按 F9 再做一次同步测试 */
+  #diag {
+    position: fixed; left: 50%; bottom: 66px; transform: translateX(-50%); z-index: 8;
+    pointer-events: none; text-align: center; white-space: nowrap;
+    font: 15px/1.75 "Microsoft YaHei", system-ui, sans-serif;
+    color: #eaf2ff; text-shadow: 0 1px 4px #000;
+    background: rgba(0,0,0,.42); padding: 8px 18px; border-radius: 8px;
+    opacity: 0; transition: opacity .25s;
+  }
+  #diag.show { opacity: 1; }
+  #diag .hint { font-size: 12.5px; color: #9fc0e4; letter-spacing: .05em; }
+
+  /* 顶上的波次计数 + 中间的大字播报 */
+  #wave {
+    position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 6;
+    pointer-events: none; white-space: nowrap;
+    font: 13px/1.5 "Microsoft YaHei", system-ui, sans-serif;
+    letter-spacing: .12em; color: rgba(255,222,184,.86);
+    text-shadow: 0 1px 4px #000;
+  }
+  #banner {
+    position: fixed; left: 50%; top: 21%; transform: translateX(-50%); z-index: 8;
+    pointer-events: none; white-space: nowrap; text-align: center;
+    font: 600 30px/1.6 "Microsoft YaHei", system-ui, sans-serif;
+    letter-spacing: .16em; color: #ffd9a8;
+    text-shadow: 0 2px 10px rgba(0,0,0,.92), 0 0 26px rgba(255,110,50,.5);
+    opacity: 0; transition: opacity .35s;
+  }
+  #banner.show { opacity: 1; }
+
+  #syncflash {
+    position: fixed; inset: 0; z-index: 9; pointer-events: none;
+    background: #fff; opacity: 0;
+  }
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <h1>房 间</h1>
+  <div class="sub">点击进入 · 10 秒后门自己开关（开 13 秒 / 关 9 秒）· 顶住 4 波丧尸（200 / 300 / 400 / 500）就通关</div>
+  <div class="sub" style="font-size:12px">打空按 R 换弹 · 走到桌柜前按 E 拉开抽屉拿子弹 · 每三只里有一个两米多的「巨型变异体」（只在走廊里活动，得自己出去打）<br>
+    血红的「扑食者」会跳到你头上：被按住时开不了枪，<b>狂按空格</b>甩开；「爆炸者」靠近就炸，提前打爆它</div>
+  <div class="keys">
+    <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 走动</span>
+    <span><kbd>Shift</kbd> 快走</span>
+    <span><kbd>空格</kbd> 跳跃 / 被扑住时狂按甩开</span>
+    <span><kbd>C</kbd> 下蹲</span>
+    <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 换枪</span>
+    <span><kbd>E</kbd> 开门 / 拉抽屉拿子弹</span>
+    <span><kbd>左键</kbd> 开枪</span>
+    <span><kbd>R</kbd> 换弹</span>
+    <span><kbd>F9</kbd> 测声音延迟</span>
+    <span><kbd>T</kbd> 重来</span>
+    <span><kbd>Esc</kbd> 退出</span>
+  </div>
+</div>
+
+<div id="hud">WASD 移动 · Shift 快走 · 空格 跳跃（被扑住时狂按甩开）· C 下蹲 · 1/2/3 换枪 · E 开门/翻抽屉拿子弹 · 左键开枪 · R 换弹 · F9 测延迟 · T 重来 · Esc 暂停/释放鼠标<span id="fps"></span></div>
+<div id="health"><span id="healthText">生命 100</span><div id="healthBar"><i id="healthFill"></i></div></div>
+<div id="crosshair"></div>
+<div id="ammo"></div>
+<div id="hurt"></div>
+<div id="prompt"></div>
+<div id="wave"></div>
+<div id="banner"></div>
+<div id="diag"></div>
+<div id="syncflash"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js"
+  }
+}
+</script>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
