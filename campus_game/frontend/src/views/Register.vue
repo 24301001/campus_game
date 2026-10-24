@@ -134,7 +134,11 @@ const validateEmail = (rule, value, callback) => {
 
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    // 后端注册现在按任务书 §5.1 卡 8 位，这里提前拦，免得填完提交才被打回来
+    { min: 8, message: '密码至少 8 位', trigger: 'blur' }
+  ],
   confirmPassword: [
     { required: true, message: '请再次输入密码', trigger: 'blur' },
     { validator: validateConfirmPassword, trigger: 'blur' }

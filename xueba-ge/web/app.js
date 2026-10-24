@@ -19,46 +19,49 @@ const S = { token: "", user: null, session: "", course: "", refs: [], streaming:
 const NL = String.fromCharCode(10), NL2 = NL + NL;
 
 /* ---------------- 网络 ---------------- */
+/* ⭐ 开机那一次 `/api/me` 的 401 不算「中途掉票」：那时候还没有会话可退，
+   直接走 logout() 会把「请宿主补一张票」误报成「用户按了退出」。
+   boot() 结尾把它置回 false，之后流式/请求路上掉票才真的按退出处理。 */
+let S_BOOT = true;
+
 async function api(path, opts = {}) {
   const headers = Object.assign({"Content-Type": "application/json"}, opts.headers || {});
   if (S.token) headers["Authorization"] = "Bearer " + S.token;
   const r = await fetch(path, Object.assign({}, opts, {headers}));
-  if (r.status === 401) { logout(); throw new Error("登录已过期，请重新登录"); }
+  // ⚠️ 别把 `/api/logout` 自己也套进这条：它本就常在没票时挨 401，
+  //    一走 logout() 就成了 logout → api → logout 的死循环。
+  if (r.status === 401 && path !== "/xbg/api/logout") { if (!S_BOOT) logout(); throw new Error("登录已过期，请重新登录"); }
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(data.detail || ("HTTP " + r.status));
   return data;
 }
 const post = (p, body) => api(p, {method: "POST", body: JSON.stringify(body || {})});
 
-/* ---------------- 登录 ---------------- */
+/* ---------------- 身份（二期 §3.1.2：本页没有登录入口） ---------------- */
+/* ⭐⭐ 二期 §3.1.3：被地图嵌在抽屉里时，「认不出票」和「用户退出」都**交回宿主**，
+   而不是把「这里不登录」那张告示杵在人脸上 —— 宿主收到 `need-ticket` 静默补票再重载本页，
+   收到 `exit` 直接收抽屉回大厅。独立开 :8010 没有宿主，返回 false，调用方落回 `showGate()`。
+   ⚠️ targetOrigin 写死 `location.origin`：抽屉与本同源，别家的页面嵌不走这条消息。 */
+function toHost(kind, reason) {
+  try {
+    if (window.self === window.top) return false;
+    window.parent.postMessage({ type: "pixelcampus:" + kind, from: "xbg", reason: reason || "" }, location.origin);
+    return true;
+  } catch (e) { return false; }
+}
+
 function showGate(msg) {
   $("gate").classList.remove("hidden");
   $("app").classList.add("hidden");
   if (msg !== undefined) $("gateMsg").textContent = msg;
-  const last = localStorage.getItem("xbg_nick") || "";
-  if (last && !$("nick").value) $("nick").value = last;   // 组长要的"记住用户名"
-  $("nick").focus();
-}
-async function doLogin(mode) {
-  const nick = $("nick").value.trim(), pw = $("pw").value;
-  if (!nick || !pw) return showGate("昵称和密码都要填");
-  $("btnLogin").disabled = true;
-  try {
-    const r = await post(mode === "reg" ? "/xbg/api/register" : "/xbg/api/login", {nick, password: pw});
-    S.token = r.token; S.user = r.user; S.session = r.session || "";
-    localStorage.setItem("xbg_nick", nick);
-    localStorage.setItem("xbg_token", S.token);
-    await enter();
-  } catch (e) {
-    showGate(e.message);
-  } finally { $("btnLogin").disabled = false; }
 }
 function logout() {
   S.token = ""; S.user = null; S.session = ""; S.mem = null;
-  localStorage.removeItem("xbg_token");
-  document.cookie = "xbg_token=; path=/; max-age=0";   // 原生下载认的是 cookie，登出必须一起清
   clearLog();
-  showGate();
+  // ⚠️ 票是 HttpOnly cookie，JS 删不掉 —— 只能让服务端下一条 Set-Cookie 作废它。
+  api("/xbg/api/logout", { method: "POST" }).catch(() => {});
+  /* 退出即回大厅：交回宿主收抽屉 + 摘 iframe，下次按 C 重新过闸门补票。 */
+  if (!toHost("exit", "logout")) showGate();
 }
 
 /* ---------------- 进入主界面 ---------------- */
@@ -802,9 +805,14 @@ async function send() {
   }, 60);
 
   try {
+    const chatHeaders = {"Content-Type": "application/json"};
+    // ⚠️ 没票的时候**别把空头发出去**：`Authorization: Bearer ` 会让服务端走 Bearer
+    //    那条支路、拿到一个空 token，压根不看 cookie —— 二期身份就是宿主那张
+    //    HttpOnly cookie，这条流式 fetch 也必须跟着它走（默认 same-origin 会带上）。
+    if (S.token) chatHeaders["Authorization"] = "Bearer " + S.token;
     const r = await fetch("/xbg/api/chat", {
       method: "POST",
-      headers: {"Content-Type": "application/json", "Authorization": "Bearer " + S.token},
+      headers: chatHeaders,
       body: JSON.stringify({question: q, session: S.session, course: S.course,
                             from_image: fromImage, image: thumb})
     });
@@ -882,8 +890,6 @@ function autofit() {
 }
 
 /* ---------------- 绑定 ---------------- */
-$("gateForm").onsubmit = (e) => { e.preventDefault(); doLogin("login"); };
-$("btnReg").onclick = () => { if (!$("nick").value.trim() || !$("pw").value) return showGate("先填昵称和密码再注册"); doLogin("reg"); };
 $("btnOut").onclick = logout;
 $("composer").onsubmit = (e) => { e.preventDefault(); send(); };
 $("q").addEventListener("keydown", (e) => {
@@ -964,11 +970,17 @@ say("idle"); opts(EXAMPLES);
 
 /* ---------------- 启动 ---------------- */
 (async function boot() {
-  const tok = localStorage.getItem("xbg_token");
-  if (tok) {
-    S.token = tok;
-    try { S.user = await api("/xbg/api/me"); return enter(); }
-    catch (e) { S.token = ""; }
-  }
-  showGate();
+  // 只有真被嵌在地图抽屉里才提"按 Esc 退出"—— 直接开这一页的人眼前没有抽屉。
+  try { if (window.self !== window.top) $("gate-embed-tip").hidden = false; } catch (e) {}
+  // ⭐ 二期 §3.1.3：身份只认宿主那张票 —— HttpOnly cookie `xbg_token`，JS 读不到，
+  //    只能问服务端本人（fetch 默认 same-origin 凭证，浏览器自己会带上）。
+  //    一期那个「地图往 localStorage 种裸 xbg_token」的约定整段删除：它和 cookie
+  //    各活一半，正是「登录一次、开别家还要再登」那个 bug 的根。
+  try { S.user = await api("/xbg/api/me"); return enter(); }
+  catch (e) {
+    /* ⭐ 没票 / 票过期。被地图嵌着 ⇒ 先挂一句「正在连通账号」再请宿主补一张票，
+       补上宿主会把本页重载一次；补不上宿主自己收抽屉。独立开 :8010 才露那张「这里不登录」。 */
+    showGate("正在连通像素校园的账号…");
+    if (!toHost("need-ticket", "no-ticket")) showGate();
+  } finally { S_BOOT = false; }
 })();

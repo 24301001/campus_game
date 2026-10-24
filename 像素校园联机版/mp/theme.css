@@ -1,0 +1,433 @@
+/* =====================================================================
+ * 像素校园 · 二期联机 UI 样式（mp/theme.css）
+ * ---------------------------------------------------------------
+ * ⚠️ 只放**联机新增**的那几块的样式，一期样式一概不覆盖（任务书 §10.1）。
+ *    色板沿用一期抽屉那套：底 #0d0f13 / 面板 #1d2129 / 边 #39404d /
+ *    米字 #e9e5d8 / 琥珀 #ffd76e / 青 #7fd6c8。
+ * 模块 2 只有顶部那条细条；私聊窗（模块 4）、公告栏（模块 5）、
+ * 个人中心（模块 6）的样式往后追加在同一文件里。
+ * =============================================================== */
+
+/* --- 顶部细条（§7.7 单机回落的提示 / 连接状态） ----------------------
+   `pointer-events:none` —— 它只是给眼睛看的，绝不能挡住下面地图的拖拽与点击。 */
+#mpBar {
+  position: fixed; top: 0; left: 50%; transform: translate(-50%, -140%);
+  z-index: 60; pointer-events: none;
+  padding: 5px 16px 6px; border-radius: 0 0 8px 8px;
+  background: rgba(13, 15, 19, .9); border: 1px solid #39404d; border-top: none;
+  color: #e9e5d8; font: 12px/1.5 ui-monospace, Consolas, "Courier New", monospace;
+  letter-spacing: .5px; white-space: nowrap;
+  transition: transform .22s ease-out, opacity .22s ease-out; opacity: 0;
+}
+#mpBar:not([hidden]) { transform: translate(-50%, 0); opacity: 1; }
+#mpBar.warn { border-color: #7a6320; color: #ffd76e; }
+#mpBar.crit { border-color: #7a2f2f; color: #ff9b9b; }
+#mpBar b { color: #7fd6c8; font-weight: 600; }
+
+/* --- HUD 里那一格联机状态（挂在 #hud 的尾巴上） --------------------- */
+#mpStat { color: #7fd6c8; }
+#mpStat.off { color: #8b93a3; }
+
+/* =====================================================================
+ * 模块 4：私聊窗口（§7.4 / §7.2.2）
+ * ---------------------------------------------------------------
+ * 右侧一条，滑出 ~300 ms；不遮玩家自己（"只占右条"）。
+ * z-index 62：在地图 HUD 之上、在一期那些抽屉/登录门（z 30~40）与
+ * `#mpBar`（60）之上，但**低于**公告栏（70）与个人中心（80）。
+ * ===================================================================== */
+#mpChat {
+  position: fixed; top: 0; right: 0; z-index: 62;
+  width: 320px; max-width: 88vw; height: 100%;
+  display: flex; flex-direction: column;
+  background: rgba(19, 22, 28, .96);
+  border-left: 1px solid #39404d;
+  box-shadow: -10px 0 26px rgba(0, 0, 0, .45);
+  color: #e9e5d8;
+  font: 13px/1.6 ui-monospace, Consolas, "Courier New", monospace;
+  transform: translateX(0); transition: transform .3s cubic-bezier(.22,.61,.36,1);
+}
+#mpChat.mcOff { transform: translateX(105%); pointer-events: none; }
+#mpChat.mcShake { animation: mcShake .24s ease-out; }
+@keyframes mcShake { 0%, 100% { box-shadow: -10px 0 26px rgba(0,0,0,.45); }
+                     45% { box-shadow: -10px 0 26px rgba(0,0,0,.45), inset 0 0 0 2px rgba(127,214,200,.5); } }
+/* 窄屏（机房那批 1366×768 也够用）：整屏高、右侧一条，不挡中间的自己。 */
+@media (max-width: 560px) { #mpChat { width: 100%; } }
+
+.mcHead {
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 12px; border-bottom: 1px solid #2a2f3a;
+  background: rgba(29, 33, 41, .7); flex: 0 0 auto;
+}
+.mcAvaHost { width: 34px; height: 34px; flex: 0 0 auto; cursor: pointer; }
+.mcAvaHost:hover { outline: 1px solid #7fd6c8; outline-offset: 2px; }
+.mcAva { display: block; width: 34px; height: 34px; image-rendering: pixelated; }
+.mcAvaTxt {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 4px; background: #2b3240; color: #9fb4d0;
+}
+.mcWho { flex: 1 1 auto; min-width: 0; }
+.mcNick { font-size: 14px; font-weight: 600; color: #ffd76e; letter-spacing: .5px;
+          overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mcStat { font-size: 11px; color: #8b93a3; }
+.mcStat.here { color: #7fd6c8; }
+.mcStat.away { color: #c8a24a; }
+.mcStat.off { color: #6c7484; }
+.mcClose {
+  flex: 0 0 auto; width: 26px; height: 26px; padding: 0;
+  background: transparent; border: 1px solid #39404d; border-radius: 4px;
+  color: #9fb4d0; font: 13px/1 inherit; cursor: pointer;
+}
+.mcClose:hover { color: #ff9b9b; border-color: #7a2f2f; }
+
+.mcList {
+  flex: 1 1 auto; overflow-y: auto; padding: 10px 12px 6px;
+  display: flex; flex-direction: column; gap: 9px;
+  scrollbar-width: thin; scrollbar-color: #39404d transparent;
+}
+.mcList::-webkit-scrollbar { width: 8px; }
+.mcList::-webkit-scrollbar-thumb { background: #39404d; border-radius: 4px; }
+.mcMore, .mcDay { align-self: center; font-size: 11px; color: #6c7484; }
+.mcDay { border-top: 1px solid #22262e; border-bottom: 1px solid #22262e; padding: 2px 10px; }
+.mcRow { display: flex; gap: 8px; align-items: flex-start; max-width: 100%; }
+.mcRow.me { flex-direction: row-reverse; }
+.mcRowAva { width: 26px; height: 26px; flex: 0 0 auto; cursor: pointer; }
+.mcRowAva .mcAva { width: 26px; height: 26px; }
+.mcRowAva .mcAvaTxt { width: 26px; height: 26px; font-size: 12px; }
+.mcBody { min-width: 0; max-width: 216px; display: flex; flex-direction: column; gap: 3px; }
+.mcRow.me .mcBody { align-items: flex-end; }
+.mcMeta { font-size: 10.5px; color: #727a89; }
+.mcMeta.fail { color: #ff9b9b; cursor: pointer; text-decoration: underline; }
+.mcBubble {
+  padding: 6px 10px; border-radius: 8px; background: #262b34;
+  border: 1px solid #343b47; color: #e9e5d8;
+  white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;
+}
+.mcRow.me .mcBubble { background: #24405c; border-color: #35597b; }
+.mcRow.fail .mcBubble { border-color: #7a2f2f; color: #ffb4b4; }
+
+.mcFoot { display: flex; gap: 8px; padding: 9px 12px 4px; flex: 0 0 auto; }
+.mcInput {
+  flex: 1 1 auto; min-width: 0; padding: 7px 10px;
+  background: #12151b; border: 1px solid #39404d; border-radius: 5px;
+  color: #e9e5d8; font: 13px/1.4 inherit;
+}
+.mcInput:focus { outline: none; border-color: #7fd6c8; box-shadow: 0 0 0 1px rgba(127,214,200,.35); }
+.mcSend {
+  flex: 0 0 auto; padding: 0 14px; background: #2b3a2e; border: 1px solid #4a6b52;
+  border-radius: 5px; color: #bfe6c8; font: 13px/2.4 inherit; cursor: pointer;
+}
+.mcSend:hover { background: #35543c; }
+.mcCnt { align-self: flex-end; padding: 0 14px 9px; font-size: 10.5px; color: #6c7484; flex: 0 0 auto; }
+.mcCnt.over { color: #ff9b9b; }
+
+/* =====================================================================
+ * 模块 5：公告栏（`mp/chat.js` 画布右上角那一块，任务书 §7.3）
+ * ---------------------------------------------------------------
+ * 距顶 16 px、距右 16 px（**相对画布**，位置由 `mpAnnPlace()` 写进 style）；
+ * 默认**收起**，只露图标 + 未读数。
+ * z-index 70：压在私聊窗（62）之上、个人中心（80）之下。
+ * `.anHide` = 单机模式整块不收（§7.7）。
+ * ===================================================================== */
+#mpAnn {
+  position: fixed; top: 16px; right: 16px; z-index: 70;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  color: #e9e5d8; font: 12px/1.6 ui-monospace, Consolas, "Courier New", monospace;
+}
+#mpAnn.anHide { display: none; }
+
+.anTab {
+  position: relative; display: block; padding: 7px 12px 8px; cursor: pointer;
+  background: rgba(13, 15, 19, .9); border: 1px solid #39404d; border-radius: 9px;
+  color: #e9e5d8; font: inherit; letter-spacing: .5px; text-align: center;
+}
+.anTab:hover { border-color: #7fd6c8; }
+.anIco { display: block; font-size: 15px; line-height: 1.1; }
+.anTab .anTxt { display: block; font-size: 10.5px; color: #8b93a3; }
+#mpAnn.anOn .anTab { border-color: #7a6320; }
+.anBadge {
+  position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px;
+  padding: 0 4px; border-radius: 9px; display: none;
+  background: #c8452f; border: 1px solid #2a0d08; color: #fff;
+  font-size: 11px; line-height: 16px; text-align: center;
+}
+#mpAnn.hasNew .anBadge { display: block; }
+
+.anPanel {
+  width: 300px; max-width: 78vw; max-height: 66vh;
+  display: none; flex-direction: column;
+  background: rgba(19, 22, 28, .97); border: 1px solid #39404d; border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .5);
+}
+#mpAnn.anOn .anPanel { display: flex; }
+.anHead {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; border-bottom: 1px solid #2a2f39;
+  color: #ffd76e; letter-spacing: 1px;
+}
+.anClose {
+  margin-left: auto; padding: 0 6px; background: none; border: none;
+  color: #8b93a3; font: 14px/1 inherit; cursor: pointer;
+}
+.anClose:hover { color: #ff9b9b; }
+.anList {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 2px 0;
+  scrollbar-width: thin; scrollbar-color: #39404d transparent;
+}
+.anList::-webkit-scrollbar { width: 8px; }
+.anList::-webkit-scrollbar-thumb { background: #39404d; border-radius: 4px; }
+.anEmpty { padding: 18px 14px; color: #6c7484; text-align: center; }
+.anRow { padding: 8px 12px; border-bottom: 1px solid #1b1f27; }
+.anRow:last-child { border-bottom: none; }
+.anWho { display: flex; align-items: center; gap: 8px; }
+.anWho b { color: #ffd76e; font-weight: 600; cursor: pointer; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.anWho b:hover { color: #ffe9a8; }
+.anAgo { margin-left: auto; color: #727a89; font-size: 10.5px; white-space: nowrap; }
+.anAvaHost { position: relative; width: 28px; height: 28px; flex: 0 0 auto; cursor: pointer; }
+.anAva { display: block; width: 28px; height: 28px; border-radius: 5px; background: #1d2129; image-rendering: pixelated; }
+.anDot {
+  position: absolute; right: -2px; bottom: -2px; width: 8px; height: 8px;
+  border-radius: 50%; background: #6b7280; border: 1px solid #0d0f13;
+}
+.anDot.on { background: #5ad17a; }
+.anTxt2 { margin-top: 3px; color: #d8d4c8; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+.anRow.me .anTxt2 { color: #c6f0e6; }
+.anRow.me .anWho b { color: #7fd6c8; }
+.anRow.fail { opacity: .8; }
+.anRow.fail .anAgo { color: #ff9b9b; }
+.anRetry {
+  margin-left: 6px; padding: 1px 6px; background: #2b3a2e; border: 1px solid #4a6b52;
+  border-radius: 4px; color: #bfe6c8; font: 10.5px/1.6 inherit; cursor: pointer;
+}
+.anFoot { flex: 0 0 auto; display: flex; gap: 7px; padding: 9px 12px 3px; border-top: 1px solid #2a2f39; }
+.anInput {
+  flex: 1 1 auto; min-width: 0; padding: 6px 9px;
+  background: #12151b; border: 1px solid #39404d; border-radius: 5px;
+  color: #e9e5d8; font: 12px/1.4 inherit;
+}
+.anInput:focus { outline: none; border-color: #7fd6c8; box-shadow: 0 0 0 1px rgba(127,214,200,.35); }
+.anSend {
+  flex: 0 0 auto; min-width: 52px; padding: 0 10px;
+  background: #2b3a2e; border: 1px solid #4a6b52; border-radius: 5px;
+  color: #bfe6c8; font: 12px/2.2 inherit; cursor: pointer;
+}
+.anSend:hover { background: #35543c; }
+.anSend:disabled { background: #1d2129; border-color: #39404d; color: #6c7484; cursor: default; }
+.anCnt { flex: 0 0 auto; align-self: flex-end; padding: 0 14px 8px; font-size: 10.5px; color: #6c7484; min-height: 12px; }
+.anCnt.over { color: #ff9b9b; }
+
+@media (max-width: 560px) { .anPanel { width: 250px; } }
+
+/* =====================================================================
+ * 模块 3：形象工坊（`mp/look.js` 的 `mpLookStudio`）
+ * ---------------------------------------------------------------
+ * 这块 DOM 由模块 6 的个人中心面板挂载，样式先放在这里。
+ * ===================================================================== */
+#lkStudio { display: flex; flex-direction: column; gap: 10px; }
+#lkStudio .lkPrev { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+#lkStudio .lkPrev canvas {
+  image-rendering: pixelated; background: #12151b;
+  border: 1px solid #39404d; border-radius: 4px;
+}
+#lkStudio .lkFile {
+  display: block; padding: 8px 10px; cursor: pointer;
+  border: 1px dashed #4a5464; border-radius: 6px; background: #171b22;
+  color: #9fb4d0; font-size: 12px;
+}
+#lkStudio .lkFile:hover { border-color: #7fd6c8; color: #e9e5d8; }
+#lkStudio .lkFile input { display: none; }
+#lkStudio .lkStat { font-size: 11.5px; color: #c8a24a; min-height: 17px; }
+#lkStudio .lkPick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+#lkStudio .lkPick label {
+  display: flex; flex-direction: column; gap: 3px;
+  font-size: 11px; color: #8b93a3;
+}
+#lkStudio .lkPick select, #lkStudio .lkPick input[type=color] {
+  padding: 5px 6px; background: #12151b; border: 1px solid #39404d; border-radius: 4px;
+  color: #e9e5d8; font: 12px/1.4 inherit; width: 100%;
+}
+#lkStudio .lkPick input[type=color] { height: 30px; padding: 2px; }
+#lkStudio .lkBtns { display: flex; gap: 8px; }
+#lkStudio .lkOk, #lkStudio .lkDef {
+  flex: 1 1 0; padding: 7px 10px; border-radius: 5px; cursor: pointer;
+  font: 12.5px/1.4 inherit; border: 1px solid #39404d; background: #1d2129; color: #e9e5d8;
+}
+#lkStudio .lkOk { background: #2b3a2e; border-color: #4a6b52; color: #bfe6c8; }
+#lkStudio .lkOk:hover { background: #35543c; }
+#lkStudio .lkDef:hover { border-color: #7a2f2f; color: #ff9b9b; }
+
+/* =====================================================================
+ * 模块 6：个人中心（§10）
+ * ---------------------------------------------------------------
+ * 四块 DOM 都由 mp/profile.js 自己造：
+ *   #mpMe   地图左上角那颗头像按钮（与右上角 #mpAnn 对称）
+ *   #mpAM   微信式头像双选菜单
+ *   #mpProf 自己的个人中心（全屏面板，可编辑）
+ *   #mpCard 别人的缩略主页（竖版卡片，只读）
+ * 层序：聊天窗 62 / 公告栏 70 / 面板 80 / 卡片 82 / 菜单 86
+ * （菜单必须最高，否则在面板里点头像会被面板自己盖住）。
+ * ===================================================================== */
+#mpMe {
+  position: fixed; left: 14px; top: 104px; z-index: 68;
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 10px 4px 4px; cursor: pointer;
+  background: rgba(29, 33, 41, .9); border: 1px solid #39404d; border-radius: 18px;
+  color: #9fb4d0; font: 12px/1.4 ui-monospace, Consolas, "Courier New", monospace;
+  letter-spacing: .5px; text-shadow: 0 1px 0 #000;
+}
+#mpMe:hover { border-color: #7fd6c8; color: #e9e5d8; background: rgba(29, 33, 41, .96); }
+#mpMe[hidden] { display: none; }
+#mpMe .meAva {
+  width: 26px; height: 26px; border-radius: 50%; background: #12151b;
+  image-rendering: pixelated; border: 1px solid #2a2f3a;
+}
+#mpMe .meTip { font-style: normal; }
+@media (max-width: 560px) { #mpMe .meTip { display: none; } #mpMe { padding: 4px; } }
+
+/* --- 双选菜单（§10.4）：恰好两条，弹在头像正上/正下方 ---------------- */
+#mpAM {
+  position: fixed; left: 0; top: 0; z-index: 86;
+  display: flex; flex-direction: column;
+  min-width: 132px; padding: 4px;
+  background: rgba(19, 22, 28, .97); border: 1px solid #39404d; border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .55);
+  color: #e9e5d8; font: 12.5px/1.5 ui-monospace, Consolas, "Courier New", monospace;
+}
+#mpAM[hidden] { display: none; }
+#mpAM .amIt {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  padding: 7px 10px; border: 0; border-radius: 5px;
+  background: transparent; color: #e9e5d8; font: inherit; letter-spacing: .4px;
+}
+#mpAM .amIt:hover, #mpAM .amIt:focus { background: #272d38; color: #ffd76e; outline: none; }
+
+/* --- 自己的个人中心：全屏面板（§10.3） -------------------------------- */
+#mpProf {
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 80;
+  display: flex; align-items: center; justify-content: center;
+  font: 13px/1.6 ui-monospace, Consolas, "Courier New", monospace; color: #e9e5d8;
+}
+#mpProf[hidden] { display: none; }
+#mpProf .pfMask { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: rgba(6, 8, 11, .72); }
+#mpProf .pfCard {
+  position: relative; width: 720px; max-width: 94vw; max-height: 92vh;
+  display: flex; flex-direction: column;
+  background: rgba(19, 22, 28, .98); border: 1px solid #39404d; border-radius: 10px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, .6); overflow: hidden;
+}
+#mpProf .pfHead {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; border-bottom: 1px solid #2a2f3a; background: rgba(29, 33, 41, .8);
+  flex: 0 0 auto;
+}
+#mpProf .pfHead b { color: #ffd76e; font-size: 14px; letter-spacing: 1px; }
+#mpProf .pfSub { flex: 1 1 auto; color: #6c7484; font-size: 11.5px; }
+#mpProf .pfX, #mpCard .cdX {
+  flex: 0 0 auto; width: 26px; height: 26px; cursor: pointer;
+  border: 1px solid #39404d; border-radius: 5px;
+  background: #1d2129; color: #9fb4d0; font: 13px/1 inherit;
+}
+#mpProf .pfX:hover { border-color: #7a2f2f; color: #ff9b9b; }
+#mpProf .pfBody {
+  flex: 1 1 auto; overflow: auto; padding: 14px;
+  display: grid; grid-template-columns: 268px minmax(0, 1fr); gap: 16px;
+}
+@media (max-width: 720px) { #mpProf .pfBody { grid-template-columns: minmax(0, 1fr); } }
+#mpProf .pfLeft { display: flex; flex-direction: column; gap: 9px; }
+#mpProf .pfPrev { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+#mpProf .pfPrev canvas {
+  image-rendering: pixelated; background: #12151b;
+  border: 1px solid #39404d; border-radius: 4px;
+}
+#mpProf .pfLook {
+  padding: 7px 10px; cursor: pointer; border-radius: 6px;
+  border: 1px dashed #4a5464; background: #171b22; color: #9fb4d0; font: 12px/1.4 inherit;
+}
+#mpProf .pfLook:hover { border-color: #7fd6c8; color: #e9e5d8; }
+#mpProf .pfStudio { border-top: 1px solid #2a2f3a; padding-top: 10px; }
+#mpProf .pfStudio[hidden] { display: none; }
+#mpProf .pfRight { display: flex; flex-direction: column; gap: 11px; }
+#mpProf .pfRow { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; align-items: start; }
+#mpProf .pfRow > label { color: #8b93a3; font-size: 12px; padding-top: 5px; }
+#mpProf .pfFix { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding-top: 5px; }
+#mpProf .pfNick { color: #e9e5d8; font-size: 13.5px; }
+#mpProf .pfFix i, #mpProf .pfCnt, #mpProf .pfTagCnt { font-style: normal; color: #6c7484; font-size: 11px; }
+#mpProf .pfWrap { position: relative; display: flex; flex-direction: column; gap: 5px; }
+#mpProf .pfCnt { position: absolute; right: 0; top: -14px; }
+#mpProf .pfCnt.over { color: #ff9b9b; }
+#mpProf .pfBio, #mpProf .pfTagIn, #mpProf select {
+  padding: 6px 8px; background: #12151b; border: 1px solid #39404d; border-radius: 5px;
+  color: #e9e5d8; font: 12.5px/1.5 inherit; width: 100%; resize: vertical;
+}
+/* ⚠️ 一期那段样式没给全局 `box-sizing:border-box`，所以 `width:100%` 加 padding
+   会溢出 16 px ⇒ 面板底下多出一条横向滚动条。这两块自己圈一份。 */
+#mpProf .pfCard, #mpProf .pfCard *, #mpCard .cdCard, #mpCard .cdCard * { box-sizing: border-box; }
+#mpProf .pfBio { padding-right: 48px; }
+#mpProf .pfBio:focus, #mpProf select:focus, #mpProf .pfTagIn:focus { border-color: #7fd6c8; outline: none; }
+#mpProf .pfTags { display: flex; flex-wrap: wrap; gap: 6px; }
+#mpProf .pfTag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 8px; border-radius: 12px;
+  background: #232a35; border: 1px solid #3b4a5d; color: #9fb4d0; font-size: 11.5px;
+}
+#mpProf .pfTag b { font-weight: 400; }
+#mpProf .pfTag i { font-style: normal; cursor: pointer; color: #6c7484; }
+#mpProf .pfTag i:hover { color: #ff9b9b; }
+#mpProf .pfTagCnt.over { color: #ff9b9b; }
+#mpProf .pfStats { padding-top: 5px; color: #7fd6c8; font-size: 12px; }
+#mpProf .pfFoot {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-top: 1px solid #2a2f3a; background: rgba(29, 33, 41, .6);
+  flex: 0 0 auto;
+}
+#mpProf .pfMsg { flex: 1 1 auto; font-size: 11.5px; color: #6c7484; min-height: 16px; }
+#mpProf .pfMsg.ok { color: #bfe6c8; }
+#mpProf .pfMsg.warn { color: #ffd76e; }
+#mpProf .pfMsg.crit { color: #ff9b9b; }
+#mpProf .pfCancel, #mpProf .pfSave {
+  padding: 7px 16px; cursor: pointer; border-radius: 6px; font: 12.5px/1.4 inherit;
+  border: 1px solid #39404d; background: #1d2129; color: #e9e5d8;
+}
+#mpProf .pfSave { background: #2b3a2e; border-color: #4a6b52; color: #bfe6c8; }
+#mpProf .pfSave:hover { background: #35543c; }
+#mpProf .pfSave:disabled { opacity: .55; cursor: default; }
+#mpProf .pfCancel:hover { border-color: #7a2f2f; color: #ff9b9b; }
+
+/* --- 别人的缩略主页：竖版卡片，一个输入框都没有（§10.5 / §10.7 验收 5） -- */
+#mpCard {
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 82;
+  display: flex; align-items: center; justify-content: center;
+  font: 13px/1.6 ui-monospace, Consolas, "Courier New", monospace; color: #e9e5d8;
+}
+#mpCard[hidden] { display: none; }
+#mpCard .cdMask { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: rgba(6, 8, 11, .58); }
+#mpCard .cdCard {
+  position: relative; width: 236px; max-width: 88vw;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 26px 16px 16px;
+  background: rgba(19, 22, 28, .98); border: 1px solid #39404d; border-radius: 12px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, .6); text-align: center;
+}
+#mpCard .cdX { position: absolute; right: 8px; top: 8px; width: 22px; height: 22px; }
+#mpCard .cdAva {
+  width: 48px; height: 48px; image-rendering: pixelated;
+  background: #12151b; border: 1px solid #39404d; border-radius: 8px;
+}
+#mpCard .cdNick { font-size: 14px; color: #ffd76e; letter-spacing: .6px; }
+#mpCard .cdOn { font-size: 11.5px; color: #8b93a3; }
+#mpCard .cdOn b { font-weight: 400; }
+#mpCard .cdOn b.on { color: #5ad17a; }
+#mpCard .cdOn b.off { color: #6c7484; }
+#mpCard .cdMeta { font-size: 11.5px; color: #9fb4d0; }
+#mpCard .cdBio { font-size: 12px; color: #c8a24a; }
+#mpCard .cdTags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 2px; }
+#mpCard .cdTag {
+  padding: 2px 8px; border-radius: 11px; font-size: 11px;
+  background: #232a35; border: 1px solid #3b4a5d; color: #9fb4d0;
+}
+#mpCard .cdMsg {
+  margin-top: 8px; width: 100%; padding: 8px 10px; cursor: pointer;
+  border: 1px solid #4a6b52; border-radius: 7px;
+  background: #2b3a2e; color: #bfe6c8; font: 12.5px/1.4 inherit;
+}
+#mpCard .cdMsg:hover { background: #35543c; }
+#mpCard .cdMsg:disabled { opacity: .5; cursor: default; }

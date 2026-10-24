@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { handBackToHost } from '@/utils/hostAuth'
 
 const routes = [
   {
@@ -92,8 +93,12 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
-  
+
   if (to.meta.requiresAuth && !userStore.token) {
+    // ⭐ 二期 §3.1.2：抽屉里不弹登录页 —— 报给宿主，由地图那张唯一的门去补票。
+    //    `next(false)` 是**干净地**中止这次导航；挂着一个永不 resolve 的导航会让
+    //    后续每次 router.push 都卡死。
+    if (handBackToHost('进入 ' + to.fullPath + ' 需要登录')) return next(false)
     next('/login')
   } else if (to.meta.requiresAdmin && userStore.user?.role !== 'ADMIN') {
     next('/home')

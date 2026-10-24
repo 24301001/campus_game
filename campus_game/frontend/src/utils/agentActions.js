@@ -435,7 +435,7 @@ export async function findProblem(action) {
     const res = await getProblemList(params)
     records = (res.data && res.data.records) || []
   } catch (e) {
-    return { path: null, reply: '题库没翻动，后端可能没起来。' }
+    return { path: null, reply: '题库这一页没翻过来，刷新一下再看。' }
   }
 
   if (!records.length) {

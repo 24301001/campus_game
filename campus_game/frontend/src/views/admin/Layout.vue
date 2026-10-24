@@ -59,7 +59,7 @@ const route = useRoute()
 const activeMenu = computed(() => route.path)
 
 const handleLogout = () => {
-  userStore.logout()
+  userStore.logout(true)
   ElMessage.success('退出成功')
   router.push('/home')
 }

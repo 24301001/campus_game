@@ -298,6 +298,7 @@ import { useUserStore } from '@/stores/user'
 import { getUserProfile, followUser } from '@/api/profile'
 import { getWrongProblems } from '@/api/agent'
 import { updateUser, updatePassword, uploadAvatar as uploadAvatarApi } from '@/api/user'
+import { loginHint } from '@/utils/hostAuth'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ProblemStatsCircle from './components/ProblemStatsCircle.vue'
 import DifficultyBreakdown from './components/DifficultyBreakdown.vue'
@@ -391,7 +392,7 @@ const loadWrongProblems = async () => {
 const loadProfile = async () => {
   if (!targetUserId.value) {
     console.error('No user ID available')
-    ElMessage.error('无法获取用户ID，请先登录')
+    ElMessage.error(loginHint())
     loading.value = false
     return
   }
@@ -538,7 +539,7 @@ const handleFollow = async () => {
 }
 
 const handleLogout = () => {
-  userStore.logout()
+  userStore.logout(true)
   ElMessage.success('退出成功')
   router.push('/home')
 }

@@ -2,6 +2,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
+import { handBackToHost } from '@/utils/hostAuth'
 
 const request = axios.create({
   baseURL: '/api',
@@ -47,7 +48,8 @@ request.interceptors.response.use(
       if (res.code === 401) {
         const userStore = useUserStore()
         userStore.logout()
-        router.push('/login')
+        // ⭐ 二期 §3.1.2：抽屉里 401 ⇒ 交给宿主补票，不在这里弹第二个登录框。
+        if (!handBackToHost()) router.push('/login')
       }
       return Promise.reject(new Error(res.message || '请求失败'))
     }

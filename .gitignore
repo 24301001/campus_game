@@ -33,6 +33,8 @@ uploads/
 *.db-shm
 *.db-wal
 .env
+# 二期换票的内部密钥：启动器第一次跑随机生成，只留在这台机器上
+/.mp_secret
 
 # ---- 本机专用 / 大件（不进仓库）----
 # Windows 版 MinGW 939MB：Linux 上装 build-essential 代替

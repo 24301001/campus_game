@@ -209,7 +209,7 @@ def current_user(request: Request) -> sqlite3.Row:
     return row
 
 
-def set_session(response: Response, user_id: int, secure: bool):
+def set_session(response: Response, user_id: int, secure: bool) -> str:
     token = secrets.token_urlsafe(32)
     with db() as connection:
         connection.execute("DELETE FROM sessions WHERE expires_at<?", (time.time(),))
@@ -219,6 +219,7 @@ def set_session(response: Response, user_id: int, secure: bool):
         )
     response.set_cookie("aunt_session", token, max_age=30 * 86400, httponly=True,
                         secure=secure, samesite="strict", path="/")
+    return token
 
 
 def iso(timestamp):
@@ -312,6 +313,51 @@ def logout(request: Request, response: Response):
 def me(request: Request):
     user = current_user(request)
     return {"id": user["id"], "username": user["username"]}
+
+
+class HostTicket(BaseModel):
+    nickname: str = Field(min_length=2, max_length=16)
+    campus_user_id: int
+
+
+def internal_guard(request: Request):
+    """服务间互信那道门闩（任务书 §3.1.3 第③步：8081 替玩家向各家换票）。
+
+    密钥只从环境变量 `CAMPUS_INTERNAL_SECRET` 读，**没设就当场 503** ——
+    宁可换不到票（地图上会挂「食堂阿姨没登进去」），也不能开一条不鉴权的发票通道。
+    """
+    secret = os.environ.get("CAMPUS_INTERNAL_SECRET", "")
+    if not secret:
+        raise HTTPException(503, "未配置 CAMPUS_INTERNAL_SECRET，内部换票通道没开")
+    # ⚠️ 两边都 .encode() 再比：compare_digest 收 str 时只认 ASCII，
+    #    有人拿中文当密钥会直接抛 TypeError 变成 500，而不是老老实实的 403。
+    if not hmac.compare_digest(request.headers.get("x-campus-internal", "").encode("utf-8"),
+                               secret.encode("utf-8")):
+        raise HTTPException(403, "内部密钥不对")
+
+
+@app.post("/api/host-ticket")
+def host_ticket(payload: HostTicket, request: Request, response: Response):
+    """主站登录后替玩家领一张阿姨自己认的票。抽屉里已经没有登录表单了（§3.1.2）。
+
+    按昵称建号/取号，**不碰口令**：建出来的 `password_hash` 是个不带冒号的随机串，
+    `password_matches()` 解析它必然抛 ValueError 并返回 False，所以这个号在阿姨这儿
+    永远登录不进来，只能由主站过了 `internal_guard` 才拿得到。
+    """
+    internal_guard(request)
+    nickname = payload.nickname.strip()
+    with db() as connection:
+        row = connection.execute("SELECT id FROM users WHERE username=?", (nickname,)).fetchone()
+        if row is None:
+            cursor = connection.execute(
+                "INSERT INTO users(username,password_hash,created_at) VALUES(?,?,?)",
+                (nickname, "!" + secrets.token_hex(32), time.time()),
+            )
+            user_id = cursor.lastrowid
+        else:
+            user_id = row["id"]
+    token = set_session(response, user_id, request.url.scheme == "https")
+    return {"ok": True, "id": user_id, "username": nickname, "token": token}
 
 
 @app.get("/api/canteens")

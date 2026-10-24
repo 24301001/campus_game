@@ -4,7 +4,6 @@
   const $ = selector => document.querySelector(selector);
   const authScreen = $("#auth-screen");
   const appScreen = $("#app-screen");
-  const authForm = $("#auth-form");
   const chatForm = $("#chat-form");
   const messages = $("#messages");
   const chatInput = $("#chat-input");
@@ -18,7 +17,7 @@
   const state = {
     user: null, catalog: null, canteen: null, floor: null, ratings: {}, selectedStall: null,
     conversations: [], conversationId: null, loadVersion: 0,
-    authMode: "login", emotion: "neutral", talkUntil: 0, sending: false
+    emotion: "neutral", talkUntil: 0, sending: false
   };
 
   function element(tag, className, text) {
@@ -70,9 +69,25 @@
   }
 
   /* ⭐ 第四十五轮：撤掉"被地图嵌着时的开机纱幕"（见 index.html 的 <head> 与 styles.css 末尾）。
-     ⚠️ `showAuth` **也**必须撤：中途 401 时得露出**真的**登录表单，不能把人冻在纱幕上。 */
+     ⚠️ `showAuth` **也**必须撤：中途 401 时得把"回主站登录"那块提示露出来，
+     不能把人冻在纱幕上。二期 §3.1.2 后这里**没有表单可填** —— 认不出票只报给宿主。 */
   function unembed() {
     try { document.documentElement.classList.remove("aunt-embed"); } catch (_) {}
+  }
+
+  /* ⭐⭐ 二期 §3.1.3：被地图嵌在抽屉里时，「认不出票」和「用户退出」两件事都**交回宿主**，
+     而不是把「这里不登录」那张告示杵在人脸上 —— 宿主收到 `need-ticket` 会静默补一张票
+     再把本页重载一次，收到 `exit` 会直接收起抽屉回大厅。独立开 :8020 没有宿主，返回 false，
+     调用方各自落回原来的 `showAuth()`。
+     ⚠️ `targetOrigin` 写死 `location.origin`（抽屉与本同源），别家的页面嵌不走这条消息。
+     ⚠️ 与「← 返回校园」那颗按钮的 `aunt-exit` 是两回事：那条只是收起抽屉（会话还在），
+        这条 `exit` 是**阿姨这边的会话已经作废**。 */
+  function toHost(kind, reason) {
+    try {
+      if (window.self === window.top) return false;
+      window.parent.postMessage({ type: "pixelcampus:" + kind, from: "cmr", reason: reason || "" }, location.origin);
+      return true;
+    } catch (_) { return false; }
   }
 
   function showAuth() {
@@ -84,7 +99,6 @@
     unembed();
     authScreen.hidden = false;
     appScreen.hidden = true;
-    $("#password").value = "";
     setError($("#auth-error"), "");
   }
 
@@ -174,49 +188,16 @@
     try { await newConversation(); } catch (error) { setError($("#chat-error"), error.message); }
   });
 
-  function setAuthMode(mode) {
-    state.authMode = mode;
-    const registering = mode === "register";
-    $("#auth-heading").textContent = registering ? "注册值班室账号" : "登录值班室";
-    $(".form-subtitle").textContent = registering ? "创建账号后，阿姨会记住你的聊天和评价。" : "用自己的账号继续上次的对话。";
-    $("#auth-submit").textContent = registering ? "注册并进入" : "登录";
-    $("#auth-switch").textContent = registering ? "已有账号？登录" : "没有账号？注册";
-    $("#password").autocomplete = registering ? "new-password" : "current-password";
-    setError($("#auth-error"), "");
-  }
-
-  authForm.addEventListener("submit", async event => {
-    event.preventDefault();
-    const username = $("#username").value.trim();
-    const password = $("#password").value;
-    if (username.length < 2 || password.length < 8) {
-      setError($("#auth-error"), "用户名至少 2 位，密码至少 8 位。");
-      return;
-    }
-    setError($("#auth-error"), "");
-    const submit = $("#auth-submit");
-    submit.disabled = true;
-    try {
-      const user = await api("/api/" + state.authMode, {
-        method: "POST", body: JSON.stringify({ username, password })
-      });
-      try { localStorage.setItem("aunt_last_username", username); } catch (_) { /* private mode */ }
-      await showApp(user);
-    } catch (error) {
-      setError($("#auth-error"), error.message);
-    } finally {
-      submit.disabled = false;
-    }
-  });
-
-  $("#auth-switch").addEventListener("click", () => {
-    setAuthMode(state.authMode === "login" ? "register" : "login");
-  });
+  /* ⭐⭐ 二期 §3.1.2：这里的 setAuthMode / 表单提交 / 登录注册切换三块**整段删除**。
+     阿姨不再自己收账号密码 —— 会话只认宿主（8081）签发的同源 HttpOnly cookie，
+     开局 `start()` 里那一次 `/api/me` 认得出人就进值班室，认不出就露出
+     index.html 那张「这边没有登录入口」的说明卡。 */
 
   $("#logout-button").addEventListener("click", async () => {
     try { await api("/api/logout", { method: "POST" }); }
     catch (_) { /* session may already have expired */ }
-    showAuth();
+    /* 退出即回大厅：交回宿主收抽屉 + 摘 iframe，下次按 C 重新过闸门补票。 */
+    if (!toHost("exit", "logout")) showAuth();
   });
 
   // 「← 返回校园」：只在被地图抽屉挂载时出现（那时 PREFIX 非空），独立运行时按钮一直藏着。
@@ -322,7 +303,9 @@
       pending.remove();
       chatInput.value = text;
       setError($("#chat-error"), error.message);
-      if (error.status === 401) showAuth();
+      /* 中途掉票：先让宿主补一张（它会重载本页），补不上宿主自己收抽屉。
+         独立跑才落到 `showAuth()` 那张告示。 */
+      if (error.status === 401 && !toHost("need-ticket", "401")) showAuth();
       return null;
     } finally {
       state.sending = false;
@@ -830,11 +813,14 @@
   }
 
   async function start() {
-    try { $("#username").value = localStorage.getItem("aunt_last_username") || ""; } catch (_) { /* private mode */ }
     setupVoiceInput();
+    // 只有真被嵌在地图抽屉里才提"按 Esc 退出"—— 独立开这一页的人眼前没有抽屉。
+    try { if (window.self !== window.top) $("#auth-embed-tip").hidden = false; } catch (_) { /* private mode */ }
     requestAnimationFrame(animate);
     try { await showApp(await api("/api/me")); }
-    catch (_) { showAuth(); }
+    /* ⭐ 开局就没票：被嵌着时**纱幕继续挂着**（那是「正在进入…」），先请宿主补票再重载；
+       补不上宿主会收抽屉。独立开 :8020 才露「这里不登录」那张告示。 */
+    catch (_) { if (!toHost("need-ticket", "no-ticket")) showAuth(); }
   }
   start();
 })();

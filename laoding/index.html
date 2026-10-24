@@ -37,29 +37,18 @@ input{font:inherit}
 #ld-boot{display:none}
 html.ld-embed #ld-boot{display:flex;height:100%;align-items:center;justify-content:center;
   background:var(--bg);color:var(--dim);font-size:13px;letter-spacing:3px}
-html.ld-embed #login-view{display:none!important}
+html.ld-embed #noauth-view{display:none!important}
 
-/* ---------- 登录窗口 ---------- */
-#login-view{height:100%;display:flex;align-items:center;justify-content:center;background:
+/* ---------- ① 无票提示（二期 §3.1.2：本页**没有登录入口**了） ---------- */
+#noauth-view{height:100%;display:flex;align-items:center;justify-content:center;background:
   repeating-linear-gradient(0deg,transparent 0 31px,rgba(37,99,235,.05) 31px 32px),
   repeating-linear-gradient(90deg,transparent 0 31px,rgba(37,99,235,.05) 31px 32px),var(--bg)}
-.login-card{width:360px;background:var(--panel);border:2px solid var(--line);padding:26px 26px 20px;image-rendering:pixelated}
-.login-card h1{font-size:17px;letter-spacing:2px;color:var(--amber);text-align:center;margin-bottom:2px}
-.login-card .sub{text-align:center;color:var(--dim);font-size:12px;margin-bottom:14px}
-.login-sprite{display:block;margin:0 auto 10px;image-rendering:pixelated}
-.tabs{display:flex;border:1px solid var(--line);margin-bottom:14px}
-.tabs button{flex:1;background:transparent;border:none;color:var(--dim);padding:7px 0;letter-spacing:2px}
-.tabs button.on{background:var(--line2);color:var(--txt)}
-.field{margin-bottom:10px}
-.field label{display:block;font-size:12px;color:var(--dim);margin-bottom:3px;letter-spacing:1px}
-.field input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:8px 10px;outline:none}
-.field input:focus{border-color:var(--blue)}
-#li-submit{width:100%;background:var(--amber);color:#ffffff;border:none;padding:9px 0;font-weight:700;letter-spacing:4px;margin-top:6px}
-#li-submit:hover{filter:brightness(1.08)}
-#li-msg{min-height:18px;font-size:12px;color:var(--red);margin-top:8px;text-align:center}
-#li-health{text-align:center;font-size:12px;color:var(--dim);margin-top:6px}
-#li-health b{font-weight:400}
-#li-health .ok{color:var(--green)} #li-health .bad{color:var(--red)}
+.noauth-card{width:360px;background:var(--panel);border:2px solid var(--line);padding:26px 26px 20px;image-rendering:pixelated}
+.noauth-card h1{font-size:17px;letter-spacing:2px;color:var(--amber);text-align:center;margin-bottom:2px}
+.noauth-card .sub{text-align:center;color:var(--dim);font-size:12px;margin-bottom:14px}
+.noauth-sprite{display:block;margin:0 auto 10px;image-rendering:pixelated}
+#noauth-msg{text-align:center;font-size:12px;color:var(--dim);line-height:1.8}
+#noauth-again{text-align:center;font-size:12px;color:var(--amber);line-height:1.8;margin-top:8px}
 
 /* ---------- 聊天界面 ---------- */
 #chat-view{height:100%;display:flex;flex-direction:column}
@@ -229,7 +218,7 @@ header .sp{flex:1}
 <div id="ld-boot">正在进入…</div>
 <script>
 /* ⚠️ 这段必须**紧跟在纱幕元素之后**（浏览器顺序解析，这里加类 ⇒ 后面解析到的
-   `#login-view` 从一开始就是隐藏的，一闪都不会有）。
+   `#noauth-view` 从一开始就是隐藏的，一闪都不会有）。
    ⚠️ 类加在 `document.documentElement`（`<html>`）上而不是 `<body>` 上。 */
 (function () {
   try {
@@ -245,21 +234,19 @@ header .sp{flex:1}
 })();
 </script>
 
-<!-- ======================= ① 登录窗口 ======================= -->
-<section id="login-view">
-  <div class="login-card">
-    <canvas id="login-sprite" class="login-sprite" width="12" height="13"></canvas>
+<!-- ======================= ① 无票提示（二期 §3.1.2：登录卡整段删除） =======================
+     本页**不再问你要昵称和密码**。老丁只认主站那张票（`/api/auth/exchange` 种的
+     HttpOnly cookie `ld_t`，或抽屉宿主递过来的 Bearer）。认不出就把话说清楚，
+     让宿主去补票 —— 绝不在这里弹第二个登录框。
+     ⚠️ 文案分两层：`#noauth-again` 只在**被地图嵌着**时才露（由 init 判 `window.top`）。
+        独立跑（直开 :8000）根本没有抽屉，让人"按 Esc 退出"是指令上的错。 -->
+<section id="noauth-view">
+  <div class="noauth-card">
+    <canvas id="noauth-sprite" class="noauth-sprite" width="12" height="13"></canvas>
     <h1>保卫处 · 值班窗口</h1>
     <div class="sub">北交大像素校园 —— 保安 · 老丁</div>
-    <div class="tabs">
-      <button id="tab-login" class="on">登 录</button>
-      <button id="tab-reg">注 册</button>
-    </div>
-    <div class="field"><label>昵称</label><input id="li-nick" maxlength="16" placeholder="怎么称呼你"></div>
-    <div class="field"><label>密码</label><input id="li-pass" type="password" maxlength="32" placeholder="设个密码，至少6位"></div>
-    <button id="li-submit">进 入</button>
-    <div id="li-msg"></div>
-    <div id="li-health">正在连接账号服务……</div>
+    <p id="noauth-msg">这里不登录。老丁只认像素校园的账号，请先在地图里登录一次。</p>
+    <p id="noauth-again" class="hidden">退出请按 Esc，登录后再走到我身边按 C。</p>
   </div>
 </section>
 
@@ -301,10 +288,10 @@ header .sp{flex:1}
       </div>
     </div>
     <aside id="map-panel">
-      <div class="ph-title">地图层 · MapBridge</div>
-      <div class="ph-sub">预留接口（本期不实现）。focus / addPin / highlight / setLayer / findPath / nearestWalkable / on——功能调用点已接入，待地图组按总体设计 §8 实现后自动生效。</div>
-      <div id="map-holder"><div class="ph-txt">地图未接入</div></div>
-      <div id="map-log-title">接口调用记录</div>
+      <div class="ph-title">地图联动 · MapBridge</div>
+      <div class="ph-sub">下面这些调用老丁已经发出去了（focus / addPin / highlight / setLayer / findPath / nearestWalkable / on），地图按总体设计 §8 接上之后就自动生效。</div>
+      <div id="map-holder"><div class="ph-txt">地图还没接上</div></div>
+      <div id="map-log-title">调用记录</div>
       <div id="map-log"></div>
     </aside>
   </div>
@@ -1828,6 +1815,9 @@ const API = {
     const r = await fetch(this.base + path, {
       method: opts.method || 'GET',
       headers: { 'Content-Type':'application/json', ...(this.token ? { Authorization:'Bearer ' + this.token } : {}) },
+      // ⭐ 二期 §3.1.3：宿主递的票是一张 HttpOnly cookie（`ld_t`），JS 读不到、
+      //    只能靠浏览器自己带 —— 不带这道 credentials，抽屉里就永远认不出票。
+      credentials: 'same-origin',
       body: opts.body ? JSON.stringify(opts.body) : undefined
     });
     const data = await r.json().catch(() => ({}));
@@ -1835,35 +1825,24 @@ const API = {
     return data;
   }
 };
-async function checkHealth(){
-  const el = $('#li-health');
-  try{ await API.req('/api/health'); el.innerHTML = '账号服务 <b class="ok">已连接</b> · FastAPI + SQLite'; }
-  catch(e){ el.innerHTML = '账号服务 <b class="bad">没连上</b> —— 先启动：python server/app.py'; }
-}
-async function submitAuth(){
-  const nick = $('#li-nick').value.trim(), pass = $('#li-pass').value;
-  const msg = $('#li-msg');
-  if(!nick || !pass){ msg.textContent = '昵称和密码都要有。'; return; }
-  if(pass.length < 6){ msg.textContent = '密码至少 6 位。'; return; }
-  msg.textContent = '';
-  const isReg = $('#tab-reg').classList.contains('on');
+/* ⭐⭐ 二期 §3.1.3：被地图嵌在抽屉里时，「认不出票」和「用户退出」这两件事都**交回宿主**，
+   而不是把「这里不登录」那张告示杵在人脸上 —— 宿主收到 `need-ticket` 会静默补一张票再把
+   本页重载一次，收到 `exit` 会直接收起抽屉回大厅。独立跑（地址栏直开 :8000）没有宿主，
+   返回值就是 false，调用方各自落回原来的告示页 / reload。
+   ⚠️ `targetOrigin` 写死 `location.origin`：抽屉与本非同源，别家的页面嵌不走这条消息。 */
+function toHost(kind, reason){
   try{
-    const r = await API.req(isReg ? '/api/register' : '/api/login', { method:'POST', body:{ nickname: nick, password: pass } });
-    if(isReg){ // 注册即登录
-      const l = await API.req('/api/login', { method:'POST', body:{ nickname: nick, password: pass } });
-      enterChat(l);
-    } else enterChat(r);
-  }catch(e){
-    msg.textContent = e.status === 409 ? '这昵称有人用了，直接去登录吧。'
-      : e.status === 401 ? '昵称或密码不对，再试试。' : ('账号服务连不上：' + e.message + '（先启动 python server/app.py）');
-  }
+    if(window.self === window.top) return false;
+    window.parent.postMessage({ type: 'pixelcampus:' + kind, from: 'ld', reason: reason || '' }, location.origin);
+    return true;
+  }catch(_e){ return false; }
 }
 function enterChat(auth){
   state.user = auth; API.token = auth.token;
   localStorage.setItem(Store.key('auth'), JSON.stringify(auth));
   /* ⭐ 第四十五轮：会话到手 ⇒ **撤掉开机的纱幕**（这是正常路径；那 8 秒兜底只管"JS 炸了"）。 */
   try{ document.documentElement.classList.remove('ld-embed'); }catch(_e){}
-  $('#login-view').classList.add('hidden');
+  $('#noauth-view').classList.add('hidden');
   $('#chat-view').classList.remove('hidden');
   loadChat();
   renderAll(); updateStatus(); updateFlowHint();
@@ -1875,8 +1854,14 @@ function enterChat(auth){
   // MAP: 玩家进入保卫处触发圈（地图层接入后由 on('enter') 驱动）
   MapBridge.on('enter', { placeId:'baoweichu' });
 }
-function logout(){
+async function logout(){
+  /* 二期：票是宿主给的一张 cookie，只清本地那份存档会**马上被 cookie 顶回来** ——
+     必须让服务端把票作废、把 cookie 删掉，再 reload。 */
   localStorage.removeItem(Store.key('auth'));
+  try{ await API.req('/api/logout', { method: 'POST' }); }catch(_e){}
+  /* ⭐ 被地图嵌着 ⇒ 交回宿主收抽屉（它同时摘掉 iframe，下次按 C 会重新过闸门补票，
+     所以"退出 → 再进来"是通的）。留在本页 reload 只会露出那张无票告示。 */
+  if(toHost('exit', 'logout')) return;
   location.reload();
 }
 
@@ -1884,50 +1869,41 @@ function logout(){
  * 启动
  * ============================================================ */
 (async function init(){
-  drawSprite($('#login-sprite'), 7);
+  drawSprite($('#noauth-sprite'), 7);
   drawSprite($('#hd-sprite'), 2);
   await Store.init();
-  // 恢复会话
-  /* ⭐⭐ 第四十三轮：**共享票优先**。
-     地图那边「一次登录进三家」，登录成功后往 localStorage 种一个裸 `ld_token`
-     （与学霸姐的 `xbg_token` 同一约定）。它必须排在本模块自己的会话**前面** ——
-     因为它的生命周期归地图管：在地图上点登出，地图会把 `ld_token` 一起清掉。
-     要是让本模块自己的键优先，就会出现「地图上登出了、抽屉里还是上一个人的身份」
-     —— 换个人来玩直接串号。
-
-     独立跑（双击 run_server.bat、或地址栏直开 8000）时根本没有 `ld_token`，
-     自然落到下面那条，行为与本轮之前**完全一样**。 */
+  /* ⭐⭐ 二期 §3.1.3：**只认宿主那张票**。
+     主站 `/api/auth/exchange` 把老丁的票种成 HttpOnly cookie `ld_t`，本页 JS 读不到它，
+     所以问服务端本人（`/api/me` 现在 Bearer 与 cookie 两条都认）。
+     一期那个「地图往 localStorage 种裸 `ld_token`」的约定**整段删除** ——
+     它就是「登录一次、开别家还要再登」这个 bug 的根（票的存活期两边各管一半）。 */
   try{
-    const shared = localStorage.getItem('ld_token');
-    if(shared){
-      API.token = shared;
-      const meInfo = await API.req('/api/me');   // `/api/me` 本来就是校验 Bearer token 的接口
-      enterChat({ token: shared, user_id: meInfo.user_id, nickname: meInfo.nickname });
-      /* ⚠️⚠️ 必须**马上抹掉** `enterChat` 刚写下的那份会话。
-         共享票这条路上，这张票的生命周期**归地图管**（地图登出时清 `ld_token`）；
-         要是让本模块自己的键留下一份，地图登出就清不干净了 ——
-         抽屉会在下次打开时**以上一个账号的身份**自动进去，而且**一点报错都没有**。 */
-      try{ localStorage.removeItem(Store.key('auth')); }catch(_e){}
-      return;
-    }
+    enterChat(await API.req('/api/me'));
+    return;
   }catch(e){
     /* ⚠️ **只清 401**（票过期 / 服务端换过库）。网络没通时抛的不是 401 ——
-       这时候清票等于把一张**可能还有效**的票毁了，用户还得白登一次。 */
-    if(e && e.status === 401){ try{ localStorage.removeItem('ld_token'); }catch(_e){} }
+       这时候清存档等于把一段**还可能接得上**的会话毁了。 */
+    if(e && e.status === 401){ try{ localStorage.removeItem(Store.key('auth')); }catch(_e){} }
   }
+  /* 独立跑（地址栏直开 :8000，没有宿主、也没有 cookie）才落到本模块自己的存档。 */
   try{
     const saved = JSON.parse(localStorage.getItem(Store.key('auth')) || 'null');
     if(saved && saved.token){
       API.token = saved.token;
-      const meInfo = await API.req('/api/me');
-      enterChat({ ...saved, ...meInfo });
+      enterChat({ ...saved, ...(await API.req('/api/me')) });
       return;
     }
   }catch(e){ localStorage.removeItem(Store.key('auth')); }
-  /* ⭐⭐ 第四十五轮：走到这里 = **任何会话都没有** ⇒ 如实露出登录卡（撤掉开机的纱幕）。
-     ⚠️ 挂着纱幕 = 永远转圈，比登录卡糟得多 —— 登录卡至少还能救命。 */
+  /* ⭐⭐ 走到这里 = **任何票都没有**。
+     被地图嵌着 ⇒ 先请宿主补一张票再把本页重载一次（§9.2 铁律 3）：这时候**纱幕继续挂着**，
+     人看到的是「正在进入…」而不是告示页；补不上宿主会自己把抽屉收掉。
+     独立跑（没有宿主）才把「这里不登录」那块提示如实露出来。
+     ⚠️ 上面那段开机脚本有一条 8 秒无条件摘纱幕的兜底：万一宿主根本没在听，
+        人最多多等 8 秒就能看到告示，不会被永久冻在「正在进入…」上。 */
+  if(toHost('need-ticket', 'no-ticket')) return;
   try{ document.documentElement.classList.remove('ld-embed'); }catch(_e){}
-  checkHealth();
+  // 只有真被嵌在抽屉里才提"按 Esc 退出"—— 独立跑这页没有抽屉可退。
+  try{ if(window.self !== window.top) $('#noauth-again').classList.remove('hidden'); }catch(_e){}
   updateStatus();
   setInterval(updateStatus, 15000);
   // 空闲自语（附录 F ③：最便宜的「活着」信号，模板填充不调 LLM，每天 ≤ dailyBudget 条）
@@ -1941,11 +1917,6 @@ function logout(){
 })();
 
 /* ---------- 事件绑定 ---------- */
-$('#tab-login').onclick = () => { $('#tab-login').classList.add('on'); $('#tab-reg').classList.remove('on'); checkHealth(); };
-$('#tab-reg').onclick   = () => { $('#tab-reg').classList.add('on'); $('#tab-login').classList.remove('on'); checkHealth(); };
-$('#li-submit').onclick = submitAuth;
-$('#li-pass').addEventListener('keydown', e => { if(e.key === 'Enter') submitAuth(); });
-$('#li-nick').addEventListener('keydown', e => { if(e.key === 'Enter') $('#li-pass').focus(); });
 $('#btn-send').onclick = onSend;
 $('#inp').addEventListener('keydown', e => { if(e.key === 'Enter') onSend(); });
 $('#btn-photo').onclick = () => $('#file-in').click();

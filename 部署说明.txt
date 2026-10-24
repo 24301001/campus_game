@@ -1,7 +1,7 @@
 ================================================================================
   像素校园 · 服务器部署说明
 --------------------------------------------------------------------------------
-  版本：最终打包版（2026-10-12）
+  版本：最终打包版（二期联机层已并入，2026-10-24）
   仓库：https://github.com/24301001/campus_game        分支：main（隔离分支）
   原 README：本仓库根目录的 README.md 保持原样，一个字没动（那份讲的是地图演示）。
              本文档讲的是「怎么把这整套东西装到一台服务器上跑起来」。
@@ -10,15 +10,20 @@
 
 〖零〗30 秒版：这套东西到底是什么
 --------------------------------------------------------------------------------
-它不是一个大网站，是「一张网页地图 + 四个小服务」。
+它不是一个大网站，是「一张网页地图 + 四个小服务 + 一个联机网关」。
 
-    · 地图        一个单文件 HTML（像素校园_全校地图.html），玩家在校园里走动
+    · 地图        一个单文件 HTML，玩家在校园里走动
+                  ⭐ 二期的**运行件**是 像素校园联机版/像素校园_多人版.html
+                     （一期那份 像素校园_全校地图.html 已冻结，只作演示与对照）
     · 算法哥      刷题平台          后端 8081（Java）+ 前端 3000（Vue）
     · 学霸姐      教材问答          8010（Python）
     · 保安老丁    保卫处            8000（Python）
     · 食堂阿姨    校园食堂          8020（Python）
+    · 联机网关    玩家互见/私聊/公告 8090（Node + ws，独立进程，**可选件**）
 
 地图本身不提供内容，它只是「一个壳」：走到谁跟前按 C，就把那个服务塞进抽屉里。
+联机网关也不提供内容，它只管「谁在哪个场景的哪个位置、谁给谁发了话」。
+它没起来时地图会自己落到「单机模式」，一期玩法一个字都不少 —— 这是故意的保命绳。
 
 ⭐⭐ 最要紧的一条：四个服务必须和地图**同源**（同一个 域名:端口 出去）。
    同源才能做到三件事：登录一次四处免登、按 Esc 关掉抽屉、探测服务在不在。
@@ -31,6 +36,10 @@
 
    这个总管，开发时用 Vite（3000 端口自带的代理），上线时用 Nginx。见〖六〗。
 
+   ⚠️ 8090 **不进**这张代理表：WebSocket 不受 CORS 管，而 /mp 这个前缀会和
+      public/mp/client.js、theme.css 抢路径。客户端自己拼 ws://<主机>:8090/mp，
+      要改口就用浏览器的 localStorage.mp_gateway。上 Nginx 时才需要显式转发（见〖六〗）。
+
    如果你把四个服务分别挂到四个端口直接对外，地图照样能打开、能看，
    但"一次登录四处免登 / Esc 退出 / 教材原件下载"会全部失效。这不是 bug，是浏览器规矩。
 
@@ -39,6 +48,15 @@
 --------------------------------------------------------------------------------
 【有】四大模块的完整代码 + 配置 + 数据 + 文档、地图源文件与构建脚本、
       四个模块各自的 README / DEPLOY / 接口契约、Windows 一键启动器。
+      ⭐ 二期的联机层也在：像素校园联机版/（运行件地图 + mp/ 四个前端文件 +
+      gateway/ 那个 8090 的 Node 网关 + _patch/ 挂载点清单），
+      以及建六张 mp_* 表的 campus_game/sql/14-multiplayer.sql。
+      ⚠️ clone 下来如果**找不到 像素校园联机版/ 这个目录**，说明拿到的是二期之前的旧提交
+      （main 上 2026-10-24 及以后那一个才有）。`git log --oneline -3` 先确认版本；
+      拿不到提交就手工拷这些：像素校园联机版/ 整个目录、
+      campus_game/sql/14-multiplayer.sql、backend 那批 Mp*.java 与改过的
+      AuthController/UserServiceImpl/SecurityConfig/DataInitConfig、
+      frontend/public/{campus.html,mp/}、frontend/src/utils/hostAuth.js、三家 Python 服务。
       学霸姐的 bge-small-zh 权重（models/）和网页端 ONNX 运行时（web/vendor/onnxruntime/）
       也一并放了进去 —— 所以端上推理那条可选路不用再跑 tools/get_onnx_assets.py。
 
@@ -71,10 +89,11 @@
     · Nginx                   上线做统一入口（见〖六〗）
     · Docker + Compose        想用现成的 docker-compose.yml 走容器路线
 
-  端口占用一览（五个都得留着）：
+  端口占用一览（六个都得留着）：
     3000  前端（地图也从这个口出去）      8010  学霸姐
     8081  刷题平台后端（路径前缀 /api）   8000  老丁
     3306  MySQL                          8020  食堂阿姨
+    8090  联机网关（WebSocket，路径 /mp；没起只是变单机，不影响其它功能）
     ⚠️ 阿姨是 8020 不是 8000 —— 8000 是老丁的地盘。
 
 
@@ -92,6 +111,13 @@
   │    ├─ 预览/ 建筑物照片/            ← 资料照片
   │    └─ README.md → 436KB 的详版说明 ／ 像素校园地图_开发交接文档.md
   ├─ campus_game/                    ← 刷题平台（后端 Java + 前端 Vue + 数据库脚本）
+  ├─ 像素校园联机版/                  ← ⭐ 二期联机层（运行件在这一份里）
+  │    ├─ 像素校园_多人版.html         地图运行件（一期那份冻结后的副本 + 六处挂载点）
+  │    ├─ mp/                         client.js 联机客户端 / look.js 形象 /
+  │    │                               chat.js 私聊 / profile.js 个人中心 / theme.css
+  │    ├─ gateway/                    8090 的 Node 网关（server.js + ws + mysql2）
+  │    ├─ _patch/                     挂载点清单与补丁脚本（apply_mp_module*.py --check）
+  │    └─ localStorage分类表.md        61 处本地存储的归属表（任务书 §9）
   ├─ xueba-ge/                       ← 学霸姐
   ├─ laoding/                        ← 保安老丁
   ├─ campus_game_cmr/                ← 食堂阿姨（aunt/ 是她的应用）
@@ -109,10 +135,17 @@
     mysql -uroot -p -e "CREATE DATABASE IF NOT EXISTS coding_platform
       DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
     mysql -uroot -p coding_platform < campus_game/database/coding_platform-full.sql
+    mysql -uroot -p coding_platform < campus_game/sql/14-multiplayer.sql   # ⭐ 二期六张 mp_* 表
 
     这是一份整库导出（表结构 + 数据 + 预设账号）。若想从空库一步步来，也可以按
-    文件名顺序导 campus_game/sql/ 下的 00-init → 13-problem-similar。
+    文件名顺序导 campus_game/sql/ 下的 00-init → 14-multiplayer。
     跑完就有两个预设账号：admin / admin123（管理员）、user / user123（普通用户）。
+    ⚠️ 那份整库导出里**没有** mp_* 六张表（它比二期早），少导第二句的话
+      8090 网关起得来但一写位置就报表不存在，HUD 会显示「单机模式」。
+      14-multiplayer.sql 里除了六张 mp_* 表，还带 nickname 的去重 + uk_nickname 唯一约束
+      （二期注册按昵称查重靠它），要重复跑安全：全程 IF NOT EXISTS / 存储过程判过。
+    ⚠️ 二期口令是 **BCrypt** 存的：老库里那两行明文口令（admin123/user123）不用手改，
+      后端启动时 DataInitConfig 会自己种成 BCrypt；直接改库请写 $2a$ 开头的串。
 
 --- 第 2 步：后端（8081） -------------------------------------------------
     cd campus_game/backend
@@ -135,14 +168,18 @@
     所以真实地址是 http://<服务器>:8081/api/...，健康检查可以用 GET /api/...
 
 --- 第 3 步：前端（3000）+ 铺地图 -----------------------------------------
-    cp 像素校园地图项目/像素校园_全校地图.html campus_game/frontend/public/campus.html
+    cp 像素校园联机版/像素校园_多人版.html campus_game/frontend/public/campus.html
+    cp -r 像素校园联机版/mp               campus_game/frontend/public/mp
     cd campus_game/frontend
     npm install
     npm run dev                 # 开发用（3000 端口；已配好四条代理）
 
-    ⭐ 那一句 cp 不能省、也不能反向改：地图的**权威源**是 像素校园地图项目/ 下那份，
-      frontend/public/campus.html 是**生成物**（换机器、更新地图都要重拷一次）。
+    ⭐ 那两句 cp 不能省、也不能反向改：地图的**权威源**是 像素校园联机版/ 下那一份
+      （一期的 像素校园地图项目/像素校园_全校地图.html 已冻结，只当对照），
+      frontend/public/campus.html 与 public/mp/ 都是**生成物**（换机器、更新地图都要重拷）。
       改名 campus.html 是为了绕开中文文件名的 URL 编码问题。
+      ⚠️ public/mp/ 必须一起拷：地图里那六个挂载点是按 ./mp/client.js 这类相对路径
+        引的，少拷就等于没有联机（表现是 HUD 写「单机模式」，不是报错）。
 
     浏览器打开 http://<服务器>:3000/campus.html —— 这就是完整入口。
 
@@ -180,7 +217,22 @@
     DeepSeek 通道可选：export DEEPSEEK_API_KEY=...（不设也能用本地资料答）
     ⚠️ 她要求**单个 worker**（SQLite 单写），别开多进程。
 
---- 第 7 步：打开 --------------------------------------------------------
+--- 第 7 步：联机网关（8090，可选件） -------------------------------------
+    cd 像素校园联机版/gateway
+    npm install                 # 只有 ws + mysql2 两个依赖，约半分钟
+    node server.js
+
+    它**不用填任何口令**：数据库账号是它自己去读
+    campus_game/backend/src/main/resources/application.yml 里 jdbc 那一截的
+    （yml 挪了位置就设 MP_APP_YML 指过去）。要改口只有一组环境变量：
+      MP_PORT(8090) / MP_MAIN_HOST(127.0.0.1) / MP_MAIN_PORT(8081) /
+      MP_DB_HOST / MP_DB_PORT / MP_DB_NAME / MP_DB_USER / MP_DB_PASS
+    验票它**不查库**，是拿浏览器带来的主 JWT 回头问 8081 的 /api/user/info（正票缓存 60 秒），
+    所以改 Java 代码不需要重编它，它也不碰账号口令。
+    ⚠️ 崩了不影响别的：地图连不上 8090 会退到「单机模式」，一期玩法照常。
+    ⚠️ 上了 Nginx 之后要给它单独加一段 WebSocket 转发（见〖六〗），否则玩家互相看不见。
+
+--- 第 8 步：打开 --------------------------------------------------------
     http://<服务器>:3000/campus.html
 
     进门后：
@@ -190,8 +242,16 @@
       走到「学生1食堂」门口，走近按 C 开食堂
       进去之后：按 Esc 退出抽屉 → 按 B 出门回地图
 
+    ⭐ 二期新增的操作：
+      点校园里任何一个玩家 → 直接开私聊窗口（离线也能发，留言等他上线）
+      右上角「公告」→ 看全服公告（200 字以内，每人 30 秒一条、每天 20 条）
+      按 `P` 或点自己头像 → 个人中心（昵称、简介、标签、形象试衣间）
+      点头像时按住不放 → 弹出「看 TA 的主页 / 和 TA 聊天」双选菜单
+      走到猫旁边按 `G` → 轮盘（摸/喂/叫/逗），蹲下的就是新形象
+      联机状态下左上角 HUD 会写「联机 · <场景> · 同场景 N 人」
 
-〖五〗必须知道的 10 个坑
+
+〖五〗必须知道的 12 个坑
 --------------------------------------------------------------------------------
   1) 同源！同源！同源！
      直接双击 像素校园_全校地图.html 只能"看地图"，四个入口全是摆设。
@@ -209,10 +269,15 @@
 
   4) 端口别串：老丁 8000、阿姨 8020。两个都是 FastAPI，很容易搞混。
 
-  5) 食堂的密码**硬性要求 ≥8 位**，直接往库里塞短密码也绕不过（她会返回 422）。
-     所以进了地图用 user/user123（7 位）登录时，进食堂会弹她自己的登录框 ——
-     这是**既定行为不是故障**；管理员账号 admin/admin123 是 8 位，能静默进。
-     （地图侧的兜底就是：发现是你，就用 admin 那对去补登。）
+  5) ⭐ 二期的「一次登录」到底是怎么成的（三家 NPC 的登录框已经删了，别再去找）：
+     地图登录 → 8081 发主 JWT → 8081 调 POST /api/auth/exchange，挨家去领一张票，
+     落成三条**路径限定的 HttpOnly cookie**（ld_t→/ld、aunt_session→/cmr、xbg_token→/xbg）。
+     领票靠的是各家新加的 POST /api/host-ticket + 一个内部密钥（见〖五〗11）。
+     阿姨那边是**按昵称建号**的，不存口令（她库里那个 password_hash 是随机串，
+     本来就登不进去），所以老那条「她要求 ≥8 位、user/user123 会弹她自己的登录框」
+     已经不存在了 —— 现在只有注册新账号时才卡 ≥8 位，登录门自己会提示。
+     ⚠️ 单独起某一家服务（不走启动器、没有内部密钥）= 换不到票，这是**预期行为**。
+        抽屉里那三家会挂着「正在连通像素校园的账号…」的纱幕，8 秒后如实告诉你没连上。
 
   6) 判题要编译器：判 C/C++ 题目时后端会调系统 g++，服务器上要先装好；
      judge.work-dir 也要可写。装不上就只用 Java/Python 判题，平台本身不受影响。
@@ -247,14 +312,28 @@
      一半用这个一半用那个，免登录和 Esc 都会莫名其妙地坏。
      统一用一个（建议对外就用域名）。
 
+ 11) ⭐ 换票的内部密钥 CAMPUS_INTERNAL_SECRET **不在仓库里**（.gitignore 挡了 /.mp_secret）。
+     Windows 上由 启动像素校园.bat 第一次跑时随机生成，再用环境变量发给 8081 和三家。
+     上服务器要自己造一个，并且**五个进程都得看到同一个值**：
+         export CAMPUS_INTERNAL_SECRET="$(head -c 24 /dev/urandom | base64)"
+     8081（读同名环境变量）、老丁 8000、阿姨 8020、学霸姐 8010 四处都要传；
+     8090 网关**不需要**（它是回头问 8081 验票的）。
+     没有这个值：主站登录、刷题、地图、联机全正常，只有四家抽屉换不到票。
+
+ 12) ⭐ 三条票的 cookie 名字必须和各家自己读的一致，别照任务书那张示意表抄：
+     阿姨是 aunt_session（不是 cmr_t）、老丁是 ld_t、学霸姐是 xbg_token。
+     它们都是 HttpOnly + 路径限定，浏览器脚本看不到，所以调试只能看 DevTools 的
+     Application → Cookies，或者拿 /api/auth/exchange 的返回体数一数是几张。
+
 
 〖六〗上线（Nginx 版，把 dev 服务器换掉）
 --------------------------------------------------------------------------------
   生产别跑 npm run dev。正确做法：前端构建成静态文件，用 Nginx 统一入口。
 
     cd campus_game/frontend
-    cp ../../像素校园地图项目/像素校园_全校地图.html public/campus.html   # ⭐ 先拷再构建
-    npm install && npm run build        # 产物在 dist/（含 dist/campus.html）
+    cp ../../像素校园联机版/像素校园_多人版.html public/campus.html   # ⭐ 先拷再构建
+    cp -r ../../像素校园联机版/mp               public/mp           # ⭐ 联机那四个文件
+    npm install && npm run build        # 产物在 dist/（含 dist/campus.html 与 dist/mp/）
 
   然后 Nginx（示意，按你的域名/证书改）：
 
@@ -286,6 +365,16 @@
                          proxy_set_header Host $host;
                          proxy_set_header X-Forwarded-Proto $scheme; }
 
+        # ⭐ 二期联机网关（WebSocket 升级，少这三行头就是"玩家互相看不见"）
+        #    地图连的是 ws://<主机>:8090/mp —— 想让 Nginx 接管，就在浏览器那边
+        #    把地址换掉：控制台执行 localStorage.mp_gateway = "wss://<域名>/mp"
+        location /mp { proxy_pass http://127.0.0.1:8090/mp;
+                       proxy_http_version 1.1;
+                       proxy_set_header Upgrade $http_upgrade;
+                       proxy_set_header Connection "upgrade";
+                       proxy_read_timeout 3600s;      # 长连接，别按默认 60s 掐
+                       proxy_send_timeout 3600s; }
+
         # 前端单页应用兜底
         location / { try_files $uri $uri/ /index.html; }
     }
@@ -297,25 +386,30 @@
   五个服务都建议交给 systemd / supervisor 托管（开机自起、崩了自拉），
   数据要留在持久化目录：MySQL 数据目录、campus_game/uploads/、
   laoding/server/users.db、xueba-ge/data/xueba.db、campus_game_cmr/aunt/data/*.sqlite3。
-  防火墙只放 80/443 出去，3000/8010/8000/8020/8081/3306 全绑 127.0.0.1。
+  防火墙只放 80/443 出去，3000/8010/8000/8020/8081/8090/3306 全绑 127.0.0.1。
+  持久化目录多一个：MySQL 里的六张 mp_* 表（位置/私聊/公告/在线态/票据都在里面），
+  跟着〖九〗那句 mysqldump 一起备份就行。
 
   【另一条路：Docker】仓库带了 campus_game/docker-compose.yml（MySQL + 后端 + 前端 三容器，
   端口映射 3307→3306、8081、3000）；要不要走容器路线看你们习惯。
   注意：容器版只覆盖刷题平台，三个 Python 服务还得单独起。
 
 
-〖七〗账号与"一次登录"
+〖七〗账号与"一次登录"（二期版）
 --------------------------------------------------------------------------------
-  · 地图的登录门是**唯一**的账号入口，账号就是刷题平台数据库里的账号：
-        admin / admin123（管理员，登录框上点一下自动填）
-        user  / user123 （普通用户）
-  · 登录这一次之后，四个抽屉**都不该**再问你要密码 —— 靠的是同一套账号密码
-    在各家之间静默同步。
-  · ⚠️ 新服务器上，学霸姐 / 老丁 / 阿姨**各自的账号库是空的**。
-    想让"免登录"生效，就到那三家里各注册一个**同名同密码**的账号（比如 admin/admin123）；
-    没注册时不会崩，只是走到那家跟前会**如实**弹出它自己的登录框。
-    （食堂那家还有个 ≥8 位的硬要求，见〖五〗5。）
+  · 地图的登录门是**唯一**的账号入口。二期注册只要**昵称 + 密码**（不要邮箱）：
+        昵称 2~16 个字符，重名直接回「该昵称已被使用」；密码 ≥8 位。
+        登录时先按 username 找人、再按 nickname 找人，所以老账号照样登。
+  · 预设账号还是那对：admin / admin123（管理员）、user / user123（普通用户）。
+    口令在库里是 **BCrypt**；老库里的明文由后端启动时 DataInitConfig 自动种成 BCrypt，
+    不用手工处理。写死的"万能口令后门"已经删掉了。
+  · 登录这一次之后，四个抽屉**都不该**再问你要密码：8081 会替你去三家各领一张
+    路径限定的 HttpOnly cookie（见〖五〗5、11、12），新服务器上**不需要**再去三家
+    各注册一个同名账号 —— 阿姨/老丁那边是按昵称自动建号的。
+  · 联机层（8090）用的是**同一张主 JWT**，不是另外的账号：浏览器把它放在
+    localStorage.token 里，网关握手时以 ?token= 带上，回头找 8081 验。
   · 老会话/换浏览器之后，兜底靠地图本地存的凭据；连凭据都清了会如实要求重登 —— 这是设计。
+  · 退出登录会把三张票一起作废（8081 会回头通知各家），不是只清 localStorage。
 
 
 〖八〗常见故障对照表
@@ -333,34 +427,66 @@
   注册收不到验证邮件                     spring.mail.* 没配；直接改库或用预设账号
   算法哥只给数据不讲解                   agent.llm.api-key 空着
   上传/头像 404                          file.upload-path 目录不存在或没权限
+  ---- 二期联机层 ----
+  HUD 写「单机模式（每 30 秒再试一次）」 8090 没起来，或 Nginx 少了 /mp 那三行升级头
+  两个人在同一片草坪却互相看不见        两边场景标识不同（进过楼就各回各家了），出门即恢复
+  抽屉里三家一直转圈「正在连通…」        内部密钥没传上（〖五〗11），或那家服务没起来
+  换票成功但进抽屉还是 401               cookie 名字和各家读的对不上（〖五〗12）
+  HUD 说已登录、哪间房都进不去           主票过期了 —— 刷新一次，地图会自己摘票摆登录门
+  别人头顶的形象是默认脸                 public/mp/ 没拷过去，或那份 look.js 是旧的
+  点玩家没反应 / 打字时人物自己走         mp/chat.js 没加载（看控制台有没有 ReferenceError）
+  网关日志报「数据库账号没拿到」         application.yml 路径不对，设 MP_APP_YML 指过去
 
 
 〖九〗更新与备份
 --------------------------------------------------------------------------------
   更新代码：git pull（本仓库 main 是隔离分支，不受其它分支影响）
-          地图换了要重跑〖四〗第 3 步那一句 cp（dev）或重跑 npm run build（生产）
+          地图换了要重跑〖四〗第 3 步那两句 cp（dev）或重跑 npm run build（生产）
+          ⭐ 改的永远是 像素校园联机版/ 那一份：public/campus.html 与 public/mp/ 是生成物，
+             直接改它们下次一拷就没了。改完记得 cmp 一遍两边是否一致。
           前端依赖变了再 npm install；Python 依赖变了再 pip install -r
+          二期联机层改了协议（scene.change / peer.move 那些字段）时，
+          网关和 mp/client.js 要**一起**换，只换一边会静默掉线（表现是"看不见彼此"）
 
   备份（数据库是唯一不可再生的东西）：
       MySQL：mysqldump coding_platform > backup_$(date +%F).sql
+             （六张 mp_* 表跟着这一句一起走：位置、私聊、公告、在线态、票据）
       老丁：laoding/server/users.db
       学霸姐：xueba-ge/data/xueba.db
       阿姨：campus_game_cmr/aunt/data/aunt.sqlite3
       上传目录：campus_game/uploads/
+      ⚠️ 别把 .mp_secret 拷到备份包里到处传（它等价于"能替任何人领票"），
+         换机器就让它重新随机生成一次。
 
   重建地图（一般用不到；地图源码改了才需要）：
       cd 像素校园地图项目/源码
       python _build/build.py        # 构建，会跑一遍加载期断言
       python _build/_deliver.py     # ⭐ 本项目铁律：必须跑，产出权威的那份地图
+      ⚠️ 二期：deliver 出来的是**一期**那份。联机层是打在副本
+        像素校园联机版/像素校园_多人版.html 上的，重建一期之后**不要**拿它覆盖副本 ——
+        副本比一期的冻结文件多跑了四十多轮改动，_patch/apply_login_patch.py 现在从一期
+        原文件重跑会在第八步断言失败。要往副本上挪新东西就手工挪，挪完跑（**必须先 cd**，
+        这几个脚本认的是相对路径，从仓库根跑会报 FileNotFoundError）：
+            cd 像素校园联机版
+            python _patch/apply_mp_module2.py   --check
+            python _patch/apply_mp_module345.py --check
+            python _patch/apply_mp_module6.py   --check
+            python _patch/apply_mp_module7.py   --check
+        六处挂载点全"已存在"才算改完（--check 只读，不会动文件）。
 
 
 〖十〗本机（Windows）怎么跑
 --------------------------------------------------------------------------------
   服务器之外的日常开发，直接双击根目录的 启动像素校园.bat 就行，它会：
     探 MySQL → 拉后端 8081 → 拉前端 3000 → 拉学霸姐 8010 → 拉老丁 8000 →
-    拉阿姨 8020 → 把地图拷进 frontend/public/campus.html → 等 3000 → 开浏览器
-  （那五个小窗口不能关，关一个就少一块功能）
+    拉阿姨 8020 → 拉联机网关 8090 → 把 像素校园联机版/ 的地图和 mp/ 拷进
+    frontend/public/ → 等 3000 → 开浏览器
+  （那六个小窗口不能关，关一个就少一块功能；8010/8000/8020/8090 是**可选件**，
+    起不来只会少对应那块功能，地图照常打开）
   它需要 JAVA_HOME 指向 JDK8、Node、Python；MinGW 在 campus_game/tools/ 下（没进仓库）。
+  它还会顺手生成根目录的 .mp_secret（第一次跑），换票全靠它 —— 见〖五〗11。
+  ⚠️ 这个 .bat 必须**双击**跑。在 Git Bash / MSYS 里用 cmd //c 调它会把中文行解析坏
+     （症状是「找不到地图文件：""」，因为 set 那几行的中文被吞了），不是脚本的问题。
   安装协议.bat 只是注册 pixelcampus:// 这个自定义协议，让网页能唤起启动器，正常玩法用不到。
 
 ================================================================================

@@ -38,35 +38,45 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private ProblemMapper problemMapper;
 
+    private static String trim(String s) {
+        return s == null ? "" : s.trim();
+    }
+
+    private static String firstNotBlank(String a, String b) {
+        String x = trim(a);
+        if (!x.isEmpty()) return x;
+        String y = trim(b);
+        return y.isEmpty() ? null : y;
+    }
+
+    /** 二期登录名就是昵称（§3.1.1），所以先按 username 找、找不到再按 nickname 找。
+     *  两列各自唯一（{@code uk_username} / {@code uk_nickname}），单列查不会撞多行。 */
+    private User findByAccount(String account) {
+        User byName = getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, account));
+        return byName != null ? byName
+                : getOne(new LambdaQueryWrapper<User>().eq(User::getNickname, account));
+    }
+
     @Override
     public LoginVO login(LoginDTO loginDTO) {
-        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(User::getUsername, loginDTO.getUsername());
-        User user = getOne(wrapper);
-        
+        String account = firstNotBlank(loginDTO.getUsername(), loginDTO.getNickname());
+        if (account == null) {
+            throw new BusinessException("昵称不能为空");
+        }
+        User user = findByAccount(account);
+
         if (user == null) {
             throw new BusinessException("用户不存在");
         }
-        
+
         if (user.getStatus() == 0) {
             throw new BusinessException("用户已被禁用");
         }
-        
-        // 验证密码
-        boolean passwordMatch = false;
-        // 先检查测试账号
-        if ("admin".equals(loginDTO.getUsername()) && "admin123".equals(loginDTO.getPassword())) {
-            passwordMatch = true;
-        } else if ("user".equals(loginDTO.getUsername()) && "user123".equals(loginDTO.getPassword())) {
-            passwordMatch = true;
-        } else {
-            // 然后检查BCrypt加密的密码
-            if (passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
-                passwordMatch = true;
-            }
-        }
-        
-        if (!passwordMatch) {
+
+        // 一期那两个"测试账号口令写死在代码里"的口子已经拿掉：
+        // admin / user 的真实 bcrypt 口令由 DataInitConfig 在启动时种进库，
+        // 判口令只走 passwordEncoder 这一条路。
+        if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
             throw new BusinessException("密码错误");
         }
         
@@ -77,17 +87,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public void register(RegisterDTO registerDTO) {
+        String nickname = trim(registerDTO.getNickname());
+        String username = trim(registerDTO.getUsername());
+        /* 二期注册只有昵称这一个输入框，登录名跟它同值（见 sql/14-multiplayer.sql 的说明）；
+           一期 SPA 那张注册页反过来只填登录名，所以两个方向都要兜住。 */
+        if (nickname.isEmpty()) nickname = username;
+        if (username.isEmpty()) username = nickname;
+
+        if (nickname.isEmpty()) {
+            throw new BusinessException("昵称不能为空");
+        }
+        if (nickname.length() < 2 || nickname.length() > 16) {
+            throw new BusinessException("昵称要 2~16 个字");
+        }
+        if (registerDTO.getPassword() == null || registerDTO.getPassword().length() < 8) {
+            throw new BusinessException("密码至少 8 位");
+        }
+
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(User::getUsername, registerDTO.getUsername());
+        wrapper.eq(User::getUsername, username).or().eq(User::getNickname, nickname);
         if (count(wrapper) > 0) {
-            throw new BusinessException("用户名已存在");
+            throw new BusinessException("该昵称已被使用");
         }
         
         User user = new User();
-        user.setUsername(registerDTO.getUsername());
+        user.setUsername(username);
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
         user.setEmail(registerDTO.getEmail());
-        user.setNickname(registerDTO.getNickname() != null ? registerDTO.getNickname() : registerDTO.getUsername());
+        user.setNickname(nickname);
         user.setRole("USER");
         user.setStatus(1);
         user.setTotalProblems(0);
@@ -113,17 +140,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("用户不存在");
         }
         
-        boolean oldPasswordMatch = false;
-        if ("admin".equals(user.getUsername()) && "admin123".equals(oldPassword)) {
-            oldPasswordMatch = true;
-        } else if ("user".equals(user.getUsername()) && "user123".equals(oldPassword)) {
-            oldPasswordMatch = true;
-        } else {
-            if (passwordEncoder.matches(oldPassword, user.getPassword())) {
-                oldPasswordMatch = true;
-            }
-        }
-        
+        boolean oldPasswordMatch = passwordEncoder.matches(oldPassword, user.getPassword());
+
         if (!oldPasswordMatch) {
             throw new BusinessException("原密码错误");
         }

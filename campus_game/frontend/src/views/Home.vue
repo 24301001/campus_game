@@ -289,7 +289,7 @@ const features = ref([
 ])
 
 const handleLogout = () => {
-  userStore.logout()
+  userStore.logout(true)
   ElMessage.success('已退出')
   router.push('/home')
 }

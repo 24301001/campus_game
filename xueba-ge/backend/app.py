@@ -19,6 +19,8 @@ import json
 import os
 import mimetypes
 import time
+import hmac
+import secrets
 from dataclasses import dataclass
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -168,6 +170,37 @@ def logout():
     r = JSONResponse({"ok": True})
     r.delete_cookie("xbg_token")
     return r
+
+
+def internal_guard(req: Request) -> None:
+    """服务间互信那道门闩（任务书 §3.1.3 第③步：8081 替玩家向各家换票）。
+
+    密钥只从环境变量 `CAMPUS_INTERNAL_SECRET` 读，**没设就当场 503** ——
+    宁可换不到票（地图上会挂「学霸姐没登进去」），也不能开一条不鉴权的发票通道。
+    """
+    secret = os.environ.get("CAMPUS_INTERNAL_SECRET", "")
+    if not secret:
+        raise HTTPException(status_code=503, detail="未配置 CAMPUS_INTERNAL_SECRET，内部换票通道没开")
+    if not hmac.compare_digest(req.headers.get("x-campus-internal", "").encode("utf-8"),
+                               secret.encode("utf-8")):
+        raise HTTPException(status_code=403, detail="内部密钥不对")
+
+
+@app.post("/api/host-ticket")
+async def host_ticket(req: Request):
+    """主站登录后替玩家领一张学霸姐认的票 —— SPA 里已经没有登录页了（§3.1.2）。
+
+    建号用的是**一次性随机口令**：`create_user` 要求 `pw_hash`/`pw_salt` 非空，
+    随机口令生成完就丢，谁也登不进这个号，只有过了上面那道门闩才拿得到票。
+    """
+    internal_guard(req)
+    body = await req.json()
+    nick = str(body.get("nickname", "")).strip()
+    row = db.user_by_nick(nick)
+    uid = int(row["id"]) if row else db.create_user(nick, secrets.token_urlsafe(24))
+    sid = db.ensure_session(uid, None)
+    out = _authed({"token": auth.issue(uid), "user": {"id": uid, "nick": nick}, "session": sid}, uid)
+    return out
 
 
 @app.get("/api/me")
