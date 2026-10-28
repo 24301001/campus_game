@@ -695,8 +695,17 @@ function mpAnnPlace() {
   const t = mpChatTargetCanvas();
   const r = t ? t.cv.getBoundingClientRect() : null;
   const dock = MP_CHAT.open ? 336 : 0;
-  const top = r && r.height ? r.top + 16 : 16;
   const right = (r && r.width ? window.innerWidth - r.right + 16 : 16) + dock;
+  let top = r && r.height ? r.top + 16 : 16;
+  /* 「退出登录」(#lgOut：fixed / top 12 / right 14 / 高约 27) 钉的是**浏览器窗口**的右上角，
+     公告栏钉的是**画布**的右上角。画布铺满窗口时 `r.top` 接近 0 ⇒ 两颗正好叠在同一个角。
+     所以只要那颗按钮真的显示着，公告栏就往下让到它的下沿以外（室内 `body.ctr-on` 时它
+     `display:none`，rect 高 0 ⇒ 不用让）。 */
+  const lg = document.getElementById("lgOut");
+  if (lg && !lg.hidden) {
+    const lr = lg.getBoundingClientRect();
+    if (lr.height > 0) top = Math.max(top, lr.bottom + 10);
+  }
   els.box.style.top = Math.round(Math.max(8, top)) + "px";
   els.box.style.right = Math.round(Math.max(8, right)) + "px";
   /* 展开态别从画布底下漏出去：能用的竖直空间就是画布底边减去收起按钮那一格。 */

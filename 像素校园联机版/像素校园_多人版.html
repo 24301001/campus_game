@@ -218,6 +218,15 @@
   #lgRow input::placeholder{color:#5f6a7b;}
   #lgRow input:focus{outline:none;border-color:#ffd76e;box-shadow:0 0 0 2px rgba(255,215,110,.13);}
   #lgRow input.bad{border-color:#e07a6a;box-shadow:0 0 0 2px rgba(224,122,106,.13);}
+  /* 密码框右边那颗显隐开关：按钮浮在输入框内右侧，不另起一行 */
+  #lgPw{position:relative;display:flex;flex:1;}
+  #lgPw input{flex:1;padding-right:48px;}
+  #lgPwEye{
+    position:absolute;right:5px;top:50%;transform:translateY(-50%);cursor:pointer;
+    padding:2px 6px;background:#20252e;color:#9fb4d0;border:1px solid #39404d;border-radius:3px;
+    font:11px/1.3 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.4px;
+  }
+  #lgPwEye:hover{background:#313847;color:#e9e5d8;border-color:#5a6474;}
   #lgMsg{padding:7px 13px 0;min-height:18px;color:#e07a6a;}
   #lgMsg.ok{color:#7fd6c8;}
   #lgRow2{display:flex;flex-direction:column;gap:6px;padding:5px 13px 13px;}
@@ -356,14 +365,15 @@
 <div id="login" hidden>
   <div id="lgBox">
     <div id="lgT">像素校园 · 登录</div>
-    <div id="lgHint">用昵称和密码进来。登录这一次，机房、逸夫楼、保卫处、食堂都不用再登。</div>
+    <div id="lgHint" hidden></div>
     <div id="lgQuick">
       <button type="button" data-u="admin" data-p="admin123">管理员 admin</button>
       <button type="button" data-u="user"  data-p="user123">普通用户 user</button>
     </div>
     <div id="lgRow">
       <input id="lgU" type="text" autocomplete="off" spellcheck="false" placeholder="昵称">
-      <input id="lgP" type="password" autocomplete="off" placeholder="密码">
+      <div id="lgPw"><input id="lgP" type="password" autocomplete="off" placeholder="密码">
+        <button id="lgPwEye" type="button" title="显示密码">显示</button></div>
     </div>
     <div id="lgMsg"></div>
     <div id="lgRow2"><button id="lgGo" type="button">进入像素校园</button>
@@ -5375,6 +5385,8 @@ const lgGo        = document.getElementById("lgGo");
 const lgOut       = document.getElementById("lgOut");
 const lgHint      = document.getElementById("lgHint");
 const lgSwitch    = document.getElementById("lgSwitch");
+const lgQuick     = document.getElementById("lgQuick");
+const lgPwEye     = document.getElementById("lgPwEye");
 const ctrCtx      = ctrCv ? ctrCv.getContext("2d") : null;
 
 /* --- 7.5.5 室内几何：一张 720×450 的逻辑画布 ---------------------------
@@ -6111,6 +6123,15 @@ function hudUserTick() {
       于是每轮往同一批按钮上再叠一条监听。 */
 (function bindQuick() {
   if (lgSwitch) lgSwitch.addEventListener("click", () => lgSetMode(LG_MODE === "register" ? "login" : "register"));
+  /* 密码显隐开关：只换 type、不动值 —— 切回打码时原来那串还在。
+     ⚠️ 和 #lgQuick 一样只绑一次；别搬进 loginGate()，那函数每登出一次就被再调一次。 */
+  if (lgPwEye && lgP) lgPwEye.addEventListener("click", () => {
+    const show = lgP.type === "password";
+    lgP.type = show ? "text" : "password";
+    lgPwEye.textContent = show ? "隐藏" : "显示";
+    lgPwEye.title = show ? "隐藏密码" : "显示密码";
+    lgP.focus();
+  });
   if (!loginEl) return;
   const btns = loginEl.querySelectorAll("#lgQuick button");
   for (const b of btns) {
@@ -6132,10 +6153,21 @@ function lgSetMode(mode) {
   const reg = LG_MODE === "register";
   if (lgGo) lgGo.textContent = reg ? "注册并进入像素校园" : "进入像素校园";
   if (lgSwitch) lgSwitch.textContent = reg ? "已有账号？去登录" : "没有账号？注册一个";
-  if (lgHint) lgHint.textContent = reg
-    ? "起个 2~16 字的昵称，校园里别人看到的就是它。密码至少 8 位。"
-    : "用昵称和密码进来。登录这一次，机房、逸夫楼、保卫处、食堂都不用再登。";
+  /* 登录态那句提示按需求删掉了（#lgHint 空着就整块收起，不留一段空白）；
+     注册还留一句密码长度提醒 —— 那一条是注册才用得上的规则。 */
+  if (lgHint) {
+    lgHint.textContent = reg ? "起个 2~16 字的昵称，校园里别人看到的就是它。密码至少 8 位。" : "";
+    lgHint.hidden = !reg;
+  }
   if (lgU) lgU.placeholder = "昵称";
+  /* ⭐ 注册**不**沿用预设测试账号：两颗演示按钮收起来，两个框也清空 ——
+     否则点过「管理员 admin」再切注册，会拿 admin/admin123 去抢注那个号。 */
+  if (lgQuick) lgQuick.hidden = reg;
+  if (reg) {
+    if (lgU) { lgU.value = ""; lgU.classList.remove("bad"); }
+    if (lgP) { lgP.value = ""; lgP.classList.remove("bad"); }
+    for (const b of loginEl.querySelectorAll("#lgQuick button")) b.classList.remove("on");
+  }
   if (lgMsg) lgMsg.textContent = "";
 }
 
@@ -6146,7 +6178,8 @@ function loginGate() {
   loginEl.hidden = false;
   if (lgMsg) { lgMsg.textContent = ""; lgMsg.classList.remove("ok"); }
   if (lgU) { lgU.value = ""; lgU.classList.remove("bad"); }
-  if (lgP) { lgP.value = ""; lgP.classList.remove("bad"); }
+  if (lgP) { lgP.value = ""; lgP.classList.remove("bad"); lgP.type = "password"; }
+  if (lgPwEye) { lgPwEye.textContent = "显示"; lgPwEye.title = "显示密码"; }
   /* 只清高亮，不重新绑监听（绑在加载期那一次就够） */
   for (const b of loginEl.querySelectorAll("#lgQuick button")) b.classList.remove("on");
   if (lgU) lgU.focus();
@@ -6202,11 +6235,14 @@ function doLogin() {
 function doLogout() {
   /* 主票与账号信息清掉；四家的票是 HttpOnly cookie，JS 删不掉 —— 叫 8081 删，
      它顺手把 `mp_ticket` 里那四行也清掉（§9.2 铁律 4：一次登出全退，不留残票）。 */
+  /* ⚠️ 先取票再清本地：反过来的话请求头里是空串，8081 认不出人，
+     `revoke()` 根本不会跑，三家 NPC 的票与 cookie 就都留下来了。 */
+  let tok = "";
+  try { tok = localStorage.getItem("token") || ""; } catch (e) {}
   try { localStorage.removeItem("token"); localStorage.removeItem("user"); } catch (e) {}
-  const tok = "";
   try {
     fetch("/api/auth/logout", {
-      method: "POST", headers: { "Authorization": "Bearer " + (tok || "") },
+      method: "POST", headers: { "Authorization": "Bearer " + tok },
       credentials: "same-origin"
     }).catch(() => {});
   } catch (e) {}
@@ -19096,6 +19132,10 @@ window.addEventListener("keydown", e => {
      于是"她在南门、你在北门"时按 E 毫无反应，而用户要的正是**随时**能叫。 */
   if ((e.key === "e" || e.key === "E") && !e.repeat) {
     if (GUIDE.mode === "lead") return;   // 她就在你面前带队；想换地方先按 Esc
+    /* ⚠️ 二期模块 7 改版：老丁的对话面板 `#gdlg` 与小北那块 `#dlg` **同一个位置**
+       ⇒ 两块不能同时开。gdOpen 那边早就有反过来的判据（GUIDE.open 时不让开），
+       这儿补上这一半；`typeof` 判空是为了 mp/guard.js 缺失时一句都不影响。 */
+    if (typeof gdIsOpen === "function" && gdIsOpen()) { guideToast("先把老丁的话说完（Esc 退出）。"); return; }
     guideCall();
     e.preventDefault(); e.stopImmediatePropagation();
   }
@@ -20417,11 +20457,16 @@ function catTick(dt) {
      走的是**向导那套栅格寻路**（`guidePath`：CELL 栅格 + Dijkstra + 视线拉直），
      不是直线 —— 直线会从两栋楼的斜缝里穿过去（`72_guide.js` 文件头 (2) 记着）。
 
-   · 交互：走近 → 头顶冒「按 C 说话」→ 按 C 打开**同源 iframe 抽屉**。
-     抽屉**复用 71b 的 `#ctrP` / `#ctrF`** 与 `ctrProbe` / `ctrOpenPlatform` /
-     `ctrClosePlatform`（`ctrOpenPlatform` 只认 `R.app`，所以给一个假房间对象即可），
-     观感与算法哥 / 学霸姐**同一套**。地址 `/ld/`：Vite 代理到 127.0.0.1:8000，
-     服务端 `PrefixStrip` 剥前缀（见 `campus_game/frontend/vite.config.js`）。
+   · 交互（二期模块 7 改版）：走近 → 头顶冒「按 C 说话」→ 按 C 开**地图底部那块对话面板**
+     （`mp/guard.js` 造的 `#gdlg`，与小北同一位置、同一套按键规矩）—— 失物登记、找失物、
+     认领、报修、工单进度、门禁、我的记录**全在地图上说完**，不单开窗、不单开抽屉。
+     ⇒ 不再走 71b 那套 `ctrProbe` 探活 + `ctrOpenPlatform` iframe + 假房间对象：
+        老丁的业务是纯本地规则，断网也能把认领闭环走完（只有面板里那颗「照片」出网，
+        `/ld/api/vision/recognize` 不通时 guard.js 自己降级成「口头补两句特征」）。
+
+   · 呼叫（二期模块 7 改版）：左上角「呼叫老丁」`#mpCall` / 按 R ⇒ 他**自动寻路走到你面前**，
+     你在路上继续走他跟着重算，站定才开口进入对话（§7.9.7）。MVP 里他是
+     「**全图唯一叫得动的人**」，这一条以前只在独立版 `laoding/` 里按时长模拟，现在是真的走位。
 
    ⚠️ 四条不许踩：
      ① **不进 props、不加 addSolid** —— 他是每帧换 img 的活人（同向导 / 猫），
@@ -20508,7 +20553,10 @@ const GUARD = (function () {
     name: "保安 · 老丁",
     x: s0.x, y: s0.y, dir: "down", step: IDLE_BASE, walk: 0, idle: 0,
     spot: 0, path: null, wi: 0, pauseT: 1.2, stuck: 0,
-    near: false, open: false
+    near: false, open: false,
+    /* 被呼叫时的三样（§7.9.7）：`call` = 他正在赶来，`callT` = 赶来已用秒数，
+       `callAnchor` = 上一次算路时你站的位置（你挪出够远就重算 = 「跟着你走」）。 */
+    call: false, callT: 0, callAnchor: null
   };
 })();
 
@@ -20579,13 +20627,21 @@ function guardFollow(dt) {
 
 /* --- 7.9.3 每帧心跳（由 build.py 补丁 27 挂在 `catTick` 之后）--------- */
 function guardTick(dt) {
-  /* 抽屉开着 = `CENTER.plat`。在地图上这是**唯一**会把它置真的地方（房间那条路
-     还会同时置 `CENTER.active`，那时玩家本来就冻着）⇒ 拿它当"抽屉开着"的判据最省事。 */
-  GUARD.open = (typeof CENTER !== "undefined") && !!CENTER.plat;
+  /* 「对话开着」的判据：改版之后是地图内那块面板（`mp/guard.js` 的 `GD.open`）；
+     mp/guard.js 没加载（双击单文件那份）才退回一期抽屉那条 `CENTER.plat`。 */
+  GUARD.open = (typeof gdIsOpen === "function")
+    ? gdIsOpen()
+    : ((typeof CENTER !== "undefined") && !!CENTER.plat);
   const dP = Math.hypot(player.x - GUARD.x, player.y - GUARD.y);
   GUARD.near = !GUARD.open && dP <= GUARD_TALK_R;
 
   if (GUARD.open) { guardStand(dt); guardTipPaint(); return; }
+
+  if (GUARD.call) {                        // ⭐ 有人在叫他 ⇒ 一路走到你跟前（§7.9.7）
+    guardCallStep(dt, dP);
+    guardTipPaint();
+    return;
+  }
 
   if (GUARD.pauseT > 0) {                       // 到站歇脚
     GUARD.pauseT -= dt;
@@ -20636,39 +20692,125 @@ function guardTipPaint() {
   guardTip.style.top  = y + "px";
 }
 
-/* --- 7.9.5 抽屉：走近按 C 开失物招领（与算法哥 / 学霸姐同一套）---------
-   `ctrProbe` 只看 `R.probe`、`ctrOpenPlatform` 只看 `R.app`、`ctrColdStart` 只看
-   `R.coldTip` ⇒ 给一个**假房间对象**就能整条复用，不必另写一套开关。 */
-const GUARD_APP = {
-  app: "/ld/", probe: "/ld/api/health",
-  /* ⭐⭐ 第四十五轮：**开门前先验票**（见 `ctrOpenPlatform` 与 `ldEnsure`）。
-     ⚠️ 写成**函数**而不是直接引用 `ldEnsure`：就为了探针能**按名字**替换它造负对照。 */
-  ensure: function () { return ldEnsure(); },
-  mpKey: "ld",
-  name: "保卫处", coldTip: "老丁的失物招领没在跑，正在叫启动器，浏览器问「是否打开」时点「打开」。"
-};
-function guardOpen() {
-  ctrOpenPlatform(GUARD_APP);
-  /* 抽屉那个 iframe 的 title 是写死的「刷题平台」，切到老丁这边顺手改一下
-     （只影响无障碍读屏与浏览器标签提示，画面无关）。 */
-  if (ctrF) ctrF.setAttribute("title", "保卫处 · 老丁");
+/* --- 7.9.5 说话：按 C 开地图底部那块对话面板（二期模块 7 改版）--------
+   以前这里给 71b 的抽屉凑了个**假房间对象**（`ctrProbe` 探活 → `ldEnsure` 验票 →
+   `ctrOpenPlatform` 把整张 laoding 界面塞进 iframe）。现在一步都不要了：
+   按 C = `mp/guard.js` 的 `gdOpen()`，面板 `#gdlg` 就摆在地图底部、与小北同一位置、
+   同一套按键规矩 —— 失物登记 / 找失物 / 认领 / 报修 / 工单进度 / 门禁 / 我的记录，
+   **全部在地图上说完**，不单开窗、不单开抽屉。
+
+   ⇒ 老丁的这套业务是**纯本地规则**（意图分类 + 四维相似度匹配 + localStorage 分片），
+      所以不探活、不验票、不冷启动，断网也能把认领闭环走完；
+      唯一出网的一步是面板里那颗「照片」（`/ld/api/vision/recognize`），
+      8000 没起来时 guard.js 自己降级成「你口头补两句特征」，流程照走。
+   ⚠️ `gdOpen` / `gdIsOpen` / `GD` 都是 `mp/guard.js` 顶层的声明：这个文件在 chunks
+      之后加载 ⇒ **只能在函数体里用**（加载期引用撞 TDZ，整页 JS 静默死）。 */
+function guardOpen(via) {
+  if (typeof gdOpen !== "function") { guardToast("老丁的对话没加载（mp/guard.js 缺失）。"); return; }
+  gdOpen(via || "talk");
 }
 function guardTalk() {
-  if (typeof CENTER !== "undefined" && (CENTER.plat || CENTER.waiting)) return;
-  /* ⚠️ 第四十五轮补的连按两次 C 并发保护（与 `auntTalk` 的 `AUNT.talking` 同款）：
-     闸门进了 `ctrOpenPlatform` 之后，`CENTER.plat` 要等 `ctrProbe` / `ldEnsure` 回来
-     才置真 —— 这中间几百毫秒里第二下 C 会再走一遍整条链（探两次、开两次抽屉）。 */
-  if (GUARD.talking) return;
+  if (typeof CENTER !== "undefined" && (CENTER.plat || CENTER.active || CENTER.waiting)) return;
+  /* 面板已经开着（呼叫到他来了、或上一句还没说完）⇒ 只把光标放回输入框，不重开、不清历史。 */
+  if (typeof gdIsOpen === "function" && gdIsOpen()) {
+    if (typeof GD !== "undefined" && GD.els) GD.els.in.focus();
+    return;
+  }
   if (!GUARD.near) { guardToast("走近老丁再按 C。"); return; }
-  GUARD.talking = true;
-  ctrProbe(GUARD_APP).then(function (ok) {
-    GUARD.talking = false;
-    if (ok) guardOpen();                // 闸门（`GUARD_APP.ensure`）在 `ctrOpenPlatform` 里
-    else ctrColdStart(GUARD_APP);       // 服务没起来 → 走 71b 那套"请启动器拉起来"
-  });
+  guardOpen("talk");
 }
 /* 反馈复用向导那张 `guideToast`（2.6 秒自动隐藏）—— 地图上已经有这一块，不另做。 */
 function guardToast(t) { if (typeof guideToast === "function") guideToast(t); }
+
+/* --- 7.9.7 呼叫：他放下手里的活儿，一路走到你面前（§2「全图唯一叫得动的人」）
+   规矩（用户 2026-10-25 逐字要求）：点左上角「呼叫老丁」/ 按 R ⇒ 老丁**自动走到玩家
+   所在地**；你在路上继续走 ⇒ 他**按你的新位置重新算路跟过来**；直到**停在玩家面前**
+   才开口进入对话（对话面板就是 §7.9.5 那块 `#gdlg`，不另开窗）。
+
+   ⚠️ 五条实现要点：
+     · 寻路只用向导那份 `guidePath`（共享栅格 + Dijkstra + 视线拉直，**同步一次算完**）。
+       每帧重算会把主线程吃干 ⇒ 只在**你从他上次瞄准的位置挪出 `GUARD_CALL_REPATH`**
+       或**这一段走到头**时重算一次。
+     · 瞄准点是「玩家沿 玩家→老丁 方向前进 `GUARD_CALL_AIM`」那个点，再 `guardSnap` 吸附
+       ⇒ 他到站是**面对你站着**，不是和你重叠（重叠了他头顶气泡会盖住你、描边也糊在一起）。
+     · ⭐ `GUARD_CALL_AIM` **必须明显小于** `GUARD_CALL_R`：`guardFollow` 到点判定是
+       "离路点 ≤14px 就算踩到"，若瞄准点与停口判据取同一个数，最后那 9~14px 会被这个
+       阈值整段吞掉 —— 他走到 53px 就原地来回重算、永远不开口（浏览器实测撞到的）。
+       取 26 / 60 之后，最后一段还有 30+px 可走，撞不进这个缝。
+     · 寻路**无解**时（隔着楼、或只剩最后几像素）不许站着等：直接朝瞄准点蹭一小步
+       （`guardWalkToward` 自带可走判定，撞墙位移 0 就停，不会穿模）。
+     · 赶来期间**不碰巡逻状态**（`spot` / `pauseT` 原样留着）⇒ 对话一关他接着巡楼。
+     · 卡住 0.9 秒是**重算同一条目的地的路**，不是像巡逻那样换下一站 ——
+       换站会让他掉头走人，正对着"我叫他他却走了"。 */
+const GUARD_CALL_R       = 60;   // 停口判据：离你 60px 就站定开口（< 搭话半径 68）
+const GUARD_CALL_AIM     = 26;   // 瞄准点离你的距离 —— 必须 < 停口判据，见上面 ⭐
+const GUARD_CALL_REPATH  = 40;   // 你挪出 40px ⇒ 重算（这一条就是"跟着走"）
+const GUARD_CALL_TIMEOUT = 60;   // 秒：超过当他被别的事绊住了，礼貌收场
+function guardCallAim() {
+  const dx = GUARD.x - player.x, dy = GUARD.y - player.y;
+  const d = Math.hypot(dx, dy) || 1;
+  return guardSnap(player.x + dx / d * GUARD_CALL_AIM, player.y + dy / d * GUARD_CALL_AIM);
+}
+function guardCallPlan() {
+  const a = guardCallAim();
+  let p = null;
+  try { p = guidePath(GUARD.x, GUARD.y, a.x, a.y); } catch (e) { p = null; }
+  GUARD.path = (p && p.length) ? p : null;
+  GUARD.wi = 0;
+  GUARD.stuck = 0;
+  GUARD.callAnchor = { x: player.x, y: player.y };   // 记住"这条路是按哪儿算的"
+}
+function guardCallStop() {
+  GUARD.call = false; GUARD.callT = 0; GUARD.callRepathT = 0;
+  GUARD.path = null; GUARD.callAnchor = null;
+  if (typeof gdChipComing === "function") gdChipComing(false);
+}
+function guardCallStep(dt, dP) {
+  if (dP <= GUARD_CALL_R) {                          // 到站：站定、转身、开口
+    guardCallStop();
+    GUARD.pauseT = 0;
+    guardStand(dt); guardFace();
+    if (typeof gdArrive === "function") gdArrive();
+    return;
+  }
+  GUARD.callT += dt;
+  if (GUARD.callT > GUARD_CALL_TIMEOUT) {
+    guardCallStop();
+    guardToast("老丁被别的事绊住了，你走近按 C 找他。");
+    return;
+  }
+  const moved = GUARD.callAnchor
+    ? Math.hypot(player.x - GUARD.callAnchor.x, player.y - GUARD.callAnchor.y) : 1e9;
+  /* 重算的节流与向导「她追你」那一段同口径（§7.2.9：`GUIDE.comeT > 0.6` 才允许追一次新坐标）
+     —— 你一路小跑时按位移重算会密到每 0.17 秒一次 Dijkstra，寻路桶队列再快也不该这么花。 */
+  GUARD.callRepathT = (GUARD.callRepathT || 0) + dt;
+  if (!GUARD.path || (moved > GUARD_CALL_REPATH && GUARD.callRepathT > 0.6)) {
+    GUARD.callRepathT = 0;
+    guardCallPlan();
+  }
+  if (!GUARD.path) {                          // 无解 ⇒ 朝瞄准点蹭一小步，别站着干等
+    const a = guardCallAim();
+    if (!guardWalkToward(a.x, a.y, dt)) guardStand(dt);
+    return;
+  }
+  const r = guardFollow(dt);
+  if (r === "done") GUARD.path = null;               // 这段走完了 ⇒ 按你的新位置再来一段
+  else if (r === "stuck") {
+    GUARD.stuck += dt;
+    if (GUARD.stuck > 0.9) { GUARD.callRepathT = 0; guardCallPlan(); }
+  }
+}
+/* 呼叫的**唯一入口**（左上角那颗按钮与 R 键都走这儿，`mp/guard.js` 的 gdCall 也走这儿）。 */
+function guardCall() {
+  if (typeof gdIsOpen === "function" && gdIsOpen()) { guardTalk(); return; }
+  if (GUARD.call) { guardToast("已经在路上了，稍等。"); return; }
+  if (typeof gdOpen !== "function") { guardToast("老丁的对话没加载（mp/guard.js 缺失）。"); return; }
+  if (Math.hypot(player.x - GUARD.x, player.y - GUARD.y) <= GUARD_CALL_R) { guardOpen("call"); return; }
+  GUARD.call = true; GUARD.callT = 0; GUARD.callAnchor = null;
+  GUARD.path = null; GUARD.wi = 0; GUARD.stuck = 0; GUARD.pauseT = 0;
+  if (typeof gdChipComing === "function") gdChipComing(true);
+  guardToast("老丁正往你这边赶……");
+}
 
 /* --- 7.9.6 按键 ------------------------------------------------------
    ⚠️ 只在**真的站得够近**时才消费 C：别处的 C 一律放行，绝不改变既有按键语义。
@@ -21185,6 +21327,16 @@ requestAnimationFrame(loop);
      ⚠️ 这个文件没拷过来也只是没个人中心：chat.js 那三处 `typeof showAvatarMenu`
         判空会退回"点头像直接开聊"，一期的玩法一个字节都不动（§7.7）。 -->
 <script src="mp/profile.js"></script>
+<!-- ⭐ 二期模块 7 改版：老丁（保卫处）搬进地图（`mp/guard.js`）。
+     按 C 不再开 iframe 抽屉，而是开地图底部那块 `#gdlg`（与小北同一位置）；
+     左上角多一颗「呼叫老丁」（`#mpCall`，按 R 同一个入口），点了他一路走到你面前才开口。
+     ⚠️ 排在本文件的 chunks **之后**：它运行期要读 `player` / `keys` / `GDEST` /
+        `guideResolve` / `guidePath` / `guideToast`，加载期取会撞 TDZ。
+     ⚠️ 它调进来的地图侧入口是 `guardCall()`（§7.9.7 寻路与"跟着走"都在地图那边），
+        地图调进去的是 `gdOpen` / `gdIsOpen` / `gdArrive` / `gdChipComing`。
+     ⚠️ 这个文件没拷过来也只是没地图内对话：`guardOpen` 那句 `typeof` 判空会提示
+        "老丁的对话没加载"，一期的玩法一个字节都不动（§7.7 单机回落）。 -->
+<script src="mp/guard.js"></script>
 <script src="mp/client.js"></script>
 </body>
 </html>

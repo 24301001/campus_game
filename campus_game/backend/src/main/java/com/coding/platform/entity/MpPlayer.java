@@ -41,6 +41,9 @@ public class MpPlayer implements Serializable {
     /** 兴趣标签，JSON 数组文本，≤5 个、每个 ≤6 字。 */
     private String tags;
 
+    /** 主页可见性 JSON，形如 {@code {"bio":false,"grade":false}}；缺省即公开。 */
+    private String privacyJson;
+
     private Integer lastX;
 
     private Integer lastY;

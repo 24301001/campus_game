@@ -108,9 +108,32 @@ def startup() -> None:
           f" ｜ 拍照 {ctx.vision.describe()}")
 
 
+def cookie_ticket(req: Request, name: str = "xbg_token") -> str:
+    """从 Cookie 头里挑出**路径最长**那张票。
+
+    8081 换票种的是 `path=/xbg`，本服务自己登录种的是 `path=/`；两张同名票会一起
+    寄过来并按「路径最长优先」排（RFC 6265 §5.4），而 Starlette 的 `request.cookies`
+    是普通字典，同一个键后写的覆盖先写的 —— 用 `cookies.get()` 会拿到那张旧票，
+    表现为「换了票，`/api/me` 还是上一个人」。这里自己扫一遍，取第一条。
+    """
+    for item in req.headers.get("cookie", "").split(";"):
+        key, _, value = item.partition("=")
+        if key.strip() == name:
+            return value.strip()
+    return ""
+
+
 def need_user(req: Request) -> int:
-    raw = req.headers.get("authorization", "")
-    token = raw[7:].strip() if raw.lower().startswith("bearer ") else req.cookies.get("xbg_token", "")
+    """认人：**宿主种的 cookie 优先**，页面自己的 Bearer 兜底。
+
+    `ld_t` 那一家踩过的坑这里一样会踩：cookie 是主站每次登录现签的，Bearer 是页面存档，
+    一期还往里种过裸票。让存档压过宿主票，轻则「明明登着却说没登录」，重则换账号后
+    还在拿上一个人的票答话（验收 12 的串号）。
+    """
+    token = cookie_ticket(req)
+    if not token:
+        raw = req.headers.get("authorization", "")
+        token = raw[7:].strip() if raw.lower().startswith("bearer ") else ""
     uid = auth.decode(token)
     if uid is None:
         raise HTTPException(status_code=401, detail="先登录")

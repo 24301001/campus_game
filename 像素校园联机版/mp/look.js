@@ -13,6 +13,7 @@
       所以本文件**不重写骨架**，而是复用一期的 `buildChar(HH, PAL)` / `buildCrouch(PAL)`
       —— 它俩本来就留了换装入口（`PAL`）和两个可选钩子（`C.longHair` / `C.glasses`）。
       一期那两个函数一个字都不改，NPC 还在用它们。
+      ⚠️ 但 `C.glasses` 这一版**不给玩家用**（镜框改在本文件 `lkExtras()` 里画，理由见那儿）。
 
    ⚠️ 蹲姿必须同步换形象（§11.2 第 4 条 / §13 风险 2）：`buildCrouch` 没有
       `longHair` / `glasses` 钩子，所以蹲姿的长发、眼镜、帽子、围巾全走本文件的
@@ -20,11 +21,14 @@
    ========================================================= */
 
 /* --- 1. 配方：字段、白名单、缓存键 ------------------------------------ */
-const LK_HAIR = ["short", "mid", "long", "ponytail", "bun", "curly"];
+/* 发型里没有"卷发"：18×30 上只能靠发顶三格高光表达，读出来是"头发缺一块"。
+   像素能读清楚的发型是**轮廓**，所以那格给了双马尾（两条垂在脸的两侧，一眼认得出）。 */
+const LK_HAIR = ["short", "mid", "long", "ponytail", "bun", "twintails"];
 const LK_EYE = ["round", "narrow", "dot"];
 const LK_ACC = ["none", "glasses", "cap", "scarf"];
 const LK_DEF = { skin: "#e9bb92", hairStyle: "short", hairColor: "#241d1a", eye: "round",
-                 cloth: "#3f6ea8", pants: "#454c5a", acc: "none" };
+                 eyeColor: "#3a2a20", cloth: "#3f6ea8", pants: "#454c5a", acc: "none",
+                 accColor: "#5a6270" };
 
 function lkHex(v, fb) {
   return (typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v)) ? v.toLowerCase() : fb;
@@ -35,31 +39,43 @@ function mpNormLook(l) {
   if (!l || typeof l !== "object") return null;
   return { skin: lkHex(l.skin, LK_DEF.skin), hairStyle: lkOne(l.hairStyle, LK_HAIR, LK_DEF.hairStyle),
            hairColor: lkHex(l.hairColor, LK_DEF.hairColor), eye: lkOne(l.eye, LK_EYE, LK_DEF.eye),
+           eyeColor: lkHex(l.eyeColor, LK_DEF.eyeColor),
            cloth: lkHex(l.cloth, LK_DEF.cloth), pants: lkHex(l.pants, LK_DEF.pants),
-           acc: lkOne(l.acc, LK_ACC, LK_DEF.acc) };
+           acc: lkOne(l.acc, LK_ACC, LK_DEF.acc), accColor: lkHex(l.accColor, LK_DEF.accColor) };
 }
 function mpDefaultLook() { return Object.assign({}, LK_DEF); }
 function mpLookKey(l) {
-  return l ? [l.skin, l.hairStyle, l.hairColor, l.eye, l.cloth, l.pants, l.acc].join("|") : "";
+  return l ? [l.skin, l.hairStyle, l.hairColor, l.eye, l.eyeColor, l.cloth, l.pants, l.acc, l.accColor].join("|") : "";
 }
 /* 一期那套三段配色（本色 / 受光 / 背光）由配方推出来，与 `A2` 同一组系数，
    所以自定义小人的一期味道（顶光 + 彩色收边）不会丢。 */
 function mpPaletteOf(L) {
-  const long = L.hairStyle === "mid" || L.hairStyle === "long" || L.hairStyle === "curly";
+  /* `mid` 与 `twintails` 都用一期钩子那个长度（垂到肩），`long` 在 lkExtras 里往下接几行；
+     钩子把两列画在躯干最外沿上、而且**画在描边之前**，所以这几档都拿得到彩色收边 ——
+     后处理那层只能往已有剪影里画，往外扩就缺一圈边。 */
+  const long = L.hairStyle === "mid" || L.hairStyle === "long" || L.hairStyle === "twintails";
   const C = {
     skin: L.skin, skinD: shade(L.skin, -0.28), skinL: shade(L.skin, 0.30),
     hair: L.hairColor, hairL: shade(L.hairColor, 0.28), hairD: shade(L.hairColor, -0.35),
+    eye: L.eyeColor, eyeD: shade(L.eyeColor, -0.30), eyeL: shade(L.eyeColor, 0.55),
     coat: L.cloth, coatD: shade(L.cloth, -0.30), coatL: shade(L.cloth, 0.26),
     pant: L.pants, pantD: shade(L.pants, -0.30), pantL: shade(L.pants, 0.24),
     shoe: "#26282e", shoeL: "#454a54",
-    pack: "#b4552f", packD: "#8a3f22", packL: "#d1704a"
+    /* 书包也是配饰 ⇒ 跟着 `accColor` 走（用户："配饰区域单独染色"）。
+       之前这四样写死成一期的橙色，于是"配饰颜色"只能染到镜框/帽子/围巾那几格，
+       背面那一整块 7×5 的书包永远不变色，看着就像染色没生效。
+       默认 `accColor` 是 #5a6270 深灰蓝，背包该是暗色，不会染成荧光色。 */
+    pack: L.accColor, packD: shade(L.accColor, -0.30), packL: shade(L.accColor, 0.24)
   };
   if (long) C.longHair = L.hairColor;
-  if (L.acc === "glasses") C.glasses = shade(L.hairColor, -0.55);
+  /* ⚠️ 这里**故意不设 `C.glasses`**：一期那个钩子画的是"一整条上沿 + 左右外框 + 鼻梁"，
+     而玩家这一版的圆眼有眼白，眼白那两格正好落在钩子的左右外框列上 —— 后画的镜框
+     和先画的眼白互相擦，整副眼镜糊成额头下一条黑带（用户报的"眼镜显示有误"）。
+     镜框改由 `lkExtras()` 在眼睛之后画，见那里。算法哥仍走钩子，不受影响。 */
   return C;
 }
 
-/* --- 2. 后处理：帽子 / 丸子头 / 马尾 / 围巾 / 眼型 ---------------------
+/* --- 2. 后处理：眼型 / 眼镜 / 垂发 / 马尾 / 丸子头 / 帽子 / 围巾 --------
    `buildChar` 出口已经把描边和接地影画完了，所以这一层只能往**已有剪影里面**画，
    往外扩会缺一圈彩色收边。坐标全部由 `HY`（头顶行，随步态 bob 起伏）推出来 ——
    与 `buildChar` 里那几行用同一个式子，否则 bob=1 那一帧会脱开脸往上飘。 */
@@ -88,59 +104,107 @@ function lkExtras(c, L, G) {
   const P = (x, y, w, h, col) => lkRect(g, G, x, y, w, h, col);
   const cx = G.cx, hy = G.hy, h2 = G.h2, hh = G.hh, face = G.face;
   const hair = L.hairColor, hairL = shade(hair, 0.28), hairD = shade(hair, -0.35);
+  const eyeD = shade(L.eyeColor, -0.30), eyeSoft = shade(L.eyeColor, 0.10);
+  const tie = shade(L.cloth, 0.20);                 // 发圈跟上衣一个色系，一眼看出是扎起来的
+  /* 垂在脸两侧那两列 —— 一期 `longHair` 钩子用的就是这两列（正好压在躯干最外沿上）。 */
+  const SX = cx + h2 + 1, DX = cx - h2 - 1;
 
-  /* --- 眼型：round = 2px 宽 + 一个高光格；narrow = 1px 硬黑；dot = 1px 软色 --- */
+  /* --- 眼型：round = 一格眼白 + 一格瞳孔；narrow = 一期那两格；dot = 1px 软色 ---
+     ⚠️ 18×30 上一只眼睛只有两列可放。原先两列全涂黑发色，读出来是"脸上两个墨点"，
+        没有眼白；现在白在外、瞳在内，三格排开正好是一张脸的眼睛。
+        瞳孔的颜色走 `eyeColor`，不再跟着发色 —— 染了金发不该是一双金眼睛。 */
+  const EYE_WHITE = "#f2efe9";
   if (!G.back) {
     if (L.eye === "round") {
-      P(cx - 3, G.ey, 2, 1, hairD); P(cx, G.ey, 2, 1, hairD);
-      P(cx - 3, G.ey, 1, 1, shade(hairD, 0.55));      // 上半 1px 高光（这里只有一行 ⇒ 左沿当高光）
-      P(cx + 1, G.ey, 1, 1, shade(hairD, 0.55));
+      if (G.front) {
+        P(cx - 3, G.ey, 1, 1, EYE_WHITE); P(cx + 2, G.ey, 1, 1, EYE_WHITE);
+        P(cx - 2, G.ey, 1, 1, eyeD);      P(cx + 1, G.ey, 1, 1, eyeD);
+      } else {
+        /* 侧视（朝左）只有一只眼，眼白落在瞳孔后面 */
+        P(cx - 3, G.ey, 1, 1, EYE_WHITE); P(cx - 2, G.ey, 1, 1, eyeD);
+      }
     } else if (L.eye === "dot") {
-      P(cx - 2, G.ey, 1, 1, shade(hair, 0.10)); P(cx + 1, G.ey, 1, 1, shade(hair, 0.10));
+      if (G.front) { P(cx - 2, G.ey, 1, 1, eyeSoft); P(cx + 1, G.ey, 1, 1, eyeSoft); }
+      else P(cx - 2, G.ey, 1, 1, eyeSoft);
+    } else {
+      /* narrow：那两格的位置与一期逐字相同，只是颜色交给眼睛自己的配方 */
+      if (G.front) { P(cx - 2, G.ey, 1, 1, eyeD); P(cx + 1, G.ey, 1, 1, eyeD); }
+      else P(cx - 2, G.ey, 1, 1, eyeD);
     }
-    /* narrow：与一期默认那两格逐字相同，一个像素都不补。 */
   }
-  /* --- 侧视只有一只眼，round 时往前挪 1px 才不会糊到鼻影 --- */
-  if (G.side && L.eye === "round") { P(cx - 3, G.ey, 2, 1, hairD); P(cx - 3, G.ey, 1, 1, shade(hairD, 0.55)); }
 
-  /* --- 蹲姿补长发（站姿由 C.longHair 钩子画过了，这里只补钩子没覆盖的两种） --- */
-  if (G.crouch && (L.hairStyle === "mid" || L.hairStyle === "long" || L.hairStyle === "curly")) {
+  /* --- 眼镜：必须画在**眼睛之后**（镜框压眼白，不是眼白擦镜框）-----------
+     18×30 上一只眼睛只有两列可放，能读出来的镜框只剩"每只眼睛头上一格 + 两眼之间
+     一格鼻梁"：整条上沿（一期钩子那种画法）在这尺寸上就是一根黑带。
+     侧视同理，只有一只眼，镜框那一格后面再接一格镜腿横到耳后（`side()` 画的是朝左的
+     人，大 x 那侧是后脑）。背向什么都不画 —— 后脑勺上没有眼镜。 */
+  if (L.acc === "glasses" && !G.back) {
+    const GC = L.accColor;
+    if (G.front) {
+      P(cx - 3, G.ey - 1, 2, 1, GC);                     // 左镜圈上沿
+      P(cx + 1, G.ey - 1, 2, 1, GC);                     // 右镜圈上沿
+      P(cx - 1, G.ey, 2, 1, GC);                         // 鼻梁（正好夹在两眼中间那两格）
+    } else {
+      P(cx - 3, G.ey - 1, 2, 1, GC);                     // 那一只眼的镜圈
+      P(cx, G.ey - 1, 2, 1, GC);                         // 镜腿：横过太阳穴到耳后
+    }
+  }
+
+  /* --- 蹲姿补垂发（站姿由 C.longHair 钩子画过了，这里只补钩子没覆盖的两种） ---
+     行数照钩子那套 `hh+3`：蹲姿头 y10..y15、躯干 y17..y20，垂发正好落到衣摆那一行。
+     最后两格压在描边圈上（腰侧那一格本来就是黑的），剪影形状不变，只是换了颜色。 */
+  if (G.crouch && (L.hairStyle === "mid" || L.hairStyle === "long" || L.hairStyle === "twintails")) {
     const LN = hh + 3;
     for (let i = 0; i < LN; i++) {
       const col = i < LN - 2 ? hair : hairD;
-      P(cx + h2 + 1, hy + 2 + i, 1, 1, col);
-      if (!G.side) P(cx - h2 - 1, hy + 2 + i, 1, 1, shade(col, 0.10));
+      P(SX, hy + 2 + i, 1, 1, col);
+      if (!G.side) P(DX, hy + 2 + i, 1, 1, shade(col, 0.10));
     }
   }
-  /* --- 蹲姿补眼镜（与 buildChar 里那段同式子：只画框，镜片留空透出眼睛） --- */
-  if (G.crouch && L.acc === "glasses" && !G.back) {
-    const GC = shade(hair, -0.55), GE = G.ey;
-    if (G.front) {
-      P(cx - h2, GE - 1, G.hw - 1, 1, GC); P(cx - h2, GE, 1, 1, GC);
-      P(cx - 1, GE, 2, 1, GC); P(cx + 2, GE, 1, 1, GC);
-    } else {
-      P(cx - h2, GE - 1, 3, 1, GC); P(cx - h2, GE, 1, 1, GC); P(cx, GE - 1, 3, 1, GC);
+  /* --- 长发：一期的钩子只到肩线下 3px，中长发就用它，长发在同一列往下再接一段 ---
+     站姿接三行、卡在胸口那段的最下一行（`ty+chest`）：腰以下躯干左右各收 1px，
+     这两列就空了 ⇒ 再往下接就垂在胳膊和腰之间那道缝里（描边早画完了，补的格子没边）。
+     蹲姿身子压扁了，接两行落在折起的大腿横条（y21..y22）上。 */
+  if (L.hairStyle === "long") {
+    const y0 = hy + 2 + (hh + 3), LN = G.crouch ? 2 : 3;
+    for (let i = 0; i < LN; i++) {
+      const col = i >= LN - 2 ? hairD : hair;
+      P(SX, y0 + i, 1, 1, col);
+      if (!G.side) P(DX, y0 + i, 1, 1, shade(col, 0.10));
     }
   }
-  /* --- 马尾：buildChar 的 longHair 是两侧各一条，马尾只留脑后那一条并加粗 --- */
+  /* --- 马尾：扎在脑后，所以**正面什么都不画** --------------------------
+     之前正面往两颊各垂一条，看着像剃了两道鬓角 —— 马尾在脑后，从正面看
+     只会被头挡住。侧视画在后脑那一侧（`side()` 画的是朝左的人，大 x 那侧就是后脑），
+     背面画正中一条。发圈跟着马尾走，也不在正面露。 */
   if (L.hairStyle === "ponytail") {
-    if (G.side) { for (let i = 0; i < 6; i++) P(cx + h2 + 1, hy + 1 + i, i < 4 ? 2 : 1, 1, i < 4 ? hair : hairD); }
-    else if (G.back) { for (let i = 0; i < 7; i++) P(cx - 1, hy + hh - 2 + i, 2, 1, i < 5 ? hair : hairD); }
-    else { P(cx + h2 + 1, hy + 2, 1, 5, hair); P(cx - h2 - 1, hy + 2, 1, 5, hair); }
-    P(cx + h2, hy + 1, 1, 1, shade(L.cloth, 0.20));          // 发圈用上衣色，一眼看出是扎起来的
+    if (G.side) {
+      for (let i = 0; i < 6; i++) P(cx + h2 + 1, hy + 1 + i, i < 4 ? 2 : 1, 1, i < 4 ? hair : hairD);
+      P(cx + h2, hy + 1, 1, 1, tie);
+    } else if (G.back) {
+      for (let i = 0; i < 7; i++) P(cx - 1, hy + hh - 2 + i, 2, 1, i < 5 ? hair : hairD);
+      P(cx + h2, hy + 1, 1, 1, tie);
+    }
+  }
+  /* --- 双马尾：两条垂发本身走一期钩子（与中长发同一长度，拿得到彩色收边），
+         后处理只在这一束上加两样都落在剪影里的东西：耳后那一格**发圈** + 圈下一格**束腰**。
+         所以正面看是"两条 + 两个亮圈"，中长发是"两条光杆"，马尾是"正面什么都没有"。 --- */
+  if (L.hairStyle === "twintails") {
+    P(SX, hy + 2, 1, 1, tie);                              // 发圈（上衣亮色，一眼看出是扎的）
+    P(SX, hy + 3, 1, 1, hairL);                            // 圈下那一格鼓起来
+    if (!G.side) {
+      P(DX, hy + 2, 1, 1, tie);
+      P(DX, hy + 3, 1, 1, shade(hairL, -0.10));            // 左侧受光、右侧压暗一点（顶光偏左）
+    }
   }
   /* --- 丸子头：头顶一个小揪 --- */
   if (L.hairStyle === "bun") {
     const by = Math.max(0, hy - 2);
     P(cx - 1, by, 3, 2, hair); P(cx - 1, by, 1, 1, hairL); P(cx + 1, by + 1, 1, 1, hairD);
   }
-  /* --- 卷发：发顶那行做三个凸起 --- */
-  if (L.hairStyle === "curly") {
-    P(cx - h2, hy, 2, 1, hairL); P(cx - 1, hy - 1 > 0 ? hy - 1 : hy, 2, 1, hairL); P(cx + h2 - 1, hy, 2, 1, hairL);
-  }
-  /* --- 帽子：盖住发顶两行 + 一圈帽檐；颜色取上衣的亮色，与小人是"一套搭配" --- */
+  /* --- 帽子：盖住发顶两行 + 一圈帽檐；颜色走 `accColor`（配饰单独调色） --- */
   if (L.acc === "cap") {
-    const cap = shade(L.cloth, 0.18), capD = shade(L.cloth, -0.34);
+    const cap = L.accColor, capD = shade(L.accColor, -0.34);
     P(cx - h2, hy, G.hw, 2, cap);
     P(cx - h2, hy, 1, 2, shade(cap, 0.22));
     P(cx + h2, hy + 1, 1, 1, capD);
@@ -148,9 +212,9 @@ function lkExtras(c, L, G) {
     else if (G.side) P(cx - h2 - 2, hy + 2, 3, 1, capD);             // 侧面：帽檐朝脸那侧
     else P(cx - 1, hy + 2, 2, 1, capD);                              // 背面：只露调节带
   }
-  /* --- 围巾：颈那一行 + 垂下来一角 --- */
+  /* --- 围巾：颈那一行 + 垂下来一角；颜色同样走 `accColor` --- */
   if (L.acc === "scarf") {
-    const sc = shade(L.cloth, -0.45), scL = shade(L.cloth, 0.34);
+    const sc = L.accColor, scL = shade(L.accColor, 0.30);
     P(cx - 3, G.neck, 7, 1, sc); P(cx - 3, G.neck, 2, 1, scL);
     if (!G.back) P(cx + 2, G.neck + 1, 1, 2, sc);
   }
@@ -199,27 +263,55 @@ function avatarOf(look, size) {
     R(10, 19, 4, 2, C.skin);                                   // 脖子
     /* 头：脸 12×13，左颊受光、右颊背光（顶光偏左，与小人一致） */
     R(6, 5, 12, 13, C.skin); R(6, 5, 1, 13, C.skinL); R(17, 5, 1, 13, C.skinD);
-    /* 头发：顶三行 + 两侧垂到肩；长发再多两行 */
+    /* 头发：顶三行 + 两侧垂发。**两侧垂到哪儿就是发型的差别所在**：
+       短发到颊 / 中长发到肩 / 长发压过肩；扎起来的（马尾、丸子头、双马尾）不留披发。 */
+    const HS = L.hairStyle;
+    const sideLen = (HS === "short" || HS === "ponytail" || HS === "bun") ? 7
+                  : HS === "twintails" ? 5 : HS === "mid" ? 12 : 17;
     R(5, 2, 14, 3, C.hair); R(5, 2, 14, 1, C.hairL);
-    R(5, 5, 2, L.hairStyle === "short" ? 7 : 12, C.hair);
-    R(17, 5, 2, L.hairStyle === "short" ? 7 : 12, C.hairD);
-    if (L.hairStyle === "bun") { R(10, 0, 4, 2, C.hair); R(10, 0, 4, 1, C.hairL); }
-    if (L.hairStyle === "ponytail") { R(19, 6, 2, 10, C.hair); R(19, 6, 2, 1, C.hairL); }
-    if (L.hairStyle === "curly") { R(5, 1, 3, 2, C.hairL); R(11, 0, 3, 2, C.hairL); R(16, 1, 3, 2, C.hair); }
-    /* 眼睛：大眼萌 = 3×3 深底 + 上沿 1px 高光；narrow 压成 3×1；dot 缩成 2×2 */
-    const eh = L.eye === "narrow" ? 1 : L.eye === "dot" ? 2 : 3, ew = L.eye === "dot" ? 2 : 3;
-    const ey = L.eye === "narrow" ? 11 : 10;
-    R(8, ey, ew, eh, C.hairD); R(15, ey, ew, eh, C.hairD);
-    if (eh >= 3) { R(8, ey, ew, 1, shade(C.hairD, 0.62)); R(15, ey, ew, 1, shade(C.hairD, 0.62)); }
+    R(5, 5, 2, sideLen, C.hair);
+    R(17, 5, 2, sideLen, C.hairD);
+    if (HS === "bun") { R(10, 0, 4, 2, C.hair); R(10, 0, 4, 1, C.hairL); }
+    /* 头像是正面大头：马尾扎在脑后，被头挡住 ⇒ 什么都不画。
+       （之前在这里贴了一截发梢，位置正好压着右脸，看着像一缕垂下来的鬓发。） */
+    if (HS === "twintails") {                          // 两束垂在头两侧，扎绳取上衣的亮色
+      const tie = shade(L.cloth, 0.20);
+      R(3, 7, 2, 8, C.hair); R(19, 7, 2, 8, C.hairD);
+      R(3, 7, 2, 2, tie); R(19, 7, 2, 2, shade(tie, -0.25));
+      R(3, 13, 2, 2, C.hairD); R(19, 13, 2, 2, C.hairD);
+    }
+    /* 眼睛：眼白底 + 瞳孔。round = 3×3 眼白 + 2×2 瞳孔；narrow 与一期同款一条 3×1；
+       dot 是 2×2 软色，不画眼白。瞳孔走 `eyeColor` 那套色，跟发色脱钩。
+       ⚠️ 两眼恒在 x7..9 与 x14..16 —— 脸是 x6..x17（中心 11.5），这两组才对称。
+          之前是 8..10 / 15..17（中心 12.5），整张脸往右歪一格：右眼贴着脸的边、
+          左眼外面空一格，眼镜框无论怎么画都不对（用户报的"眼镜显示有误"根子在这儿）。 */
+    const ey = L.eye === "narrow" ? 11 : 10, eh = L.eye === "narrow" ? 1 : 3;
+    const E1 = 7, E2 = 14;
+    if (L.eye === "round") {
+      const WHITE = "#f4f2ee";
+      R(E1, ey, 3, 3, WHITE); R(E2, ey, 3, 3, WHITE);
+      R(E1 + 1, ey + 1, 2, 2, C.eyeD); R(E2 + 1, ey + 1, 2, 2, C.eyeD);
+      R(E1 + 1, ey + 1, 1, 1, C.eyeL); R(E2 + 1, ey + 1, 1, 1, C.eyeL);
+    } else if (L.eye === "dot") {
+      R(E1 + 1, ey + 1, 2, 2, shade(C.eye, 0.10)); R(E2 + 1, ey + 1, 2, 2, shade(C.eye, 0.10));
+    } else {
+      R(E1, ey, 3, 1, C.eyeD); R(E2, ey, 3, 1, C.eyeD);
+    }
     R(11, 12, 2, 1, C.skinD);                                  // 鼻影
     R(10, 15, 4, 1, shade(C.skinD, -0.28));                    // 嘴
+    /* 眼镜：两个镜圈 + 鼻梁，**镜片不填色** —— 眼睛从框里透出来才叫眼镜，
+       填了就是一副眼罩（之前那版画的是"上沿一整条 + 两根通高竖框"，竖框正好压在
+       两只眼睛的外侧那一列上，把眼白擦掉半只）。 */
     if (L.acc === "glasses") {
-      const GC = shade(L.hairColor, -0.55);
-      R(7, ey - 1, 5, 1, GC); R(13, ey - 1, 5, 1, GC); R(11, ey - 1, 2, 1, GC);
-      R(7, ey - 1, 1, eh + 2, GC); R(17, ey - 1, 1, eh + 2, GC);
+      const GC = L.accColor;
+      R(E1 - 1, ey - 1, 5, 1, GC); R(E2 - 1, ey - 1, 5, 1, GC);       // 两个镜圈的上沿
+      R(E1 + 3, ey - 1, 2, 1, GC);                                     // 鼻梁（把它俩连起来）
+      R(E1 - 1, ey, 1, eh, GC); R(E1 + 3, ey, 1, eh, GC);              // 左圈左右框
+      R(E2 - 1, ey, 1, eh, GC); R(E2 + 3, ey, 1, eh, GC);              // 右圈左右框（右那根兼镜腿）
+      R(E1 - 1, ey + eh, 5, 1, GC); R(E2 - 1, ey + eh, 5, 1, GC);      // 两个镜圈的下沿
     }
-    if (L.acc === "cap") { R(4, 1, 16, 4, shade(L.cloth, 0.18)); R(4, 5, 16, 1, shade(L.cloth, -0.34)); }
-    if (L.acc === "scarf") { R(5, 18, 14, 3, shade(L.cloth, -0.45)); R(5, 18, 5, 1, shade(L.cloth, 0.34)); }
+    if (L.acc === "cap") { R(4, 1, 16, 4, L.accColor); R(4, 5, 16, 1, shade(L.accColor, -0.34)); }
+    if (L.acc === "scarf") { R(5, 18, 14, 3, L.accColor); R(5, 18, 5, 1, shade(L.accColor, 0.30)); }
     outlineSprite(c, 0.45);
     _lkAvatars[key] = c;
   }
@@ -353,10 +445,8 @@ function lkAnalyze(canvas) {
   else if (hang >= 16) L.hairStyle = "long";
   else if (hang >= 8) L.hairStyle = "mid";
   else L.hairStyle = "short";
-  /* 卷发：发顶那条边的明暗跳变次数多（直发只有 1~2 次） */
-  let edge = 0;
-  for (let x = 12; x < 35; x++) if (Math.abs(lkLumAt(d, x, 6) - lkLumAt(d, x - 1, 6)) > 26) edge++;
-  if (edge >= 7 && L.hairStyle === "short") L.hairStyle = "curly";
+  /* 照片里认不出双马尾（两束垂在头两侧，跟披发在 48×48 上是一个轮廓），
+     所以这条链只交短发/中长发/长发/丸子头/马尾，剩下的让人自己在下面挑。 */
 
   /* ⑥ 眼镜：眼带（y 19..23）里找一条横贯、比两侧皮肤暗得多的连续带 */
   let darkRun = 0, bestRun = 0;
@@ -369,12 +459,15 @@ function lkAnalyze(canvas) {
   }
   /* 帽檐：发顶那一条几乎等色、且饱和度明显高于头发 ⇒ 当成帽子 */
   const capish = lkDominant(d, 13, 3, 34, 8, c => notBg(c) && lkSat(c) > 0.42);
-  if (bestRun >= 15) L.acc = "glasses";
-  else if (capish && lkSat(capish) > 0.46) { L.acc = "cap"; L.cloth = lkHexOf(capish); }
+  /* 镜框自己那条暗带的颜色：以前眼镜的颜色是拿发色压暗算的，染了金发就配一副金框，
+     现在它有自己的字段，直接从照片那条带上取。 */
+  const frameC = lkDominant(d, 12, 19, 35, 23, c => notBg(c) && lkLum(c) < 96);
+  if (bestRun >= 15) { L.acc = "glasses"; if (frameC) L.accColor = lkHexOf(frameC); }
+  else if (capish && lkSat(capish) > 0.46) { L.acc = "cap"; L.accColor = lkHexOf(capish); }
   else L.acc = "none";
   /* 围巾：下巴以下那一条（y 29..33）饱和度高、且与上衣不同色 */
   const neck = lkDominant(d, 16, 29, 31, 33, c => notBg(c) && lkSat(c) > 0.38);
-  if (L.acc === "none" && neck && lkDist(neck, cloth || [0, 0, 0]) > 120) L.acc = "scarf";
+  if (L.acc === "none" && neck && lkDist(neck, cloth || [0, 0, 0]) > 120) { L.acc = "scarf"; L.accColor = lkHexOf(neck); }
 
   /* ⑦ 眼型：眼带里那两团黑的宽高比 */
   let blk = 0, wsum = 0;
@@ -440,7 +533,7 @@ function mpApplyLook(look, opt) {
   try { localStorage.setItem("mp_look", JSON.stringify(L)); } catch (e) {}
   if (typeof mpPushLook === "function") mpPushLook(L);
   if (!opt || !opt.silent) {
-    if (typeof mpNotice === "function") mpNotice("形象换好了，别人眼里你已经是这个样子", "ok");
+    if (typeof mpNotice === "function") mpNotice("形象已更新，其他玩家看到的就是这个样子", "ok");
   }
   return L;
 }
@@ -455,12 +548,12 @@ function mpLookStudio(cur, onPick) {
   const prev = document.createElement("div"); prev.className = "lkPrev";
   const form = document.createElement("div"); form.className = "lkForm";
   const file = document.createElement("label"); file.className = "lkFile";
-  file.innerHTML = "选一张照片（只在你这台电脑上处理）<input type=\"file\" accept=\"image/*\">";
+  file.innerHTML = "选择照片<input type=\"file\" accept=\"image/*\">";
   const inp = file.querySelector("input");
   const stat = document.createElement("div"); stat.className = "lkStat";
   const pick = document.createElement("div"); pick.className = "lkPick";
   const btns = document.createElement("div"); btns.className = "lkBtns";
-  const ok = document.createElement("button"); ok.type = "button"; ok.className = "lkOk"; ok.textContent = "就这个样子";
+  const ok = document.createElement("button"); ok.type = "button"; ok.className = "lkOk"; ok.textContent = "使用当前形象";
   const def = document.createElement("button"); def.type = "button"; def.className = "lkDef"; def.textContent = "恢复默认形象";
   btns.appendChild(ok); btns.appendChild(def);
 
@@ -476,10 +569,20 @@ function mpLookStudio(cur, onPick) {
     const ac = mkCanvas(72, 72); const ag = ac.getContext("2d"); ag.imageSmoothingEnabled = false;
     ag.drawImage(a, 0, 0, 72, 72); prev.appendChild(ac);
   }
-  function sel(label, list, val, on) {
-    const box = document.createElement("label"); box.textContent = label;
+  /* 下拉框给用户看的中文名。⚠️ 键是**配方字段名**（hairStyle/eye/acc），
+     不是界面上那三个字 —— 之前 sel() 把"发型"当键去查表，查不到就把英文原样
+     吐回给用户看了（short / round / none 就是这么漏出去的）。 */
+  const LK_LABEL = {
+    hairStyle: { short: "短发", mid: "中长发", long: "长发", ponytail: "马尾", bun: "丸子头", twintails: "双马尾" },
+    eye:       { round: "圆眼", narrow: "细长眼", dot: "点状眼" },
+    acc:       { none: "无", glasses: "眼镜", cap: "帽子", scarf: "围巾" }
+  };
+  const LK_FIELD = { hairStyle: "发型", eye: "眼型", acc: "配饰" };
+  function lkLabelOf(field, v) { const m = LK_LABEL[field]; return (m && m[v]) || v; }
+  function sel(field, list, val, on) {
+    const box = document.createElement("label"); box.textContent = LK_FIELD[field] || field;
     const s = document.createElement("select");
-    for (const v of list) { const o = document.createElement("option"); o.value = v; o.textContent = v; s.appendChild(o); }
+    for (const v of list) { const o = document.createElement("option"); o.value = v; o.textContent = lkLabelOf(field, v); s.appendChild(o); }
     s.value = val; s.addEventListener("change", () => on(s.value));
     box.appendChild(s); return box;
   }
@@ -491,22 +594,24 @@ function mpLookStudio(cur, onPick) {
   }
   function rebuild() {
     pick.textContent = "";
-    pick.appendChild(sel("发型", LK_HAIR, L.hairStyle, v => { L.hairStyle = v; drawPrev(); fire(); }));
-    pick.appendChild(sel("眼型", LK_EYE, L.eye, v => { L.eye = v; drawPrev(); fire(); }));
-    pick.appendChild(sel("配饰", LK_ACC, L.acc, v => { L.acc = v; drawPrev(); fire(); }));
+    pick.appendChild(sel("hairStyle", LK_HAIR, L.hairStyle, v => { L.hairStyle = v; drawPrev(); fire(); }));
+    pick.appendChild(sel("eye", LK_EYE, L.eye, v => { L.eye = v; drawPrev(); fire(); }));
+    pick.appendChild(sel("acc", LK_ACC, L.acc, v => { L.acc = v; drawPrev(); fire(); }));
     pick.appendChild(color("发色", L.hairColor, v => { L.hairColor = v; drawPrev(); fire(); }));
+    pick.appendChild(color("瞳色", L.eyeColor, v => { L.eyeColor = v; drawPrev(); fire(); }));
     pick.appendChild(color("肤色", L.skin, v => { L.skin = v; drawPrev(); fire(); }));
-    pick.appendChild(color("上衣", L.cloth, v => { L.cloth = v; drawPrev(); fire(); }));
-    pick.appendChild(color("裤子", L.pants, v => { L.pants = v; drawPrev(); fire(); }));
+    pick.appendChild(color("上衣颜色", L.cloth, v => { L.cloth = v; drawPrev(); fire(); }));
+    pick.appendChild(color("裤子颜色", L.pants, v => { L.pants = v; drawPrev(); fire(); }));
+    pick.appendChild(color("配饰颜色", L.accColor, v => { L.accColor = v; drawPrev(); fire(); }));
   }
   function fire() { if (onPick) onPick(Object.assign({}, L)); }
   inp.addEventListener("change", () => {
     const f = inp.files && inp.files[0]; if (!f) return;
-    stat.textContent = "正在本地读照片…";
+    stat.textContent = "正在识别照片…";
     mpAnalyzePhoto(f).then(got => {
       Object.assign(L, got);
-      stat.textContent = "量好了：发色 " + L.hairColor + " · 上衣 " + L.cloth + " · 发型 " + L.hairStyle +
-        " · " + (L.acc === "none" ? "没认出手件" : L.acc) + "。不满意就在下面改。";
+      stat.textContent = "识别结果：" + lkLabelOf("hairStyle", L.hairStyle) + "、" + lkLabelOf("eye", L.eye) +
+        (L.acc === "none" ? "，无配饰" : "，佩戴" + lkLabelOf("acc", L.acc)) + "。如有偏差请在下方调整。";
       rebuild(); drawPrev(); fire();
     });
   });
@@ -515,6 +620,6 @@ function mpLookStudio(cur, onPick) {
   wrap.appendChild(prev); wrap.appendChild(file); wrap.appendChild(stat);
   wrap.appendChild(pick); wrap.appendChild(btns);
   rebuild(); drawPrev();
-  if (!cur) stat.textContent = "不想传照片也行，下面七个开关随便捏一个。";
+  if (!cur) stat.textContent = "照片仅在本机识别，不会上传服务器。也可跳过照片，在下方手动选择。";
   return wrap;
 }

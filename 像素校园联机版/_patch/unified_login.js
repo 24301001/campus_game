@@ -238,6 +238,15 @@ function hudUserTick() {
       于是每轮往同一批按钮上再叠一条监听。 */
 (function bindQuick() {
   if (lgSwitch) lgSwitch.addEventListener("click", () => lgSetMode(LG_MODE === "register" ? "login" : "register"));
+  /* 密码显隐开关：只换 type、不动值 —— 切回打码时原来那串还在。
+     ⚠️ 和 #lgQuick 一样只绑一次；别搬进 loginGate()，那函数每登出一次就被再调一次。 */
+  if (lgPwEye && lgP) lgPwEye.addEventListener("click", () => {
+    const show = lgP.type === "password";
+    lgP.type = show ? "text" : "password";
+    lgPwEye.textContent = show ? "隐藏" : "显示";
+    lgPwEye.title = show ? "隐藏密码" : "显示密码";
+    lgP.focus();
+  });
   if (!loginEl) return;
   const btns = loginEl.querySelectorAll("#lgQuick button");
   for (const b of btns) {
@@ -259,10 +268,21 @@ function lgSetMode(mode) {
   const reg = LG_MODE === "register";
   if (lgGo) lgGo.textContent = reg ? "注册并进入像素校园" : "进入像素校园";
   if (lgSwitch) lgSwitch.textContent = reg ? "已有账号？去登录" : "没有账号？注册一个";
-  if (lgHint) lgHint.textContent = reg
-    ? "起个 2~16 字的昵称，校园里别人看到的就是它。密码至少 8 位。"
-    : "用昵称和密码进来。登录这一次，机房、逸夫楼、保卫处、食堂都不用再登。";
+  /* 登录态那句提示按需求删掉了（#lgHint 空着就整块收起，不留一段空白）；
+     注册还留一句密码长度提醒 —— 那一条是注册才用得上的规则。 */
+  if (lgHint) {
+    lgHint.textContent = reg ? "起个 2~16 字的昵称，校园里别人看到的就是它。密码至少 8 位。" : "";
+    lgHint.hidden = !reg;
+  }
   if (lgU) lgU.placeholder = "昵称";
+  /* ⭐ 注册**不**沿用预设测试账号：两颗演示按钮收起来，两个框也清空 ——
+     否则点过「管理员 admin」再切注册，会拿 admin/admin123 去抢注那个号。 */
+  if (lgQuick) lgQuick.hidden = reg;
+  if (reg) {
+    if (lgU) { lgU.value = ""; lgU.classList.remove("bad"); }
+    if (lgP) { lgP.value = ""; lgP.classList.remove("bad"); }
+    for (const b of loginEl.querySelectorAll("#lgQuick button")) b.classList.remove("on");
+  }
   if (lgMsg) lgMsg.textContent = "";
 }
 
@@ -273,7 +293,8 @@ function loginGate() {
   loginEl.hidden = false;
   if (lgMsg) { lgMsg.textContent = ""; lgMsg.classList.remove("ok"); }
   if (lgU) { lgU.value = ""; lgU.classList.remove("bad"); }
-  if (lgP) { lgP.value = ""; lgP.classList.remove("bad"); }
+  if (lgP) { lgP.value = ""; lgP.classList.remove("bad"); lgP.type = "password"; }
+  if (lgPwEye) { lgPwEye.textContent = "显示"; lgPwEye.title = "显示密码"; }
   /* 只清高亮，不重新绑监听（绑在加载期那一次就够） */
   for (const b of loginEl.querySelectorAll("#lgQuick button")) b.classList.remove("on");
   if (lgU) lgU.focus();

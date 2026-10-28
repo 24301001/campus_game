@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 public interface MpPlayerMapper {
 
     @Select("SELECT user_id AS userId, nickname, look_json AS lookJson, bio, college, grade, tags, "
+            + "privacy_json AS privacyJson, "
             + "last_x AS lastX, last_y AS lastY, last_scene AS lastScene, updated_at AS updatedAt "
             + "FROM mp_player WHERE user_id = #{userId}")
     MpPlayer findByUser(@Param("userId") Long userId);
@@ -32,11 +33,12 @@ public interface MpPlayerMapper {
      *    而**单机模式（没连上网关）时那条路不通**（§7.7），个人中心里换的形象就存不下。
      *    走位三列（{@code last_x/last_y/last_scene}）不在这里更新，那是网关的事。
      */
-    @Insert("INSERT INTO mp_player(user_id, nickname, look_json, bio, college, grade, tags) "
-            + "VALUES(#{userId}, #{nickname}, #{lookJson}, #{bio}, #{college}, #{grade}, #{tags}) "
+    @Insert("INSERT INTO mp_player(user_id, nickname, look_json, bio, college, grade, tags, privacy_json) "
+            + "VALUES(#{userId}, #{nickname}, #{lookJson}, #{bio}, #{college}, #{grade}, #{tags}, #{privacyJson}) "
             + "ON DUPLICATE KEY UPDATE look_json = VALUES(look_json), "
             + "bio = VALUES(bio), college = VALUES(college), "
-            + "grade = VALUES(grade), tags = VALUES(tags)")
+            + "grade = VALUES(grade), tags = VALUES(tags), "
+            + "privacy_json = VALUES(privacy_json)")
     int upsertProfile(MpPlayer player);
 
     /** 「我的数据」：发过几条公告（软删的不算，§10.3）。 */

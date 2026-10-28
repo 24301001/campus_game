@@ -194,8 +194,23 @@ def check_origin(request: Request):
         raise HTTPException(403, "请求来源不匹配")
 
 
+def cookie_ticket(request: Request, name: str) -> str:
+    """从 Cookie 头里挑出**路径最长**那张票。
+
+    8081 换票种的是 `path=/cmr`，本服务自己登录种的是 `path=/`；两张同名票会一起
+    寄过来并按「路径最长优先」排（RFC 6265 §5.4），而 Starlette 的 `request.cookies`
+    是普通字典，同一个键后写的覆盖先写的 —— 用 `cookies.get()` 会拿到那张旧票，
+    表现为「换了票，`/api/me` 还是上一个人」。这里自己扫一遍，取第一条。
+    """
+    for item in request.headers.get("cookie", "").split(";"):
+        key, _, value = item.partition("=")
+        if key.strip() == name:
+            return value.strip()
+    return ""
+
+
 def current_user(request: Request) -> sqlite3.Row:
-    token = request.cookies.get("aunt_session")
+    token = cookie_ticket(request, "aunt_session")
     if not token:
         raise HTTPException(401, "请先登录")
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
@@ -300,7 +315,7 @@ def login(payload: Credentials, request: Request, response: Response):
 @app.post("/api/logout")
 def logout(request: Request, response: Response):
     check_origin(request)
-    token = request.cookies.get("aunt_session")
+    token = cookie_ticket(request, "aunt_session")
     if token:
         with db() as connection:
             connection.execute("DELETE FROM sessions WHERE token_hash=?",

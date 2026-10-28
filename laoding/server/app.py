@@ -116,7 +116,14 @@ def issue_token(user_id: str) -> str:
 
 
 def auth(authorization: str, cookie_token: str = "") -> dict:
-    token = authorization[7:] if authorization and authorization.startswith("Bearer ") else cookie_token
+    """认出这个人：**cookie 优先于 Bearer**。
+
+    抽屉里那张 `ld_t` 是主站每次登录现签的（§3.1.2：宿主给的票才是身份），而 Bearer
+    是页面自己的存档 —— 一期往里种过裸票，早晚会过期。反过来排会出两种事故：
+    人明明登着、却因为一张过期 Bearer 被判定"没登录"；或者同一台电脑换了账号，
+    页面还在拿上一个人的 Bearer 答话（验收 12 说的串号）。
+    """
+    token = cookie_token or (authorization[7:] if authorization and authorization.startswith("Bearer ") else "")
     if not token:
         raise HTTPException(401, "未登录")
     with db() as conn:
@@ -138,6 +145,22 @@ class AuthBody(BaseModel):
 
 
 LD_COOKIE = "ld_t"
+
+
+def cookie_ticket(request: Request, name: str = LD_COOKIE) -> str:
+    """从 Cookie 头里挑出**路径最长**那张票。
+
+    浏览器同名不同路径的票会一起寄过来，并按「路径最长优先」排（RFC 6265 §5.4）：
+    8081 换票种的 `path=/ld` 在前，一期在 :8000 独立登录种的 `path=/` 旧票在后。
+    而 Starlette 的 `request.cookies` 是普通字典，同一个键后写的覆盖先写的 ——
+    直接 `cookies.get()` 拿到的正是那张**旧票**，于是「`/api/auth/exchange` 报了
+    `ld:ok`，`/api/me` 还是上一个人」。这里自己扫一遍，取第一条。
+    """
+    for item in request.headers.get("cookie", "").split(";"):
+        key, _, value = item.partition("=")
+        if key.strip() == name:
+            return value.strip()
+    return ""
 
 
 def with_ticket(payload: dict) -> JSONResponse:
@@ -200,23 +223,23 @@ def logout(request: Request):
 
     ⚠️ 票同时存在两处（一期 localStorage `ld_token` / 二期 cookie），只清一边会
     留下「页面说退出了、`/api/me` 还是上一个人」的串号口子。
+    ⚠️ 作废的必须是 `auth()` 当下认的那一张（cookie 优先），不然主站来收票时
+    删掉的是浏览器里那张无关的旧票 —— 真凶还在库里活着，而这个人已经退不干净了。
     """
-    token = request.cookies.get(LD_COOKIE, "")
-    if not token:
-        authorization = request.headers.get("Authorization", "")
-        if authorization.startswith("Bearer "):
-            token = authorization[7:]
+    authorization = request.headers.get("Authorization", "")
+    token = cookie_ticket(request) or (authorization[7:] if authorization.startswith("Bearer ") else "")
     if token:
         with db() as conn:
             conn.execute("DELETE FROM tokens WHERE token = ?", (token,))
     response = JSONResponse({"ok": True})
     response.delete_cookie(LD_COOKIE, path="/")
+    response.delete_cookie(LD_COOKIE, path="/ld")
     return response
 
 
 @app.get("/api/me")
 def me(request: Request, authorization: str = Header(default="")):
-    return auth(authorization, request.cookies.get("ld_t", ""))
+    return auth(authorization, cookie_ticket(request))
 
 
 class HostTicketBody(BaseModel):

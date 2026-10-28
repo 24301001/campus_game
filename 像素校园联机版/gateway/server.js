@@ -51,6 +51,7 @@ const CFG = {
   syncRy: 540,
   maxPeersPerScene: 30,   // §7.1 人数上限：服务端也兜一道，超出只多发 join 的裁剪
   msgMaxLen: 500,         // §6.1 私聊 ≤500 字
+  chatPerMin: 30,         // §7.4 私聊 1 秒 1 条 / 每分钟 ≤30 条（1 秒那条写在同一句 SQL 里）
   announceMaxLen: 200,    // §7.3 公告 ≤200 字
   announceGapMs: 30000,   // §7.3 单人 ≥30 秒一条
   announcePerDay: 20,     // §7.3 每天 ≤20 条
@@ -210,7 +211,7 @@ function tickSync() {
        半径变化（客户端缩放档位换了）走的是同一条路，不需要额外标记。 */
     for (const b of arr) {
       b.visible.clear();
-      for (const a of arr) if (a !== b && canSee(b, a)) b.visible.add(a);
+      for (const a of arr) if (a !== b && a.userId !== b.userId && canSee(b, a)) b.visible.add(a);
       for (const a of b.visible) {
         if (b.seen.has(a.userId)) continue;
         if (b.seen.size >= CFG.maxPeersPerScene) continue;      // §7.1 上限：超出不渲染，也不报错
@@ -375,7 +376,7 @@ const HANDLERS = {
       type: "welcome",
       me: { id: c.userId, nickname: c.nickname, look: c.look },
       scene: c.scene,
-      peers: Array.from(rooms.get(c.scene)).filter(a => a !== c && canSee(c, a)).slice(0, CFG.maxPeersPerScene).map(peerProfile),
+      peers: Array.from(rooms.get(c.scene)).filter(a => a !== c && a.userId !== c.userId && canSee(c, a)).slice(0, CFG.maxPeersPerScene).map(peerProfile),
       serverTime: Date.now()
     });
     /* 在线快照先给自己，再通知全场"多了一个人"；顺手补拉离线期间的私聊（§7.6）。 */
@@ -413,7 +414,7 @@ const HANDLERS = {
       type: "welcome",
       me: { id: c.userId, nickname: c.nickname, look: c.look },
       scene: to,
-      peers: Array.from(rooms.get(to)).filter(a => a !== c && canSee(c, a)).slice(0, CFG.maxPeersPerScene).map(peerProfile),
+      peers: Array.from(rooms.get(to)).filter(a => a !== c && a.userId !== c.userId && canSee(c, a)).slice(0, CFG.maxPeersPerScene).map(peerProfile),
       serverTime: Date.now(), switched: true
     });
     send(c, presenceSnapshot());
@@ -433,13 +434,19 @@ const HANDLERS = {
        ⚠️ 必须排在限流**之前** —— 重发的是同一条已经收下的话，拿"一秒只能发一条"去拒它，
           客户端会把一条已经入库的消息标成"没发出去"。 */
     if (cmid && c.chatSeen.has(cmid)) { send(c, c.chatSeen.get(cmid)); return; }
-    const now = Date.now();
-    if (c.chatAt && now - c.chatAt < 1000) { err(c, "too_fast", "慢一点，一秒只能发一条", cmid); return; }
-    if (!c.chatWin || now - c.chatWin > 60000) { c.chatWin = now; c.chatN = 0; }
-    if (c.chatN >= 30) { err(c, "flood", "这一分钟发得太多了，歇一会儿再发", cmid); return; }
-    c.chatAt = now; c.chatN++;
+    /* 限流交给 MySQL 判（§7.4：1 秒 1 条 / 每分钟 30 条）：
+       记在连接对象上时，刷新或重连就清零，等于没设防（§13 风险 13 同一类问题）。
+       两个窗口都由库算，避开 JS 与 MySQL 的时钟/时区差。 */
     (async () => {
       try {
+        const [fl] = await db().execute(
+          "SELECT COUNT(*) AS n, SUM(created_at >= DATE_SUB(NOW(3), INTERVAL 1 SECOND)) AS recent " +
+          "FROM mp_message WHERE from_user=? AND created_at >= DATE_SUB(NOW(3), INTERVAL 60 SECOND)",
+          [c.userId]);
+        const n = Number(fl[0] && fl[0].n) || 0;
+        const recent = Number(fl[0] && fl[0].recent) || 0;
+        if (recent > 0) { err(c, "too_fast", "慢一点，一秒只能发一条", cmid); return; }
+        if (n >= CFG.chatPerMin) { err(c, "flood", "这一分钟发得太多了，歇一会儿再发", cmid); return; }
         const sid = await ensureSession(c.userId, to);
         const t = Date.now();
         const [r] = await db().execute(
@@ -526,6 +533,15 @@ const HANDLERS = {
     }
     (async () => {
       try {
+        /* 30 秒间隔以库里最后一条为准：`c.announceAt` 只是省一次查询的快判，
+           刷新页面或重连后它是 0，必须靠这道库判把口子堵上（§7.3）。 */
+        const [ln] = await db().execute(
+          "SELECT MAX(created_at) AS last FROM mp_announcement WHERE user_id=? AND deleted=0",
+          [c.userId]);
+        const lastMs = ln[0] && ln[0].last ? new Date(ln[0].last).getTime() : 0;
+        if (lastMs && now - lastMs < CFG.announceGapMs) {
+          err(c, "ann_too_fast", "公告最快 " + (CFG.announceGapMs / 1000) + " 秒一条", cmid); return;
+        }
         const [dn] = await db().execute(
           "SELECT COUNT(*) AS n FROM mp_announcement WHERE user_id=? AND deleted=0 AND created_at >= CURDATE()",
           [c.userId]);
@@ -568,6 +584,89 @@ const HANDLERS = {
       }
     })().catch(() => {});
   },
+  /* --- 6.6 自己的发言记录（模块 6 §10.3「我的数据」点开查询）------------
+     `part` 三段：`ann` 我发过的公告 / `peers` 我聊过的人 / `thread` 我和某个人的全部私聊。
+     ⚠️ 三条 SQL 的用户条件**全部绑死 `c.userId`**，`withUser` 只决定"我和他"那一段
+        （会话行本来就是按这一对建的），传谁都查不出第三个人的话。
+     ⚠️ 这条链路只服务**自己看自己**：他人主页卡片（`/api/profile/card/{id}`）一个字都不返回，
+        所以 §10.6 红线 3「他人主页不得出现聊天记录」在服务端就是成立的，不靠前端遮。 */
+  "mine.history"(c, m) {
+    const part = String(m.part || "");
+    const limit = Math.max(1, Math.min(50, Math.trunc(num(m.limit, 30)) || 30));
+    const beforeId = Math.max(0, Math.trunc(num(m.beforeId, 0)));
+    (async () => {
+      try {
+        if (part === "ann") {
+          const args = [c.userId];
+          /* 公告表全局只留最新 50 条（`announce.post` 里那条 DELETE），所以"所有历史"
+             的上限就是库里还留着的那些；这里不再叠 7 天过滤，查的是自己名下的全部。 */
+          let sql = "SELECT id, content, created_at FROM mp_announcement WHERE user_id=? AND deleted=0";
+          if (beforeId) { sql += " AND id<?"; args.push(beforeId); }
+          sql += " ORDER BY id DESC LIMIT " + (limit + 1);       // limit 是上面夹出来的整数，没有注入面
+          const [rows] = await db().execute(sql, args);
+          const list = rows.slice(0, limit).map(r => ({ id: Number(r.id), content: r.content, at: atOf(r.created_at) }));
+          send(c, { type: "mine.history", part, beforeId, list, hasMore: rows.length > limit,
+                    oldestId: list.length ? list[list.length - 1].id : 0 });
+          return;
+        }
+        if (part === "peers") {
+          const [rows] = await db().execute(
+            "SELECT s.user_a, s.user_b, s.last_msg_at, s.last_preview, " +
+            " (SELECT COUNT(*) FROM mp_message mm WHERE mm.session_id=s.id) AS n " +
+            "FROM mp_session s WHERE s.user_a=? OR s.user_b=? " +
+            "ORDER BY s.last_msg_at IS NULL, s.last_msg_at DESC LIMIT 100",
+            [c.userId, c.userId]);
+          const list = [], ids = [];
+          for (const r of rows) {
+            const a = Number(r.user_a), b = Number(r.user_b);
+            const peer = a === c.userId ? b : a;
+            ids.push(peer);
+            list.push({ withUser: peer, count: Number(r.n) || 0, lastAt: atOf(r.last_msg_at),
+                        preview: String(r.last_preview || "") });
+          }
+          const names = new Map();
+          if (ids.length) {
+            const [ps] = await db().execute(
+              "SELECT user_id, nickname FROM mp_player WHERE user_id IN (" +
+              ids.map(() => "?").join(",") + ")", ids);
+            for (const p of ps) names.set(Number(p.user_id), p.nickname);
+          }
+          for (const it of list) it.nickname = names.get(it.withUser) || ("玩家" + it.withUser);
+          send(c, { type: "mine.history", part, list });
+          return;
+        }
+        if (part === "thread") {
+          const withUser = Math.trunc(num(m.withUser, 0));
+          if (!(withUser > 0) || withUser === c.userId) { err(c, "mine_bad_target", "不认识这个人"); return; }
+          const [x, y] = pairOf(c.userId, withUser);
+          const [sr] = await db().execute("SELECT id FROM mp_session WHERE user_a=? AND user_b=?", [x, y]);
+          if (!sr.length) {
+            send(c, { type: "mine.history", part, withUser, list: [], hasMore: false, oldestId: 0 });
+            return;
+          }
+          const args = [Number(sr[0].id)];
+          /* 和 `chat.history` 同一条查询，但**不写 `read_at`**：这是查自己的旧账，
+             不是把对方的消息摊开读了。 */
+          let sql = "SELECT id, from_user, to_user, content, created_at FROM mp_message WHERE session_id=?";
+          if (beforeId) { sql += " AND id<?"; args.push(beforeId); }
+          sql += " ORDER BY id DESC LIMIT " + (limit + 1);
+          const [rows] = await db().execute(sql, args);
+          const hasMore = rows.length > limit;
+          const list = rows.slice(0, limit).reverse().map(r => ({
+            msgId: Number(r.id), from: Number(r.from_user), to: Number(r.to_user),
+            content: r.content, at: atOf(r.created_at)
+          }));
+          send(c, { type: "mine.history", part, withUser, beforeId, list, hasMore,
+                    oldestId: list.length ? list[0].msgId : 0 });
+          return;
+        }
+        err(c, "mine_bad_part", "没有这一类记录");
+      } catch (e) {
+        console.warn("[mp][mine.history] " + e.code + " " + e.message);
+        err(c, "mine_load_failed", "记录没拉下来，关掉再点开试试");
+      }
+    })().catch(() => {});
+  },
   "look.update"(c, m) {
     if (!applyLook(c, m.look)) return;
     safeSql("UPDATE mp_player SET look_json=? WHERE user_id=?", [c.lookJson, c.userId], "look");
@@ -601,10 +700,10 @@ function normScene(s) {
   s = String(s || "out").replace(/[^a-z0-9_-]/gi, "").slice(0, 32);
   return s || "out";
 }
-/* 形象配方：只认 §8.4 那七个字段，值一律走白名单或颜色正则 ——
+/* 形象配方：只认 §8.4 那九个字段，值一律走白名单或颜色正则 ——
    网关**不信任客户端**，脏数据进 `look_json` 会把所有人的小人画崩。 */
 const LOOK_ENUM = {
-  hairStyle: ["short", "mid", "long", "ponytail", "bun", "curly"],
+  hairStyle: ["short", "mid", "long", "ponytail", "bun", "twintails"],
   eye: ["round", "narrow", "dot"],
   acc: ["none", "glasses", "cap", "scarf"]
 };
@@ -618,9 +717,11 @@ function applyLook(c, raw) {
     hairStyle: pick("hairStyle", "short"),
     hairColor: col("hairColor", "#241d1a"),
     eye: pick("eye", "round"),
+    eyeColor: col("eyeColor", "#3a2a20"),
     cloth: col("cloth", "#3f6ea8"),
     pants: col("pants", "#454c5a"),
-    acc: pick("acc", "none")
+    acc: pick("acc", "none"),
+    accColor: col("accColor", "#5a6270")
   };
   const json = JSON.stringify(look);
   if (json.length > LOOK_MAX) return false;
@@ -690,6 +791,10 @@ wss.on("connection", (ws, req) => {
       send(old, { type: "error", code: "kicked", msg: "这个账号在别处登录了" });
       close(old.ws, 4001, "同一账号在别处登录");
       byUser.delete(user.id);
+      /* ⚠️ 只 `ws.close()` 的话，旧连接要等 WS 的 close 事件才离开房间；
+         这段缝里新人已经进房，双方会把对方当成"另一个自己"塞进 welcome。
+         这里直接摘房间（`leaveRoom` 幂等，close 事件再来一次也不会重复播报）。 */
+      dropConn(old, "kicked");
     }
 
     c = {
@@ -699,10 +804,10 @@ wss.on("connection", (ws, req) => {
       rx: CFG.syncRx, ry: CFG.syncRy,
       seen: new Set(), visible: new Set(), moved: false, posDirty: false, inRoom: false,
       alive: true, lastBeat: Date.now(), helloDone: false, presenceAt: 0, kicked: false,
-      /* 私聊与公告限流（§7.4 / §7.3）：两张 Map 兼作 clientMsgId 去重表。
-         每日公告条数**不在这里记** —— 问 MySQL，刷新页面绕不过去。 */
-      chatSeen: new Map(), chatAt: 0, chatWin: 0, chatN: 0,
-      announceAt: 0, annSeen: new Map()
+      /* 私聊与公告的 clientMsgId 去重表。限流口径**不在这里记** ——
+         私聊 1 s / 30 条每分钟、公告 30 s 与每日 20 条全部以 MySQL 为准，
+         否则刷新页面或重连就把计数器清零了。`announceAt` 只当省查询的快判。 */
+      chatSeen: new Map(), announceAt: 0, annSeen: new Map()
     };
     byUser.set(user.id, c);
     const queued = inbox.splice(0, inbox.length);

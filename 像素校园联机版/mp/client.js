@@ -33,7 +33,8 @@ const MP = {
   openAt: 0,             // ws 打开的时刻：10 秒等不到 welcome 就当这次报到废了
   ticks: 0,              // 100 ms 计数：150 拍 = 15 s 心跳
   silence: 0,            // 距上次收到任何消息的拍数
-  lastNotice: 0
+  lastNotice: 0,
+  kickToken: ""          // 被 4001 顶掉时手里那张票：票换了才允许重新连
 };
 const MP_LERP_MS = 120;          // §7.1 客户端插值窗口
 const MP_SEND_MS = 100;          // §7.1 上报频率 10 Hz
@@ -53,7 +54,8 @@ function mpSceneOf(key) { return MP_SCENES[key] || String(key || "out"); }
    协议里那七个字段一个字都不改。 */
 function mpMyLookFallback() {
   return { skin: "#e9bb92", hairStyle: "short", hairColor: "#241d1a", eye: "round",
-           cloth: "#3f6ea8", pants: "#454c5a", acc: "none" };
+           eyeColor: "#3a2a20", cloth: "#3f6ea8", pants: "#454c5a", acc: "none",
+           accColor: "#5a6270" };
 }
 function mpMyLook() {
   try {
@@ -225,6 +227,7 @@ function mpOnClose(ev) {
   MP.ws = null;
   mpClearPeers();
   if (ev && ev.code === 4001) {              // 同一账号在别处登录 ⇒ **不自动重连**（§6.1）
+    MP.kickToken = mpTicket();               // 记住被踢时那张票，换票后才允许翻身
     MP.state = "kicked";
     mpNotice("这个账号在别处登录，本页已断开联机", "crit", 4000);
     mpHud();
@@ -332,8 +335,10 @@ function mpOnMessage(m) {
     case "pong": MP.ticks = 0; return;
     default:
       /* `chat.*` / `announce.*` / `presence` 交给 mp/chat.js；它没加载（单机回落、
-         文件没拷）就当没收到，绝不报错。返回真值表示"这条有人接了"。 */
-      if (typeof mpNetMessage === "function") mpNetMessage(m);
+         文件没拷）就当没收到，绝不报错。返回真值表示"这条有人接了"。
+         接不住再给 mp/profile.js 一次（`mine.history` = 自己的发言记录，模块 6）。 */
+      if (typeof mpNetMessage === "function" && mpNetMessage(m)) return;
+      if (typeof mpProfMessage === "function") mpProfMessage(m);
       return;
   }
 }
@@ -430,17 +435,36 @@ function mpPeerSprite(p) {
   if (p.look && typeof charSpriteOf === "function") return charSpriteOf(p.look, p.dir, p.step);
   return charSprite(p.dir, p.step);
 }
-function mpNickLabel(g, text, cx, cyTop) {
-  /* §7.1：12 px 深色描边白字 + 深色底衬。字号是**屏幕像素**，不随缩放变大。 */
+function mpNickText(p, mode) {
+  /* `mode==="id"`：全局视角只留 `#ID` —— 昵称最长七八个字，那个档位下一个人只有
+     4~6 背板像素宽，整条牌比半条路还长（用户："缩小至全局后 id 好大"）。 */
+  if (mode === "id") return "#" + p.id;
+  return (p.nickname || "玩家") + "#" + p.id;
+}
+/* 名牌分三档（用户：地图缩到全局时满屏都是 12 px 的灰底牌，比人还大）：
+   · zoom ≥ 1 ⇒ 原样 12 px + 昵称#ID（§7.1「字号是屏幕像素，不随缩放变大」本来讲的是正常视角）
+   · 1/4 ≤ zoom < 1 ⇒ 9 px + 只有 #ID
+   · zoom < 1/4（1/6、1/8、FIT 这三档全局）⇒ **不画**：这时候两个人落地线只差一两个像素，
+     任何字号都只是糊成一片灰底，"谁在哪"交给脚下那圈光环，不靠牌 */
+function mpNickMode(zoom) {
+  const z = Number(zoom);
+  const k = z > 0 ? z : 1;
+  return k >= 1 ? "full" : k >= 0.25 ? "id" : "off";
+}
+function mpNickLabel(g, text, cx, cyTop, fs) {
+  /* §7.1：深色描边白字 + 深色底衬；12 px 是正常视角的规格，缩小视角由 `mpNickMode` 递减。 */
   if (!text) return;
+  const size = fs > 0 ? fs : 12;
   g.save();
-  g.font = '12px ui-monospace, Consolas, "Courier New", monospace';
+  g.font = size + 'px ui-monospace, Consolas, "Courier New", monospace';
   g.textAlign = "center";
   g.textBaseline = "middle";
   const w = g.measureText(text).width;
+  const pad = size >= 10 ? 3 : 2;
+  const h = size + 4;
   g.fillStyle = "rgba(13,15,19,.72)";
-  g.fillRect(Math.round(cx - w / 2) - 3, Math.round(cyTop) - 8, Math.round(w) + 6, 16);
-  g.lineWidth = 3;
+  g.fillRect(Math.round(cx - w / 2) - pad, Math.round(cyTop) - h / 2, Math.round(w) + pad * 2, h);
+  g.lineWidth = Math.max(1, Math.round(size / 4));
   g.strokeStyle = "rgba(10,12,16,.92)";
   g.lineJoin = "round";
   g.strokeText(text, cx, cyTop);
@@ -474,7 +498,7 @@ function mpCollectPeers(drawList, ox, oy, vw, vh) {
     if (++n > 30) break;                                     // §7.1 同场景 ≤30 人，超出不画，也不报错
     drawList.push({
       img: mpPeerSprite(p), ax: CH_AX, ay: CH_AY,
-      x: p.x, y: p.y, baseY: p.y, mp: "peer", mpId: p.id, nick: p.nickname
+      x: p.x, y: p.y, baseY: p.y, mp: "peer", mpId: p.id, nick: mpNickText(p)
     });
   }
 }
@@ -489,21 +513,39 @@ function mpPeerHoverRing(g, fx, fy, zoom) {
   g.stroke();
   g.restore();
 }
-/* 主循环画完一个条目之后叫我一眼：self ⇒ 光环，peer ⇒ 头顶昵称（+ 悬停光圈）。 */
+/* 主循环画完一个条目之后叫我一眼：self ⇒ 光环，peer ⇒ 头顶昵称（+ 悬停光圈）。
+   字号与内容按 `mpNickMode(zoom)` 分档，全局视角下牌面会明显变小、只剩 `#ID`，
+   再小就不画了（脚下水波纹、光圈这些都不受影响，照常画）。 */
 function mpDrawDecor(g, it, dx, dy, zoom) {
+  const mode = mpNickMode(zoom);
   if (it.mp === "self") {
-    if (MP.state === "online") mpSelfRing(g, dx + CH_AX * zoom, dy + CH_AY * zoom, zoom);
+    if (MP.state !== "online") return;
+    mpSelfRing(g, dx + CH_AX * zoom, dy + CH_AY * zoom, zoom);
+    /* 自己头顶也挂一块牌：一张图上十几个人走动，光靠"哪个是青色圈"不够，
+       要的是"每个人头顶都能读出是谁"（用户：联机时人物在地图上走动 id 可视）。 */
+    if (mode !== "off")
+      mpNickLabel(g, mpNickText({ nickname: mpMyNickname(), id: mpMyId() }, mode),
+                  dx + CH_AX * zoom, dy - 9, mode === "id" ? 9 : 12);
     return;
   }
   if (it.mp !== "peer") return;
   if (typeof MP_CHAT !== "undefined" && MP_CHAT && MP_CHAT.hover === it.mpId)
     mpPeerHoverRing(g, dx + CH_AX * zoom, dy + CH_AY * zoom, zoom);
-  mpNickLabel(g, it.nick, dx + CH_AX * zoom, dy - 9);
+  if (mode === "off") return;
+  mpNickLabel(g, mode === "id" ? ("#" + it.mpId) : it.nick,
+              dx + CH_AX * zoom, dy - 9, mode === "id" ? 9 : 12);
 }
 
 /* --- 10. 室内：房间画布上那几个同类 ----------------------------------
    `ctrDraw()` 那一段本来就按脚点 y 排序（玩家 + NPC 两个），我把同事塞进同一个数组，
    遮挡关系与室外同一条规矩。 */
+/* 室内那块画布的 `Z = ctrZoom()` 恒 ≥1（`Math.max(1, …)`），所以这里三档里只会走到
+   `full` 或 `off`；写成同一个 `mpNickMode` 是为了将来房间也支持缩小时不用再改一遍。 */
+function mpIndoorLabel(g, p, Z, x, yTop) {
+  const mode = mpNickMode(Z);
+  if (mode === "off") return;
+  mpNickLabel(g, mpNickText(p, mode), x, yTop, mode === "id" ? 9 : 12);
+}
 function mpIndoorPeers(g, Z, ox, oy) {
   const out = [];
   if (MP.state !== "online" || MP.scene === "out") return out;
@@ -521,7 +563,7 @@ function mpIndoorPeers(g, Z, ox, oy) {
         g.setTransform(1, 0, 0, 1, 0, 0);
         if (typeof MP_CHAT !== "undefined" && MP_CHAT && MP_CHAT.hover === p.id)
           mpPeerHoverRing(g, ox + p.x * Z, oy + p.y * Z, Z);
-        mpNickLabel(g, p.nickname, ox + p.x * Z, oy + (p.y - CH_AY) * Z - 9);
+        mpIndoorLabel(g, p, Z, ox + p.x * Z, oy + (p.y - CH_AY) * Z - 9);
         g.restore();
       }
     });
@@ -533,6 +575,8 @@ function mpIndoorSelfRing(g, Z, ox, oy) {
   g.save();
   g.setTransform(1, 0, 0, 1, 0, 0);
   mpSelfRing(g, ox + CENTER.x * Z, oy + CENTER.y * Z, Z);
+  mpIndoorLabel(g, { nickname: mpMyNickname(), id: mpMyId() }, Z,
+                ox + CENTER.x * Z, oy + (CENTER.y - CH_AY) * Z - 9);
   g.restore();
 }
 
@@ -562,10 +606,15 @@ function mpWatchTicket() {
   const tok = mpTicket();
   if (!tok) {
     if (MP.state === "online" || MP.state === "connecting") { mpClose("logout"); mpSolo("logout"); }
+    else if (MP.state === "kicked") { MP.state = "off"; MP.kickToken = ""; mpHud(); }
     else if (MP.state === "solo") { MP.state = "off"; MP.attempts = 0; mpHud(); }
     return;
   }
-  if (MP.state === "kicked") return;                    // 被踢这一页就不自己翻身上去
+  /* 被踢：只有**票换了**（重新登录）才允许再连，同一张票不自己翻身上去。 */
+  if (MP.state === "kicked") {
+    if (tok === MP.kickToken) return;
+    MP.state = "off"; MP.kickToken = ""; MP.attempts = 0;
+  }
   if (MP.state === "solo" || MP.state === "retrying") return;   // 退避定时器在路上，别抢它的节奏
   if (MP.state !== "online" && MP.state !== "connecting") {
     MP.attempts = 0;                    // 全新一次登录 ⇒ 从零数起

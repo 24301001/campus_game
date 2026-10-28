@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS `mp_player` (
     `college` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '学院（下拉选择）',
     `grade` VARCHAR(8) NOT NULL DEFAULT '' COMMENT '年级（下拉选择）',
     `tags` VARCHAR(128) NOT NULL DEFAULT '[]' COMMENT '兴趣标签，JSON 数组，≤5 个',
+    `privacy_json` VARCHAR(128) NOT NULL DEFAULT '{}' COMMENT '主页可见性：{"bio":false,...}，缺省=公开（个人中心「公开/隐藏」）',
     `last_x` INT NOT NULL DEFAULT 0 COMMENT '上次落点 X（世界像素）',
     `last_y` INT NOT NULL DEFAULT 0 COMMENT '上次落点 Y（世界像素）',
     `last_scene` VARCHAR(32) NOT NULL DEFAULT 'out' COMMENT '上次所在场景',
@@ -133,3 +134,26 @@ CREATE TABLE IF NOT EXISTS `mp_ticket` (
     `expires_at` DATETIME NOT NULL COMMENT '过期时间',
     PRIMARY KEY (`user_id`, `service`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='四家 NPC 服务票据';
+
+-- ---------------------------------------------
+-- 七、老库补列：`mp_player.privacy_json`（个人主页「公开 / 隐藏」）
+-- ---------------------------------------------
+-- 上面那张 CREATE TABLE 带这列，是给**新库**的；已经建好表的老库走这一段。
+-- MySQL 没有 `ADD COLUMN IF NOT EXISTS`，所以沿用本文件开头那套存储过程守卫，可重复执行。
+
+DROP PROCEDURE IF EXISTS `mp_add_player_privacy_column`;
+DELIMITER $$
+CREATE PROCEDURE `mp_add_player_privacy_column`()
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME = 'mp_player'
+                      AND COLUMN_NAME = 'privacy_json') THEN
+        ALTER TABLE `mp_player`
+            ADD COLUMN `privacy_json` VARCHAR(128) NOT NULL DEFAULT '{}'
+                COMMENT '主页可见性：{"bio":false,...}，缺省=公开（个人中心「公开/隐藏」）' AFTER `tags`;
+    END IF;
+END$$
+DELIMITER ;
+CALL `mp_add_player_privacy_column`();
+DROP PROCEDURE IF EXISTS `mp_add_player_privacy_column`;

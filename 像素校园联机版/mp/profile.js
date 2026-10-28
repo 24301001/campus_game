@@ -36,7 +36,7 @@ const PF_BIO_MAX = 40, PF_TAG_MAX = 5, PF_TAG_LEN = 6;
 
 /* --- 0. 与 8081 说话 -------------------------------------------------
    ⚠️ 走同源相对路径 `/api/...`：浏览器直开 HTML（file://）时 fetch 必然失败，
-      面板就如实说"连不上服务器"，绝不假装保存成功。 */
+      面板就如实说"无法连接服务器"，绝不假装保存成功。 */
 function pfToken() {
   try { return typeof mpTicket === "function" ? (mpTicket() || "") : (localStorage.getItem("token") || ""); }
   catch (e) { return ""; }
@@ -44,7 +44,7 @@ function pfToken() {
 function pfLogged() { return !!pfToken(); }
 function pfApi(method, path, body) {
   const tok = pfToken();
-  if (!tok) return Promise.reject(new Error("先登录"));
+  if (!tok) return Promise.reject(new Error("请先登录"));
   const opt = {
     method: method,
     credentials: "same-origin",
@@ -52,7 +52,7 @@ function pfApi(method, path, body) {
   };
   if (body !== undefined) opt.body = JSON.stringify(body);
   return fetch(path, opt).then(r => r.json().catch(() => null)).then(j => {
-    if (!j) throw new Error("连不上服务器（8081）");
+    if (!j) throw new Error("无法连接服务器");
     if (j.code !== 200) throw new Error(j.message || "请求失败");
     return j.data;
   });
@@ -195,20 +195,30 @@ function pfCloseMenu() {
 const PF_HTML = `
 <div class="pfMask"></div>
 <div class="pfCard">
-  <div class="pfHead"><b>个人中心</b><span class="pfSub">改完点保存才落到服务器</span><button type="button" class="pfX" title="关闭（Esc）">✕</button></div>
+  <div class="pfHead"><b>个人中心</b><span class="pfSub">修改后需点击保存生效</span><button type="button" class="pfX" title="关闭（Esc）">✕</button></div>
   <div class="pfBody">
     <div class="pfLeft">
       <div class="pfPrev"></div>
-      <button type="button" class="pfLook">换形象 · 传照片</button>
+      <button type="button" class="pfLook">更换形象 · 上传照片</button>
       <div class="pfStudio" hidden></div>
     </div>
     <div class="pfRight">
-      <div class="pfRow"><label>昵称</label><div class="pfFix"><span class="pfNick">…</span><i>🔒 注册名，不可更改</i></div></div>
-      <div class="pfRow"><label>签名</label><div class="pfWrap"><textarea class="pfBio" rows="2" placeholder="一句话说给自己听"></textarea><i class="pfCnt">0/40</i></div></div>
+      <div class="pfRow"><label>昵称</label><div class="pfFix"><span class="pfNick">…</span><i>注册后不可修改</i></div></div>
+      <div class="pfRow"><label>签名</label><div class="pfWrap"><textarea class="pfBio" rows="2" placeholder="请输入个人简介"></textarea><i class="pfCnt">0/40</i></div></div>
       <div class="pfRow"><label>学院</label><select class="pfCollege"></select></div>
       <div class="pfRow"><label>年级</label><select class="pfGrade"></select></div>
-      <div class="pfRow"><label>兴趣</label><div class="pfWrap"><div class="pfTags"></div><input class="pfTagIn" placeholder="+ 添加"><i class="pfTagCnt">0/5</i></div></div>
-      <div class="pfRow"><label>我的数据</label><div class="pfStats">…</div></div>
+      <div class="pfRow"><label>兴趣</label><div class="pfWrap"><div class="pfTags"></div><input class="pfTagIn" placeholder="输入兴趣后回车添加"><i class="pfTagCnt">0/5</i></div></div>
+      <div class="pfRow"><label>主页可见</label><div class="pfWrap"><div class="pfPv"></div><i class="pfPvTip">「隐藏」只影响别人点开你主页时看到的内容；地图上的小人、公告与聊天的署名照常可见，那两样藏不住。</i></div></div>
+      <div class="pfRow"><label>我的数据</label><div class="pfFix"><span class="pfStats">…</span><button type="button" class="pfHB">点开查询发言记录</button></div></div>
+      <div class="pfHist" hidden>
+        <div class="pfHTop">
+          <button type="button" class="pfHTab" data-tab="ann">我的公告</button>
+          <button type="button" class="pfHTab" data-tab="chat">我的私聊</button>
+          <span class="pfHHint"></span>
+          <button type="button" class="pfHMin">收起</button>
+        </div>
+        <div class="pfHList"></div>
+      </div>
     </div>
   </div>
   <div class="pfFoot"><span class="pfMsg"></span><button type="button" class="pfCancel">取消</button><button type="button" class="pfSave">保存</button></div>
@@ -227,9 +237,13 @@ function pfEnsurePanel() {
     college: box.querySelector(".pfCollege"), grade: box.querySelector(".pfGrade"),
     tags: box.querySelector(".pfTags"), tagIn: box.querySelector(".pfTagIn"),
     tagCnt: box.querySelector(".pfTagCnt"), stats: box.querySelector(".pfStats"),
+    pv: box.querySelector(".pfPv"),
     prev: box.querySelector(".pfPrev"), studio: box.querySelector(".pfStudio"),
     look: box.querySelector(".pfLook"), msg: box.querySelector(".pfMsg"),
-    save: box.querySelector(".pfSave")
+    save: box.querySelector(".pfSave"),
+    hb: box.querySelector(".pfHB"), hist: box.querySelector(".pfHist"),
+    hList: box.querySelector(".pfHList"), hMin: box.querySelector(".pfHMin"),
+    hHint: box.querySelector(".pfHHint"), hTabs: box.querySelectorAll(".pfHTab")
   };
   MP_PROF.panel = box;
   MP_PROF.pfEls = els;
@@ -240,10 +254,21 @@ function pfEnsurePanel() {
   els.save.addEventListener("click", pfSave);
   els.look.addEventListener("click", () => pfToggleStudio());
 
+  /* 发言记录（§10.3「我的数据」）：点开才查，公告与私聊分两个页签。 */
+  els.hb.addEventListener("click", () => pfHistToggle());
+  els.hMin.addEventListener("click", () => pfHistToggle(false));
+  for (const tb of els.hTabs) tb.addEventListener("click", () => pfHistTab(tb.getAttribute("data-tab")));
+  els.hList.addEventListener("click", pfHistClick);
+
   /* 键盘交接（§7.2.4）：面板开着的时候地图不许接走任何按键。 */
   box.tabIndex = -1;
   pfGrabKeys(box);
-  box.addEventListener("keydown", e => { if (e.key === "Escape") { e.preventDefault(); pfClosePanel(); } });
+  box.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    e.preventDefault();
+    if (pfHistShown()) { pfHistToggle(false); return; }   // Esc 两段：先收记录，再关面板
+    pfClosePanel();
+  });
 
   els.bio.addEventListener("input", () => pfBioCount());
   els.tagIn.addEventListener("keydown", e => {
@@ -255,7 +280,7 @@ function pfEnsurePanel() {
 function pfOpenPanel() {
   const box = pfEnsurePanel();
   if (!pfLogged()) {
-    pfPanelMsg("单机模式没有个人中心：先登录才能改档案", "warn");
+    pfPanelMsg("当前为单机模式，个人中心需登录后使用", "warn");
     box.hidden = false;
     pfFocusTop(box);
     return;
@@ -264,15 +289,16 @@ function pfOpenPanel() {
   pfFocusTop(box);
   MP_PROF.openAt = Date.now();
   pfReleaseKeys();
-  pfPanelMsg("正在读你的档案…", "");
+  pfPanelMsg("正在读取…", "");
   pfApi("GET", "/api/profile/me").then(data => {
-    if (!data) throw new Error("没读到档案");
+    if (!data) throw new Error("读取失败，请刷新页面后重试");
     MP_PROF.me = data;
     MP_PROF.draft = {
       bio: String(data.bio || ""),
       college: String(data.college || ""),
       grade: String(data.grade || ""),
       tags: (Array.isArray(data.tags) ? data.tags : []).slice(),
+      privacy: pfPrivacyOf(data.privacy),
       look: data.look || null
     };
     pfFillPanel(data);
@@ -283,6 +309,7 @@ function pfClosePanel() {
   if (document.activeElement === MP_PROF.panel) MP_PROF.panel.blur();
   MP_PROF.panel.hidden = true;
   MP_PROF.draft = null;
+  pfHistReset();
   pfReleaseKeys();
   if (typeof mpChatFocus === "function" && typeof MP_CHAT !== "undefined" && MP_CHAT && MP_CHAT.open) mpChatFocus();
 }
@@ -292,12 +319,14 @@ function pfFillPanel(d) {
   els.bio.value = MP_PROF.draft.bio;
   if (d.limits && d.limits.bio) els.bio.maxLength = Number(d.limits.bio) || PF_BIO_MAX;
   pfBioCount();
-  pfFillSelect(els.college, d.colleges || [], MP_PROF.draft.college, "（还没选学院）");
-  pfFillSelect(els.grade, d.grades || [], MP_PROF.draft.grade, "（还没选年级）");
+  pfFillSelect(els.college, d.colleges || [], MP_PROF.draft.college, "（学院待选择）");
+  pfFillSelect(els.grade, d.grades || [], MP_PROF.draft.grade, "（年级待选择）");
   const st = d.stats || {};
-  /* 数据统计**只有自己看得到**（§10.2 / §10.6 红线 3）：这里只显示数量，不显示任何一条内容。 */
-  els.stats.textContent = "公告 " + (st.announcements || 0) + " 条 · 聊过 " + (st.chatPeers || 0) + " 人";
+  /* 数据统计**只有自己看得到**（§10.2 / §10.6 红线 3）：这里只有数量，
+     旁边那颗「点开查询」查的也是自己名下的那一份（§3.5），他人卡片上没有这一行。 */
+  els.stats.textContent = "公告 " + (st.announcements || 0) + " 条 · 私聊 " + (st.chatPeers || 0) + " 人";
   pfRenderTags();
+  pfRenderPrivacy();
   pfDrawPrev(MP_PROF.draft.look);
   pfPanelMsg("", "");
 }
@@ -333,8 +362,8 @@ function pfAddTag(raw) {
   if (!tag) return;
   if (pfCodePoints(tag) > PF_TAG_LEN) return pfPanelMsg("每个兴趣标签最多 " + PF_TAG_LEN + " 字", "warn");
   const list = pfTags();
-  if (list.indexOf(tag) >= 0) return pfPanelMsg("「" + tag + "」已经贴上了", "warn");
-  if (list.length >= PF_TAG_MAX) return pfPanelMsg("兴趣标签最多 " + PF_TAG_MAX + " 个，先摘一个再贴", "warn");
+  if (list.indexOf(tag) >= 0) return pfPanelMsg("「" + tag + "」已添加", "warn");
+  if (list.length >= PF_TAG_MAX) return pfPanelMsg("兴趣标签最多 " + PF_TAG_MAX + " 个，请先移除一个再添加", "warn");
   list.push(tag);
   pfRenderTags();
   pfPanelMsg("", "");
@@ -350,7 +379,7 @@ function pfRenderTags() {
     label.textContent = tag;
     const x = document.createElement("i");
     x.textContent = "×";
-    x.title = "摘掉";
+    x.title = "移除";
     x.addEventListener("click", () => { pfTags().splice(i, 1); pfRenderTags(); });
     chip.appendChild(label); chip.appendChild(x);
     host.appendChild(chip);
@@ -360,13 +389,56 @@ function pfRenderTags() {
   MP_PROF.pfEls.tagIn.disabled = list.length >= PF_TAG_MAX;
 }
 
+/* --- 主页可见性（用户："新增公开和隐藏，自定义调节别人能看到什么"） -----
+   ⚠️ 真正的裁剪在 8081 的 `card()` 里：隐藏项**连键都不返回**，这里只是把开关画出来、
+      把人设的意图存回去。前端不画不等于看不见，所以这份设置不能只留在浏览器里。
+   ⚠️ 键名单由服务端 `profile.privacyKeys` 下发（后端只认那几个键）——
+      名单之外多出来的键会被 `pfPrivacyOf` 丢掉，避免把任意字段写进库里那列。 */
+const PF_PV_LABEL = { bio: "签名", college: "学院", grade: "年级", tags: "兴趣", online: "在线状态" };
+function pfPrivacyKeys(d) {
+  const fromServer = d && Array.isArray(d.privacyKeys) ? d.privacyKeys : null;
+  const list = fromServer || Object.keys(PF_PV_LABEL);
+  const out = [];
+  for (const key of list) if (PF_PV_LABEL[key] && out.indexOf(key) < 0) out.push(key);
+  return out;
+}
+/** 归一化成 `{bio:true, college:true, …}`：缺省一律按「公开」，与后端 `parsePrivacy` 同一口径。 */
+function pfPrivacyOf(raw, keys) {
+  const src = (raw && typeof raw === "object") ? raw : {};
+  const out = {};
+  for (const key of (keys || Object.keys(PF_PV_LABEL))) out[key] = src[key] !== false && src[key] !== 0 && src[key] !== "false";
+  return out;
+}
+function pfRenderPrivacy() {
+  const host = MP_PROF.pfEls && MP_PROF.pfEls.pv;
+  if (!host || !MP_PROF.draft) return;
+  const keys = pfPrivacyKeys(MP_PROF.me);
+  MP_PROF.draft.privacy = pfPrivacyOf(MP_PROF.draft.privacy, keys);
+  host.textContent = "";
+  for (const key of keys) {
+    const on = MP_PROF.draft.privacy[key];
+    const it = document.createElement("button");
+    it.type = "button";
+    it.className = "pfPvIt " + (on ? "on" : "off");
+    it.dataset.k = key;
+    it.setAttribute("aria-pressed", on ? "true" : "false");
+    it.innerHTML = "<b>" + PF_PV_LABEL[key] + "</b><i>" + (on ? "公开" : "隐藏") + "</i>";
+    it.title = on ? "别人点开你的主页能看到这一项，点击改为隐藏" : "别人点开你的主页看不到这一项，点击改为公开";
+    it.addEventListener("click", () => {
+      MP_PROF.draft.privacy[key] = !MP_PROF.draft.privacy[key];
+      pfRenderPrivacy();
+    });
+    host.appendChild(it);
+  }
+}
+
 /* --- 形象：默认只露四向预览，点开才上是模块 3 那间试衣间 --------------- */
 function pfDrawPrev(look) {
   const host = MP_PROF.pfEls.prev;
   host.textContent = "";
   if (typeof charSpriteOf !== "function" || typeof mkCanvas !== "function") {
     const tip = document.createElement("i");
-    tip.textContent = "形象文件没加载（mp/look.js）";
+    tip.textContent = "形象组件未加载，请刷新页面后重试";
     host.appendChild(tip);
     return;
   }
@@ -391,7 +463,7 @@ function pfToggleStudio(force) {
   if (show && !host.dataset.built) {
     if (typeof mpLookStudio !== "function") {
       const tip = document.createElement("i");
-      tip.textContent = "形象文件没加载（mp/look.js）";
+      tip.textContent = "形象组件未加载，请刷新页面后重试";
       host.appendChild(tip);
     } else {
       /* 试衣间自己就画四向预览 + 72px 头像，所以打开它的时候把上面那块收起来，
@@ -404,7 +476,7 @@ function pfToggleStudio(force) {
   }
   host.hidden = !show;
   MP_PROF.pfEls.prev.hidden = show;
-  MP_PROF.pfEls.look.textContent = show ? "收起试衣间" : "换形象 · 传照片";
+  MP_PROF.pfEls.look.textContent = show ? "收起形象编辑" : "更换形象 · 上传照片";
 }
 
 function pfPanelMsg(text, kind) {
@@ -421,21 +493,209 @@ function pfSave() {
     college: MP_PROF.pfEls.college.value || "",
     grade: MP_PROF.pfEls.grade.value || "",
     tags: pfTags(),
+    privacy: MP_PROF.draft.privacy || undefined,
     look: MP_PROF.draft.look || undefined
   };
   if (pfCodePoints(body.bio) > PF_BIO_MAX) return pfPanelMsg("签名最多 " + PF_BIO_MAX + " 字", "warn");
   MP_PROF.saving = true;
   MP_PROF.pfEls.save.disabled = true;
-  pfPanelMsg("保存中…", "");
+  pfPanelMsg("正在保存…", "");
   pfApi("PUT", "/api/profile/me", body).then(data => {
     MP_PROF.me = data;
     pfFillPanel(data);
-    pfPanelMsg("已经存好了", "ok");
-    if (typeof mpNotice === "function") mpNotice("个人中心已保存", "ok", 2200);
+    pfPanelMsg("保存成功", "ok");
+    if (typeof mpNotice === "function") mpNotice("个人主页已保存", "ok", 2200);
   }).catch(e => pfPanelMsg(e.message, "crit")).then(() => {
     MP_PROF.saving = false;
     MP_PROF.pfEls.save.disabled = false;
   });
+}
+
+/* --- 3.5 自己的发言记录（§10.3「我的数据」点开查询）--------------------
+   两个页签：**公告**与**私聊**分开列；私聊先列"我和谁聊过"，点开某个人才展开
+   和他那一段 —— 就是"分私聊对象查看"。
+   ⚠️ 数据走 8090 网关的 `mine.history`（§6.1 冻结表没有这一类，和 `chat.read` 一样
+      是最小扩展）：8081 的 `/api/profile/card/{id}` 根本不返回消息内容，所以
+      「其他人查看主页不可看到聊天记录」（§10.6 红线 3）在服务端就成立，
+      不是靠这里不渲染。三条 SQL 的用户条件全部绑死连接自己的 `userId`，
+      `withUser` 只决定"我和他"那一段，换谁的号都查不出第三个人的话。
+   ⚠️ 公告全服只留最新 50 条（`announce.post` 里那条修剪），"所有历史"的上限
+      就是库里还留着的那些 —— 页签上如实写一句，不假装能翻到无穷远。 */
+const PF_H_PAGE = 30;
+function pfHistState() {
+  if (!MP_PROF.hist) MP_PROF.hist = {
+    open: false, tab: "ann",
+    ann: { list: [], hasMore: false, oldest: 0, loading: false, loaded: false },
+    peers: { list: [], loading: false, loaded: false },
+    thread: Object.create(null)                 // withUser -> {list, hasMore, oldest, loading, open}
+  };
+  return MP_PROF.hist;
+}
+function pfHistShown() { return !!(MP_PROF.hist && MP_PROF.hist.open && MP_PROF.panel && !MP_PROF.panel.hidden); }
+function pfHistReset() { MP_PROF.hist = null; const els = MP_PROF.pfEls; if (els) { els.hist.hidden = true; els.hb.textContent = "点开查询发言记录"; } }
+function pfWsReady() { return typeof MP !== "undefined" && !!MP && MP.state === "online" && typeof mpSend === "function"; }
+function pfHistReq(q) {
+  if (!pfWsReady()) return false;
+  try { mpSend(Object.assign({ type: "mine.history" }, q)); return true; } catch (e) { return false; }
+}
+function pfHistToggle(force) {
+  const els = MP_PROF.pfEls; if (!els) return;
+  const st = pfHistState();
+  st.open = (typeof force === "boolean") ? force : !st.open;
+  els.hist.hidden = !st.open;
+  els.hb.textContent = st.open ? "收起发言记录" : "点开查询发言记录";
+  if (st.open) pfHistTab(st.tab, true); else els.hList.innerHTML = "";
+}
+function pfHistTab(tab, force) {
+  const st = pfHistState(), els = MP_PROF.pfEls;
+  if (!els) return;
+  st.tab = tab;
+  for (const tb of els.hTabs) tb.classList.toggle("on", tb.getAttribute("data-tab") === tab);
+  if (tab === "ann") { if (force || !st.ann.loaded) pfHistLoadAnn(); else pfHistPaintAnn(); return; }
+  pfHistPaintPeers();
+  if (force || !st.peers.loaded) pfHistLoadPeers();
+}
+function pfHistLoadPeers() {
+  const st = pfHistState();
+  if (st.peers.loading) return;
+  st.peers.loading = true;
+  pfHistPaintPeers();
+  if (!pfHistReq({ part: "peers" })) { st.peers.loading = false; pfHistPaintPeers(); }
+}
+function pfHistLoadAnn() {
+  const st = pfHistState();
+  if (st.ann.loading) return;
+  st.ann.loading = true;
+  pfHistPaintAnn();
+  if (!pfHistReq({ part: "ann", limit: PF_H_PAGE })) { st.ann.loading = false; pfHistPaintAnn(); }
+}
+function pfHistMoreAnn() {
+  const st = pfHistState();
+  if (st.ann.loading || !st.ann.hasMore || !st.ann.oldest) return;
+  st.ann.loading = true;
+  pfHistPaintAnn();
+  if (!pfHistReq({ part: "ann", limit: PF_H_PAGE, beforeId: st.ann.oldest })) { st.ann.loading = false; pfHistPaintAnn(); }
+}
+function pfHistThread(id) {
+  const st = pfHistState();
+  /* 新建的这一段默认是**收起**的：只有点了那行名字才展开并去查。 */
+  return st.thread[id] || (st.thread[id] = { list: [], hasMore: false, oldest: 0, loading: false, loaded: false, open: false });
+}
+function pfHistOpenThread(id) {
+  const t = pfHistThread(id);
+  if (t.loaded || t.loading) return;
+  t.loading = true;
+  pfHistReq({ part: "thread", withUser: id, limit: PF_H_PAGE });
+}
+function pfHistMoreThread(id) {
+  const t = pfHistThread(id);
+  if (t.loading || !t.hasMore || !t.oldest) return;
+  t.loading = true;
+  pfHistPaintPeers();
+  if (!pfHistReq({ part: "thread", withUser: id, limit: PF_H_PAGE, beforeId: t.oldest })) {
+    t.loading = false; pfHistPaintPeers();
+  }
+}
+function pfTime(ms) {
+  const d = new Date(Number(ms) || 0);
+  const p = n => (n < 10 ? "0" + n : String(n));
+  return p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+function pfHistHint(text) { MP_PROF.pfEls.hHint.textContent = text || ""; }
+function pfHistList(html) { MP_PROF.pfEls.hList.innerHTML = html; }
+function pfHistPaintAnn() {
+  const st = pfHistState(), els = MP_PROF.pfEls;
+  if (!pfWsReady()) { pfHistHint(""); pfHistList('<div class="pfHNone">联机没连上（' + ((typeof MP !== "undefined" && MP && MP.state) || "off") + '），发言记录要联机时才查得到。</div>'); return; }
+  if (st.ann.loading && !st.ann.list.length) { pfHistHint("正在查…"); pfHistList('<div class="pfHNone">正在查…</div>'); return; }
+  const rows = st.ann.list.map(it =>
+    '<div class="pfHItem"><span class="pfHTx">' + pfEsc(it.content) + '</span><i class="pfHTime">' + pfTime(it.at) + '</i></div>');
+  if (st.ann.hasMore) rows.push('<button type="button" class="pfHMore" data-act="more-ann"' +
+    (st.ann.loading ? " disabled" : "") + '>' + (st.ann.loading ? "正在查…" : "查看更早的记录") + "</button>");
+  pfHistHint(st.ann.list.length ? "共 " + st.ann.list.length + " 条" : "");
+  pfHistList(rows.length ? rows.join("") : '<div class="pfHNone">还没有查到属于你的公告。</div>');
+}
+function pfHistPaintPeers() {
+  const st = pfHistState();
+  if (!pfWsReady()) { pfHistHint(""); pfHistList('<div class="pfHNone">联机没连上（' + ((typeof MP !== "undefined" && MP && MP.state) || "off") + '），发言记录要联机时才查得到。</div>'); return; }
+  if (st.peers.loading && !st.peers.list.length) { pfHistHint("正在查…"); pfHistList('<div class="pfHNone">正在查…</div>'); return; }
+  const rows = st.peers.list.map(p => {
+    const t = st.thread[p.withUser];
+    const head = '<button type="button" class="pfHPeer" data-act="peer" data-id="' + p.withUser + '">' +
+      '<b>' + pfEsc(p.nickname || ("玩家" + p.withUser)) + '</b>' +
+      '<i>' + (p.count || 0) + " 条" + (p.lastAt ? " · " + pfTime(p.lastAt) : "") + '</i>' +
+      '<em>' + (t && t.open ? "收起" : "展开") + '</em></button>';
+    return '<div class="pfHOne">' + head + '<div class="pfHBody"' + (t && t.open ? "" : " hidden") + '>' + pfHistThreadHtml(p, t) + '</div></div>';
+  });
+  pfHistHint(st.peers.list.length ? "聊过 " + st.peers.list.length + " 个人" : "");
+  pfHistList(rows.length ? rows.join("") : '<div class="pfHNone">还没有私聊过任何人。</div>');
+}
+function pfHistThreadHtml(peer, t) {
+  const me = pfMyId();
+  if (!t) return '<div class="pfHNone">点上面的名字看这一段。</div>';
+  if (t.loading && !t.list.length) return '<div class="pfHNone">正在查…</div>';
+  const rows = t.list.map(m =>
+    '<div class="pfHMsg ' + (Number(m.from) === Number(me) ? "mine" : "peer") + '">' +
+    '<span class="pfHWho">' + (Number(m.from) === Number(me) ? "我说" : pfEsc(peer.nickname || ("玩家" + peer.withUser)) + "说") + '</span>' +
+    '<span class="pfHTx">' + pfEsc(m.content) + '</span><i class="pfHTime">' + pfTime(m.at) + '</i></div>');
+  if (t.hasMore) rows.push('<button type="button" class="pfHMore" data-act="more-thread" data-id="' +
+    peer.withUser + '"' + (t.loading ? " disabled" : "") + ">" +
+    (t.loading ? "正在查…" : "查看更早的记录") + "</button>");
+  return rows.length ? rows.join("") : '<div class="pfHNone">这一位没有查到记录。</div>';
+}
+function pfHistClick(e) {
+  const btn = e.target && e.target.closest ? e.target.closest("[data-act]") : null;
+  if (!btn) return;
+  const act = btn.getAttribute("data-act");
+  if (act === "more-ann") { e.preventDefault(); pfHistMoreAnn(); return; }
+  if (act === "peer") {
+    e.preventDefault();
+    const id = Number(btn.getAttribute("data-id"));
+    const t = pfHistThread(id);
+    t.open = !t.open;
+    if (t.open) pfHistOpenThread(id);
+    pfHistPaintPeers();
+    return;
+  }
+  if (act === "more-thread") { e.preventDefault(); pfHistMoreThread(Number(btn.getAttribute("data-id"))); }
+}
+/* 网关回执（mp/client.js 的路由兜到这里）。`beforeId` 为 0 ⇒ 这一页是最新的一屏，
+   直接整块替换；不为 0 ⇒ 是"更早"，往尾部接。 */
+function mpProfMessage(m) {
+  if (!m || m.type !== "mine.history") return false;
+  const st = MP_PROF.hist;
+  if (!st || !st.open) return true;
+  const list = Array.isArray(m.list) ? m.list : [];
+  if (m.part === "ann") {
+    const fresh = !Number(m.beforeId);
+    st.ann.loading = false; st.ann.loaded = true;
+    st.ann.list = fresh ? list : st.ann.list.concat(list);
+    st.ann.hasMore = !!m.hasMore;
+    st.ann.oldest = Number(m.oldestId) || (fresh ? 0 : st.ann.oldest);
+    pfHistPaintAnn();
+    return true;
+  }
+  if (m.part === "peers") {
+    st.peers.loading = false; st.peers.loaded = true;
+    st.peers.list = list.map(it => ({
+      withUser: Number(it.withUser), nickname: String(it.nickname || ""),
+      count: Number(it.count) || 0, lastAt: Number(it.lastAt) || 0, preview: String(it.preview || "")
+    }));
+    pfHistPaintPeers();
+    return true;
+  }
+  if (m.part === "thread") {
+    const id = Number(m.withUser);
+    const t = pfHistThread(id);
+    const fresh = !Number(m.beforeId);
+    t.loading = false; t.loaded = true;
+    t.list = fresh ? list : t.list.concat(list);
+    t.hasMore = !!m.hasMore;
+    t.oldest = Number(m.oldestId) || (fresh ? 0 : t.oldest);
+    pfHistPaintPeers();
+    return true;
+  }
+  if (m.part) { pfHistHint("这一类记录没查到"); if (m.part === "ann") { st.ann.loading = false; pfHistPaintAnn(); } }
+  return true;
 }
 
 /* --- 4. 别人的缩略主页（竖版卡片，只读，§10.5） ----------------------
@@ -490,11 +750,12 @@ function pfOpenCard(id) {
   const els = MP_PROF.cdEls;
   els.nick.textContent = "…";
   els.on.textContent = ""; els.meta.textContent = ""; els.bio.textContent = "";
+  els.meta.className = "cdMeta"; els.bio.className = "cdBio";   // 上一张卡的「未公开」灰字不能留给下一个人
   els.tags.textContent = "";
   els.msg.disabled = false;
   pfCloseMenu();
   pfApi("GET", "/api/profile/card/" + id).then(d => {
-    if (!d || d.userId !== id) throw new Error("这位玩家不存在或已注销");
+    if (!d || d.userId !== id) throw new Error("该玩家不存在或已注销");
     MP_PROF.cardData = d;
     pfPaintCard(d);
     /* 顺手把聊天窗顶部那个名字补上：离线的人不在 `presence` 快照里，网关的会话名单
@@ -510,6 +771,7 @@ function pfOpenCard(id) {
   }).catch(e => {
     els.nick.textContent = e.message;
     els.on.textContent = ""; els.meta.textContent = ""; els.bio.textContent = "";
+    els.meta.className = "cdMeta"; els.bio.className = "cdBio";
     els.tags.textContent = "";
     els.msg.disabled = true;
     els.ava.removeAttribute("src");
@@ -517,14 +779,27 @@ function pfOpenCard(id) {
 }
 function pfPaintCard(d) {
   const els = MP_PROF.cdEls;
+  const hid = pfHiddenSet(d);
   const src = pfAvaSrc(d.look, 48);                 // §10.5：24×24 放大到 48×48，最近邻不糊
   if (src) els.ava.src = src; else els.ava.removeAttribute("src");
   els.nick.textContent = d.nickname || ("玩家" + d.userId);
   els.on.innerHTML = pfOnLine(d);
-  els.meta.textContent = [d.college, d.grade].filter(Boolean).join(" · ");
+  const meta = [];
+  if (!hid.college && d.college) meta.push(d.college);
+  if (!hid.grade && d.grade) meta.push(d.grade);
+  if (hid.college || hid.grade) meta.push("（未公开）");
+  els.meta.textContent = meta.join(" · ");
   els.meta.hidden = !els.meta.textContent;
-  els.bio.textContent = d.bio ? ("「" + d.bio + "」") : "";
+  els.meta.className = "cdMeta" + ((hid.college || hid.grade) ? " hide" : "");
+  els.bio.textContent = hid.bio ? "（签名未公开）" : (d.bio ? ("「" + d.bio + "」") : "");
+  els.bio.className = "cdBio" + (hid.bio ? " hide" : "");
   els.tags.textContent = "";
+  if (hid.tags) {
+    const none = document.createElement("span");
+    none.className = "cdTag hide";
+    none.textContent = "兴趣未公开";
+    els.tags.appendChild(none);
+  }
   for (const tag of (Array.isArray(d.tags) ? d.tags : [])) {
     const chip = document.createElement("span");
     chip.className = "cdTag";
@@ -536,10 +811,19 @@ function pfPaintCard(d) {
 }
 /* 在线那颗点：网关的 presence 快照说了才算（它比 8081 那 90 秒窗口新鲜）。 */
 function pfOnLine(d) {
+  if (pfHiddenSet(d).online) return '<b class="off">○</b> 在线状态未公开';
   const live = pfOnlineNow(d.userId);
   if (live) return '<b class="on">●</b> 在线';
   const ago = d.lastSeen ? pfAgo(d.lastSeen) : "";
   return '<b class="off">○</b> ' + (ago ? ago + "活跃" : "离线");
+}
+/* 本人设了「隐藏」的那几项：服务端 `card()` 直接把键删掉，同时给一份 `hidden` 键名清单，
+   这儿只负责如实写一句"未公开" —— 原值压根没到浏览器，想显示也显示不出来。 */
+function pfHiddenSet(d) {
+  const out = {};
+  const list = (d && Array.isArray(d.hidden)) ? d.hidden : [];
+  for (const key of list) out[String(key)] = true;
+  return out;
 }
 function pfOnlineNow(id) {
   if (typeof MP_ONLINE !== "undefined" && MP_ONLINE && MP_ONLINE.has(Number(id))) return true;
