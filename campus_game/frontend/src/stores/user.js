@@ -17,9 +17,10 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const setUser = (newUser) => {
-    user.value = newUser
-    if (newUser) {
-      localStorage.setItem('user', JSON.stringify(newUser))
+    const displayUser = newUser ? { ...newUser, nickname: localStorage.getItem('mpNickname') || newUser.nickname } : null
+    user.value = displayUser
+    if (displayUser) {
+      localStorage.setItem('user', JSON.stringify(displayUser))
     } else {
       localStorage.removeItem('user')
     }

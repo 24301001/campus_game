@@ -21,11 +21,10 @@
             <span class="nav-user" @click="$router.push('/profile')">
               {{ userStore.user.nickname || userStore.user.username }}
             </span>
-            <button class="btn btn-outline btn-sm" @click="handleLogout">退出</button>
+            <a class="btn btn-outline btn-sm" href="/">返回校园</a>
           </template>
           <template v-else>
-            <button class="btn btn-outline btn-sm" @click="$router.push('/login')">登录</button>
-            <button class="btn btn-primary btn-sm" @click="$router.push('/register')">注册</button>
+            <a class="btn btn-primary btn-sm" href="/">进入校园大厅</a>
           </template>
         </div>
         <!-- Mobile menu toggle -->
@@ -40,11 +39,10 @@
           <router-link to="/agent" class="mobile-link" @click="mobileOpen = false">算法哥</router-link>
           <router-link to="/profile" class="mobile-link" @click="mobileOpen = false">个人中心</router-link>
           <router-link v-if="userStore.user.role === 'ADMIN'" to="/admin/dashboard" class="mobile-link" @click="mobileOpen = false">管理</router-link>
-          <button class="btn btn-outline btn-full" @click="handleLogout">退出</button>
+          <a class="btn btn-outline btn-full" href="/">返回校园</a>
         </template>
         <template v-else>
-          <button class="btn btn-outline btn-full" @click="$router.push('/login'); mobileOpen = false">登录</button>
-          <button class="btn btn-primary btn-full" @click="$router.push('/register'); mobileOpen = false">注册</button>
+          <a class="btn btn-primary btn-full" href="/">进入校园大厅</a>
         </template>
       </div>
     </nav>
@@ -73,9 +71,7 @@
               <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
             </svg>
           </button>
-          <button class="btn btn-ghost btn-lg" @click="$router.push('/register')">
-            免费注册
-          </button>
+          <a class="btn btn-ghost btn-lg" href="/">从校园大厅进入</a>
         </div>
         <div class="hero-stats">
           <div class="stat-item" v-for="stat in stats" :key="stat.label">
@@ -175,12 +171,12 @@
           <h2>准备好了吗？</h2>
           <p>现在开始，用代码书写你的未来</p>
         </div>
-        <button class="btn btn-primary btn-lg" @click="$router.push('/register')">
+        <a class="btn btn-primary btn-lg" href="/">
           立即开始
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
           </svg>
-        </button>
+        </a>
       </div>
     </section>
 
@@ -288,11 +284,6 @@ const features = ref([
   { icon: 'User', title: '社区交流', desc: '与同学一起刷题，互相激励。管理员全程支持，答疑解惑。', color: 'teal', hover: false }
 ])
 
-const handleLogout = () => {
-  userStore.logout()
-  ElMessage.success('已退出')
-  router.push('/home')
-}
 </script>
 
 <style scoped>

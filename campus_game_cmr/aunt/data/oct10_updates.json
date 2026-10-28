@@ -1059,12 +1059,38 @@
             4
           ],
           "front": "east",
-          "summary": "依据用户提供的楼层示意图标注；实际营业及档口边界以现场为准。",
+          "summary": "依据用户提供的楼层示意图标注；图上可见面包、蛋糕、三明治等烘焙陈列，未标注品种和价格，实际营业及档口边界以现场为准。",
           "hours": [],
-          "dishes": [],
+          "dishes": [
+            {
+              "name": "蛋糕",
+              "price": null,
+              "priceNote": "示意图可见蛋糕陈列，未标注具体品种和价格",
+              "evidence": ["P5"]
+            },
+            {
+              "name": "面包",
+              "price": null,
+              "priceNote": "示意图可见面包陈列，未标注具体品种和价格",
+              "evidence": ["P5"]
+            },
+            {
+              "name": "三明治",
+              "price": null,
+              "priceNote": "示意图可见三明治陈列，未标注具体品种和价格",
+              "evidence": ["P5"]
+            },
+            {
+              "name": "纸杯蛋糕",
+              "price": null,
+              "priceNote": "示意图可见纸杯蛋糕陈列，未标注具体品种和价格",
+              "evidence": ["P5"]
+            }
+          ],
           "evidence": [
             "P5"
-          ]
+          ],
+          "_qoderFix": "24"
         }
       ],
       "fixtures": [

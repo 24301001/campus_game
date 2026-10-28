@@ -52,21 +52,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("用户已被禁用");
         }
         
-        // 验证密码
-        boolean passwordMatch = false;
-        // 先检查测试账号
-        if ("admin".equals(loginDTO.getUsername()) && "admin123".equals(loginDTO.getPassword())) {
-            passwordMatch = true;
-        } else if ("user".equals(loginDTO.getUsername()) && "user123".equals(loginDTO.getPassword())) {
-            passwordMatch = true;
-        } else {
-            // 然后检查BCrypt加密的密码
-            if (passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
-                passwordMatch = true;
-            }
-        }
-        
-        if (!passwordMatch) {
+        if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
             throw new BusinessException("密码错误");
         }
         
@@ -113,18 +99,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("用户不存在");
         }
         
-        boolean oldPasswordMatch = false;
-        if ("admin".equals(user.getUsername()) && "admin123".equals(oldPassword)) {
-            oldPasswordMatch = true;
-        } else if ("user".equals(user.getUsername()) && "user123".equals(oldPassword)) {
-            oldPasswordMatch = true;
-        } else {
-            if (passwordEncoder.matches(oldPassword, user.getPassword())) {
-                oldPasswordMatch = true;
-            }
-        }
-        
-        if (!oldPasswordMatch) {
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new BusinessException("原密码错误");
         }
         

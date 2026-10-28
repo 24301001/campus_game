@@ -12,10 +12,10 @@
             <el-button @click="$router.push('/problems')">题库</el-button>
             <template v-if="userStore.user">
               <el-button v-if="userStore.user.role === 'ADMIN'" @click="$router.push('/admin/dashboard')">管理后台</el-button>
-              <el-button type="danger" @click="handleLogout">退出</el-button>
+              <el-button @click="goLobby">返回校园</el-button>
             </template>
             <template v-else>
-              <el-button type="primary" @click="$router.push('/login')">登录</el-button>
+              <el-button type="primary" @click="goLobby">返回校园登录</el-button>
             </template>
           </div>
         </div>
@@ -537,11 +537,7 @@ const handleFollow = async () => {
   }
 }
 
-const handleLogout = () => {
-  userStore.logout()
-  ElMessage.success('退出成功')
-  router.push('/home')
-}
+const goLobby = () => window.top.location.assign('/')
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'

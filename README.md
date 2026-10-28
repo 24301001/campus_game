@@ -6,13 +6,14 @@
 
 [![landmarks](https://img.shields.io/badge/landmarks-41-ffd76e?style=flat-square)](#-校园里有什么)
 [![gates](https://img.shields.io/badge/gates-5-c0392b?style=flat-square)](#-校园里有什么)
-[![single-file](https://img.shields.io/badge/single--file-1.18%20MB-7fd6c8?style=flat-square)](#-一个文件装下全部)
-[![dependencies](https://img.shields.io/badge/dependencies-0-9fb4d0?style=flat-square)](#-自己跑一份)
+[![original-map](https://img.shields.io/badge/map-original%20HTML-7fd6c8?style=flat-square)](#-原地图和联机)
 [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](#-许可)
 
 **🎮 [进校园逛逛](play.html)　·　🏛 [思源楼场景](siyuan.html)　·　📄 [直接打开地图](像素校园_全校地图.html)**
 
 </div>
+
+> 联机大厅请运行 [启动像素校园.bat](启动像素校园.bat)，打开 `http://localhost:3000/`。它使用下方的原地图 HTML；照片形象、统一登录和四个角色的本地接入说明见 [mp/README.md](mp/README.md)。
 
 ![思源楼前，像素人物来回走动](assets/siyuan-walk.gif)
 
@@ -22,9 +23,9 @@
 
 ## 这是什么
 
-一个 **单文件网页**。打开它，你会站在一座能走动的像素校园里。
+地图主体仍是原来的 `像素校园_全校地图.html`。打开它，你会站在一座能走动的像素校园里；联机大厅由同目录的 `mp/` 脚本和本地服务提供。
 
-没有游戏引擎，没有素材图，没有构建步骤，没有依赖。整座校园 —— 楼、树、马路、湖、网球场的白线、图书馆屋顶的红瓦、明湖里划水的鸭子 —— 全都是浏览器里当场用 `canvas` 画出来的：一块一块拼像素，一行一行写坐标。
+地图绘制没有游戏引擎。整座校园 —— 楼、树、马路、湖、网球场的白线、图书馆屋顶的红瓦、明湖里划水的鸭子 —— 全都是浏览器里当场用 `canvas` 画出来的：一块一块拼像素，一行一行写坐标。
 
 ```
 5208 × 2929 世界像素  ·  41 个地标  ·  5 个校门  ·  4 个可辨认的角色
@@ -95,9 +96,9 @@
 - **计算机中心**的电脑打开的是**刷题平台**；**逸夫楼**的电脑打开的是**学霸**（能查教材、能一步步讲题）
 - 按 `B` 出门，**回到你进门时站的那个位置**，不会瞬移
 
-### 📦 一个文件装下全部
+### 📦 原地图和联机
 
-整个校园就是一个 `.html`。双击即开，不联网也能跑，扔 U 盘里发给同学也不会少东西。
+原地图画面和场景保留在同名 `.html` 中。单机游览可以直接打开，但需保留同目录的 `mp/` 资源；联机、公告、私聊和四个角色的统一账号需按上方说明启动本地服务。
 
 ---
 
@@ -122,7 +123,7 @@ git clone -b main https://github.com/24301001/campus_game.git
 cd campus_game
 ```
 
-**最省事**：双击 `像素校园_全校地图.html`。
+**单机游览**：在完整项目目录里双击 `像素校园_全校地图.html`。
 
 **最稳**：起个本地服务器（浏览器对 `file://` 有些限制）：
 

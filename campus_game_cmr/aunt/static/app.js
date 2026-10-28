@@ -4,7 +4,6 @@
   const $ = selector => document.querySelector(selector);
   const authScreen = $("#auth-screen");
   const appScreen = $("#app-screen");
-  const authForm = $("#auth-form");
   const chatForm = $("#chat-form");
   const messages = $("#messages");
   const chatInput = $("#chat-input");
@@ -84,8 +83,6 @@
     unembed();
     authScreen.hidden = false;
     appScreen.hidden = true;
-    $("#password").value = "";
-    setError($("#auth-error"), "");
   }
 
   function showAuntEmotion(value) {
@@ -107,7 +104,7 @@
       api("/api/canteens"), api("/api/ratings"), api("/api/conversations")
     ]);
     state.user = user;
-    $("#current-user").textContent = user.username;
+    $("#current-user").textContent = localStorage.getItem("mpNickname") || user.username;
     unembed();                       // ⭐ 会话到手 ⇒ 撤掉开机的纱幕（正常路径）
     authScreen.hidden = true;
     appScreen.hidden = false;
@@ -118,12 +115,14 @@
     map.setRatings(ratings);
     const select = $("#canteen-select");
     select.replaceChildren();
-    for (const canteen of catalog.canteens) {
+    // [QODER-FIX #22] 用户要求“学活一和明湖一换位置”：下拉里明湖排第一，
+    // 进门默认就是明湖 1F（1F 平面图 P2）；学活排在它后面，不再抢占首屏。
+    for (const canteen of [...catalog.canteens].sort((a, b) => (a.id === "minghu" ? -1 : b.id === "minghu" ? 1 : 0))) {
       const option = element("option", "", canteen.name);
       option.value = canteen.id;
       select.append(option);
     }
-    state.canteen = catalog.canteens[0];
+    state.canteen = catalog.canteens.find(item => item.id === "minghu") || catalog.canteens[0];
     select.value = state.canteen.id;
     renderFloors();
     renderConversations();
@@ -174,51 +173,6 @@
     try { await newConversation(); } catch (error) { setError($("#chat-error"), error.message); }
   });
 
-  function setAuthMode(mode) {
-    state.authMode = mode;
-    const registering = mode === "register";
-    $("#auth-heading").textContent = registering ? "注册值班室账号" : "登录值班室";
-    $(".form-subtitle").textContent = registering ? "创建账号后，阿姨会记住你的聊天和评价。" : "用自己的账号继续上次的对话。";
-    $("#auth-submit").textContent = registering ? "注册并进入" : "登录";
-    $("#auth-switch").textContent = registering ? "已有账号？登录" : "没有账号？注册";
-    $("#password").autocomplete = registering ? "new-password" : "current-password";
-    setError($("#auth-error"), "");
-  }
-
-  authForm.addEventListener("submit", async event => {
-    event.preventDefault();
-    const username = $("#username").value.trim();
-    const password = $("#password").value;
-    if (username.length < 2 || password.length < 8) {
-      setError($("#auth-error"), "用户名至少 2 位，密码至少 8 位。");
-      return;
-    }
-    setError($("#auth-error"), "");
-    const submit = $("#auth-submit");
-    submit.disabled = true;
-    try {
-      const user = await api("/api/" + state.authMode, {
-        method: "POST", body: JSON.stringify({ username, password })
-      });
-      try { localStorage.setItem("aunt_last_username", username); } catch (_) { /* private mode */ }
-      await showApp(user);
-    } catch (error) {
-      setError($("#auth-error"), error.message);
-    } finally {
-      submit.disabled = false;
-    }
-  });
-
-  $("#auth-switch").addEventListener("click", () => {
-    setAuthMode(state.authMode === "login" ? "register" : "login");
-  });
-
-  $("#logout-button").addEventListener("click", async () => {
-    try { await api("/api/logout", { method: "POST" }); }
-    catch (_) { /* session may already have expired */ }
-    showAuth();
-  });
-
   // 「← 返回校园」：只在被地图抽屉挂载时出现（那时 PREFIX 非空），独立运行时按钮一直藏着。
   // 收件人是地图父页 —— 它收到 `aunt-exit` 就把抽屉收起来（Esc 那条路也仍然有效）。
   if (PREFIX) {
@@ -235,7 +189,8 @@
 
   function appendMessage(role, content, evidence = [], ranking = [], recommendations = [], emotion = "neutral") {
     const row = element("div", "message " + role);
-    const avatar = element("div", "message-avatar", role === "assistant" ? "姨" : (state.user ? state.user.username.charAt(0) : "我"));
+    const displayName = localStorage.getItem("mpNickname") || state.user?.username || "我";
+    const avatar = element("div", "message-avatar", role === "assistant" ? "姨" : displayName.charAt(0));
     avatar.setAttribute("aria-hidden", "true");
     if (role === "assistant") {
       avatar.textContent = "";
@@ -243,7 +198,7 @@
       avatar.dataset.emotion = emotion;
     }
     const body = element("div", "message-body");
-    body.append(element("p", "message-name", role === "assistant" ? "阿姨 · 丙" : "你"));
+    body.append(element("p", "message-name", role === "assistant" ? "阿姨 · 丙" : displayName));
     body.append(element("p", "message-bubble", content));
     if (ranking && ranking.length) {
       const card = element("ol", "ranking-card");
@@ -730,13 +685,18 @@
     const question = input.value.trim();
     if (!id || !question) return;
     const answerNode = $("#detail-chat-answer");
+    // [QODER-FIX #23] 右侧提问的答案直接显示在右侧同一个面板里，
+    // 不再只写一句“请看左侧对话”（用户反馈生成结果全跑到左边）。
+    answerNode.classList.remove("detail-answer-ready");
+    answerNode.classList.add("detail-answer-pending");
     answerNode.textContent = "阿姨正在查资料…";
     const result = await sendMessage(question, id);
     if (state.selectedStall !== id) return;
+    answerNode.classList.remove("detail-answer-pending");
     if (!result) { answerNode.textContent = $("#chat-error").textContent || "提问没有发出，请再试一次。"; return; }
     input.value = "";
-    const dishes = (result.recommendations || []).map(item => "• " + item.dish + "（" + item.floorLabel + "）");
-    answerNode.textContent = result.reply + (dishes.length ? "\n" + dishes.join("\n") : "");
+    answerNode.textContent = "阿姨：" + result.reply;
+    answerNode.classList.add("detail-answer-ready");
     map.sayAtStall(id, result.reply);
   });
 
@@ -830,7 +790,6 @@
   }
 
   async function start() {
-    try { $("#username").value = localStorage.getItem("aunt_last_username") || ""; } catch (_) { /* private mode */ }
     setupVoiceInput();
     requestAnimationFrame(animate);
     try { await showApp(await api("/api/me")); }

@@ -34,24 +34,7 @@ const post = (p, body) => api(p, {method: "POST", body: JSON.stringify(body || {
 function showGate(msg) {
   $("gate").classList.remove("hidden");
   $("app").classList.add("hidden");
-  if (msg !== undefined) $("gateMsg").textContent = msg;
-  const last = localStorage.getItem("xbg_nick") || "";
-  if (last && !$("nick").value) $("nick").value = last;   // 组长要的"记住用户名"
-  $("nick").focus();
-}
-async function doLogin(mode) {
-  const nick = $("nick").value.trim(), pw = $("pw").value;
-  if (!nick || !pw) return showGate("昵称和密码都要填");
-  $("btnLogin").disabled = true;
-  try {
-    const r = await post(mode === "reg" ? "/xbg/api/register" : "/xbg/api/login", {nick, password: pw});
-    S.token = r.token; S.user = r.user; S.session = r.session || "";
-    localStorage.setItem("xbg_nick", nick);
-    localStorage.setItem("xbg_token", S.token);
-    await enter();
-  } catch (e) {
-    showGate(e.message);
-  } finally { $("btnLogin").disabled = false; }
+  $("gateMsg").textContent = msg || "请返回校园大厅登录后再进入。";
 }
 function logout() {
   S.token = ""; S.user = null; S.session = ""; S.mem = null;
@@ -65,7 +48,7 @@ function logout() {
 async function enter() {
   $("gate").classList.add("hidden");
   $("app").classList.remove("hidden");
-  $("who").textContent = S.user ? S.user.nick : "";
+  $("who").textContent = localStorage.getItem("mpNickname") || (S.user ? S.user.nick : "");
   const b = await api("/xbg/api/bootstrap");
   if (b.name) { S.name = b.name; $("dlgName").textContent = b.name; $("face").alt = b.name + " 立绘"; }
   const chips = [["", "全部课程"]].concat((b.courses || []).map(c => [c, c]));
@@ -882,9 +865,6 @@ function autofit() {
 }
 
 /* ---------------- 绑定 ---------------- */
-$("gateForm").onsubmit = (e) => { e.preventDefault(); doLogin("login"); };
-$("btnReg").onclick = () => { if (!$("nick").value.trim() || !$("pw").value) return showGate("先填昵称和密码再注册"); doLogin("reg"); };
-$("btnOut").onclick = logout;
 $("composer").onsubmit = (e) => { e.preventDefault(); send(); };
 $("q").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }

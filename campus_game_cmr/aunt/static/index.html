@@ -36,29 +36,12 @@
        styles.css 末尾）。独立跑时它永远 display:none，一个字都不影响。 -->
   <div id="aunt-boot" role="status">正在进入…</div>
   <div id="auth-screen" class="auth-screen">
-    <section class="auth-intro" aria-labelledby="auth-title">
-      <div class="brand-line"><span class="brand-mark" aria-hidden="true">食</span><span>像素校园 / 食堂值班室</span></div>
-      <div class="auth-intro-main">
-        <div class="auth-portrait aunt-portrait" data-emotion="neutral" role="img" aria-label="动漫风格的食堂阿姨，平静微笑"></div>
-        <p class="small-label">阿姨 · 丙</p>
-        <h1 id="auth-title">今天想吃什么，<br>先来问问阿姨。</h1>
-        <p>查窗口、看菜品、聊口碑。登录后，阿姨会记住你说过的话。</p>
-      </div>
-      <p class="intro-foot">七处餐厅资料 · 公开来源整理 · 室内视图为示意</p>
-    </section>
     <main class="auth-form-area">
-      <form id="auth-form" class="auth-form" novalidate>
-        <p class="form-overline">欢迎回来</p>
-        <h2 id="auth-heading">登录值班室</h2>
-        <p class="form-subtitle">用自己的账号继续上次的对话。</p>
-        <label for="username">用户名</label>
-        <input id="username" name="username" autocomplete="username" minlength="2" maxlength="24" required placeholder="输入用户名">
-        <label for="password">密码</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required placeholder="至少 8 位">
-        <p id="auth-error" class="form-error" role="alert" hidden></p>
-        <button id="auth-submit" class="primary-button" type="submit">登录</button>
-        <button id="auth-switch" class="text-button" type="button">没有账号？注册</button>
-      </form>
+      <div class="auth-form">
+        <h2>食堂阿姨</h2>
+        <p>请返回校园大厅登录后再进入。</p>
+        <a href="/">返回校园大厅</a>
+      </div>
     </main>
   </div>
 
@@ -66,7 +49,7 @@
     <header class="topbar">
       <div class="brand-line"><span class="brand-mark" aria-hidden="true">食</span><span>校园食堂 · 阿姨</span></div>
       <span class="demo-badge">食堂资料体验版</span>
-      <div class="topbar-user"><span id="current-user"></span><button id="back-campus" class="subtle-button" type="button" hidden>← 返回校园</button><button id="logout-button" class="subtle-button" type="button">退出</button></div>
+      <div class="topbar-user"><span id="current-user"></span><button id="back-campus" class="subtle-button" type="button" hidden>← 返回校园</button></div>
     </header>
 
     <main class="workbench">

@@ -245,21 +245,13 @@ header .sp{flex:1}
 })();
 </script>
 
-<!-- ======================= ① 登录窗口 ======================= -->
+<!-- 身份由校园大厅统一签发；这里没有独立登录入口。 -->
 <section id="login-view">
   <div class="login-card">
-    <canvas id="login-sprite" class="login-sprite" width="12" height="13"></canvas>
     <h1>保卫处 · 值班窗口</h1>
     <div class="sub">北交大像素校园 —— 保安 · 老丁</div>
-    <div class="tabs">
-      <button id="tab-login" class="on">登 录</button>
-      <button id="tab-reg">注 册</button>
-    </div>
-    <div class="field"><label>昵称</label><input id="li-nick" maxlength="16" placeholder="怎么称呼你"></div>
-    <div class="field"><label>密码</label><input id="li-pass" type="password" maxlength="32" placeholder="设个密码，至少6位"></div>
-    <button id="li-submit">进 入</button>
-    <div id="li-msg"></div>
-    <div id="li-health">正在连接账号服务……</div>
+    <p>请返回校园大厅登录后再进入。</p>
+    <a href="/">返回校园大厅</a>
   </div>
 </section>
 
@@ -272,7 +264,6 @@ header .sp{flex:1}
     <button id="clock" title="点击可拨时间（演示用）">--:--</button>
     <span class="sp"></span>
     <button id="btn-reset" class="hbtn" title="清空本地数据重新来">重置数据</button>
-    <button id="btn-logout" class="hbtn">退出</button>
   </header>
   <div id="main">
     <div id="chat-col">
@@ -290,7 +281,6 @@ header .sp{flex:1}
         <button class="qa" data-act="lost_intake">登记失物</button>
         <button class="qa" data-act="repair">报修</button>
         <button class="qa" data-act="claim">认领核对</button>
-        <button class="qa" data-act="call">呼叫老丁</button>
       </div>
       <div id="draft-bar" class="hidden"></div>
       <div id="input-row">
@@ -828,6 +818,10 @@ function pushMsg(m, save = true){
   msgsEl.appendChild(renderMsg(m));
   msgsEl.scrollTop = msgsEl.scrollHeight;
   const mood = autoMood(m); if(mood) setMood(mood);
+  if(window.parent !== window && m.who === 'guard') {
+    const text = m.text || m.note || '';
+    if(text) window.parent.postMessage({type:'campus.guard.reply',text}, location.origin);
+  }
 }
 function say(text){ pushMsg({ who:'guard', kind:'text', text }); }
 function me(text){ pushMsg({ who:'me', kind:'text', text }); }
@@ -1613,6 +1607,7 @@ function createRepair(d){
 /* ---------- 呼叫（全图唯一叫得动，总体设计 §12） ---------- */
 // to: 玩家当前位置 {x,y}。合体时由引擎/地图层传入；独立交付期未接入地图，用保卫处前台点兜底。
 function doCall(to){
+  if(window.parent !== window){ say('我就在你身边，有事直接说。'); return; }
   if(!inServiceHours()){ say(Store.agent.offduty_line); return; }      // 只在 08:00–22:00 应答
   if(state.summon === 'walking'){ say('已经在路上了，稍等。'); return; }
   state.summon = 'walking';
@@ -1835,32 +1830,8 @@ const API = {
     return data;
   }
 };
-async function checkHealth(){
-  const el = $('#li-health');
-  try{ await API.req('/api/health'); el.innerHTML = '账号服务 <b class="ok">已连接</b> · FastAPI + SQLite'; }
-  catch(e){ el.innerHTML = '账号服务 <b class="bad">没连上</b> —— 先启动：python server/app.py'; }
-}
-async function submitAuth(){
-  const nick = $('#li-nick').value.trim(), pass = $('#li-pass').value;
-  const msg = $('#li-msg');
-  if(!nick || !pass){ msg.textContent = '昵称和密码都要有。'; return; }
-  if(pass.length < 6){ msg.textContent = '密码至少 6 位。'; return; }
-  msg.textContent = '';
-  const isReg = $('#tab-reg').classList.contains('on');
-  try{
-    const r = await API.req(isReg ? '/api/register' : '/api/login', { method:'POST', body:{ nickname: nick, password: pass } });
-    if(isReg){ // 注册即登录
-      const l = await API.req('/api/login', { method:'POST', body:{ nickname: nick, password: pass } });
-      enterChat(l);
-    } else enterChat(r);
-  }catch(e){
-    msg.textContent = e.status === 409 ? '这昵称有人用了，直接去登录吧。'
-      : e.status === 401 ? '昵称或密码不对，再试试。' : ('账号服务连不上：' + e.message + '（先启动 python server/app.py）');
-  }
-}
 function enterChat(auth){
   state.user = auth; API.token = auth.token;
-  localStorage.setItem(Store.key('auth'), JSON.stringify(auth));
   /* ⭐ 第四十五轮：会话到手 ⇒ **撤掉开机的纱幕**（这是正常路径；那 8 秒兜底只管"JS 炸了"）。 */
   try{ document.documentElement.classList.remove('ld-embed'); }catch(_e){}
   $('#login-view').classList.add('hidden');
@@ -1874,40 +1845,21 @@ function enterChat(auth){
   }
   // MAP: 玩家进入保卫处触发圈（地图层接入后由 on('enter') 驱动）
   MapBridge.on('enter', { placeId:'baoweichu' });
+  if(window.parent !== window) window.parent.postMessage({type:'campus.guard.ready'}, location.origin);
 }
-function logout(){
-  localStorage.removeItem(Store.key('auth'));
-  location.reload();
-}
-
 /* ============================================================
  * 启动
  * ============================================================ */
 (async function init(){
-  drawSprite($('#login-sprite'), 7);
   drawSprite($('#hd-sprite'), 2);
   await Store.init();
-  // 恢复会话
-  /* ⭐⭐ 第四十三轮：**共享票优先**。
-     地图那边「一次登录进三家」，登录成功后往 localStorage 种一个裸 `ld_token`
-     （与学霸姐的 `xbg_token` 同一约定）。它必须排在本模块自己的会话**前面** ——
-     因为它的生命周期归地图管：在地图上点登出，地图会把 `ld_token` 一起清掉。
-     要是让本模块自己的键优先，就会出现「地图上登出了、抽屉里还是上一个人的身份」
-     —— 换个人来玩直接串号。
-
-     独立跑（双击 run_server.bat、或地址栏直开 8000）时根本没有 `ld_token`，
-     自然落到下面那条，行为与本轮之前**完全一样**。 */
+  // 仅认大厅下发的票；不恢复旧模块自己的账号会话。
   try{
     const shared = localStorage.getItem('ld_token');
     if(shared){
       API.token = shared;
       const meInfo = await API.req('/api/me');   // `/api/me` 本来就是校验 Bearer token 的接口
-      enterChat({ token: shared, user_id: meInfo.user_id, nickname: meInfo.nickname });
-      /* ⚠️⚠️ 必须**马上抹掉** `enterChat` 刚写下的那份会话。
-         共享票这条路上，这张票的生命周期**归地图管**（地图登出时清 `ld_token`）；
-         要是让本模块自己的键留下一份，地图登出就清不干净了 ——
-         抽屉会在下次打开时**以上一个账号的身份**自动进去，而且**一点报错都没有**。 */
-      try{ localStorage.removeItem(Store.key('auth')); }catch(_e){}
+      enterChat({ token: shared, user_id: meInfo.user_id, nickname: localStorage.getItem('mpNickname') || meInfo.nickname });
       return;
     }
   }catch(e){
@@ -1915,19 +1867,8 @@ function logout(){
        这时候清票等于把一张**可能还有效**的票毁了，用户还得白登一次。 */
     if(e && e.status === 401){ try{ localStorage.removeItem('ld_token'); }catch(_e){} }
   }
-  try{
-    const saved = JSON.parse(localStorage.getItem(Store.key('auth')) || 'null');
-    if(saved && saved.token){
-      API.token = saved.token;
-      const meInfo = await API.req('/api/me');
-      enterChat({ ...saved, ...meInfo });
-      return;
-    }
-  }catch(e){ localStorage.removeItem(Store.key('auth')); }
-  /* ⭐⭐ 第四十五轮：走到这里 = **任何会话都没有** ⇒ 如实露出登录卡（撤掉开机的纱幕）。
-     ⚠️ 挂着纱幕 = 永远转圈，比登录卡糟得多 —— 登录卡至少还能救命。 */
+  try{ localStorage.removeItem(Store.key('auth')); }catch(_e){}
   try{ document.documentElement.classList.remove('ld-embed'); }catch(_e){}
-  checkHealth();
   updateStatus();
   setInterval(updateStatus, 15000);
   // 空闲自语（附录 F ③：最便宜的「活着」信号，模板填充不调 LLM，每天 ≤ dailyBudget 条）
@@ -1941,12 +1882,15 @@ function logout(){
 })();
 
 /* ---------- 事件绑定 ---------- */
-$('#tab-login').onclick = () => { $('#tab-login').classList.add('on'); $('#tab-reg').classList.remove('on'); checkHealth(); };
-$('#tab-reg').onclick   = () => { $('#tab-reg').classList.add('on'); $('#tab-login').classList.remove('on'); checkHealth(); };
-$('#li-submit').onclick = submitAuth;
-$('#li-pass').addEventListener('keydown', e => { if(e.key === 'Enter') submitAuth(); });
-$('#li-nick').addEventListener('keydown', e => { if(e.key === 'Enter') $('#li-pass').focus(); });
 $('#btn-send').onclick = onSend;
+window.addEventListener('message', e => {
+  if(e.origin !== location.origin || e.source !== window.parent || e.data?.type !== 'campus.guard.ask') return;
+  if(!state.user) { window.parent.postMessage({type:'campus.guard.reply',text:'老丁还在准备，请稍后再试。'}, location.origin); return; }
+  const text = String(e.data.text || '').trim().slice(0, 500);
+  if(!text) return;
+  $('#inp').value = text;
+  onSend();
+});
 $('#inp').addEventListener('keydown', e => { if(e.key === 'Enter') onSend(); });
 $('#btn-photo').onclick = () => $('#file-in').click();
 $('#file-in').addEventListener('change', e => { if(e.target.files[0]) onPhoto(e.target.files[0]); e.target.value = ''; });
@@ -1963,7 +1907,6 @@ document.querySelectorAll('.qa').forEach(b => {
     updateFlowHint();
   }
 });
-$('#btn-logout').onclick = logout;
 $('#btn-reset').onclick = () => {
   if(!confirm('清空本地公共层数据（失物库 / 工单库）并重新播种？')) return;
   Store.reset(); location.reload();

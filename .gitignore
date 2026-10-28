@@ -9,6 +9,7 @@
 node_modules/
 .venv/
 venv/
+.localdeps/
 
 # ---- 构建产物 ----
 target/
@@ -24,6 +25,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 *.log
+mp/runlogs/
 
 # ---- 运行时数据（数据库、上传件）----
 uploads/
@@ -32,6 +34,9 @@ uploads/
 *.sqlite3-wal
 *.db-shm
 *.db-wal
+mp/原地图*.png
+mp/mysql-dev/
+mp/mysql-pass
 .env
 
 # ---- 本机专用 / 大件（不进仓库）----

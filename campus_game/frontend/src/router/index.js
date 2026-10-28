@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { ensureAgentTicket } from '@/utils/lobbyAuth'
 
 const routes = [
   {
@@ -13,18 +14,15 @@ const routes = [
   },
   {
     path: '/login',
-    name: 'Login',
-    component: () => import('@/views/Login.vue')
+    redirect: '/agent'
   },
   {
     path: '/register',
-    name: 'Register',
-    component: () => import('@/views/Register.vue')
+    redirect: '/agent'
   },
   {
     path: '/verify-email',
-    name: 'VerifyEmail',
-    component: () => import('@/views/VerifyEmail.vue')
+    redirect: '/agent'
   },
   {
     path: '/problems',
@@ -90,11 +88,12 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   
   if (to.meta.requiresAuth && !userStore.token) {
-    next('/login')
+    if (await ensureAgentTicket()) next()
+    else { window.top.location.assign('/'); next(false) }
   } else if (to.meta.requiresAdmin && userStore.user?.role !== 'ADMIN') {
     next('/home')
   } else {

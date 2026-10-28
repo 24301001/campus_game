@@ -9,21 +9,13 @@
 </head>
 <body>
 
-<!-- 登录态：昵称 + 密码，进不去就聊不了 -->
+<!-- 身份由校园大厅统一签发；这里仅显示连接失败提示。 -->
 <div id="gate" class="gate hidden">
-  <form id="gateForm" class="card">
-    <h1>学霸哥</h1>
-    <p class="sub">课业辅导型智能体 · 讲原理 / 给资料 / 一步步推导<br>
-      <span class="dim">（能提交代码判分的，去找算法哥）</span></p>
-    <label>昵称<input id="nick" maxlength="24" required></label>
-    <label>密码<input id="pw" type="password" maxlength="64" required></label>
-    <div class="row">
-      <button type="submit" class="primary" id="btnLogin">登录</button>
-      <button type="button" class="ghost" id="btnReg">注册新号</button>
-    </div>
-    <p id="gateMsg" class="msg"></p>
-    <p class="dim tiny">账号只用来把聊天记录挂在你身上：换设备、关掉重开，历史都还在。</p>
-  </form>
+  <div class="card">
+    <h1>学霸姐</h1>
+    <p id="gateMsg" class="msg">请返回校园大厅登录后再进入。</p>
+    <a class="ghost" href="/">返回校园大厅</a>
+  </div>
 </div>
 
 <!-- 聊天态 -->
@@ -47,7 +39,6 @@
     </div>
     <div class="foot">
       <div id="stat" class="dim tiny"></div>
-      <button id="btnOut" class="ghost">退出</button>
     </div>
   </aside>
 

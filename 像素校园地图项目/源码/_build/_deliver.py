@@ -21,6 +21,11 @@ def md5(p):
 if not os.path.exists(SRC):
     print('MISSING SRC', SRC); sys.exit(1)
 shutil.copyfile(SRC, DST)
+# Keep the generated map's original filename and apply the lobby integration
+# after the legacy builder has finished its own layout assertions.
+sys.path.insert(0, os.path.dirname(os.path.dirname(PROJ)))
+from mp.integrate_map import main as integrate_lobby
+integrate_lobby()
 a, b = md5(SRC), md5(DST)
 print('src', os.path.getsize(SRC), a)
 print('dst', os.path.getsize(DST), b)
