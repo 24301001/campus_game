@@ -1,4 +1,7 @@
-/* Photo pixels stay in this browser. Only the small look recipe is saved. */
+/* 照片 → 形象的**本机兜底**那一路：识别的主路径已经改走服务端多模态模型
+   （mp/server.py 的 /api/mp/look/from-photo）。下面 fromPhoto 这套 128px 颜色统计
+   只在模型不可用时才用，认不出脸时会套一个固定假脸框，所以结果只能算粗略估算。
+   存进库的始终只有那一小份 look 配方，不留原图。 */
 (() => {
   const fallback = {skin:'#f2c9a0',hairStyle:'short',hairColor:'#30251e',eye:'round',eyeColor:'#332a2b',cloth:'#c94954',clothAlt:'#f3eee7',clothPattern:'solid',pants:'#38516d',acc:'none',accColor:'#b67a56'};
   const oldFallback = {skin:'#e9bb92',hairStyle:'short',hairColor:'#241d1a',eye:'round',cloth:'#3f6ea8',pants:'#454c5a',acc:'none'};
@@ -6,162 +9,329 @@
   const hex = ([r,g,b]) => '#' + [r,g,b].map(x => Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,'0')).join('');
   const rgb = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
   const dist = (a,b) => Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
-  const shade=(h,k)=>hex(rgb(h).map(x=>k>0?x+(255-x)*k:x*(1+k)));
+  /* 提亮偏暖、压暗偏冷（地图 shade 同一条式子）：中性灰的加减在像素画里会让衣服发脏，
+     高光往暖、阴影往冷才有体积感。 */
+  const shade=(h,k)=>{const c=rgb(h);return hex(k>=0
+    ? [c[0]+(255-c[0])*k, c[1]+(255-c[1])*k*0.93, c[2]+(255-c[2])*k*0.80]
+    : [c[0]*(1+k*1.08), c[1]*(1+k), c[2]*(1+k*0.86)]);};
   const norm = value => {
     const v=value&&typeof value==='object'?value:{};
     const result={...fallback};
     for(const k of ['skin','hairColor','eyeColor','cloth','clothAlt','pants','accColor'])if(typeof v[k]==='string'&&/^#[0-9a-f]{6}$/i.test(v[k]))result[k]=v[k].toLowerCase();
-    if(['short','mid','long','ponytail','bun','curly'].includes(v.hairStyle))result.hairStyle=v.hairStyle;
+    if(['short','mid','long','ponytail','bun','twintails'].includes(v.hairStyle))result.hairStyle=v.hairStyle;
     if(['round','narrow','dot'].includes(v.eye))result.eye=v.eye;
     if(['none','glasses','cap','scarf'].includes(v.acc))result.acc=v.acc;
     if(['solid','stripe'].includes(v.clothPattern))result.clothPattern=v.clothPattern;
     return result;
   };
   const isDefault = value => [fallback,oldFallback].some(v=>JSON.stringify(norm(value))===JSON.stringify(norm(v)));
-  // One 18×30 paper-doll skeleton. Side view looks left; the right view mirrors it.
+  /* 骨架照搬地图自带的 buildChar（像素校园_全校地图.html 第 4710 行起）：4.3 头身 ——
+     头 6 行（第 1..6 行）· 颈 1 行 · 躯干 9 行（8..16）· 腿 8 行（17..24）· 鞋 2 行（25..26），
+     头宽 7 格（x6..12），眼睛各 1 格（x7 与 x11，关于脸中线 x9 镜像，和嘴 x8..x10 同轴），落地锚点 (9,27)，最后统一过一遍彩色自动描边。
+     ⚠️ 以前这套 look 是自己一套 8 行大头 + 2×2 眼白的画法，玩家往街上一站就和地图上
+        所有 NPC 不像同一种人（头大一号、眼大两号、还没有收边）—— 这是"形象很怪"的根因。
+     ⚠️ 五官一律以 HY（会随走路起伏）为基准，不能用绝对行号，否则抬身那一帧脸会散。 */
+  const GAIT = [
+    { m: 1, fl: 2, spread: 1, bob: 0, sw: 0 },
+    { m: 0, fl: 2, spread: 0, bob: 1, sw: 1 },
+    { m: 2, fl: 1, spread: 1, bob: 0, sw: 1 },
+    { m: 0, fl: 1, spread: 0, bob: 1, sw: 0 },
+    { m: 0, fl: 0, spread: 0, bob: 0, sw: 0 },
+    { m: 0, fl: 0, spread: 0, bob: 1, sw: 0 }
+  ];
+  /* 自动描边：不用纯黑（像素画里太硬显脏），取相邻实心像素的颜色压暗补 1px 收边 ——
+     头发的边=更黑的头发、袖子的边=更深的蓝。和地图 outlineSprite 同一口径。 */
+  function outlineSprite(c, k) {
+    const g = c.getContext('2d'), W = c.width, H = c.height;
+    const d = g.getImageData(0, 0, W, H).data;
+    const src = (x, y) => (x >= 0 && y >= 0 && x < W && y < H && d[(y * W + x) * 4 + 3] > 40) ? (y * W + x) * 4 : -1;
+    const NB = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    const edge = [];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (d[(y * W + x) * 4 + 3] > 40) continue;
+      for (let n = 0; n < 4; n++) { const j = src(x + NB[n][0], y + NB[n][1]); if (j >= 0) { edge.push(x, y, j); break } }
+    }
+    for (let i = 0; i < edge.length; i += 3) {
+      const j = edge[i + 2];
+      g.fillStyle = 'rgb(' + ((d[j] * k) | 0) + ',' + ((d[j + 1] * k) | 0) + ',' + ((d[j + 2] * k) | 0) + ')';
+      g.fillRect(edge[i], edge[i + 1], 1, 1);
+    }
+  }
+  /* 接地影：分几层由深到浅的像素椭圆叠在一起（地图 shadowBlob 同一口径），
+     比一个实心椭圆柔和，也不会有抗锯齿的灰边。 */
+  function shadowBlob(g, bx, by, rx, ry, alpha, layers) {
+    const L = layers || 4, step = alpha / L;
+    for (let i = L; i >= 1; i--) {
+      const t = i / L, w = Math.max(1, Math.round(rx * t)), h = Math.max(1, Math.round(ry * t));
+      g.fillStyle = 'rgba(14,18,28,' + step.toFixed(3) + ')';
+      for (let y = -h; y <= h; y++) {
+        const q = 1 - (y * y) / (h * h);
+        if (q <= 0) continue;
+        const dx = Math.floor(w * Math.sqrt(q));
+        g.fillRect(Math.round(bx - dx), Math.round(by + y), dx * 2 + 1, 1);
+      }
+    }
+  }
   function paint(look, dir, step, crouched, pose) {
-    const v=norm(look), c=document.createElement('canvas'); c.width=18; c.height=30;
-    const g=c.getContext('2d'); g.imageSmoothingEnabled=false;
-    const side=dir==='left'||dir==='right', back=dir==='up', flip=dir==='right';
-    const dark=shade(v.hairColor,-.32), light=shade(v.hairColor,.24);
-    const skinLight=shade(v.skin,.14), skinDark=shade(v.skin,-.20);
-    const shirtLight=shade(v.cloth,.20), shirtDark=shade(v.cloth,-.24);
-    const pantLight=shade(v.pants,.18), pantDark=shade(v.pants,-.23);
-    const shoe='#34313a', sole='#24232a';
-    function px(x,y,w,h,col){if(w<=0||h<=0)return;g.fillStyle=col;g.fillRect(flip?18-x-w:x,y,w,h)}
-    function shirtBands(x,y,w,h){if(v.clothPattern==='stripe')for(let row=y+1;row<y+h;row+=3)px(x,row,w,1,v.clothAlt)}
-    const walking=!crouched&&step>=0&&step<4;
-    const phase=walking?(step<2?-1:1):0;
-    const bob=0;
-    const hy=crouched?8:1+bob;
-    // Shadow and shoes remain attached to the map's (9,27) foot anchor.
-    px(5,28,9,1,'rgba(47,40,36,.20)');
-    px(6,29,7,1,'rgba(47,40,36,.12)');
-    if(crouched){
-      if(side){
-        px(6,18,6,6,v.cloth);px(6,18,1,6,shirtLight);px(11,19,1,5,shirtDark);
-        shirtBands(6,18,6,6);
-        px(pose==='pet'?4:5,21,2,4,shirtLight);px(pose==='pet'?3:5,24,2,2,v.skin);
-      }else{
-        px(5,18,9,6,v.cloth);px(5,18,2,5,shirtLight);px(12,19,1,5,shirtDark);
-        shirtBands(5,18,9,6);
-        px(3,19,2,5,shirtLight);px(14,19,2,5,shirtDark);
-        px(3,24,2,2,v.skin);px(14,24,2,2,skinDark);
+    const v = norm(look), c = document.createElement('canvas'); c.width = 18; c.height = 30;
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+    const side = dir === 'left' || dir === 'right', back = dir === 'up', flip = dir === 'right';
+    const C = {
+      skin: v.skin, skinL: shade(v.skin, .14), skinD: shade(v.skin, -.20),
+      hair: v.hairColor, hairL: shade(v.hairColor, .22), hairD: shade(v.hairColor, -.34),
+      coat: v.cloth, coatL: shade(v.cloth, .20), coatD: shade(v.cloth, -.26),
+      pant: v.pants, pantL: shade(v.pants, .18), pantD: shade(v.pants, -.23),
+      shoe: '#26282e', shoeL: '#454a54', eye: v.eyeColor,
+      pack: '#b4552f', packL: '#d1704a', packD: '#8a3f22',   // 与地图 A2 同款书包：进图后 silhouette 才对得上
+      tie: shade(v.cloth, .30)
+    };
+    function px(x, y, w, h, col) { if (w > 0 && h > 0) { g.fillStyle = col; g.fillRect(flip ? 18 - x - w : x, y, w, h) } }
+    function pxr(x, y, w, h, col) { if (w > 0 && h > 0) { g.fillStyle = col; g.fillRect(x, y, w, h) } }
+    const cx = 9, HW = 7, H2 = 3, HH = 6, FACE = 4, SHOE_TOP = 25;
+    const F = crouched ? { m: 0, fl: 0, spread: 0, bob: 0, sw: 0 } : (GAIT[step] || GAIT[4]);
+    const b = F.bob;
+    const TOP = crouched ? 10 : 1, TORSO = crouched ? 4 : 9;
+    const HY = TOP + b, ty = TOP + HH + 1 + b, ly = TOP + HH + 1 + TORSO + b;
+    const KNEE = crouched ? 23 : 21, ARMR = crouched ? 4 : 6;
+    const EY = HY + 2 + (FACE >= 5 ? 2 : 1);   // 眼睛行：与地图 head() 同一个式子（FACE=4 ⇒ HY+3）
+
+    /* ---------- 躯干：肩宽 9 → 腰宽 7 → 衣摆压实腰线（逐格照搬 buildChar 的 torso） ---------- */
+    function torsoFront() {
+      px(cx - 4, ty, 9, 1, C.coatL);                               // 肩顶受光
+      const chest = Math.max(2, TORSO - 3);
+      px(cx - 4, ty + 1, 9, chest, C.coat);                        // 胸
+      px(cx - 3, ty + 1 + chest, 7, TORSO - 1 - chest, C.coat);    // 腰（左右各收 1px）
+      px(cx - 4, ty + 1, 2, TORSO - 1, C.coatL);                   // 左侧受光面
+      px(cx + 3, ty + 1, 1, TORSO - 1, C.coatD);                   // 右侧背光面
+      px(cx - 4, ty + chest, 9, 1, 'rgba(0,0,0,0.13)');            // 胸腰分界
+      px(cx - 3, ty + TORSO - 1, 7, 1, C.coatD);                   // 衣摆
+      if (back) {
+        px(cx - 3, ty + 1, 7, TORSO - 4, C.pack);                  // 书包
+        px(cx - 3, ty + 1, 7, 1, C.packL);
+        px(cx + 2, ty + 1, 1, TORSO - 4, C.packD);
+        px(cx - 2, ty - 1, 5, 1, 'rgba(0,0,0,0.26)');              // 背带压肩
+      } else {
+        px(cx, ty + 1, 1, TORSO - 2, C.coatD);                     // 前襟
+        if (!crouched) px(cx - 2, ty + chest + 2, 4, 1, C.coatD);  // 口袋线（蹲姿躯干只有 4 行，画不下）
       }
-      px(5,23,8,4,v.pants);px(6,24,2,2,pantLight);px(10,24,2,2,pantDark);
-      px(4,26,5,2,shoe);px(9,26,5,2,shoe);px(4,27,10,1,sole);
-    }else if(side){
-      // Six-pixel profile, front hand and a visible bag at the back.
-      const front=7, rear=9;
-      px(rear,18,3,8,pantDark);px(front,18,3,8,v.pants);px(front,19,1,6,pantLight);
-      px(rear,26,4,2,shoe);px(front-1,26,4,2,shoe);
-      px(front-1,26,3,1,'#67616a');px(front-1,27,8,1,sole);
-      px(6,10+bob,6,8,v.cloth);px(6,10+bob,1,8,shirtLight);
-      px(11,11+bob,1,7,shirtDark);px(7,17+bob,4,1,shirtDark);
-      shirtBands(6,10+bob,6,8);
-      px(5,12+phase,2,6,shirtLight);px(5,18+phase,2,2,v.skin);
-    }else{
-      // Front/back: shoulders wider than waist, separated legs and exposed hands.
-      const l=0, r=0;
-      px(6+l,18,3,8,v.pants);px(10+r,18,3,8,v.pants);
-      /* [QODER-FIX #14] 裤子染色更明显：主色占 2/3，亮/暗只做少量明暗，
-         以前正面两条腿各只有 1px 是主色，看上去像没染上。 */
-      px(6+l,19,1,3,pantLight);px(10+r,19,1,3,pantLight);
-      px(8+l,22,1,4,pantDark);px(12+r,22,1,4,pantDark);
-      px(5+l,26,4,2,shoe);px(10+r,26,4,2,shoe);
-      px(5+l,26,3,1,'#67616a');px(10+r,26,3,1,'#67616a');
-      px(5+l,27,4,1,sole);px(10+r,27,4,1,sole);
-      if(walking){px(6,23,1,2,phase<0?pantLight:pantDark);px(12,23,1,2,phase>0?pantLight:pantDark)}
-      px(5,10+bob,9,6,v.cloth);px(6,16+bob,7,2,v.cloth);
-      px(5,10+bob,2,6,shirtLight);px(12,11+bob,2,5,shirtDark);
-      px(7,17+bob,5,1,shirtDark);
-      shirtBands(5,10+bob,9,6);shirtBands(6,16+bob,7,2);
-      px(3,11+bob+l,2,6,shirtLight);px(14,11+bob+r,2,6,shirtDark);
-      if(v.clothPattern==='stripe'){px(3,13+bob+l,2,1,v.clothAlt);px(14,13+bob+r,2,1,v.clothAlt)}
-      px(3,17+bob+l,2,2,v.skin);px(14,17+bob+r,2,2,skinDark);
-      if(!back){px(9,11+bob,1,6,shirtDark);px(7,15+bob,4,1,shirtDark)}
+      if (v.clothPattern === 'stripe' && !back) for (let r = ty + 2; r < ty + TORSO - 1; r += 3) { px(cx - 4, r, 9, 1, v.clothAlt); px(cx - 6, r + 1, 2, 1, v.clothAlt); px(cx + 5, r + 1, 2, 1, v.clothAlt) }
     }
-    px(8,hy+8,3,2,skinDark);
-    if(back){
-      px(6,hy,6,1,light);px(5,hy+1,8,8,v.hairColor);
-      px(5,hy+2,1,7,light);px(12,hy+2,1,7,dark);
-      px(8,hy+3,2,1,light);
-    }else if(side){
-      // Face left: forehead and nose project at x4; hair and bag stay on the right.
-      px(6,hy,6,1,light);px(5,hy+1,8,2,v.hairColor);
-      px(5,hy+3,8,6,v.skin);px(10,hy+2,3,7,v.hairColor);
-      px(12,hy+3,1,6,dark);px(5,hy+3,4,1,v.hairColor);
-      px(4,hy+4,2,2,skinLight);px(4,hy+6,2,1,v.skin);
-      px(5,hy+7,1,1,skinDark);px(6,hy+8,3,1,skinDark);
-      px(6,hy+4,2,v.eye==='narrow'?1:2,'#fff7e3');
-      px(6,hy+4,1,1,'#ffffff');px(7,hy+5,1,1,v.eyeColor);
-      px(5,hy+7,1,1,'#a15f5c');
-    }else{
-      px(6,hy,6,1,light);px(5,hy+1,8,2,v.hairColor);
-      px(6,hy+3,7,5,v.skin);px(6,hy+3,2,1,v.hairColor);
-      px(5,hy+3,1,4,dark);px(13,hy+3,1,4,dark);
-      px(7,hy+8,5,1,skinDark);px(8,hy+9,3,1,skinDark);
-      for(const x of [7,10]){
-        px(x,hy+4,2,v.eye==='narrow'?1:2,'#fff7e3');
-        px(x,hy+4,1,1,'#ffffff');
-        px(x+1,hy+5,1,1,v.eyeColor);
-        if(v.eye==='dot')px(x,hy+4,1,1,v.eyeColor);
+    function armsFront() {
+      const aL = ty + 1 + F.sw, aR = ty + 1 + (F.sw ? 0 : 1);
+      px(cx - 6, aL, 2, ARMR, back ? C.coat : C.coatL); px(cx - 6, aL + ((ARMR / 2) | 0), 1, 1, C.coatD);
+      px(cx - 6, aL + ARMR, 2, 2, C.skin);
+      px(cx + 5, aR, 2, ARMR, C.coatD); px(cx + 6, aR + ((ARMR / 2) | 0), 1, 1, C.hairD);
+      px(cx + 5, aR + ARMR, 2, 2, C.skinD);
+    }
+    function legsFront() {
+      function one(x, shx, edge, edgeCol, up) {
+        const knee = KNEE - up, bot = SHOE_TOP - up;
+        /* 大腿定长到 KNEE-1，小腿从 knee 起严丝合缝（照 buildChar.legs）：
+           若把大腿缩短 1px 让小腿上移，会在 KNEE-1 留一条 1px 空洞，描边把它填成一圈深色，
+           肉眼看是腿中段断了一格。 */
+        px(x, ly, 3, KNEE - ly, C.pant); px(x + edge, ly, 1, KNEE - ly, edgeCol);
+        px(x, ly, 3, 1, 'rgba(0,0,0,0.18)');
+        px(x, knee, 3, bot - knee, C.pant); px(x, knee, 3, 1, shade(C.pant, -.20));
+        px(shx, bot, 4, 2, C.shoe); px(shx, bot, 4, 1, C.shoeL);   // 鞋比腿宽 1px：脚是横的
       }
-      px(6,hy+7,1,1,'#d88d88');px(12,hy+7,1,1,'#d88d88');
-      px(9,hy+7,1,1,'#a15f5c');
+      const d = F.spread ? 1 : 0;
+      one(cx - 3 - d, cx - 4 - d, 0, C.pantL, F.fl === 1 ? 1 : 0);
+      one(cx + 1 + d, cx + 1 + d, 2, C.pantD, F.fl === 2 ? 1 : 0);
     }
-    /* [QODER-FIX #10/#11/#12] 发型重画：
-       · 丸子头以头顶正中（x=5..12 的中心）对齐，不再偏右；
-       · 中发＝齐肩内扣，左右两侧连成发帘，不再像两根不等长的双马尾；
-       · 长发垂到肩下，卷发改成围着头缘的圆弧卷团。 */
-    if(v.hairStyle==='mid'||v.hairStyle==='long'){
-      /* [QODER-FIX #11-v2] 中发/长发＝贴着脑袋的左右发帘：外侧 2px 主体 + 内侧 1px 高光，
-         底部向脸颊收一点；正面左右完全同长对称，不再像两根粗细/长短不同的马尾。 */
-      const len=v.hairStyle==='long'?10:6;
-      if(side){
-        px(11,hy+2,3,len,dark);px(11,hy+2,2,len-1,v.hairColor);px(12,hy+3,1,Math.max(2,len-3),light);
-      }else{
-        px(4,hy+2,2,len,dark);px(13,hy+2,2,len,dark);
-        px(5,hy+2,1,len-1,v.hairColor);px(13,hy+2,1,len-1,v.hairColor);
-        px(4,hy+2,1,2,light);px(14,hy+2,1,2,light);
-        if(back){px(6,hy+7,7,Math.max(1,len-5),v.hairColor);px(7,hy+len+1,5,1,dark)}
+    /* ---------- 侧视：厚度 6px，前臂摆到身前，两条腿靠横向错位表达迈步 ---------- */
+    function bodySide() {
+      px(cx - 3, ty, 6, 1, C.coatL); px(cx - 3, ty + 1, 6, TORSO - 1, C.coat);
+      px(cx - 3, ty + 1, 1, TORSO - 1, C.coatL); px(cx + 2, ty + 1, 1, TORSO - 1, C.coatD);
+      px(cx - 3, ty + TORSO - 1, 6, 1, C.coatD);
+      px(cx + 1, ty + 1, 3, TORSO - 3, C.pack);                    // 书包露在背后
+      px(cx + 3, ty + 1, 1, TORSO - 3, C.packD);
+      px(cx + 1, ty + 1, 3, 1, C.packL);
+      if (v.clothPattern === 'stripe') for (let r = ty + 2; r < ty + TORSO - 1; r += 3) px(cx - 3, r, 6, 1, v.clothAlt);
+      const ao = crouched ? (pose === 'pet' || pose === 'feed' ? -1 : 0) : F.sw * 2;
+      px(cx - 4, ty + 2 + ao, 2, ARMR, C.coatL); px(cx - 4, ty + 2 + ao + ARMR, 2, 2, C.skin);
+    }
+    function legsSide() {
+      const s = F.m === 0 ? 2 : 0, fx = cx - 3 + s, bx = cx + 1 - s;
+      const fl = F.m === 1 || (F.m === 0 && !F.sw), th = KNEE - ly;
+      px(fx, ly, 3, th, C.pant); px(fx + (fl ? 0 : 2), ly, 1, th, fl ? C.pantL : C.pantD);
+      px(fx, KNEE, 3, SHOE_TOP - KNEE, C.pant);
+      px(fx - 1, SHOE_TOP, 4, 2, C.shoe); px(fx - 1, SHOE_TOP, 4, 1, C.shoeL);
+      px(bx, ly, 3, th + 1, C.pant); px(bx + (fl ? 2 : 0), ly, 1, th + 1, fl ? C.pantD : C.pantL);
+      px(bx, KNEE + 1, 3, SHOE_TOP - KNEE - 1, C.pant);
+      px(bx, SHOE_TOP, 4, 2, C.shoe); px(bx, SHOE_TOP, 4, 1, C.shoeL);
+    }
+
+    /* ---------- 头与五官（骨架逐格照搬 buildChar 的 head / sideBody） ----------
+       ⚠️ 脸的可用列是 x6..x12（共 7 列，中线 **x9**），嘴 x8..x10、下颌 x7..x11 都以 x9 对称。
+          地图权威画法（buildChar.head，像素校园_全校地图.html 第 4758 行）两眼落在 x7、x10，
+          中线其实是 8.5 ⇒ 眼睛整排比嘴往左偏半格，18×30 放大 6 倍就是 3 屏幕像素的歪，
+          看着就是"嘴和眼睛对不上"。这一版把右眼挪到 x11，两眼 {x7}{x11} 真正关于 x9 镜像，
+          地图那两处正脸（4759 / 5006）同步改，玩家和 NPC 仍逐格一致。
+          三档眼型只在"往哪个方向多占一格"上做文章：
+            豆豆眼  1 列 × 1 行（x7、x11 @ EY）
+            圆眼    1 列 × 2 行（往**上**长一行到 EY-1，两格同色）⇒ 竖着大一圈
+            细眼    2 列 × 1 行（{x7,x8} 与 {x10,x11} @ EY，全瞳孔实色，往**内**扩一格）
+       ⚠️ 侧视只有靠近镜头这一只眼（x7）：细眼朝后拖成 2 格实线，圆眼往上长一行（EY-1）。
+       ⚠️ 圆眼的上排画在配饰**之后**（eyesTop）：眼镜上沿正好压在 EY-1 这一行，
+          先画眼睛会被镜框整条抹掉，三档又退回两种。 */
+    const EYE_CORE = [cx - 2, cx + 2];   // 正面两眼（x7、x11：关于脸中线 x9 镜像，与嘴同轴）
+    /* 圆眼上排那一格画**瞳孔同色**（整只眼 = 1 列 × 2 行实心）。
+       ⚠️ 试过点一格 55% 白做"眼神光"：18×30 上读起来是眼睛顶上顶了颗白点 = 眉毛/反光，
+          而且眼镜上沿（中性灰）和它亮度几乎一样，一戴眼镜圆眼就糊回豆豆眼。
+          圆眼靠**高度**赢，不靠高光。 */
+    function eyesFront() {
+      if (v.eye === 'dot') { px(EYE_CORE[0], EY, 1, 1, C.eye); px(EYE_CORE[1], EY, 1, 1, C.eye); return }
+      if (v.eye === 'narrow') {
+        /* 整条 2 列 × 1 行**全用瞳孔实色**：左眼从 x7 往里长到 x8，右眼从 x11 往里长到 x10，
+           两半仍关于 x9 镜像（中间只剩 x9 一列鼻梁，眼镜那格正好压在下面）。
+           ⚠️ 试过把朝外那一格压成 mix(瞳孔,肤色,45%) 做"眼尾渐隐"：18×30 上那格既不象
+              瞳孔也不象皮肤，读起来是眼角蹭了块灰 ⇒ 整张脸显脏。细眼靠**宽度**赢，不靠渐隐。 */
+        px(EYE_CORE[0], EY, 2, 1, C.eye); px(EYE_CORE[1] - 1, EY, 2, 1, C.eye);
+        return
+      }
+      px(EYE_CORE[0], EY, 1, 1, C.eye); px(EYE_CORE[1], EY, 1, 1, C.eye)   // 圆眼瞳孔：与豆豆眼同两列
+    }
+    function eyesTop() {
+      if (v.eye !== 'round' || back) return
+      if (side) { px(cx - 2, EY - 1, 1, 1, C.eye); return }
+      px(EYE_CORE[0], EY - 1, 1, 1, C.eye); px(EYE_CORE[1], EY - 1, 1, 1, C.eye)
+    }
+    function headFront() {
+      px(cx - H2 + 1, HY, HW - 2, 1, C.hairL);                 // 发顶受光（顶光层）
+      px(cx - H2, HY + 1, HW, 1, C.hair);
+      px(cx - H2, HY + 2, HW, FACE, C.skin);                   // 脸
+      px(cx - H2, HY + 2, 1, FACE, C.skinL);                   // 左颊受光（光自左上）
+      px(cx + H2, HY + 2, 1, FACE, C.skinD);                   // 右颊背光
+      eyesFront();
+      eyesTop();
+      px(cx - 1, HY + FACE, 3, 1, shade(C.skinD, -.28));       // 嘴（脸的倒数第二行）
+      px(cx - H2 + 1, HY + FACE + 1, HW - 2, 1, C.skinD);      // 下颌收边
+    }
+    function headBack() {
+      px(cx - H2 + 1, HY, HW - 2, 1, C.hairL);
+      px(cx - H2, HY + 1, HW, 1, C.hair);
+      px(cx - H2, HY + 2, HW, HH - 2, C.hair);                 // 后脑整片是发
+      px(cx - H2, HY + 1, 1, HH - 1, C.hairL);
+      px(cx + H2, HY + 1, 1, HH - 1, C.hairD);
+      px(cx - 1, HY + 2, 2, 1, shade(C.hair, .2));             // 发旋小高光（不是横贯亮带）
+    }
+    function headSide() {
+      px(cx - H2 + 1, HY, HW - 2, 1, C.hairL);
+      px(cx - H2, HY + 1, HW, 1, C.hair);
+      px(cx - H2, HY + 2, HW, HH - 2, C.skin);
+      px(cx + 1, HY + 2, 3, HH - 2, C.hair);                   // 后脑
+      px(cx + H2, HY + 2, 1, HH - 2, C.hairD);
+      px(cx - H2, HY + 2, H2 + 1, 1, C.hair);                  // 刘海压额（额头有台阶）
+      /* 侧视只有靠近镜头这一只眼（x7）：细眼朝**后**拖成 2 格实线，与正面同款；
+         圆眼那一行高的差别在 eyesTop() 里补（要压在刘海/镜框之上才看得见）。 */
+      if (v.eye === 'narrow') px(cx - 2, EY, 2, 1, C.eye);
+      else { px(cx - 2, EY, 1, 1, C.eye); eyesTop() }
+      px(cx - H2, EY - 1, 1, 1, C.skinL);                      // 额头受光
+      px(cx - H2, EY + 1, 1, 1, C.skinL);                      // 鼻尖受光（侧脸第二个台阶）
+      px(cx - H2, HY + FACE, 2, 1, C.skinD);                   // 下巴
+    }
+    /* ⚠️ 顺序不能反：先头/躯干再腿，腿压在躯干下沿（反过来衣摆会盖住大腿根）。 */
+    if (side) { headSide(); bodySide(); legsSide(); }
+    else if (back) { headBack(); torsoFront(); armsFront(); legsFront(); }
+    else { headFront(); torsoFront(); armsFront(); legsFront(); }
+    /* ---------- 发型：全部用地图长发钩子那一套工艺 ----------
+       长发/中发＝贴在 x = cx±(H2+1) 这两列（正好是躯干最外两列）的细发帘，发梢两行压暗 ⇒
+       它会自然压在肩头上，这就是"垂到肩"的样子，不用另算肩线。
+       ⚠️ 四段发型都必须画在描边之前，否则这些 1px 细列拿不到彩色收边，3× 下像两片浮在肩上的色块。
+       ⚠️ 侧视只画**后脑那一侧**（画的是朝左的人，后脑恒在 x 较大的一侧）；前面再挂一条
+          会盖住五官，那不叫长发，那叫头发糊脸。 */
+    function curtain(len) {
+      for (let i = 0; i < len; i++) {
+        const col = i < len - 2 ? C.hair : C.hairD;
+        px(cx + H2 + 1, HY + 2 + i, 1, 1, col);
+        if (!side) px(cx - H2 - 1, HY + 2 + i, 1, 1, shade(col, .1));
       }
     }
-    if(v.hairStyle==='ponytail'){
-      if(side){px(12,hy+4,3,2,dark);px(13,hy+5,2,6,v.hairColor);px(13,hy+10,2,1,dark)}
-      else if(back){px(8,hy+5,3,2,dark);px(8,hy+7,3,5,v.hairColor);px(9,hy+12,2,1,dark)}
-      else{px(12,hy+4,2,2,dark);px(13,hy+6,2,5,v.hairColor);px(13,hy+11,2,1,dark)}
-    }
-    if(v.hairStyle==='bun'){
-      /* [QODER-FIX #10-v2] 丸子头缩成 4×3 的圆发髻，压在头顶正中 x=7..10（头中心 8.5），
-         上窄下宽有层次；侧面上窄下宽地靠在后脑，不再是一整块横条/方砖。 */
-      const by=Math.max(0,hy-2);
-      if(side){px(9,by,2,1,dark);px(8,by+1,4,2,dark);px(9,by+1,2,1,light);px(8,by+3,1,1,v.hairColor)}
-      else{px(8,by,2,1,dark);px(7,by+1,4,2,dark);px(8,by+1,2,1,light);px(7,by+3,4,1,v.hairColor)}
-    }
-    if(v.hairStyle==='curly'){
-      /* [QODER-FIX #12-v2] 卷发＝沿头缘一圈对称的小卷团（左右镜像），
-         贴着头顶和两颊，不再是一边大一边小的乱块。 */
-      const by=Math.max(0,hy-1);
-      if(side){
-        px(7,by,5,2,v.hairColor);px(11,hy+1,3,7,dark);px(12,hy+2,1,5,v.hairColor);
-        for(const [x,y] of [[9,by],[12,hy+3],[11,hy+7]])px(x,y,1,1,light);
-      }else{
-        px(5,by,8,2,v.hairColor);px(4,hy+2,2,7,dark);px(13,hy+2,2,7,dark);
-        for(const [x,y] of [[6,by],[9,by],[4,hy+4],[14,hy+4],[5,hy+8],[13,hy+8]])px(x,y,1,1,light);
-        if(back)px(6,hy+7,7,2,v.hairColor);
+    if (v.hairStyle === 'mid') curtain(5);
+    if (v.hairStyle === 'long') curtain(HH + 3);
+    if (v.hairStyle === 'ponytail') {
+      /* 马尾扎在脑后 ⇒ 三个视图说的是同一件事：**束根在头顶正中，尾巴往后垂**。
+         正面只有束根那一小截 + 脑袋两侧各露 2 格尾巴边（旧代码正面画在 x13，读起来是侧马尾）。 */
+      if (side) {
+        px(cx + H2 - 1, HY + 2, 2, 1, C.tie);                   // 扎带（耳后）
+        px(cx + H2, HY + 3, 1, 7, C.hairD);                     // 靠脑袋那列压暗：尾巴要和后脑分开
+        px(cx + H2 + 1, HY + 3, 1, 7, C.hair);
+        px(cx + H2, HY + 9, 2, 1, C.hairD);                     // 发梢
+      } else if (back) {
+        px(cx - 2, HY + 2, 5, 1, C.tie);                        // 扎带横压在后脑发上
+        px(cx - 1, HY + 3, 3, 8, C.hair);
+        px(cx - 2, HY + 3, 1, 8, C.hairD); px(cx + 2, HY + 3, 1, 8, C.hairD);
+        px(cx - 1, HY + 9, 3, 2, C.hairD);
+      } else {
+        px(cx - 1, HY, 3, 1, C.tie);                            // 束根（头顶正中）
+        px(cx - H2 - 1, HY + 3, 1, 2, C.hairD); px(cx + H2 + 1, HY + 3, 1, 2, C.hairD);
       }
     }
-    /* [QODER-FIX #15] 配饰统一读 v.accColor：眼镜/帽子/围巾各用各自选的颜色，
-       修掉以前配饰颜色写死、改了“配饰颜色”也不生效的问题。 */
-    if(v.acc==='glasses'&&!back){
-      const frame=v.accColor;
-      /* [QODER-FIX #13] 正面眼镜补全下镜框：左右两片各画完整一圈，中间留鼻梁桥。 */
-      if(side){px(5,hy+3,4,1,frame);px(5,hy+4,1,2,frame);px(6,hy+6,3,1,frame);px(9,hy+3,2,1,frame)}
-      else{px(5,hy+3,8,1,frame);px(5,hy+4,1,3,frame);px(12,hy+4,1,3,frame);px(8,hy+4,2,1,frame);px(5,hy+6,4,1,frame);px(10,hy+6,3,1,frame)}
+    if (v.hairStyle === 'bun') {
+      /* 丸子头：头顶之外只剩 1 行可堆，光往上堆会读成"一顶扁帽子"。
+         所以丸子**压在发顶两行上**（球的下半嵌进脑袋），靠自动描边给出圆轮廓，
+         再用一道扎带把球和发顶切开，球才"站"在头上。 */
+      const w = side ? 4 : 5, x0 = side ? cx - 1 : cx - 2;
+      px(x0, HY - 1, w, 2, C.hair);
+      px(x0, HY - 1, w - 1, 1, C.hairL);                        // 顶部受光
+      px(x0 + w - 1, HY - 1, 1, 2, C.hairD);                    // 背光侧
+      px(x0, HY + 1, w, 1, C.tie);                              // 扎带
     }
-    if(v.acc==='cap'){px(5,hy-1,8,3,shade(v.accColor,-.18));px(4,hy+2,side?5:10,1,v.accColor)}
-    if(v.acc==='scarf'){px(6,hy+9,7,2,v.accColor);px(11,hy+11,2,3,shade(v.accColor,-.22))}
+    if (v.hairStyle === 'twintails') {
+      /* 双马尾：两束各 2 列宽，扎在耳下（第 HY+3 行）往下垂，压在袖子上方。
+         贴头那列用主色、外侧那列压暗，两束才不会和脑袋糊成一片（连成一片就成头盔）。 */
+      const LN = 8, top = HY + 3;
+      const one = (outer, inner) => {
+        px(inner, top, 1, LN, C.hair);
+        px(outer, top, 1, LN, C.hairD);
+        px(inner, top + LN - 2, 1, 2, C.hairD);
+        px(inner, top, 1, 1, C.tie);
+      };
+      if (side) one(cx + H2 + 1, cx + H2);
+      else { one(cx - H2 - 2, cx - H2 - 1); one(cx + H2 + 2, cx + H2 + 1) }
+    }
+    /* ---------- 配饰：眼镜的几何直接取地图 C.glasses 那段（算法哥同款） ----------
+       只画「上沿 + 左右外框 + 鼻梁」，**两眼那两格留空** ⇒ 眼睛从镜片后面透出来。
+       18×30 上脸只有 4 行高，试过实心 3×3 镜框：一盖上去整张脸糊成一条黑带。
+       ⚠️ 眼线行必须复用 EY 这同一个式子，不能写绝对行号 —— 否则走路抬身那一帧眼镜会脱开脸往上飘。
+       ⚠️ 背向不画（后脑勺上凭空一副眼镜），并且一律画在描边之前，镜框才拿得到彩色收边。 */
+    if (v.acc === 'glasses' && !back) {
+      const frame = v.accColor, GE = EY;
+      if (side) {
+        px(cx - H2, GE - 1, 3, 1, frame);                       // 上沿（短，只罩得住那一只眼）
+        px(cx - H2, GE, 1, 1, frame);                            // 外框
+        px(cx, GE - 1, 3, 1, frame);                             // 镜腿：横过太阳穴压在后脑发上
+      } else {
+        /* 镜框左右两柱必须关于脸中线 x9 真镜像：左柱在 x6（脸的左边缘），右柱就得在 x12
+           （脸的右边缘）。以前右柱写成 x11，一是左右不对称，二是正好盖住细眼朝外那一格，
+           戴眼镜的细眼脸整排糊成一条黑带。上沿同理铺满 x6..x12，跟两柱接上。 */
+        px(cx - H2, GE - 1, HW, 1, frame);                        // 上沿 x6..x12
+        px(cx - H2, GE, 1, 1, frame);                              // 左外框 x6
+        px(cx, GE, 1, 1, frame);                                   // 鼻梁：圆眼时两眼之间只剩这一格
+        px(cx + H2, GE, 1, 1, frame);                              // 右外框 x12
+      }
+      eyesTop();                    // 圆眼的上排补在镜框之上，否则三档退回两档
+    }
+    if (v.acc === 'cap') {
+      /* 帽檐落在发际线那一行（HY+1），**不占额头行 HY+2**：一来帽子上沿本来就该压在头发
+         和皮肤的分界处，二来圆眼的眼上排正是 HY+2 —— 檐压上去三档又退回两档。 */
+      px(cx - H2, HY - 1, HW, 1, shade(v.accColor, .16));        // 帽顶受光
+      px(cx - H2, HY, HW, 1, v.accColor);                        // 帽身盖住发顶
+      if (side) px(cx - H2 - 2, HY + 1, H2 + 3, 1, shade(v.accColor, -.22));   // 帽檐朝前
+      else if (!back) px(cx - H2, HY + 1, HW, 1, shade(v.accColor, -.22));     // 正面：檐压在发际线
+      else px(cx - H2 + 1, HY + 1, HW - 2, 1, shade(v.accColor, -.22));        // 背面：只剩帽底边
+    }
+    if (v.acc === 'scarf') {
+      px(cx - 4, ty - 1, 9, 1, v.accColor);                      // 绕颈一圈（压在颈行上）
+      px(cx - 4, ty, 9, 1, shade(v.accColor, -.18));             // 搭在肩上那排
+      if (back) px(cx - 2, ty + 1, 4, 2, v.accColor);            // 背面：巾尾搭在背上
+      else px(cx + 1, ty + 1, 2, 3, shade(v.accColor, -.26));    // 正/侧面：垂下来的巾角
+    }
+    /* --- 后处理：彩色描边 → 接地影（唯一一条出口，顺序不能反）---
+       ⚠️ 描边必须先把变换复位；接地影必须在描边之后，否则影子会被描一圈边。
+          影子的几何是地图上量出来的：足迹落在 x6..16 / y27..29 内，不会被画布硬切。 */
+    outlineSprite(c, .45);
+    shadowBlob(g, cx + 2, 28, 5, 2, .46, 3);
     return c;
   }
   function sprite(look,dir='down',step=4) {

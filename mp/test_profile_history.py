@@ -1,5 +1,6 @@
 """Profile visibility and private sent-history checks against isolated lobby :3012."""
 import json
+import os
 import secrets
 import sqlite3
 import time
@@ -8,7 +9,9 @@ import urllib.request
 from pathlib import Path
 
 BASE = "http://127.0.0.1:3012"
-DB = Path(__file__).with_name("qa-new.sqlite3")
+# 和被测服务用同一个库：server.py 读 MP_DB，这里跟着读，否则两边各开一个文件，
+# 直连数据库造的那条公告永远查不到（报 no such table: mp_announcement）。
+DB = Path(os.environ.get("MP_DB") or Path(__file__).with_name("qa-new.sqlite3"))
 
 
 def call(path, token="", method="GET", body=None):
@@ -34,20 +37,26 @@ def create():
 def main():
     owner, owner_id = create()
     viewer, viewer_id = create()
+    status, colleges = call("/api/mp/colleges")
+    assert status == 200 and "计算机科学与技术学院" in colleges["colleges"]
     status, existing = call("/api/mp/profile/me", owner)
     assert status == 200
     look = {**existing["look"], "eye": "dot", "eyeColor": "#3a74b2"}
     status, _ = call("/api/mp/profile/me", owner, "PUT", {
-        "look": look, "bio": "公开签名", "college": "信息学院", "grade": "大三", "tags": ["像素", "游戏"],
+        "look": look, "bio": "公开签名", "college": "计算机科学与技术学院", "grade": "大三", "tags": ["像素", "游戏"],
         "visibility": {"bio": True, "college": True, "grade": True, "tags": True}})
     assert status == 200
     status, public = call(f"/api/mp/profile/{owner_id}", viewer)
-    assert status == 200 and public["bio"] == "公开签名" and public["college"] == "信息学院"
+    assert status == 200 and public["bio"] == "公开签名" and public["college"] == "计算机科学与技术学院"
     assert public["grade"] == "大三" and public["tags"] == ["像素", "游戏"]
     assert public["look"]["eyeColor"] == "#3a74b2"
     assert all(public["visibility"].values())
     status, _ = call("/api/mp/profile/me", owner, "PUT", {
         "look": look, "bio": "保密", "college": "信息学院", "grade": "大三", "tags": ["像素"],
+        "visibility": {"bio": False, "college": True, "grade": True, "tags": False}})
+    assert status == 400
+    status, _ = call("/api/mp/profile/me", owner, "PUT", {
+        "look": look, "bio": "保密", "college": "计算机科学与技术学院", "grade": "大三", "tags": ["像素"],
         "visibility": {"bio": False, "college": True, "grade": True, "tags": False}})
     assert status == 200
     _, public = call(f"/api/mp/profile/{owner_id}", viewer)
@@ -67,9 +76,12 @@ def main():
     assert status == 200 and [a["content"] for a in history["announcements"]] == ["自己的公告"]
     assert [m["content"] for m in history["private"]] == ["我发的私聊"]
     assert history["private"][0]["to"] == viewer_id
+    assert [c["peer"] for c in history["conversations"]] == [viewer_id]
+    assert [i["content"] for i in history["conversations"][0]["items"]] == ["对方发的私聊", "我发的私聊"]
+    assert [i["mine"] for i in history["conversations"][0]["items"]] == [False, True]
     assert call("/api/mp/history/me")[0] == 401
     assert call(f"/api/mp/history/{owner_id}", viewer)[0] == 404
-    print("PASS: complete public fields, hidden fields, eye color, own sent records, no cross-account history")
+    print("PASS: college whitelist, complete public fields, hidden fields, eye color, own sent records, per-peer conversation, no cross-account history")
 
 
 if __name__ == "__main__":

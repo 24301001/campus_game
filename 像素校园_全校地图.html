@@ -59,14 +59,16 @@
   /* 保安 · 老丁（第七十九分片）头顶那颗「按 C 说话」气泡走 #ctip —— 与 #tip 同**一条规则**
      （他要独立一个元素：向导那颗是「E 说话」，一辈子只可能出现在小北头顶，
        两颗共存时会互相抢 transform；合并成一条选择器，样式永远同步）。
-     食堂阿姨（第八十分片）那颗「按 C 进食堂」同理走 #atip，第三条元素挂同一条规则。 */
-  #tip,#ctip,#atip{
+     食堂阿姨（第八十分片）那颗「按 C 进食堂」同理走 #atip，第三条元素挂同一条规则。
+     #dtip 是**门口**那颗「按 F 进入 ××」（第四十七轮）：进门提示原来只写在顶部 #hud 那行小字里，
+     站在楼前根本注意不到，用户报「逸夫楼和计算机楼没有快捷键提示」⇒ 同一句话再挂一颗门口气泡。 */
+  #tip,#ctip,#atip,#dtip{
     position:fixed;left:0;top:0;pointer-events:none;transform:translate(-50%,-100%);
     padding:2px 6px;background:#1d2129;color:#e9e5d8;border:1px solid #39404d;border-radius:4px;
     font:12px/1.4 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
     box-shadow:0 2px 8px rgba(0,0,0,.45);white-space:nowrap;
   }
-  #tip b,#ctip b,#atip b{color:#ffd76e;}
+  #tip b,#ctip b,#atip b,#dtip b{color:#ffd76e;}
   #dlg{
     position:fixed;left:50%;transform:translateX(-50%);bottom:64px;   /* 让开右下角的 #zoom */
     width:min(560px,calc(100vw - 28px));
@@ -74,7 +76,7 @@
     box-shadow:0 18px 40px rgba(0,0,0,.55);
     color:#e9e5d8;font:12px/1.75 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
   }
-  #tip[hidden],#ctip[hidden],#atip[hidden],#dlg[hidden],#toast[hidden]{display:none;}
+  #tip[hidden],#ctip[hidden],#atip[hidden],#dtip[hidden],#dlg[hidden],#toast[hidden]{display:none;}
   #dlgT{padding:6px 10px;border-bottom:1px solid #2b2f3a;color:#ffd76e;font-weight:600;}
   #dlgLog{padding:8px 10px;max-height:132px;overflow:auto;}
   #dlgQuick{display:flex;flex-wrap:wrap;gap:6px;padding:0 10px 8px;}
@@ -132,9 +134,10 @@
      它的 textContent 一直是「E 说话」）。收掉只是**看不见**，她照旧在跑，
      出门回地图一解除就原样回来。
      ⚠️ 第八十分片加的 #atip（食堂阿姨那颗）**同样必须挂进来** —— 不加的话，
-        阿姨要是恰好站在计算机中心 / 逸夫楼附近，她的气泡会直接浮在室内画面上。 */
+        阿姨要是恰好站在计算机中心 / 逸夫楼附近，她的气泡会直接浮在室内画面上。
+        #dtip（门口那颗「按 F 进入 ××」）也一样：它是**室外**才有的东西，进屋必须收掉。 */
   body.ctr-on #hud,body.ctr-on #zoom,body.ctr-on #tip,body.ctr-on #ctip,
-  body.ctr-on #atip,body.ctr-on #dlg,body.ctr-on #toast,body.ctr-on #wheel{display:none;}
+  body.ctr-on #atip,body.ctr-on #dtip,body.ctr-on #dlg,body.ctr-on #toast,body.ctr-on #wheel{display:none;}
   /* HUD 里新加的两行。⚠️ :empty 时收起来 —— 否则地图上永远挂着一行空白 */
   #hudctr{display:block;color:#7fd6c8;}
   #hudctr:empty{display:none;}
@@ -198,6 +201,7 @@
 <div id="tip" hidden><b>E</b> 说话</div>
 <div id="ctip" hidden><b>C</b> 和老丁说话</div>
 <div id="atip" hidden><b>C</b> 进食堂</div>
+<div id="dtip" hidden></div>
 <div id="dlg" hidden>
   <div id="dlgT">向导 · 小北</div>
   <div id="dlgLog"></div>
@@ -4752,7 +4756,7 @@ function buildChar(HH, PAL) {
          整张脸糊成一条黑带（sprite.py 的"头块刚性"探针会实测出来）。 */
       const EY = HY + 2 + (FACE >= 5 ? 2 : 1);               // 眼睛所在行
       P(cx - 2, EY, 1, 1, C.hairD);                         // 左眼
-      P(cx + 1, EY, 1, 1, C.hairD);                         // 右眼（间距 2px）
+      P(cx + 2, EY, 1, 1, C.hairD);                         // 右眼（两眼关于脸中线 x9 镜像，与嘴 x8..x10 同轴）
       if (FACE >= 5) P(cx, EY + 1, 1, 1, C.skinD);          // 鼻影（脸够高才放得下）
       P(cx - 1, HY + FACE, 3, 1, shade(C.skinD, -0.28));    // 嘴（脸的倒数第二行）
       P(cx - H2 + 1, HY + FACE + 1, HW - 2, 1, C.skinD);    // 下颌收边（脸的最后一行）
@@ -4998,8 +5002,8 @@ function buildCrouch(PAL) {
       P(cx - H2, TOP + 2, 1, FACE, C.skinL);                // 左颊受光
       P(cx + H2, TOP + 2, 1, FACE, C.skinD);                // 右颊背光
       const EY = TOP + 2 + (FACE >= 5 ? 2 : 1);             // = TOP+3
-      P(cx - 2, EY, 1, 1, C.hairD);
-      P(cx + 1, EY, 1, 1, C.hairD);
+      P(cx - 2, EY, 1, 1, C.hairD);                         // 两眼关于 x9 镜像（与站姿同一套）
+      P(cx + 2, EY, 1, 1, C.hairD);
       P(cx - 1, TOP + FACE, 3, 1, shade(C.skinD, -0.28));   // 嘴
       P(cx - H2 + 1, TOP + FACE + 1, HW - 2, 1, C.skinD);   // 下颌
     }
@@ -5322,6 +5326,7 @@ defRoom({
   name: "计算机中心", sub: "算法哥的机房",
   hint: "← → / A D 左右移动　↑ ↓ / W S 前后移动<br>走到算法哥身边按 <b>C</b> 找他说话　·　按 <b>B</b> 出门回地图",
   enterTip: "按 F 进入计算机中心",
+  enterBubble: "<b>F</b> 进入计算机中心",     // 门口那颗气泡（同 #tip 的写法：按键加粗成金色）
   floor: ctrFloor, walls: ctrWalls, decor: ctrDecor, door: ctrDoor,
   solid: CTR_SOLID,
   spawn: CTR_SPAWN,
@@ -5683,15 +5688,41 @@ window.addEventListener("keyup", e => {
 window.addEventListener("blur", () => { for (const k in CKEYS) CKEYS[k] = 0; });
 
 /* --- 7.5.16 起搏：地图上的「按 F」提示 --------------------------------
-   本段不改主循环，所以自带一个极轻的常驻 rAF：只判一次坐标、只写一个 textContent。 */
-let _hudctrLast = null;
+   本段不改主循环，所以自带一个极轻的常驻 rAF：只判一次坐标、只写一个 textContent。
+   第四十七轮：原来只有顶部 #hud 那行小字，站在楼前根本看不见 ⇒ 同一句话再挂一颗
+   门口气泡 #dtip，钉在楼矩形下沿（门那一侧）正上方，样式跟老丁/阿姨头顶那颗同一条规则。
+   ⚠️ 地图放大到 6×8× 时一栋楼比屏幕还宽，门口会跑到屏幕外 ⇒ 坐标夹进视口，
+      宁可贴着边也要让人看见"按 F"。 */
+const doorTip     = document.getElementById("dtip");
+let _hudctrLast = null, _dtipLast = null, _dTipX = -1e9, _dTipY = -1e9;
 function ctrHudPulse() {
   if (!CENTER.active && hudCtr) {
     const R = roomAt();
     const t = R ? R.enterTip : "";
     /* ⚠️ 比一下再写：textContent 赋同一个值也会产生一次 DOM 变更 + 样式重算，
        这个循环是 60Hz 常驻的，不缓存就等于让浏览器每秒白算 60 次。 */
-    if (t !== _hudctrLast) { hudCtr.textContent = t; _hudctrLast = t; }
+    if (t !== _hudctrLast) { hudCtr.textContent = t; _hudctrLast = t }
+    const bubble = R ? R.enterBubble : "";
+    if (bubble !== _dtipLast) {
+      _dtipLast = bubble;
+      if (bubble) { doorTip.innerHTML = bubble; doorTip.hidden = false }
+      else doorTip.hidden = true;
+    }
+    if (bubble && R.rect) {
+      const cssW = parseFloat(cv.style.width);
+      if (cssW) {
+        const cs = cssW / VIEW_W;
+        const x = Math.max(96, Math.min(window.innerWidth - 96,
+          (window.innerWidth  - VIEW_W * cs) / 2 + (R.rect.x + R.rect.w / 2 - cam.x) * zoom * cs));
+        const y = Math.max(30, Math.min(window.innerHeight - 10,
+          (window.innerHeight - VIEW_H * cs) / 2 + (R.rect.y + R.rect.h - cam.y) * zoom * cs));
+        if (Math.abs(x - _dTipX) > 1 || Math.abs(y - _dTipY) > 1) {
+          _dTipX = x; _dTipY = y;
+          doorTip.style.left = x + "px";
+          doorTip.style.top  = y + "px";
+        }
+      }
+    }
   }
   requestAnimationFrame(ctrHudPulse);
 }
@@ -5865,6 +5896,7 @@ defRoom({
   name: "逸夫楼 · 一楼大厅", sub: "咨询台",
   hint: "← → / A D 左右移动　↑ ↓ / W S 前后移动<br>走到学霸姐身边按 <b>C</b> 找她说话　·　按 <b>B</b> 出门回地图",
   enterTip: "按 F 进入逸夫楼",
+  enterBubble: "<b>F</b> 进入逸夫楼",         // 门口那颗气泡（同 #tip 的写法：按键加粗成金色）
   floor: yfFloor, walls: yfWalls, decor: yfDecor, door: yfDoor,
   solid: YF_SOLID,
   spawn: YF_SPAWN,
@@ -18589,6 +18621,9 @@ function guideTipFollow() {
         （`clearRect` 不重置 alpha，它只清像素）。
      ③ 角色画布**永远不许**进 `BLD_IMGS`：绘制循环里 `drawSwimRing` 紧跟角色那一笔，
         角色项一旦 alpha < 1，水线涟漪会被一起调暗。
+        ⚠️ 第四十七轮起遮挡判定不再看 `BLD_IMGS`，改看条目上的 `ch` 标记（人 = 跳过），
+        所以这条前提由「别把角色加进 BLD_IMGS」变成「每一处角色条目都必须带 `ch: 1`」——
+        地图里五处（玩家/向导/猫/老丁/阿姨）加 lobby 的对端玩家，共六处。
 
    认楼靠的是 parts/60_assemble.js 顶部那张 `BLD_IMGS`（按 canvas 认，
    不按 tag 也不按宽高 —— 图书馆精灵宽 401，与 18 宿舍楼同宽）。
@@ -18602,9 +18637,40 @@ function guideTipFollow() {
 
 const OCCL_A   = 0.34;      // 挡住人时这栋楼降到的不透明度（用户看实物后再调）
 const OCCL_TAU = 0.11;      // 淡入淡出时间常数（秒）（同上）
+const OCCL_COVER = 0.30;    // **道具**至少要实心盖住人物矩形 30% 才化开（楼不受这条约束）
+
+/* 道具的实心遮罩：惰性在 canvas 上挂一张 alpha 的 Uint8Array（不可枚举，跟着画布一起回收）。
+   ⚠️ 只在"第一次真和某人矩形重叠"时建一次 —— 每帧 getImageData 是把 GPU 读回主线程，
+      60 帧一次绝不能要；建完之后每帧就只是数组取值。 */
+function occMask(img) {
+  let m = img.__occA;
+  if (!m) {
+    const d = img.getContext('2d').getImageData(0, 0, img.width, img.height).data;
+    m = new Uint8Array(img.width * img.height);
+    for (let i = 3, j = 0; i < d.length; i += 4, j++) m[j] = d[i];
+    Object.defineProperty(img, '__occA', { value: m, enumerable: false });
+  }
+  return m;
+}
+
+/* 人矩形（左上 sx,sy，18×30）与道具矩形**相交**那一块里，实心格子占整个人物矩形的比例。 */
+function occSolid(it, sx, sy) {
+  const px0 = it.x - it.ax, py0 = it.y - it.ay, W = it.img.width, H = it.img.height;
+  const ax0 = Math.max(sx, px0), ay0 = Math.max(sy, py0);
+  const ax1 = Math.min(sx + CH_W, px0 + W), ay1 = Math.min(sy + CH_H, py0 + H);
+  if (ax1 <= ax0 || ay1 <= ay0) return 0;
+  const a = occMask(it.img);
+  let n = 0;
+  for (let y = ay0; y < ay1; y++) {
+    const row = (y - py0) * W;
+    for (let x = ax0; x < ax1; x++) if (a[row + (x - px0)] > 200) n++;
+  }
+  return n / (CH_W * CH_H);
+}
 
 const _occlCur  = new Map();     // canvas -> 当前不透明度（跨帧平滑用）
 const _occlWant = new Set();     // 本帧该淡的 canvas
+const _occlSeen = new Set();     // 本帧**看得见**的遮挡候选（第四十七轮：不再只认楼）
 let   _occlStep = 1;             // 本帧插值系数，由 occlFrame() 算
 let   _occlPrev = 0;             // 上一帧的时刻；首帧由 occlFrame 自己补上
 
@@ -18619,38 +18685,62 @@ function occlFrame() {
 /* 每帧先定"谁该淡"。补丁 20(b) 挂在绘制循环**之前**（要用排序后的 drawList）。 */
 function occlTick(list, ox, oy, zoom) {
   _occlWant.clear();
+  _occlSeen.clear();
   /* 两个"人"：玩家、向导。向导与补丁 18 同口径 —— FIT 档下 18px 精灵只剩 1.6 背板
      像素、根本不画，那就没必要为她把楼化开。 */
   const watchers = [{ x: player.x, y: player.y, baseY: player.y }];
   if (Math.max(CH_W, CH_H) * zoom >= 1.5)
     watchers.push({ x: GUIDE.x, y: GUIDE.y, baseY: GUIDE.y });
 
+  /* ⚠️ 第四十七轮：判据从「是不是楼」换成「是不是**人**」。
+     以前只有 `BLD_IMGS` 里的建筑会淡，可遮挡人的根本不止建筑 —— 实测在操场围墙
+     （tag `stwall`，234×94，画在 props 里但没登记进 BLD_IMGS）那段路上，排序后
+     它整幅压在人身上，一次盖掉 540 个像素里的 522 个：人**整个消失**，只剩头顶
+     一截和名牌浮在墙上。左右走动时人身上一段实色墙皮、下一段又露出来，看着就是
+     "整个人被拖成一帧残影"。楼化开做得再好，墙不化开照样是这个症状。
+     现在凡是**画在人之后、又正好罩住人**的条目一律进同一套化开，人和人之间不化
+     （靠条目上的 `ch` 标记认，见绘制循环那几处 push）。 */
   for (const it of list) {
-    if (!BLD_IMGS.has(it.img)) continue;
+    if (it.ch) continue;
+    _occlSeen.add(it.img);
     for (const w of watchers) {
-      /* ① 楼必须**画在人之后**：drawList 按 baseY 升序排，排在后 = 画在上 = 会盖住人。
-            相等时**不淡** —— 人那两个条目是 push 在 props 之后的，Array#sort 是
-            稳定排序 ⇒ 同 baseY 时人排在后、人画在上，楼盖不住 ⇒ 判据用严格大于。 */
+      /* ① 遮挡物必须**画在人之后**：drawList 按 baseY 升序排，排在后 = 画在上 = 会盖住人。
+            相等时**不淡** —— 人那几个条目是 push 在 props 之后的，Array#sort 是
+            稳定排序 ⇒ 同 baseY 时人排在后、人画在上，遮挡物盖不住 ⇒ 判据用严格大于。 */
       if (it.baseY <= w.baseY) continue;
-      /* ② 人的**精灵矩形中心**要落进楼的精灵矩形。
+      /* ② 人的**精灵矩形中心**要落进遮挡物的精灵矩形。
             用中心而不是矩形相交：贴着墙角擦着一条边走过去时人明明看得见，
             不该为这一点边就把整栋楼化开。 */
       const cx = w.x - CH_AX + CH_W / 2, cy = w.y - CH_AY + CH_H / 2;
       if (cx >= it.x - it.ax && cx <= it.x - it.ax + it.img.width &&
           cy >= it.y - it.ay && cy <= it.y - it.ay + it.img.height) {
-        _occlWant.add(it.img);
-        break;
+        /* ③ 楼维持旧行为（矩形基本实心，罩住就该淡）；**道具**必须真的画住人才淡 ——
+              校门拱门、旗杆、树这类精灵中间大片透明，只按矩形判会把好端端的门脸化开。 */
+        if (BLD_IMGS.has(it.img) || occSolid(it, w.x - CH_AX, w.y - CH_AY) >= OCCL_COVER) {
+          _occlWant.add(it.img);
+          break;
+        }
       }
     }
   }
 
   /* 跨帧插值：整栋楼"啪"地透明、"啪"地恢复会疯狂闪，插值才像雾化开。
-     收尾吸附到目标值，免得无限逼近（也免得 P6 的单调性被浮点尾巴破坏）。 */
-  for (const c of BLD_IMGS) {
+     收尾吸附到目标值，免得无限逼近（也免得 P6 的单调性被浮点尾巴破坏）。
+     ⚠️ 遍历对象从 `BLD_IMGS` 换成**本帧看得见的候选** `_occlSeen`：道具比建筑多得多，
+        每帧全表扫一遍不值当，而化开本来就只对画出来的东西有意义。 */
+  for (const c of _occlSeen) {
     const want = _occlWant.has(c) ? OCCL_A : 1;
     const cur  = _occlCur.has(c) ? _occlCur.get(c) : 1;
     const nxt  = cur + (want - cur) * _occlStep;
     _occlCur.set(c, Math.abs(nxt - want) < 0.004 ? want : nxt);
+  }
+  /* 淡着淡着滚出视口的道具：不在 `_occlSeen` 里就没人管它，等它再进视野会带着
+     0.34 出场闪一下。这里把"还欠着没复位"的那几个继续往 1 收（改已存在的键
+     不改变 Map 结构，遍历中 set 安全）。 */
+  for (const [c, v] of _occlCur) {
+    if (v >= 1 || _occlSeen.has(c)) continue;
+    const nxt = v + (1 - v) * _occlStep;
+    _occlCur.set(c, nxt > 0.996 ? 1 : nxt);
   }
 }
 
@@ -19844,7 +19934,7 @@ const GUARD = (function () {
     name: "保安 · 老丁",
     x: s0.x, y: s0.y, dir: "down", step: IDLE_BASE, walk: 0, idle: 0,
     spot: 0, path: null, wi: 0, pauseT: 1.2, stuck: 0,
-    near: false, open: false, summoned: false, summonRepath: 0
+    near: false, open: false, summoned: false, summonRepath: 0, summonT: 0
   };
 })();
 
@@ -19868,7 +19958,7 @@ function guardFace() {
 function guardWalkToward(tx, ty, dt) {
   const dx = tx - GUARD.x, dy = ty - GUARD.y, d = Math.hypot(dx, dy);
   if (d < 0.6) return false;
-  const ux = dx / d, uy = dy / d, s = (player.speed || 150) * (GUARD.summoned ? 2.4 : 0.5) * dt;
+  const ux = dx / d, uy = dy / d, s = (player.speed || 150) * (GUARD.summoned ? 3 : 0.5) * dt;
   const nx = GUARD.x + ux * s, ny = GUARD.y + uy * s;
   let moved = 0;
   if (guardWalkable(nx, GUARD.y)) { moved += Math.abs(nx - GUARD.x); GUARD.x = nx; }
@@ -19922,18 +20012,33 @@ function guardTick(dt) {
   GUARD.near = !GUARD.open && dP <= GUARD_TALK_R;
 
   if (GUARD.summoned && !CENTER.active) {
-    if (dP <= 54) {
-      GUARD.summoned = false; GUARD.path = null; guardStand(dt); guardFace();
+    GUARD.summonT += dt;
+    /* 到站：54px 内就算"走到面前"。第二条是**兜底到站** —— 他被临时障碍隔在玩家
+       十几米外绕不过来时，宁可就地开聊，也别让玩家干等一个永远不来的对话框。 */
+    if (dP <= 54 || (GUARD.summonT > 15 && dP <= 150)) {
+      GUARD.summoned = false; GUARD.path = null; GUARD.stuck = 0; GUARD.summonT = 0;
+      guardStand(dt); guardFace();
       if (window.MP && MP.guardArrived) MP.guardArrived();
+      else guardToast("老丁到了，但对话面板没起来——刷新页面（F5）再按 C。");
     } else {
       GUARD.summonRepath -= dt;
-      if (GUARD.summonRepath <= 0 || !GUARD.path) {
-        GUARD.summonRepath = 0.75;
+      if (GUARD.summonRepath <= 0) {
+        GUARD.summonRepath = 0.5;
         try { GUARD.path = guidePath(GUARD.x, GUARD.y, player.x, player.y); } catch (e) { GUARD.path = null; }
         GUARD.wi = 0;
       }
-      if (GUARD.path && GUARD.path.length) guardFollow(dt);
-      else guardStand(dt);
+      /* 卡死兜底：`guidePath` 走的是加载期那张共享栅格，摊位/展台这类**临时实体**它不知道，
+         召唤路上完全可能派出一条走不通的边。这一支原来没有 stuck 处理 ⇒ 他会一路原地
+         踏步，永远差那几十像素，玩家看到的就是"叫了人没来、对话也没弹"。
+         挪不动就丢掉路点直着朝玩家走（绕好看不重要，一定到得了面前才重要），
+         并把下一次重排推后 0.6 秒，让这段直路真的走出两步。 */
+      const r = GUARD.path && GUARD.path.length ? guardFollow(dt) : "stuck";
+      if (r === "run") GUARD.stuck = 0;
+      else {
+        GUARD.stuck += dt; GUARD.path = null;
+        GUARD.summonRepath = Math.max(GUARD.summonRepath, 0.6);
+        guardWalkToward(player.x, player.y, dt);
+      }
     }
     GUARD.near = dP <= GUARD_TALK_R;
     guardTipPaint();
@@ -20001,29 +20106,16 @@ const GUARD_APP = {
   ensure: function () { return ldEnsure(); },
   name: "保卫处", coldTip: "老丁的失物招领服务还没起来，正在拉起来，稍等一会儿……"
 };
-function guardOpen() {
-  ctrOpenPlatform(GUARD_APP);
-  /* 抽屉那个 iframe 的 title 是写死的「刷题平台」，切到老丁这边顺手改一下
-     （只影响无障碍读屏与浏览器标签提示，画面无关）。 */
-  if (ctrF) ctrF.setAttribute("title", "保卫处 · 老丁");
-}
+/* --- 7.9.5 对话：只有地图右下角那一块面板（`#mpGuard`），不再开抽屉 -------
+   第四十七轮：原来按 C 是 `ctrProbe` → `ctrOpenPlatform` 开"保卫处"抽屉，服务没起来
+   还会换成 `ctrColdStart` 那块"请启动器拉起来"的提示窗 —— 用户要的是**在地图里把话说完**，
+   所以保安这一家把抽屉和冷启动窗整体撤掉，只留 `MP.openGuardTalk` 这一个入口
+   （面板背后那块隐藏 iframe 才是真正接老丁服务的桥，画面上看不见）。
+   `GUARD_APP` / `ldEnsure` 保留：健康探针与"按名字替换造负对照"还要用它们。 */
 function guardTalk() {
-  if (window.MP && MP.openGuardTalk) {
-    if (!GUARD.near) { guardToast("走近老丁再按 C。"); return; }
-    MP.openGuardTalk(); return;
-  }
-  if (typeof CENTER !== "undefined" && (CENTER.plat || CENTER.waiting)) return;
-  /* ⚠️ 第四十五轮补的连按两次 C 并发保护（与 `auntTalk` 的 `AUNT.talking` 同款）：
-     闸门进了 `ctrOpenPlatform` 之后，`CENTER.plat` 要等 `ctrProbe` / `ldEnsure` 回来
-     才置真 —— 这中间几百毫秒里第二下 C 会再走一遍整条链（探两次、开两次抽屉）。 */
-  if (GUARD.talking) return;
   if (!GUARD.near) { guardToast("走近老丁再按 C。"); return; }
-  GUARD.talking = true;
-  ctrProbe(GUARD_APP).then(function (ok) {
-    GUARD.talking = false;
-    if (ok) guardOpen();                // 闸门（`GUARD_APP.ensure`）在 `ctrOpenPlatform` 里
-    else ctrColdStart(GUARD_APP);       // 服务没起来 → 走 71b 那套"请启动器拉起来"
-  });
+  if (window.MP && MP.openGuardTalk) { MP.openGuardTalk(); return; }
+  guardToast("对话面板没起来——刷新页面（F5）后再按 C。");
 }
 /* 反馈复用向导那张 `guideToast`（2.6 秒自动隐藏）—— 地图上已经有这一块，不另做。 */
 function guardToast(t) { if (typeof guideToast === "function") guideToast(t); }
@@ -20401,7 +20493,11 @@ function update(dt) {
      上界 WORLD_H - viewH 是负数 → clamp 会返回负上界、把相机推到界外。
      所以上界一律 max(0, …)：视口比世界大时相机老实待在原点。 */
   cam.x = clamp(player.x - viewW / 2,    0, Math.max(0, WORLD_W - viewW));
-  cam.y = clamp(player.y - viewH * 0.62, 0, Math.max(0, WORLD_H - viewH));
+  /* ⚠️ 竖向锚点必须落在**屏幕像素**整数上，不能是 `viewH * 0.62` 这种小数：
+     viewH = VIEW_H/zoom ⇒ viewH*0.62*zoom = 270*0.62 = 167.4，那 0.4 屏像素是常数偏移，
+     而相机取整后落在 1/zoom 网格上 → 上下走时人的屏幕 y 会在 167/168 之间来回跳。
+     先四舍五入成 167 再除以 zoom，人的屏幕位置就锁死在一个整数上。 */
+  cam.y = clamp(player.y - Math.round(viewH * 0.62 * zoom) / zoom, 0, Math.max(0, WORLD_H - viewH));
   animateWater(dt);                         // 水波 / 鱼影 / 鸭子
   animateFlag(dt);                          // 旗面换帧（[52_flag] 风动）
   hudTick();                                // HUD：最近地标 + 坐标
@@ -20413,24 +20509,45 @@ function update(dt) {
 }
 
 const drawList = [];
+/* 名牌层（lobby.js 在画布外另画一遍）要用**同一个**相机，不能它自己 round(cam)，
+   否则 2×/3× 下字比人飘 1 屏像素。render() 每帧把当前相机写进来。 */
+const CAMG = { x: 0, y: 0 };
 function render() {
-  const ox = Math.round(cam.x), oy = Math.round(cam.y);
+  /* ⚠️ 第四十七轮：相机网格从「1 世界像素」改到「1 **屏幕**像素」。
+     旧写法 `ox = Math.round(cam.x)` 把相机钉在世界整数格上，而 1 世界像素 = zoom 屏像素 ——
+     1× 档没事，2×/3×（近景）就出事：人连续走、相机每走满 1 世界像素才跳一格，
+     于是人的屏幕位置先往一个方向飘 1~2px、相机一 tick 又**倒回去 2~3px**。
+     实测长按右：2× 档序列 `221,223,222,221,223…`（26 帧里倒退 16 次、跨 2px 跳变 9 次），
+     3× 档 `213,214,214,214,212,212,212…`（每 3 帧倒退 2px）——
+     这就是用户说的「近景看走动姿势有颠簸卡顿」：不是帧没清干净，是人在自己脸上倒着抖。
+     现在把相机量化到 1/zoom 世界像素（= 恰好 1 屏像素），人的屏幕坐标成了常数、
+     世界按整屏像素滚动，背景和道具也不再抖。 */
+  const grid = zoom > 1;
+  const ox = grid ? Math.round(cam.x * zoom) / zoom : Math.round(cam.x);
+  const oy = grid ? Math.round(cam.y * zoom) / zoom : Math.round(cam.y);
+  CAMG.x = ox; CAMG.y = oy;
   ctx.imageSmoothingEnabled = false;
   occlFrame();                              // 第三十七轮：复位 alpha + 算插值步长
   ctx.clearRect(0, 0, VIEW_W, VIEW_H);
   /* 地面取 mip。L 保证 2^L <= 1/zoom ⇒ 只做「1:1 或轻微缩小」，绝不放大 mip（会糊）。
      源矩形按 WORLD 边界夹一次：FIT 档 viewH 比 WORLD_H 大 0.47px，不夹会在底边漏透明缝。
-     crisp（整数放大 / 精确 mip）关平滑走最近邻，其余开平滑。 */
+     crisp（整数放大 / 精确 mip）关平滑走最近邻，其余开平滑。
+     ⚠️ 相机落在 1/zoom 网格上时（2×/3×）源矩形只能取**整数世界列** `gx`，
+        剩下那不足 1 像素的小数换成**整数屏像素**的目的地位移 `offx`：
+        源边保持像素精确（不重采样、不糊），滚动粒度却是 1 屏像素。
+        zoom ≤ 1 时 ox 本来就是整数 ⇒ offx 恒 0，整段与改前逐字等价。 */
   const L = mipLevelFor(zoom), s = 1 << L;
   const mw = mips[L].width, mh = mips[L].height;
-  const msw = Math.min(viewW, WORLD_W - ox) / s, msh = Math.min(viewH, WORLD_H - oy) / s;
+  const gx = Math.floor(ox), gy = Math.floor(oy);
+  const offx = Math.round((gx - ox) * zoom), offy = Math.round((gy - oy) * zoom);
+  const msw = Math.min(viewW - offx / zoom, WORLD_W - gx) / s, msh = Math.min(viewH - offy / zoom, WORLD_H - gy) / s;
   const crisp = zoom >= 1 || zoom * s === 1;
-  let mox = ox / s, moy = oy / s;
+  let mox = gx / s, moy = gy / s;
   if (crisp) { mox = Math.round(mox); moy = Math.round(moy); }   // 精确贴图：对齐 mip 网格
   mox = Math.max(0, Math.min(mox, mw - msw));
   moy = Math.max(0, Math.min(moy, mh - msh));
   ctx.imageSmoothingEnabled = !crisp;
-  ctx.drawImage(mips[L], mox, moy, msw, msh, 0, 0, msw * s * zoom, msh * s * zoom);
+  ctx.drawImage(mips[L], mox, moy, msw, msh, offx, offy, msw * s * zoom, msh * s * zoom);
   drawWater(ox, oy, zoom);                  // 动态水层：地面之后、道具之前
 
   drawList.length = 0;
@@ -20451,18 +20568,18 @@ function render() {
   const chClip = Math.round(CH_H * lakeSubmerge(player.x, player.y));
   /* 蹲姿（第四十四轮）：`player.act` 非空时换成蹲姿精灵。 */
   const _pfr = (player.act && (player.actD - player.actT) < 0.35) ? 0 : 1;
-  drawList.push({ img: window.MP && MP.connected ? (player.act ? MP.crouch(MP.look, player.dir, player.act, _pfr) : MP.sprite(MP.look, player.dir, player.step)) : (player.act ? poseSprite(player.dir, player.act, _pfr) : charSprite(player.dir, player.step)), ax: CH_AX, ay: CH_AY, x: player.x, y: player.y, baseY: player.y, clip: chClip });
+  drawList.push({ img: window.MP && MP.connected ? (player.act ? MP.crouch(MP.look, player.dir, player.act, _pfr) : MP.sprite(MP.look, player.dir, player.step)) : (player.act ? poseSprite(player.dir, player.act, _pfr) : charSprite(player.dir, player.step)), ax: CH_AX, ay: CH_AY, x: player.x, y: player.y, baseY: player.y, clip: chClip, ch: 1 });
   /* 向导「小北」：与补丁 9 同口径 —— FIT 档下 18px 的精灵只剩 1.6 背板像素，
      点采样会忽隐忽现，直接不画。 */
   if (Math.max(CH_W, CH_H) * zoom >= 1.5)
     drawList.push({ img: guideSprite(GUIDE.dir, GUIDE.step), ax: CH_AX, ay: CH_AY,
-                    x: GUIDE.x, y: GUIDE.y, baseY: GUIDE.y });
+                    x: GUIDE.x, y: GUIDE.y, baseY: GUIDE.y, ch: 1 });
   /* 猫宠（§22.7）：与向导同口径 —— 同一个 zoom 门限、同一个 drawList、
      同一套 baseY 遮挡。不活跃的猫（作息 at:null 的时段）不进列表。 */
   if (Math.max(CAT_W, CAT_H) * zoom >= 1.5)
     for (const _c of CATS) if (_c.active)
       drawList.push({ img: catSprite(_c.cfg.id, _c.act, _c.dir, _c.frame),
-                      ax: CAT_AX, ay: CAT_AY, x: _c.x, y: _c.y, baseY: _c.y });
+                      ax: CAT_AX, ay: CAT_AY, x: _c.x, y: _c.y, baseY: _c.y, ch: 1 });
   /* 猫粮（第四十四轮）：一次性世界物体，蹲下喂食时落在玩家脚前一格。
      ⚠️ 不进 props / 不加 addSolid（后者会重掷全校园散射，见 §6.6 物种种子）。 */
   if (CAT_FOOD) {
@@ -20473,11 +20590,11 @@ function render() {
   /* 保安 · 老丁（§7.9）：同口径 —— 与玩家 / 向导 / 猫共用一条落笔路径。 */
   if (Math.max(CH_W, CH_H) * zoom >= 1.5)
     drawList.push({ img: guardSprite(GUARD.dir, GUARD.step), ax: CH_AX, ay: CH_AY,
-                    x: GUARD.x, y: GUARD.y, baseY: GUARD.y });
+                    x: GUARD.x, y: GUARD.y, baseY: GUARD.y, ch: 1 });
   /* 食堂阿姨（§7.10）：同口径 —— 与玩家 / 向导 / 猫 / 老丁共用一条落笔路径。 */
   if (Math.max(CH_W, CH_H) * zoom >= 1.5)
     drawList.push({ img: auntSprite(AUNT.dir, AUNT.step), ax: CH_AX, ay: CH_AY,
-                    x: AUNT.x, y: AUNT.y, baseY: AUNT.y });
+                    x: AUNT.x, y: AUNT.y, baseY: AUNT.y, ch: 1 });
   if (window.MP) MP.appendOutdoorPeers(drawList);
   drawList.sort((a, b) => a.baseY - b.baseY);      // 3/4 视角：按落地线排序即得到正确遮挡
   /* ⚠️ 取整必须在**背板空间**：先 round 世界坐标再乘 zoom，会把物体相对间距量化到

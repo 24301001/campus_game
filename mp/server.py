@@ -18,6 +18,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from http.cookies import SimpleCookie
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
+import urllib.error
+import urllib.request
 
 from websockets.asyncio.server import serve
 
@@ -29,8 +31,15 @@ WS_PORT = int(os.environ.get("MP_WS_PORT", "8090"))
 CMR_PORT = int(os.environ.get("CMR_PORT", "8020"))  # [QODER-FIX #22] 食堂阿姨可跑独立实例(如 8021)，不碰 /opt
 DEFAULT_LOOK = {"skin": "#f2c9a0", "hairStyle": "short", "hairColor": "#30251e", "eye": "round", "eyeColor": "#332a2b", "cloth": "#c94954", "clothAlt": "#f3eee7", "clothPattern": "solid", "pants": "#38516d", "acc": "none", "accColor": "#b67a56"}
 LOOK_COLORS = ("skin", "hairColor", "eyeColor", "cloth", "clothAlt", "pants", "accColor")
-LOOK_CHOICES = {"hairStyle": ("short", "mid", "long", "ponytail", "bun", "curly"), "eye": ("round", "narrow", "dot"), "acc": ("none", "glasses", "cap", "scarf"), "clothPattern": ("solid", "stripe")}
+LOOK_CHOICES = {"hairStyle": ("short", "mid", "long", "ponytail", "bun", "twintails"), "eye": ("round", "narrow", "dot"), "acc": ("none", "glasses", "cap", "scarf"), "clothPattern": ("solid", "stripe")}
 DEFAULT_VISIBILITY = {"bio": True, "college": True, "grade": True, "tags": True}
+# 学院不手填：主页上是下拉，名单只有这里这一份（与 8081 那套 MpProfileService.COLLEGES 对齐）。
+CAMPUS_COLLEGES = ("计算机科学与技术学院", "电子信息工程学院", "自动化与智能学院", "电气工程学院",
+                   "机械与电子控制工程学院", "交通运输学院", "土木建筑工程学院", "环境学院",
+                   "化学化工学院", "建筑与艺术学院", "数学与统计学院", "物理科学与工程学院",
+                   "系统科学学院", "软件学院", "网络空间安全学院（国家保密学院）", "经济管理学院",
+                   "法学院", "语言与传播学院", "马克思主义学院", "体育与健康学院",
+                   "詹天佑学院", "威海国际学院", "国际教育学院", "继续教育学院", "其他")
 SCENES = {"out", "center", "yifu"}
 NPC_PORTS = {"xbg": 8010, "ld": 8000, "cmr": CMR_PORT, "agent": 8081}
 PROXY_PREFIXES = (("/xbg", 8010), ("/ld", 8000), ("/cmr", CMR_PORT),
@@ -103,6 +112,155 @@ def valid_look(value):
             raise ValueError("形象选项无效")
         result[key] = item
     return result
+
+
+# ---------- 照片 → 形象：交给多模态模型看，浏览器里那套 128px 颜色统计只当断网兜底 ----------
+# 密钥不出服务端：环境变量 DASHSCOPE_API_KEY 优先，否则复用老丁那侧已 gitignore 的 key 文件。
+QWEN_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+QWEN_MODEL = "qwen3.8-flash"
+QWEN_TIMEOUT = 25
+QWEN_KEY_FILE = ROOT / "laoding" / "server" / "qwen_key.txt"
+# 肤色和瞳色给的是**档位**不是自由值：像素小人脸只有 7 格宽，模型报回来的
+# #e8c8a9 和 #f2c9a0 这种差别画不出来，反而每次刷新都换一个色。
+SKIN_TONES = ("#f7d9bd", "#f2c9a0", "#e0ac7e", "#c68642", "#8d5524", "#5c3a21")
+EYE_TONES = ("#332a2b", "#4a3423", "#6b4a2f", "#3d5a6c", "#4a5d4e", "#2f2f38")
+LOOK_PROMPT = (
+    "你是像素风卡通形象生成助手。看这张人物照片，抽出把**这个人**画成像素小人所需的特征。\n"
+    "只根据图片里看得见的内容判断；被挡住、看不清的按最接近的选项，严禁编造。\n"
+    '只输出一个 JSON 对象（不要 markdown 代码块、不要任何解释文字）：\n'
+    '{"skin":"肤色","hairStyle":"发型","hairColor":"发色hex","eye":"眼型","eyeColor":"瞳色",'
+    '"cloth":"上衣主色hex","clothPattern":"solid或stripe","clothAlt":"条纹副色hex",'
+    '"pants":"裤子颜色hex","acc":"配饰","accColor":"配饰颜色hex"}\n'
+    "取值规则：\n"
+    "- 所有颜色写成 # 加 6 位十六进制，例如 #3a2b1f。\n"
+    "- skin 必须从这 6 档里原样选一个：" + " ".join(SKIN_TONES) + "。\n"
+    "- eyeColor 必须从这 6 档里原样选一个：" + " ".join(EYE_TONES) + "。\n"
+    "- hairStyle 只能取 short(短发、露耳) mid(齐肩) long(过肩披发) ponytail(在脑后扎成一束) "
+    "bun(盘成丸子) twintails(左右两束)；看不出扎没扎起来就选 short。\n"
+    "- eye 只能取 round(圆而大) narrow(细长) dot(小而圆)。\n"
+    "- hairColor 以头顶头发为准，避开高光、发丝反光和背景。\n"
+    "- cloth/clothAlt/pants 取照片里这个人**身上实际穿的那件衣服和裤子**的颜色，"
+    "不要取背景、不要取皮肤；上衣明显是条纹才 clothPattern=stripe，否则 solid。\n"
+    "- acc 只能取 none glasses(戴眼镜) cap(戴帽子) scarf(围围巾)；没戴就 none。"
+    "accColor 是镜框/帽子/围巾的颜色，none 时填 #b67a56。\n"
+)
+
+
+def qwen_api_key() -> str:
+    key = os.environ.get("DASHSCOPE_API_KEY", "").strip()
+    if key:
+        return key
+    try:
+        return QWEN_KEY_FILE.read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
+def _hex_color(value, fallback: str) -> str:
+    text = str(value or "").strip().lower()
+    digits = text[1:] if text.startswith("#") else ""
+    if len(digits) == 3 and all(c in "0123456789abcdef" for c in digits):
+        return "#" + "".join(c * 2 for c in digits)          # 模型爱写 #abc 这种缩写
+    if len(digits) == 6 and all(c in "0123456789abcdef" for c in digits):
+        return "#" + digits
+    return fallback
+
+
+def _nearest_tone(value, palette) -> str:
+    """把模型给的任意颜色吸到最近的档位上（档位就是渲染器认的那几种肤色/瞳色）。"""
+    text = _hex_color(value, "")
+    if not text:
+        return palette[0]
+    rgb = [int(text[i:i + 2], 16) for i in (1, 3, 5)]
+    def gap(color: str) -> int:
+        tone = [int(color[i:i + 2], 16) for i in (1, 3, 5)]
+        return sum((rgb[i] - tone[i]) ** 2 for i in range(3))
+    return min(palette, key=gap)
+
+
+def _one_of(value, choices, fallback: str) -> str:
+    text = str(value or "").strip().lower()
+    return text if text in choices else fallback
+
+
+def model_look(data):
+    """模型输出 → 合法 look。⚠️ 每个字段各自兜底：模型漏一个字段不该让整张脸回到默认。"""
+    if not isinstance(data, dict):
+        raise ValueError("模型没给出对象")
+    return valid_look({
+        "skin": _nearest_tone(data.get("skin"), SKIN_TONES),
+        "hairStyle": _one_of(data.get("hairStyle"), LOOK_CHOICES["hairStyle"], DEFAULT_LOOK["hairStyle"]),
+        "hairColor": _hex_color(data.get("hairColor"), DEFAULT_LOOK["hairColor"]),
+        "eye": _one_of(data.get("eye"), LOOK_CHOICES["eye"], DEFAULT_LOOK["eye"]),
+        "eyeColor": _nearest_tone(data.get("eyeColor"), EYE_TONES),
+        "cloth": _hex_color(data.get("cloth"), DEFAULT_LOOK["cloth"]),
+        "clothAlt": _hex_color(data.get("clothAlt"), DEFAULT_LOOK["clothAlt"]),
+        "clothPattern": _one_of(data.get("clothPattern"), LOOK_CHOICES["clothPattern"], DEFAULT_LOOK["clothPattern"]),
+        "pants": _hex_color(data.get("pants"), DEFAULT_LOOK["pants"]),
+        "acc": _one_of(data.get("acc"), LOOK_CHOICES["acc"], DEFAULT_LOOK["acc"]),
+        "accColor": _hex_color(data.get("accColor"), DEFAULT_LOOK["accColor"]),
+    })
+
+
+def strip_json(text: str) -> dict:
+    body = (text or "").strip()
+    if body.startswith("```"):
+        body = body.split("\n", 1)[-1] if "\n" in body else body
+        if body.rstrip().endswith("```"):
+            body = body.rstrip()[:-3]
+    start, end = body.find("{"), body.rfind("}")
+    if 0 <= start < end:
+        body = body[start:end + 1]
+    return json.loads(body)
+
+
+def look_from_photo(image: str):
+    """POST 一张 data:image 给 Qwen，换回一份 look 配方。失败抛 ValueError / OSError。"""
+    if not isinstance(image, str) or not image.startswith("data:image/") or len(image) < 100:
+        raise ValueError("image 必须是 data:image base64")
+    key = qwen_api_key()
+    if not key:
+        raise LookupError("未配置 DASHSCOPE_API_KEY")
+    payload = {
+        "model": QWEN_MODEL,
+        "messages": [{
+            "role": "user",
+            "content": [
+                {"type": "image_url", "image_url": {"url": image[:12 * 1024 * 1024]}},
+                {"type": "text", "text": LOOK_PROMPT},
+            ],
+        }],
+        "response_format": {"type": "json_object"},
+        "enable_thinking": False,
+        "temperature": 0.1,
+    }
+    request = urllib.request.Request(
+        QWEN_URL, data=json.dumps(payload).encode("utf-8"),
+        headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"}, method="POST")
+    # 百炼是国内服务，显式绕过系统代理（Clash 之类会把请求绕到海外节点，超时就是这么来的）
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    with opener.open(request, timeout=QWEN_TIMEOUT) as response:
+        out = json.loads(response.read().decode("utf-8"))
+    return model_look(strip_json(out["choices"][0]["message"]["content"]))
+
+
+# 匿名可调（注册前就要生成形象），所以按来源 IP 限流：模型调用是要花钱的。
+LOOK_RATE_WINDOW = 60.0
+LOOK_RATE_LIMIT = 8
+look_calls: dict[str, list[float]] = {}
+look_rate_lock = threading.Lock()
+
+
+def look_rate_limited(ip: str) -> bool:
+    moment = time.time()
+    with look_rate_lock:
+        hits = [t for t in look_calls.get(ip, []) if moment - t < LOOK_RATE_WINDOW]
+        if len(hits) >= LOOK_RATE_LIMIT:
+            look_calls[ip] = hits
+            return True
+        hits.append(moment)
+        look_calls[ip] = hits
+        return False
 
 
 def token_user(token: str):
@@ -232,9 +390,9 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def body(self):
+    def body(self, limit=4096):
         size = int(self.headers.get("Content-Length", "0"))
-        if size < 1 or size > 4096:
+        if size < 1 or size > limit:
             raise ValueError("请求数据过大或为空")
         return json.loads(self.rfile.read(size))
 
@@ -314,6 +472,20 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = urlsplit(self.path).path
         try:
+            if path == "/api/mp/look/from-photo":
+                # 注册前就要生成形象 ⇒ 这个口不带 token，只能按 IP 限流（一次调用是要花钱的）
+                if look_rate_limited(self.client_address[0]):
+                    return self.send_json(429, {"error": "生成太频繁，请一分钟后再试", "code": "rate_limited"})
+                image = self.body(4 << 20).get("image")
+                try:
+                    look = look_from_photo(image)
+                except LookupError as exc:
+                    return self.send_json(503, {"error": str(exc), "code": "no_key"})
+                except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError) as exc:
+                    return self.send_json(504, {"error": "识别服务连不上：" + str(exc)[:160], "code": "upstream"})
+                except (KeyError, ValueError, TypeError, json.JSONDecodeError) as exc:
+                    return self.send_json(502, {"error": "识别结果读不出来：" + str(exc)[:160], "code": "bad_result"})
+                return self.send_json(200, {"ok": True, "model": QWEN_MODEL, "look": look})
             if path == "/api/mp/register":
                 data = self.body()
                 name, password = str(data.get("nickname", "")).strip(), str(data.get("password", ""))
@@ -399,6 +571,8 @@ class Handler(BaseHTTPRequestHandler):
             visibility = data.get("visibility", player_of(u["id"])["visibility"])
             if len(bio) > 40 or len(college) > 32 or len(grade) > 8 or not isinstance(tags, list) or len(tags) > 5 or any(not isinstance(t, str) or len(t) > 6 for t in tags):
                 raise ValueError("资料长度超出限制")
+            if college and college not in CAMPUS_COLLEGES:
+                raise ValueError("学院请在下拉里选本校的院系")
             if not isinstance(visibility, dict) or set(visibility) != set(DEFAULT_VISIBILITY) or any(type(v) is not bool for v in visibility.values()):
                 raise ValueError("资料展示设置无效")
             execute("UPDATE mp_player SET look_json=?,bio=?,college=?,grade=?,tags=?,visibility_json=? WHERE user_id=?", (json.dumps(look), bio, college, grade, json.dumps(tags, ensure_ascii=False), json.dumps(visibility), u["id"]))
@@ -414,13 +588,27 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 if path == "/api/mp/health":
                     return self.send_json(200, {"ok": True, "online": len(active)})
+                if path == "/api/mp/colleges":
+                    return self.send_json(200, {"colleges": list(CAMPUS_COLLEGES)})
                 u = self.auth()
                 if path == "/api/mp/profile/me":
                     return self.send_json(200, public_profile(u["id"], u["id"]))
                 if path == "/api/mp/history/me":
                     sent_board = rows("SELECT id,content,created_at FROM mp_announcement WHERE user_id=? ORDER BY id DESC", (u["id"],))
                     sent_private = rows("SELECT m.id,m.to_user,m.content,m.created_at,v.nickname FROM mp_message m JOIN mp_user v ON v.id=m.to_user WHERE m.from_user=? ORDER BY m.id DESC", (u["id"],))
-                    return self.send_json(200, {"announcements": [{"id": a["id"], "content": a["content"], "at": now_iso(a["created_at"])} for a in sent_board], "private": [{"id": m["id"], "to": m["to_user"], "nickname": m["nickname"], "content": m["content"], "at": now_iso(m["created_at"])} for m in sent_private]})
+                    # 聊天记录按“对话对象”分组时要收和发两边都算，昵称取对方的那一个
+                    peer_rows = rows("SELECT m.id,m.from_user,m.to_user,m.content,m.created_at,n.nickname FROM mp_message m "
+                                     "JOIN mp_user n ON n.id=(CASE WHEN m.from_user=? THEN m.to_user ELSE m.from_user END) "
+                                     "WHERE m.from_user=? OR m.to_user=? ORDER BY m.id DESC", (u["id"], u["id"], u["id"]))
+                    conversations, grouped = [], {}
+                    for m in peer_rows:
+                        other = m["to_user"] if m["from_user"] == u["id"] else m["from_user"]
+                        group = grouped.get(other)
+                        if group is None:
+                            group = grouped[other] = {"peer": other, "nickname": m["nickname"], "items": []}
+                            conversations.append(group)
+                        group["items"].append({"id": m["id"], "mine": m["from_user"] == u["id"], "content": m["content"], "at": now_iso(m["created_at"])})
+                    return self.send_json(200, {"announcements": [{"id": a["id"], "content": a["content"], "at": now_iso(a["created_at"])} for a in sent_board], "private": [{"id": m["id"], "to": m["to_user"], "nickname": m["nickname"], "content": m["content"], "at": now_iso(m["created_at"])} for m in sent_private], "conversations": conversations})
                 if path.startswith("/api/mp/profile/"):
                     target = int(path.rsplit("/", 1)[1])
                     profile = public_profile(target, u["id"])
@@ -443,6 +631,9 @@ class Handler(BaseHTTPRequestHandler):
         body = target.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", (mimetypes.guess_type(target.name)[0] or "application/octet-stream") + ("; charset=utf-8" if target.suffix in (".html", ".js", ".css") else ""))
+        # 这四个文件是改完直接生效的源码，绝不能让浏览器拿缓存：
+        # 以前没发这个头，改完 look.js/lobby.js 后刷新仍是旧画面，看起来像"根本没改"。
+        self.send_header("Cache-Control", "no-store, must-revalidate")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
