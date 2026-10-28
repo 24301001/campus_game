@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { login as loginApi, register as registerApi, getUserInfo } from '@/api/user'
 import { reset as resetAgentWatch } from '@/utils/agentWatcher'
-import { handExitToHost } from '@/utils/hostAuth'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
@@ -18,9 +17,10 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const setUser = (newUser) => {
-    user.value = newUser
-    if (newUser) {
-      localStorage.setItem('user', JSON.stringify(newUser))
+    const displayUser = newUser ? { ...newUser, nickname: localStorage.getItem('mpNickname') || newUser.nickname } : null
+    user.value = displayUser
+    if (displayUser) {
+      localStorage.setItem('user', JSON.stringify(displayUser))
     } else {
       localStorage.removeItem('user')
     }
@@ -42,15 +42,11 @@ export const useUserStore = defineStore('user', () => {
     return await registerApi(registerForm)
   }
 
-  const logout = (handBack = false) => {
+  const logout = () => {
     setToken('')
     setUser(null)
     // 退出时把算法哥的观察状态清干净，别把上一个人的状态带给下一个登录的账号
     resetAgentWatch()
-    // ⭐ 只有**用户主动按退出**才交回宿主收抽屉（各视图传 true）。
-    //    请求拦截器那条 401 走的是默认 false —— 那是「票过期」，该让宿主静默补票重试，
-    //    不是把人踢回大厅（任务书 §9.2 铁律 3 / 风险表第 5 条）。
-    if (handBack) handExitToHost()
   }
 
   const fetchUserInfo = async () => {

@@ -669,12 +669,10 @@ const send = async (text, options = {}) => {
     syncProfileIfChanged(data.payload)
     loadSessions()
   } catch (e) {
-    // 给改配置的人留一句准话（配置项名别塞进气泡里吓学生）
-    console.warn('[算法哥] 这一句没接上：查后端服务与 agent.llm.api-key', e)
     messages.value.push({
       id: `err-${Date.now()}`,
       role: 'assistant',
-      content: '这句话我没接上。可能是服务没起来，也可能是我还没配上网上的钥匙 —— 稍等一下再问一遍。',
+      content: '我这边出了点问题。检查一下后端服务，或者 `agent.llm.api-key` 有没有配上。',
       error: true
     })
   } finally {

@@ -19,8 +19,6 @@ import json
 import os
 import mimetypes
 import time
-import hmac
-import secrets
 from dataclasses import dataclass
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -108,32 +106,9 @@ def startup() -> None:
           f" ｜ 拍照 {ctx.vision.describe()}")
 
 
-def cookie_ticket(req: Request, name: str = "xbg_token") -> str:
-    """从 Cookie 头里挑出**路径最长**那张票。
-
-    8081 换票种的是 `path=/xbg`，本服务自己登录种的是 `path=/`；两张同名票会一起
-    寄过来并按「路径最长优先」排（RFC 6265 §5.4），而 Starlette 的 `request.cookies`
-    是普通字典，同一个键后写的覆盖先写的 —— 用 `cookies.get()` 会拿到那张旧票，
-    表现为「换了票，`/api/me` 还是上一个人」。这里自己扫一遍，取第一条。
-    """
-    for item in req.headers.get("cookie", "").split(";"):
-        key, _, value = item.partition("=")
-        if key.strip() == name:
-            return value.strip()
-    return ""
-
-
 def need_user(req: Request) -> int:
-    """认人：**宿主种的 cookie 优先**，页面自己的 Bearer 兜底。
-
-    `ld_t` 那一家踩过的坑这里一样会踩：cookie 是主站每次登录现签的，Bearer 是页面存档，
-    一期还往里种过裸票。让存档压过宿主票，轻则「明明登着却说没登录」，重则换账号后
-    还在拿上一个人的票答话（验收 12 的串号）。
-    """
-    token = cookie_ticket(req)
-    if not token:
-        raw = req.headers.get("authorization", "")
-        token = raw[7:].strip() if raw.lower().startswith("bearer ") else ""
+    raw = req.headers.get("authorization", "")
+    token = raw[7:].strip() if raw.lower().startswith("bearer ") else req.cookies.get("xbg_token", "")
     uid = auth.decode(token)
     if uid is None:
         raise HTTPException(status_code=401, detail="先登录")
@@ -193,37 +168,6 @@ def logout():
     r = JSONResponse({"ok": True})
     r.delete_cookie("xbg_token")
     return r
-
-
-def internal_guard(req: Request) -> None:
-    """服务间互信那道门闩（任务书 §3.1.3 第③步：8081 替玩家向各家换票）。
-
-    密钥只从环境变量 `CAMPUS_INTERNAL_SECRET` 读，**没设就当场 503** ——
-    宁可换不到票（地图上会挂「学霸姐没登进去」），也不能开一条不鉴权的发票通道。
-    """
-    secret = os.environ.get("CAMPUS_INTERNAL_SECRET", "")
-    if not secret:
-        raise HTTPException(status_code=503, detail="未配置 CAMPUS_INTERNAL_SECRET，内部换票通道没开")
-    if not hmac.compare_digest(req.headers.get("x-campus-internal", "").encode("utf-8"),
-                               secret.encode("utf-8")):
-        raise HTTPException(status_code=403, detail="内部密钥不对")
-
-
-@app.post("/api/host-ticket")
-async def host_ticket(req: Request):
-    """主站登录后替玩家领一张学霸姐认的票 —— SPA 里已经没有登录页了（§3.1.2）。
-
-    建号用的是**一次性随机口令**：`create_user` 要求 `pw_hash`/`pw_salt` 非空，
-    随机口令生成完就丢，谁也登不进这个号，只有过了上面那道门闩才拿得到票。
-    """
-    internal_guard(req)
-    body = await req.json()
-    nick = str(body.get("nickname", "")).strip()
-    row = db.user_by_nick(nick)
-    uid = int(row["id"]) if row else db.create_user(nick, secrets.token_urlsafe(24))
-    sid = db.ensure_session(uid, None)
-    out = _authed({"token": auth.issue(uid), "user": {"id": uid, "nick": nick}, "session": sid}, uid)
-    return out
 
 
 @app.get("/api/me")

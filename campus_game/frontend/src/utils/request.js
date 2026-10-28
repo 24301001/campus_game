@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
-import router from '@/router'
-import { handBackToHost } from '@/utils/hostAuth'
+import { ensureAgentTicket } from '@/utils/lobbyAuth'
 
 const request = axios.create({
   baseURL: '/api',
@@ -41,21 +40,30 @@ request.interceptors.request.use(
 )
 
 request.interceptors.response.use(
-  response => {
+  async response => {
     const res = response.data
     if (res.code !== 200) {
       ElMessage.error(res.message || '请求失败')
       if (res.code === 401) {
+        if (!response.config.__lobbyRetry && await ensureAgentTicket()) {
+          return request({ ...response.config, __lobbyRetry: true })
+        }
         const userStore = useUserStore()
         userStore.logout()
-        // ⭐ 二期 §3.1.2：抽屉里 401 ⇒ 交给宿主补票，不在这里弹第二个登录框。
-        if (!handBackToHost()) router.push('/login')
+        window.top.location.assign('/')
       }
       return Promise.reject(new Error(res.message || '请求失败'))
     }
     return res
   },
-  error => {
+  async error => {
+    if (error.response?.status === 401) {
+      if (!error.config?.__lobbyRetry && await ensureAgentTicket()) {
+        return request({ ...error.config, __lobbyRetry: true })
+      }
+      useUserStore().logout()
+      window.top.location.assign('/')
+    }
     ElMessage.error(error.message || '请求失败')
     return Promise.reject(error)
   }

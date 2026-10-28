@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>像素校园 · 全校地图</title>
+<title>像素校园 · 联机大厅</title>
+<link rel="stylesheet" href="mp/theme.css">
 <style>
   html,body{margin:0;height:100%;background:#101216;overflow:hidden;}
   #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
@@ -125,44 +126,6 @@
   #ctrP{position:fixed;inset:0;z-index:20;background:#0d0f13;}
   #ctrF{display:block;width:100%;height:100%;border:0;background:#0d0f13;}
   #ctrP[hidden],#ctrCv[hidden],#ctrHud[hidden],#ctrTip[hidden],#login[hidden]{display:none;}
-  /* ---------- 二期：宿主闸门告示（第四十六轮）----------
-     这张卡片盖在 iframe 上。它存在的意义是：**闸门没过的时候一个字都不往 iframe 里加载**，
-     由宿主自己把话说清楚（服务没开 / 票没续上），而不是让那家挂出「这里不登录」那张死页
-     贴在用户脸上 —— 用户原话：「不行」。
-     ⚠️ 收起/展开**不能靠 `[hidden]` 去覆盖 `display:flex`**（同 #wheel 那条老账：UA 表里
-        `[hidden]{display:none}` 打不过带 id 的规则）⇒ 基础规则写 display:none，
-        展开交给优先级更高的 `:not([hidden])`。 */
-  #ctrGate{
-    position:absolute;inset:0;z-index:2;display:none;
-    align-items:center;justify-content:center;background:#0d0f13;
-    font:12px/1.75 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
-  }
-  #ctrGate:not([hidden]){display:flex;}
-  #cgBox{
-    width:min(430px,calc(100vw - 32px));
-    background:#1d2129;border:1px solid #39404d;border-radius:6px;
-    box-shadow:0 18px 40px rgba(0,0,0,.55);color:#e9e5d8;
-    animation:cgIn .16s ease-out;
-  }
-  @keyframes cgIn{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
-  #cgT{
-    padding:10px 13px;border-bottom:1px solid #2b2f3a;color:#ffd76e;
-    font-weight:600;font-size:13px;letter-spacing:.8px;
-  }
-  #cgMsg{padding:11px 13px 3px;color:#9fb4d0;white-space:pre-line;}
-  #cgMsg b{color:#e9e5d8;font-weight:600;}
-  #cgRow{display:flex;gap:6px;padding:11px 13px 13px;}
-  #cgRow button{
-    flex:1;cursor:pointer;padding:8px 4px;background:#272d38;color:#e9e5d8;
-    border:1px solid #39404d;border-radius:4px;
-    font:12px/1.4 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
-  }
-  #cgRow button:hover{background:#313847;border-color:#5a6474;}
-  #cgRow button:active{transform:translateY(1px);}
-  /* ⚠️ 必须带 `#cgRow` 前缀：`#cgRow button` 的优先级是 (id+类型)，
-     单写 `#cgRetry` 压不过它 —— 实测两颗按钮长成一个样，主按钮的琥珀色没了。 */
-  #cgRow #cgRetry{background:#3a3320;border-color:#7a6320;color:#ffd76e;}
-  #cgRow #cgRetry:hover{background:#463d24;border-color:#ffd76e;}
   /* ⚠️ 向导那三块（气泡 / 对话框 / 横幅）**也**必须一起收 —— 它们是 position:fixed 的
      独立层，`ctr-on` 只顾着 #hud / #zoom 的话，小北要是恰好站在计算机中心附近，
      她头上那个「E 说话」气泡会直接浮在教室画面上（`_centerprobe` 的 C6 里看得见
@@ -176,85 +139,49 @@
   #hudctr{display:block;color:#7fd6c8;}
   #huduser{display:block;color:#9fb4d0;}
   #hudctr:empty,#huduser:empty{display:none;}
-  /* ---------- 登录门（进地图前的那一次）----------
-     第四十六轮的 UI 打磨：面板进场合一下、标题点一颗琥珀灯、输入框聚焦发光、
-     按钮分主次（进入=实心琥珀，注册/登录切换=虚线幽灵钮），提示语红=出错、青=成了。 */
+  /* ---------- 登录门（进地图前的那一次）---------- */
   #login{
     position:fixed;inset:0;z-index:30;background:rgba(9,11,15,.93);
     display:flex;align-items:center;justify-content:center;
   }
   #lgBox{
-    width:min(400px,calc(100vw - 32px));
+    width:min(380px,calc(100vw - 32px));
     background:#1d2129;border:1px solid #39404d;border-radius:6px;
-    box-shadow:0 18px 40px rgba(0,0,0,.55),0 0 0 1px rgba(255,215,110,.07);
-    color:#e9e5d8;
+    box-shadow:0 18px 40px rgba(0,0,0,.55);color:#e9e5d8;
     font:12px/1.75 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
-    animation:cgIn .18s ease-out;
   }
-  #lgT{
-    padding:10px 13px;border-bottom:1px solid #2b2f3a;color:#ffd76e;
-    font-weight:600;font-size:13px;letter-spacing:.8px;
-  }
-  #lgT::before{
-    content:"";display:inline-block;width:6px;height:6px;margin:0 8px 2px 0;
-    background:#ffd76e;box-shadow:0 0 8px rgba(255,215,110,.75);
-  }
-  #lgHint{padding:9px 13px 4px;color:#9fb4d0;}
-  #lgQuick{display:flex;gap:6px;padding:9px 13px 2px;}
+  #lgT{padding:9px 12px;border-bottom:1px solid #2b2f3a;color:#ffd76e;font-weight:600;font-size:13px;}
+  #lgHint{padding:8px 12px 4px;color:#9fb4d0;}
+  #lgQuick{display:flex;gap:6px;padding:8px 12px 2px;}
   #lgQuick button{
-    flex:1;cursor:pointer;padding:7px 4px;background:#272d38;color:#e9e5d8;
-    border:1px solid #39404d;border-radius:4px;
-    font:12px/1.4 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
+    flex:1;cursor:pointer;padding:6px 4px;background:#272d38;color:#e9e5d8;
+    border:1px solid #39404d;border-radius:4px;font:12px/1.4 ui-monospace,Consolas,monospace;
   }
   #lgQuick button:hover{background:#313847;border-color:#5a6474;}
-  #lgQuick button:active{transform:translateY(1px);}
   #lgQuick button.on{background:#39404d;border-color:#ffd76e;color:#ffd76e;}
-  #lgRow{display:flex;flex-direction:column;gap:6px;padding:9px 13px 0;}
+  #lgRow{display:flex;flex-direction:column;gap:6px;padding:8px 12px 0;}
   #lgRow input{
-    padding:7px 10px;background:#161a21;color:#e9e5d8;border:1px solid #39404d;border-radius:4px;
-    font:12px/1.4 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
-    transition:border-color .12s,box-shadow .12s;
+    padding:6px 9px;background:#161a21;color:#e9e5d8;border:1px solid #39404d;border-radius:4px;
+    font:12px/1.4 ui-monospace,Consolas,"Courier New",monospace;
   }
-  #lgRow input::placeholder{color:#5f6a7b;}
-  #lgRow input:focus{outline:none;border-color:#ffd76e;box-shadow:0 0 0 2px rgba(255,215,110,.13);}
-  #lgRow input.bad{border-color:#e07a6a;box-shadow:0 0 0 2px rgba(224,122,106,.13);}
-  /* 密码框右边那颗显隐开关：按钮浮在输入框内右侧，不另起一行 */
-  #lgPw{position:relative;display:flex;flex:1;}
-  #lgPw input{flex:1;padding-right:48px;}
-  #lgPwEye{
-    position:absolute;right:5px;top:50%;transform:translateY(-50%);cursor:pointer;
-    padding:2px 6px;background:#20252e;color:#9fb4d0;border:1px solid #39404d;border-radius:3px;
-    font:11px/1.3 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.4px;
-  }
-  #lgPwEye:hover{background:#313847;color:#e9e5d8;border-color:#5a6474;}
-  #lgMsg{padding:7px 13px 0;min-height:18px;color:#e07a6a;}
-  #lgMsg.ok{color:#7fd6c8;}
-  #lgRow2{display:flex;flex-direction:column;gap:6px;padding:5px 13px 13px;}
+  #lgRow input:focus{outline:1px solid #ffd76e;outline-offset:1px;}
+  #lgMsg{padding:6px 12px 0;min-height:18px;color:#e07a6a;}
+  #lgRow2{padding:4px 12px 12px;}
   #lgGo{
-    width:100%;cursor:pointer;padding:9px;background:#ffd76e;color:#1d2129;
+    width:100%;cursor:pointer;padding:8px;background:#ffd76e;color:#1d2129;
     border:1px solid #7a6320;border-radius:4px;
-    font:13px/1 ui-monospace,Consolas,"Courier New",monospace;font-weight:600;letter-spacing:.8px;
+    font:13px/1 ui-monospace,Consolas,monospace;font-weight:600;
   }
-  #lgGo:hover{background:#ffe49a;}
-  #lgGo:active{transform:translateY(1px);}
-  #lgGo:disabled{opacity:.55;cursor:default;transform:none;background:#c9a94f;}
-  #lgSwitch{
-    cursor:pointer;padding:6px;background:transparent;color:#9fb4d0;
-    border:1px dashed #39404d;border-radius:4px;
-    font:12px/1.4 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
-  }
-  #lgSwitch:hover{color:#ffd76e;border-color:#5a6474;background:#232833;}
+  #lgGo:disabled{opacity:.6;cursor:default;}
   /* 「退出登录」。⚠️ 必须**自成一块**（fixed + pointer-events:auto）——
      不能挂在 #hud 里：那是 pointer-events:none，按钮点不动（第 23 行那条老账）。 */
   #lgOut{
     position:fixed;right:14px;top:12px;z-index:12;cursor:pointer;
-    padding:4px 10px;background:#1d2129;color:#9fb4d0;border:1px solid #39404d;border-radius:4px;
+    padding:3px 9px;background:#1d2129;color:#9fb4d0;border:1px solid #39404d;border-radius:4px;
     font:12px/1.4 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
     text-shadow:0 1px 0 #000;
   }
-  #lgOut::before{content:"●";color:#7fd6c8;margin-right:6px;font-size:9px;vertical-align:1px;}
   #lgOut:hover{background:#272d38;border-color:#5a6474;color:#e9e5d8;}
-  #lgOut:hover::before{color:#e07a6a;}
   #lgOut[hidden]{display:none;}
   body.ctr-on #lgOut{display:none;}
   /* ---------- 猫宠：就地动作轮盘（第四十四轮）----------
@@ -292,10 +219,6 @@
     fill:#ffd76e;font:600 13px ui-monospace,Consolas,"Courier New",monospace;pointer-events:none;
   }
 </style>
-<!-- ⭐ 二期模块 2：联机 UI 的样式单独一个文件（任务书 §10.1「不覆盖一期样式」）。
-     它排在一期那段之后 ⇒ 同名选择器会赢，所以文件里**只许**出现 `#mp*` 这些联机自己的
-     id。文件没拷过来也只是没样式，功能不受影响（`mp/client.js` 里全部画在 canvas 上）。 -->
-<link rel="stylesheet" href="mp/theme.css">
 </head>
 <body>
 <div id="wrap"><canvas id="cv"></canvas></div>
@@ -319,7 +242,7 @@
      ⚠️ 这条注释里**不能写出脚本标签的字面量**（带尖括号那种）—— build.py 用
          正则「脚本开标签 + 非贪婪 + 脚本闭标签」切 JS 段，一旦这里出现开标签，
          匹配就提前从这里起算，把注释当 JS 喂给 node --check。栽过两次（SYNTAX_FAIL）。 -->
-<div id="tip" hidden><b>E</b> 找小北</div>
+<div id="tip" hidden><b>E</b> 说话</div>
 <div id="ctip" hidden><b>C</b> 和老丁说话</div>
 <div id="atip" hidden><b>C</b> 进食堂</div>
 <div id="dlg" hidden>
@@ -345,39 +268,22 @@
   <span id="ctrHudHint"></span>
 </div>
 <div id="ctrTip" hidden></div>
-<!-- ⭐ 二期：抽屉**开不开得成**由宿主说，不让那家自己挂告示。
-     `#ctrGate` 是盖在 iframe 上的一块宿主告示（闸门没过时**根本不加载**那家的页面），
-     必须摆在 `#ctrP` **里面** —— 抽屉收起时它跟着收，Esc 的绑定也不受影响。
-     ⚠️ 本注释里不许出现带尖括号的脚本标签字面量（理由同上面那段）。 -->
-<div id="ctrP" hidden><iframe id="ctrF" title="刷题平台" referrerpolicy="no-referrer"></iframe>
-  <div id="ctrGate" hidden>
-    <div id="cgBox">
-      <div id="cgT">—</div>
-      <div id="cgMsg">—</div>
-      <div id="cgRow">
-        <button id="cgRetry" type="button">重试</button>
-        <button id="cgBack" type="button">返回校园</button>
-      </div>
-    </div>
-  </div>
-</div>
+<div id="ctrP" hidden><iframe id="ctrF" title="刷题平台" referrerpolicy="no-referrer"></iframe></div>
 <button id="lgOut" type="button" hidden>退出登录</button>
 <div id="login" hidden>
   <div id="lgBox">
     <div id="lgT">像素校园 · 登录</div>
-    <div id="lgHint" hidden></div>
+    <div id="lgHint">选一个预设账号。登录这一次，刷题平台和学霸姐都不用再登了。</div>
     <div id="lgQuick">
       <button type="button" data-u="admin" data-p="admin123">管理员 admin</button>
       <button type="button" data-u="user"  data-p="user123">普通用户 user</button>
     </div>
     <div id="lgRow">
-      <input id="lgU" type="text" autocomplete="off" spellcheck="false" placeholder="昵称">
-      <div id="lgPw"><input id="lgP" type="password" autocomplete="off" placeholder="密码">
-        <button id="lgPwEye" type="button" title="显示密码">显示</button></div>
+      <input id="lgU" type="text" autocomplete="off" spellcheck="false" placeholder="用户名">
+      <input id="lgP" type="password" autocomplete="off" placeholder="密码">
     </div>
     <div id="lgMsg"></div>
-    <div id="lgRow2"><button id="lgGo" type="button">进入像素校园</button>
-      <button id="lgSwitch" type="button">没有账号？注册一个</button></div>
+    <div id="lgRow2"><button id="lgGo" type="button">进入像素校园</button></div>
   </div>
 </div>
 <!-- 猫宠「对猫的动作」轮盘（第四十四轮）。⚠️ 摆在脚本标签**之前**、**#hud 之外** ——
@@ -5369,12 +5275,6 @@ const ctrHudHint  = document.getElementById("ctrHudHint");
 const ctrTipEl    = document.getElementById("ctrTip");
 const ctrP        = document.getElementById("ctrP");
 const ctrF        = document.getElementById("ctrF");
-/* ⭐ 二期：宿主那张闸门告示的五个零件（`ctrGateShow` 用）。 */
-const ctrGate     = document.getElementById("ctrGate");
-const cgT         = document.getElementById("cgT");
-const cgMsg       = document.getElementById("cgMsg");
-const cgRetry     = document.getElementById("cgRetry");
-const cgBack      = document.getElementById("cgBack");
 const hudCtr      = document.getElementById("hudctr");
 const hudUser     = document.getElementById("huduser");
 const loginEl     = document.getElementById("login");
@@ -5383,10 +5283,6 @@ const lgP         = document.getElementById("lgP");
 const lgMsg       = document.getElementById("lgMsg");
 const lgGo        = document.getElementById("lgGo");
 const lgOut       = document.getElementById("lgOut");
-const lgHint      = document.getElementById("lgHint");
-const lgSwitch    = document.getElementById("lgSwitch");
-const lgQuick     = document.getElementById("lgQuick");
-const lgPwEye     = document.getElementById("lgPwEye");
 const ctrCtx      = ctrCv ? ctrCv.getContext("2d") : null;
 
 /* --- 7.5.5 室内几何：一张 720×450 的逻辑画布 ---------------------------
@@ -5517,8 +5413,7 @@ defRoom({
      ⚠️ 写成**函数**而不是直接引用 `campusEnsure`：就为了探针能**按名字**替换它
         造负对照（`_auntprobe.py` 对阿姨那一家就是这么干的）。 */
   ensure: function () { return campusEnsure(); },
-  mpKey: "campus",        // 给闸门告示用的名字（见 MP_SERVICES）
-  coldTip: "刷题平台没在跑，正在叫启动器，浏览器问「是否打开」时点「打开」。"
+  coldTip: "刷题平台没在跑 —— 正在叫启动器（浏览器会问一次「是否打开」，点「打开」）…"
 });
 
 /* --- 7.5.8 状态 ------------------------------------------------------- */
@@ -5531,7 +5426,7 @@ const CENTER = {
   nearNpc: false,
   tipT: 0,
   waiting: false,       // 正在等协议把服务拉起来
-  xbg: "",              // 学霸姐那边的换票结果："" / "ok" / "skip" / "down"
+  xbg: "",              // 学霸姐那边的登录结果："" / "ok" / "skip" / "down"
   ld:  "",              // 老丁（保卫处）那边的登录结果：同上
   cmr: "",              // 食堂阿姨那边的登录结果：同上
   campus: ""            // 算法哥（刷题平台 8081）那边的登录结果：同上
@@ -5593,20 +5488,17 @@ function ctrDraw() {
 
   R.floor(g); R.walls(g); R.decor(g); R.door(g);
 
-  /* ⚠️ 所有人按脚点 y 排序后画 —— 与主循环 `drawList` 同一条规矩，
-       擦身而过时的前后遮挡才正确。
-       ⭐ 二期模块 2：同场景的**其他玩家**并进这同一个数组，房间里的遮挡自然也对。
-       `mp/client.js` 没加载（单机回落）时这里是空数组，画法与一期逐字相同。 */
+  /* ⚠️ 两个人按脚点 y 排序后画 —— 与主循环 `drawList` 同一条规矩，
+       擦身而过时的前后遮挡才正确。 */
   const n = R.npc;
   const who = [
     { y: n.y,      f: () => ctrDrawChar(g, n.spr(n.dir, n.step), n.x, n.y) },
-    { y: CENTER.y, f: () => ctrDrawChar(g, typeof mpSelfSprite === "function" ? mpSelfSprite(CENTER.dir, CENTER.step) : charSprite(CENTER.dir, CENTER.step), CENTER.x, CENTER.y) }
+    { y: CENTER.y, f: () => ctrDrawChar(g, window.MP && MP.connected ? MP.sprite(MP.look, CENTER.dir, CENTER.step) : charSprite(CENTER.dir, CENTER.step), CENTER.x, CENTER.y) }
   ];
-  if (typeof mpIndoorPeers === "function") for (const o of mpIndoorPeers(g, Z, ox, oy)) who.push(o);
+  if (window.MP) MP.appendIndoorPeers(who, g);
   who.sort((a, b) => a.y - b.y);
   for (const o of who) o.f();
-  /* §7.1：自己脚下多一圈青色淡光环（与 NPC 那个交互光圈同色），联机时才亮。 */
-  if (typeof mpIndoorSelfRing === "function") mpIndoorSelfRing(g, Z, ox, oy);
+  if (window.MP) MP.drawIndoorLabels(g);
 
   /* NPC 身边的交互光圈：走近了才亮，是"可以按 C 了"的第二重提示（第一重是底部那行字） */
   if (CENTER.nearNpc) {
@@ -5686,6 +5578,7 @@ function roomEnter(R) {
   if (CENTER.active || !R) return;
   CENTER.room = R;
   CENTER.active = true;
+  if (window.MP) MP.changeScene(R.key, R.spawn.x, R.spawn.y);
   CENTER.x = R.spawn.x; CENTER.y = R.spawn.y;
   CENTER.dir = "up"; CENTER.step = IDLE_BASE;
   CENTER.walk = 0; CENTER.t = 0; CENTER.tipT = 0; CENTER.nearNpc = false;
@@ -5722,6 +5615,7 @@ function roomLeave() {
   if (ctrHud) ctrHud.hidden = true;
   if (ctrTipEl) ctrTipEl.hidden = true;
   document.body.classList.remove("ctr-on");
+  if (window.MP) MP.changeScene("out", player.x, player.y);
   /* ⚠️ 玩家在地图上的坐标**一个字不动** —— 他本来就站在进门前那个位置，
        出门就该回到原地，不许瞬移（用户第三十八轮在向导那边为同类问题报过 bug）。 */
 }
@@ -5742,9 +5636,6 @@ function ctrProbe(R) {
     } catch (e) { fin(false); }
   });
 }
-/* 当前这扇门的告示是给谁看的 —— 「重试」要重开的是**同一扇**门，不是 CENTER.room。
-   （用户可能站在门口按 C 开了阿姨，又用鼠标点了告示上的重试，此时房间还是那间屋。） */
-let CG_R = null;
 function ctrOpenPlatform(R) {
   if (!ctrP) return;
   CENTER.plat = true;   // ⚠️ 仍然**同步**置位：移动键锁 / 连按两次 C 的并发保护都靠它
@@ -5752,79 +5643,25 @@ function ctrOpenPlatform(R) {
   ctrP.hidden = false;
   /* ⚠️⚠️ 必须**比较过再 set**：第四十轮这里写的是 `!ctrF.getAttribute("src")`
      （只在第一次打开时设），于是"从计算机中心出来、进逸夫楼按 C"打开的**仍是刷题平台**。
-     比较的是 `R.app` —— 引擎泛化后这是唯一知道该开哪扇门的地方。 */
+     比较的是 `R.app` —— 引擎泛化后这是唯一知道该开哪扇门的地方。
+     ⚠️ `reuse` 必须在 set **之前**算出来（set 完就恒为 true 了），A5 那条踹醒判据要用它。 */
+  const reuse = !!(ctrF && ctrF.getAttribute("src") === R.app);
   /* ⭐⭐ 第四十五轮：**开门前先验票**。四家的 `ensure`（见各自 `*Ensure`）回答"我登着吗"，
      没登着就拿凭据补登。闸门挂在**这唯一一个开门出口**上 ⇒ 四个调用点（含 `ctrColdStart`
      那条"服务刚起来"的路）自动都有闸门，谁也漏不掉。
      ⚠️ 第一次打开时 src 要**等闸门回来**才设 ⇒ 模块的首次 `/api/me` 必然已经带上会话
         （这正是 `cmrEnsure` 注释里那个"当面弹登录框"的闪的来源）。
-     ⭐⭐ 第四十六轮改口径：闸门没成（`skip` / `down`）**不再设 src**。
-        上一版是"照样设 src，让那家自己挂『这里不登录』告示"—— 用户看了那张纸说「不行」。
-        抽屉开不开得成由**宿主**说，`ctrGateShow` 把原因讲清楚并给「重试 / 返回校园」，
-        那家自己的告示页从此**一次都不会被加载**。 */
-  CG_R = R;
-  /* 验票在路上：只有"这扇门还没挂着"时才盖等待牌 —— 已经载着同一家的话盖一下再揭，
-     等于让活页面闪一张黑卡，画蛇添足。 */
-  const already = !!(ctrF && ctrF.getAttribute("src") === R.app);
-  if (!already) ctrGateShow(R, "wait");
+     ⚠️ 闸门没成（`skip` / `down`）**照样设 src**，如实露出那家自己的登录框 —— 不装。 */
   let gate;
   try { gate = R.ensure ? R.ensure() : "ok"; } catch (e) { gate = "skip"; }
   Promise.resolve(gate).catch(() => "skip").then(st => {
-    /* ⚠️ 验票这几百毫秒里抽屉可能已经被收掉了：Esc、按 B 出屋、或者刚被 `mpExpiredNotice`
-       识破过期票自己收的。这时候再把 src 设回去，就是一张藏在看不见的地方的活页面，
-       下一次按 C 还会**跳过闸门**直接看见它。 ⇒ 一律作废，重按 C 重新验。 */
-    if (!CENTER.plat) return;
-    if (st === "ok") {                       // 票是活的 ⇒ 该开门就开门，告示收掉
-      ctrGateHide();
-      if (ctrF && ctrF.getAttribute("src") !== R.app) ctrF.setAttribute("src", R.app);
-      ctrBindFrameEsc();
-      return;
-    }
-    try { if (ctrF) ctrF.removeAttribute("src"); } catch (e) {}
-    ctrGateShow(R, st);
+    if (ctrF && ctrF.getAttribute("src") !== R.app) ctrF.setAttribute("src", R.app);
+    ctrBindFrameEsc();
+    if (reuse && st === "ok") ctrUnstickFrame(R);      // 见 A5
   });
 }
-function ctrGateShow(R, why) {
-  if (!ctrGate || !cgT || !cgMsg) return;
-  const svc = R && R.mpKey ? MP_SERVICES[R.mpKey] : null;
-  const label = (svc && svc.label) || (R && R.npc && R.npc.name) || "那位同学";
-  if (why === "wait") {
-    cgT.textContent = "正在验票";
-    cgMsg.textContent = "正在向主站续" + label + "的通行证，一两秒的事，稍等一下。";
-  } else if (why === "down") {
-    cgT.textContent = label + "还没开起来";
-    cgMsg.textContent = "不是你没登录 —— 是" + label + "的那个服务没在跑。\n"
-      + "双击「启动像素校园.bat」，等窗口都开完，再回这里点「重试」。";
-  } else {
-    cgT.textContent = "通行证没续上";
-    cgMsg.textContent = "主站的票过期了（或服务连不上），这次先不进屋。\n"
-      + "点「重试」再验一次；要重新登录一次就点「返回校园」。";
-  }
-  if (cgRetry) cgRetry.hidden = why === "wait";
-  if (cgBack) cgBack.hidden = false;
-  ctrGate.hidden = false;
-}
-function ctrGateHide() { if (ctrGate) ctrGate.hidden = true; }
-/* 「重试」：先探一下服务在不在，再决定要不要走闸门 ——
-   不探就重新验一遍票的话，"没开起来"会被 8081 的换票失败说成"票没续上"，
-   把人往登录门上支，那是**两件不同的事**（上一版 HUD 就为这个被用户纠正过）。 */
-function ctrGateRetry() {
-  const R = CG_R;
-  if (!R) { ctrClosePlatform(true); return; }
-  ctrGateShow(R, "wait");
-  ctrProbe(R).then(ok => {
-    if (!ok) { ctrGateShow(R, "down"); return; }
-    ctrOpenPlatform(R);                      // 唯一的开门出口：闸门 / src 比较 / Esc 都自动跟着走
-  });
-}
-/* ⭐ `detach` 是二期给"各家抽屉里那颗退出按钮"留的口子：光把抽屉藏起来，
-   iframe 里那张页面还挂着 —— 而 `ctrOpenPlatform` 比较过 `src` 就**不会重新加载**，
-   于是下一次按 C 看到的是上一轮留下的「这里不登录」死页。摘掉 src 才能让
-   下一次开门重新走一遍闸门（主票还在 ⇒ 静默补一张新票，直接进界面）。 */
-function ctrClosePlatform(detach) {
+function ctrClosePlatform() {
   if (ctrP) ctrP.hidden = true;
-  ctrGateHide();                            // 告示跟着抽屉收，别留一张卡下次凭空冒出来
-  if (detach) { try { if (ctrF) ctrF.removeAttribute("src"); } catch (e) {} }
   CENTER.plat = false;
   CENTER.waiting = false;
   _ctrLast = performance.now();                        // 免得回来第一帧 dt 巨大
@@ -5851,6 +5688,51 @@ function ctrBindFrameEsc() {
   try {
     if (ctrF.contentDocument && ctrF.contentDocument.readyState === "complete") ctrFrameBindEsc();
   } catch (e) {}
+}
+/* ⭐⭐ 第四十五轮：**踹醒停在登录页的抽屉**。
+   动机：抽屉是"认门不重开"的 —— `ctrOpenPlatform` 只在 `src` 变了才重载
+   （见上面那段注释，是**刻意**的：保住模块的内存态）。于是一旦那家**停在自己的登录页上**
+   （算法哥 SPA 被 401 推到 `/login`、老丁/阿姨的登录卡露着），**再按 C 也纹丝不动**。
+   ⚠️ 只在"闸门验票成功、且这一扇门本来就是开着的"时踹（判据见 `ctrOpenPlatform`），
+      而且问的是**那家自己**（读它的 DOM / 地址），不猜。 */
+function ctrFrameOnLogin(w) {
+  try {
+    if (!w || !w.document) return false;
+    const d = w.document;
+    /* ⚠️ 先看"纱幕"（模块侧那段 `html.*-embed`）：纱幕亮着 = 还在"正在进入…"，
+       **不算**登录页。漏了这一条，会在模块启动的那一瞬把它误判成"停在登录页"
+       又踹一脚 —— 自己把自己踹成死循环。 */
+    const he = d.documentElement;
+    if (he && he.classList &&
+        (he.classList.contains("ld-embed") || he.classList.contains("aunt-embed"))) return false;
+    /* 算法哥：SPA，停在 `/login` 路由上（`src` 属性还是 `/agent`，但**地址**已经变了） */
+    if (String((w.location && w.location.pathname) || "") === "/login") return true;
+    /* 老丁：`#login-view` 没被 `hidden` 收走就是露着 */
+    const lv = d.getElementById && d.getElementById("login-view");
+    if (lv && !lv.classList.contains("hidden")) return true;
+    /* 阿姨：`#auth-screen` 的 `hidden` 属性 */
+    const as = d.getElementById && d.getElementById("auth-screen");
+    if (as && !as.hidden) return true;
+    /* 学霸姐：`#gate` 的 `hidden` 类（她开机本来就是 `hidden`，正常看不到这颗） */
+    const g = d.getElementById && d.getElementById("gate");
+    if (g && !g.classList.contains("hidden")) return true;
+    return false;
+  } catch (e) { return false; }   // 跨源 / 文档还没就绪 ⇒ 一律当"不是"，静默跳过
+}
+function ctrUnstickFrame(R) {
+  if (!ctrF) return;
+  /* 3 秒内只踹一次：`replace` 之后文档要重新加载，而加载完的那一瞬可能又被判成登录页
+     （模块自己那次 `/api/me` 还没回来）—— 没这道闸就会踹成循环。 */
+  const now = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+  if (ctrF.__pxUnstuckAt && now - ctrF.__pxUnstuckAt < 3000) return;
+  let w = null;
+  try { w = ctrF.contentWindow; } catch (e) {}
+  if (!w || !ctrFrameOnLogin(w)) return;
+  ctrF.__pxUnstuckAt = now;
+  /* ⚠️⚠️ **绝不能用 `w.location.reload()`**：算法哥被 401 推到 `/login` 之后，
+     iframe 的**地址**就是 `/login`（`src` 属性却还是 `/agent`）⇒ reload 只会把登录页
+     再刷一遍，看着像"按了没反应"。必须**换地址回正门**。 */
+  try { w.location.replace(R.app); } catch (e) {}
 }
 function ctrTalk() {
   const R = CENTER.room;
@@ -5883,196 +5765,393 @@ function ctrColdStart(R) {
       } else if (n >= 60) {
         clearInterval(timer);
         CENTER.waiting = false;
-        /* ⭐ 第四十六轮：叫了 90 秒还没起来 ⇒ **别只挂一条 8 秒就消失的气泡**。
-           以前用户按 C 之后看到的是"什么都没发生"：气泡一过，屋里安安静静，
-           他不知道是没登录还是没开起来，只能出门再走一遍。
-           现在把抽屉开起来摆那张「还没开起来」的告示 —— 原因写在脸上，
-           手里还留着「重试」，不用记着"我得重新走到门口按 C"。 */
-        ctrOpenPlatform(R);
+        ctrTipMsg("还没起来。手动双击一下「启动像素校园.bat」吧。", 8);
       }
     });
   }, 1500);
 }
 
-/* --- 7.5.14 统一登录（二期 W1）：全局一张票，四家免登 --------------------
-   一期这一大段是「地图拿账号密码去四家各登一次」，所以留下四套
-   `*Sync` / 四份明文 `*_cred` / 一个 `ctrFrameOnLogin` 踹醒补丁。
-   二期按任务书 §3.1.2 把这些**连根拔掉**：
+/* --- 7.5.14 登录门 -----------------------------------------------------
+   作用只有一个：**把 token 种进 localStorage**。刷题平台跑在同一个源上，
+   iframe 一加载，它的 Pinia store 从 localStorage 读到 token ⇒ 直接就是登录态。
+   ⚠️ 这不是安全机制 —— 两个预设账号就明写在按钮上，它只是一道"仪式"。
+   ⭐ 第四十一轮起这里还要**顺手把学霸姐那边也登一次**（同一套账号密码，
+      登录一次进两边）—— 见 `xbgSync`。 */
+const CTR_USERS = [
+  { u: "admin", p: "admin123", n: "管理员" },
+  { u: "user",  p: "user123",  n: "刷题者" }
+];
 
-     ① 主站只登一次（昵称 + 密码，8081 签发主 JWT）；
-     ② 8081 在后台替这个人向四家换票，写成**路径限定的 HttpOnly cookie**
-        （/xbg、/ld、/cmr、/agent），地图这边**不经手任何票**；
-     ③ iframe 走同源代理加载 ⇒ 浏览器自动带 cookie ⇒ 开局即已登录；
-     ④ 票过期 ⇒ 宿主静默换一次票再问一遍（§9.2 铁律 3），
-        四家**都没有登录页**，所以任何情况下都不会在抽屉里弹表单。
+/* ⭐⭐ 第四十一轮：一次登录进两边。
+   学霸姐（xueba-ge，8010）走 Vite 的 `/xbg` 代理，与地图**同源**，
+   所以她那边也认这一对账号密码。三步：
 
-   ⚠️ 主票（`localStorage.token`）与 `campus_cred` 那类明文口令**都不再写四家的**；
-      四家的票是 HttpOnly，JS 读不到，也不需要读。 */
-const MP_SERVICES = {
-  /* probe 就是那家自己开机用来恢复会话的接口 —— 问它本人，不猜。 */
-  xbg:    { label: "学霸姐",  probe: "/xbg/api/me",    cookie: true  },
-  ld:     { label: "老丁",    probe: "/ld/api/me",     cookie: true  },
-  cmr:    { label: "食堂阿姨", probe: "/cmr/api/me",   cookie: true  },
-  /* 刷题平台读的是主 JWT（Bearer 头），而且它的 401 有**两种**回法：
-     过滤器链直接 HTTP 401，或控制器 HTTP 200 + `{code:401}`（GlobalExceptionHandler），
-     所以 `code: true` —— 只看 r.ok 会把后者误判成"活着"。 */
-  campus: { label: "刷题平台", probe: "/api/user/info", cookie: false, code: true }
-};
-/* 主票的过期时间：JWT 第二段里的 `exp`（秒）。解不出来就当它永不过期 ——
-   ⚠️ 宁可不拦，也别因为一次 base64 抖动把人踢下线。 */
-function mpJwtExp(tok) {
-  const p = String(tok || "").split(".")[1];
-  if (!p) return 0;
+     ① `POST /xbg/api/login`     有号就登
+     ② `POST /xbg/api/register`  401（还没这个号）⇒ 用**同一个密码**开一个
+
+   ⚠️⚠️ **这个顺序本身就是安全设计**：`xbgSync` 只在"平台那一步
+      （刷题平台自己的登录接口）已经返回 200 之后"才被调用 ⇒ 绝不会为没验证过的凭据开号。
+      这也是**不预置账号**的理由 —— 再写一份 seed 就是第二处真相，密码一漂移没人知道。
+   ⚠️ 三步**全都不阻塞进地图**：8010 没起来、register 冲突、凭据不满足她那边
+      （nick≥2 或 pw≥4）……任何一样失败都只是 HUD 尾巴上多一句提示，
+      地图照常玩；进逸夫楼时 iframe 会显示学霸姐**自己的**登录框（她内建了）。
+
+   ⚠️⚠️⚠️ **`xbgSync` 有两个入口，缺一不可**。第一版只留了 ①，用户当场撞上：
+     ① `doLogin` —— 刚在登录门上敲完账号密码，凭据就在手里。
+     ② `xbgBootSync` —— 见它自己的注释（登录门**会自己藏起来**）。 */
+const XBG_LOGIN = "/xbg/api/login", XBG_REG = "/xbg/api/register";
+function xbgSave(t) { try { localStorage.setItem("xbg_token", t); } catch (e) {} }
+function xbgPost(url, u, p) {
+  return fetch(url, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nick: u, password: p })
+  }).then(r => r.json().then(j => ({ status: r.status, j: j })));
+}
+function xbgSync(u, p, left) {
+  return xbgPost(XBG_LOGIN, u, p).then(res => {
+    if (res.j && res.j.token) { xbgSave(res.j.token); return "ok"; }
+    if (res.status === 401) {                       // 还没这个号 ⇒ 用同一个密码开一个
+      return xbgPost(XBG_REG, u, p).then(r2 => {
+        if (r2.j && r2.j.token) { xbgSave(r2.j.token); return "ok"; }
+        return "skip";                              // 409（同昵称不同密码）/ 被拒
+      }).catch(() => "skip");
+    }
+    return "skip";
+  }).catch(() => {
+    /* 8010 还在起来 —— 她要读 85 MB 向量，bind 完还要十几秒。
+       退避重试 4 次（每次 3 秒，共约 12 秒），盖住启动器那条 40 秒等待的后半段。 */
+    if (left > 0) return new Promise(r => setTimeout(r, 3000)).then(() => xbgSync(u, p, left - 1));
+    return "down";
+  });
+}
+
+/* ⚠️⚠️ 第四十一轮补丁（用户实测反馈）：**登录门会自己藏起来**。
+     `loginGate()` 见到 `localStorage.token` 就直接 `loginEl.hidden = true; return;`
+     （原话「24 小时内再来，直接进」）⇒ **`doLogin` 根本不会被调用**，
+     `xbgSync` 也就永远不跑。而地图这个 token 是长期的，用户上一次登录可能是几天前 ——
+     那时候还没有学霸姐。于是：人一路走进逸夫楼按 C，iframe 里的学霸姐读不到 `xbg_token`，
+     弹出**她自己的**登录框。用户的原话就是「为啥给学霸姐对话需要我自己再登录」。
+
+     ⇒ 登录门被跳过时**补一次同步**。补同步要密码，所以把凭据记在 `xbg_cred` 里。
+
+     ⚠️ 是明文。之所以能接受：这道门**本来就不是安全机制** —— 两个预设账号
+        （`admin/admin123`、`user/user123`）明写在 `#lgQuick` 按钮上，它只解决
+        「进地图前得按一下」，不解决「防谁」。真正该当密钥看的两样
+        （平台 JWT、学霸姐的 token）都不是这个。
+     ⚠️ 用 `encodeURIComponent` 而**不是 `btoa`**：`btoa` 碰中文昵称直接抛异常；
+        更要紧的是它**看起来像加密其实不是**，比明文更容易让后来人误判成"已保护"。 */
+const XBG_CRED = "xbg_cred";
+function xbgCredSave(u, p) {
+  try { localStorage.setItem(XBG_CRED, encodeURIComponent(u) + "\n" + encodeURIComponent(p)); } catch (e) {}
+}
+function xbgCredLoad() {
   try {
-    const b = p.replace(/-/g, "+").replace(/_/g, "/");
-    const j = JSON.parse(atob(b + "=".repeat((4 - b.length % 4) % 4)));
-    return j && typeof j.exp === "number" ? j.exp : 0;
-  } catch (e) { return 0; }
+    const s = localStorage.getItem(XBG_CRED) || "", i = s.indexOf("\n");
+    if (i < 0) return null;
+    const u = decodeURIComponent(s.slice(0, i)), p = decodeURIComponent(s.slice(i + 1));
+    return (u && p) ? { u: u, p: p } : null;
+  } catch (e) { return null; }
 }
-/* ⭐ 第四十六轮：读票的地方**顺手把过期的票清掉**。
-   主票躺在 `localStorage` 里不会自己死：8081 认不出它，四家的票也就再也续不上，
-   可 HUD 还写着"已登录"、点哪间房都被闸门挡回来 —— 嘴上说登着、身上没票，
-   用户看到的就是"我明明登录了却说没登录"。在这里一次性戳破，后面每一条路都干净。 */
-/* ⭐ 票在这一刻被当场识破（过期）。光清 `localStorage` 不够 —— 抽屉还开着、登录门还藏着，
-   人看到的是"地图照常跑，但哪间房都进不去"。这里当场把场面收回来：
-   收抽屉（摘掉 iframe，绝不留一张刷不出来的页面）→ 重画 HUD → 摆回登录门。
-   ⚠️ 不会有递归：本函数里每一次 `mpToken` 再进来时票已被删，走的是开头那条 `return ""`。 */
-function mpExpiredNotice() {
-  if (CENTER.plat) ctrClosePlatform(true);
-  hudUserTick();
-  loginGate();
+function xbgBootSync() {
+  let tok = "", xt = "";
+  try { tok = localStorage.getItem("token") || ""; xt = localStorage.getItem("xbg_token") || ""; } catch (e) {}
+  /* ① 没登平台 ⇒ 页面还停在登录门上，`doLogin` 自己会同步，这里不用管。
+     ② 学霸姐那边已经有票 ⇒ 没什么可补的（这是"已登录过"的常态，走这条最省事）。 */
+  if (!tok || xt) return;
+  const c = xbgCredLoad();
+  if (!c) return;         // 第四十一轮之前登的会话，没留凭据 ⇒ 无解，等下回走登录门
+  /* ⚠️ **不预先置 `CENTER.xbg`**：置成任何值都会被 `hudUserTick` 当成"结果回来了"，
+     补同步那十几秒里会在 HUD 上闪一句「学霸姐没同步上」—— 可它还没失败呢。空串不显示尾巴。 */
+  xbgSync(c.u, c.p, 6).then(st => { CENTER.xbg = st; hudUserTick(); });
 }
-function mpToken() {
-  let t = "";
-  try { t = localStorage.getItem("token") || ""; } catch (e) { return ""; }
-  if (!t) return "";
-  const exp = mpJwtExp(t);
-  if (exp && exp * 1000 <= Date.now()) {
-    try { localStorage.removeItem("token"); localStorage.removeItem("user"); } catch (e) {}
-    mpExpiredNotice();
-    return "";
-  }
-  return t;
-}
-function mpSet(key, st) { CENTER[key] = st; hudUserTick(); }
-
-/* 一次换四张票。`force` 是"票刚被证明不活了"时再来一遍用的。
-   ⚠️ 并发去重：四条闸门可能同时扑上来（进楼时按 C、HUD 也在探），
-      合并成**一个**在途请求，免得对 8081 打四次 exchange。 */
-let MP_EXCHANGE = null;
-/* 最近一次换票时**各家自己回的状态**（`ok` / `down`）。
-   光看探针分不出"没开"和"没登进去"：8010 没跑时 Vite 代理回的是 **500**，
-   `fetch` 这一层是成功的 ⇒ `mpAsk` 只能说"不认得你"（no），HUD 就会把"她根本没开"
-   误报成"没登进去"。8081 是逐家去换票的，它知道哪一家连不上 —— 把那份结果留在这儿。 */
-let MP_PEER = {};
-function mpExchange(force) {
-  const tok = mpToken();
-  if (!tok) return Promise.resolve("skip");
-  if (MP_EXCHANGE) return MP_EXCHANGE;
-  MP_EXCHANGE = fetch("/api/auth/exchange", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok },
-    credentials: "same-origin"
-  }).then(r => {
-    if (!r.ok) return "skip";
-    /* 读不到 body 不算失败：票已经种下了，只是少了"哪家没开"这条情报。 */
-    return r.json().then(j => { MP_PEER = (j && j.data) || {}; return "ok"; }, () => "ok");
-  }).catch(() => "down")
-    .then(st => { MP_EXCHANGE = null; if (force && st === "ok") return "ok"; return st; });
-  return MP_EXCHANGE;
+/* ⭐ 学霸姐的闸门（第四十五轮）。同一个坑：`xbgBootSync` 见 `xbg_token` 在就早退，
+   票死了也不管。`/xbg/api/me` 就是她 `web/app.js` 开机用来恢复会话的那个接口，
+   带 `Authorization: Bearer`（见那边 `api()` 的写法）；401 就拿 `xbgCredLoad()` 重登。
+   ⚠️ 同样**不预先置** `CENTER.xbg`。 */
+let XBG_READY = null;
+function xbgEnsure() {
+  if (XBG_READY) return XBG_READY;
+  XBG_READY = (function () {
+    let t = "";
+    try { t = localStorage.getItem("xbg_token") || ""; } catch (e) {}
+    if (!t) { const c = xbgCredLoad(); return Promise.resolve(c ? xbgSync(c.u, c.p, 1) : "skip"); }
+    return fetch("/xbg/api/me", { headers: { "Authorization": "Bearer " + t } })
+      .then(r => {
+        if (r.ok) return "ok";
+        const c = xbgCredLoad();
+        return c ? xbgSync(c.u, c.p, 1) : "skip";
+      })
+      .catch(() => "down");
+  })().then(st => { CENTER.xbg = st; hudUserTick(); XBG_READY = null; return st; });
+  return XBG_READY;
 }
 
-/* 问某一家："带着你现在这身 cookie（或主票），我还认得你吗？" */
-function mpAsk(key) {
-  const svc = MP_SERVICES[key];
-  const h = svc.cookie ? {} : { "Authorization": "Bearer " + mpToken() };
-  return fetch(svc.probe, { headers: h, credentials: "same-origin" }).then(r => {
-    if (!r.ok) return "no";
-    if (!svc.code) return "yes";
-    return r.json().then(j => (j && j.code === 200) ? "yes" : "no").catch(() => "no");
-  }).catch(() => "down");
-}
+/* ⭐⭐ 第四十三轮：老丁（laoding，8000）也进同一套「一次登录进三家」。
+   他走 Vite 的 `/ld` 代理，与地图**同源**，账号口径也同一套
+   （`admin/admin123`、`user/user123` 早已种进他的 `server/users.db`）⇒ 整套结构
+   与上面 `xbgSync` **逐字同构**，只有两处不同：
 
-/* ⭐ 闸门（任务书 §9.2 铁律 3 的实现）。返回值：
-     "ok"    —— 已登录，iframe 可以放心加载
-     "skip"  —— 换过票还是不认，如实报告（HUD 挂尾巴），**但绝不弹登录框**
-     "down"  —— 那家服务连不上（和"没登录"是两件事，提示语不同）
-   ⚠️ 只有 `campus` 这一家失败会**落回主站登录门**：主票都没了，
-      另外三家的票也不可能续上，那才是真的需要重新登录。 */
-function mpEnsure(key) {
-  return mpAsk(key).then(st => {
-    if (st === "yes") return "ok";
-    if (st === "down") return "down";
-    return mpExchange(true).then(x => {
-      if (x === "down") return "down";
-      return mpAsk(key).then(s2 => s2 === "yes" ? "ok"
-                          : (MP_PEER[key] === "down" ? "down" : "skip"));
-    });
-  }).then(mark => {
-    mpSet(key, mark);
-    if (mark === "skip" && key === "campus") loginGate();
-    return mark;
+     ① 请求体字段叫 `nickname`（不是学霸姐的 `nick`）—— 见 `laoding/server/app.py`
+        的 `AuthBody`。发错字段服务端直接 422，登录永远不成，且**报错在浏览器控制台
+        里看不出来**（`r.json()` 拿到的是 `{detail:[...]}`，没有 `token`，静默走 skip）。
+     ② 票**不写进本模块的存储**，而是种一个裸 token `ld_token` —— 理由见下。
+
+   ⚠️⚠️ `laoding/index.html` 恢复会话读的是**它自己命名空间下的一坨 JSON**
+      （`guard_v?dataVersion_auth`），跟学霸姐读裸 `xbg_token` 不一样。地图**不去伪造**
+      别人家的存储键：`Store.key()` 里那个 `dataVersion` 是 laoding 的内部版本号，
+      哪天它一升，地图拼出来的键就静默失效，而且这种坏法**没有任何报错**。
+      ⇒ 改成双方各让一步：地图只种一个**中立的** `ld_token`，由老丁自己在前端认领
+      （见 `laoding/index.html` 启动段那条 fallback）。服务端一个字都不用改 ——
+      `/api/me` 本来就是校验 Bearer token 的接口。 */
+const LD_LOGIN = "/ld/api/login", LD_REG = "/ld/api/register";
+function ldSave(t) { try { localStorage.setItem("ld_token", t); } catch (e) {} }
+function ldPost(url, u, p) {
+  return fetch(url, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nickname: u, password: p })
+  }).then(r => r.json().then(j => ({ status: r.status, j: j })));
+}
+function ldSync(u, p, left) {
+  return ldPost(LD_LOGIN, u, p).then(res => {
+    if (res.j && res.j.token) { ldSave(res.j.token); return "ok"; }
+    if (res.status === 401) {                       // 没这个号 ⇒ 用同一个密码开一个
+      return ldPost(LD_REG, u, p).then(r2 => {
+        if (r2.j && r2.j.token) { ldSave(r2.j.token); return "ok"; }
+        return "skip";                              // 409（同昵称不同密码）/ 400（密码 <6 位）
+      }).catch(() => "skip");
+    }
+    return "skip";
+  }).catch(() => {
+    /* 8000 还没起来。他启动比学霸姐快得多（不读索引），但启动器那一步也可能整段跳过
+       （laoding 目录缺了 / 20 秒没起来）⇒ 同样退避重试，别把一次抢跑当永久失败。 */
+    if (left > 0) return new Promise(r => setTimeout(r, 3000)).then(() => ldSync(u, p, left - 1));
+    return "down";
   });
 }
-/* 四家各留一个同名包装 —— 一期那四处 App 注册（`ensure: function(){ return xbgEnsure(); }`）
-   和探针造负对照的写法都靠名字挂钩，**不改它们**。 */
-function xbgEnsure()    { return mpEnsure("xbg"); }
-function ldEnsure()     { return mpEnsure("ld"); }
-function cmrEnsure()    { return mpEnsure("cmr"); }
-function campusEnsure() { return mpEnsure("campus"); }
+/* 凭据：与 `XBG_CRED` **分开存**。两家服务互相独立，一方登不上不该污染另一方的凭据；
+   而且分开之后，只用过老丁、没用过学霸姐的会话也能各自补同步。 */
+const LD_CRED = "ld_cred";
+function ldCredSave(u, p) {
+  try { localStorage.setItem(LD_CRED, encodeURIComponent(u) + "\n" + encodeURIComponent(p)); } catch (e) {}
+}
+function ldCredLoad() {
+  try {
+    const s = localStorage.getItem(LD_CRED) || "", i = s.indexOf("\n");
+    if (i < 0) return null;
+    const u = decodeURIComponent(s.slice(0, i)), p = decodeURIComponent(s.slice(i + 1));
+    return (u && p) ? { u: u, p: p } : null;
+  } catch (e) { return null; }
+}
+/* ⭐ 第四十三轮补丁（**实测才暴露的洞**）：`ld_cred` 是**从本轮起**才开始记的。
+   在本轮之前登录过的人，localStorage 里只有 `token`，`ld_cred` 是空的 ⇒
+   `ldCredLoad()` 返回 null、补同步直接放弃 —— 他刷新页面按 C，**照样**看到老丁自己的登录框。
+   而"已经登过的人"恰恰是绝大多数（登录门 24 小时内不再出现）。
 
-/* 开机补票：手里有主票就先把四张 cookie 焐热，人不用等到按 C 才换。
-   ⚠️ 不 await：启动器那几家服务可能还在读索引，卡住地图启动是本末倒置。 */
-let MP_LASTSYNC = 0;
-function mpBootSync() {
-  MP_LASTSYNC = Date.now();
-  if (!mpToken()) {
-    /* 票没了（包括刚刚被 `mpToken` 识破并清掉的那张过期票）。
-       ⚠️ 抽屉正开着的话**当场收掉**：那张页面上的会话是靠票续的，票一没，
-          它下一次请求就是 401，用户会看见抽屉里慢慢变成一张死页。 */
-    if (CENTER.plat) ctrClosePlatform(true);
-    hudUserTick();
-    loginGate();
-    return;                               // 停在登录门上，doLogin 那条路自己会换
-  }
-  mpExchange(true).then(st => {
-    if (st !== "ok") return;
-    for (const k in MP_SERVICES) { if (k !== "campus") mpAsk(k).then(a => { if (a === "no") mpEnsure(k); }); }
+   ⇒ 用登录门上**本来就明写着的**那对预设账号兜一次：`localStorage.user.username`
+      命中 `CTR_USERS` 就用它那对密码。
+   ⚠️ 这不是新增秘密 —— 那两对账号就印在 `#lgQuick` 的按钮上（见 `CTR_USERS` 上面那段
+      "这不是安全机制"的注释）。命中不了就**原样放弃**、落回登录框，**绝不瞎猜密码**。 */
+function ldPresetCred() {
+  let uname = "";
+  try {
+    const u = JSON.parse(localStorage.getItem("user") || "null");
+    uname = (u && (u.username || u.nickname)) || "";
+  } catch (e) {}
+  if (!uname) return null;
+  for (const p of CTR_USERS) if (p.u === uname) return { u: p.u, p: p.p };
+  return null;
+}
+/* ⭐ 第四十五轮抽出来：`ldBootSync` 与 `ldEnsure` 用的是**同一条**候选链。 */
+function ldBestCred() { return ldCredLoad() || ldPresetCred(); }
+/* ⭐ 老丁的闸门（第四十五轮）。⚠️ `ldBootSync` 见 `ld_token` 在就早退，**票死了也不管**
+   —— 这条补的正是那个洞：问服务端"我这票还认吗"（`/ld/api/me` 就是老丁页面自己
+   `init()` 用来恢复会话的那个接口）；不认就拿 `ldBestCred()` 重登一次。
+   ⚠️ **不预先置** `CENTER.ld`（同 `ldBootSync` 的注释：置了会在结果回来前闪一句提示）。 */
+let LD_READY = null;
+function ldEnsure() {
+  if (LD_READY) return LD_READY;
+  LD_READY = (function () {
+    let t = "";
+    try { t = localStorage.getItem("ld_token") || ""; } catch (e) {}
+    if (!t) { const c = ldBestCred(); return Promise.resolve(c ? ldSync(c.u, c.p, 1) : "skip"); }
+    return fetch("/ld/api/me", { headers: { "Authorization": "Bearer " + t } })
+      .then(r => {
+        if (r.ok) return "ok";
+        const c = ldBestCred();
+        return c ? ldSync(c.u, c.p, 1) : "skip";
+      })
+      .catch(() => "down");
+  })().then(st => { CENTER.ld = st; hudUserTick(); LD_READY = null; return st; });
+  return LD_READY;
+}
+/* ⚠️ 与 `xbgBootSync` 同一个理由、同一个坑：登录门见 `localStorage.token` 就自己藏起来
+   （"24 小时内再来，直接进"）⇒ `doLogin` 根本不会被调用。老用户（第四十三轮之前登的）
+   手里有 `token` 却没有 `ld_token`，`ld_cred` 也没有 —— 他按 C 时抽屉里会弹老丁自己的登录框。
+   这正是上一轮学霸姐栽过的那个跟头（用户原话「为啥给学霸姐对话需要我自己再登录」）。 */
+function ldBootSync() {
+  let tok = "", lt = "";
+  try { tok = localStorage.getItem("token") || ""; lt = localStorage.getItem("ld_token") || ""; } catch (e) {}
+  if (!tok || lt) return;   // 没登平台 ⇒ 登录门那条路会同步；他那边已经有票 ⇒ 无可补
+  const c = ldBestCred();   // ⭐ 老会话没凭据时用预设账号兜底（见上）
+  if (!c) return;           // 连预设都没有（自建账号）⇒ 无解，等下回走登录门
+  /* ⚠️ 同样**不预先置 `CENTER.ld`**（见 `xbgBootSync` 里那段"闪一句没同步上"的解释）。 */
+  ldSync(c.u, c.p, 6).then(st => { CENTER.ld = st; hudUserTick(); });
+}
+
+/* ⭐⭐ 第四十四轮：食堂阿姨（cmr，8020）也进「一次登录进四家」。
+   她走 Vite 的 `/cmr` 代理，与地图**同源**，于是她签发的 HttpOnly 会话 cookie
+   在 iframe 里天然被带上 —— **这就是「进食堂不用重复登录」的全部秘密**，
+   不需要老丁那种「把票种进 localStorage 再由对方认领」的迂回（她也没有票可种）。
+
+   与上面两家**三处**不同，每一处发错都是静默失败：
+
+     ① 请求体字段叫 **`username`**（学霸姐是 `nick`、老丁是 `nickname`）——
+        见 `aunt/server.py` 的 `Credentials`。发错服务端回 422，前端**一个字都不报**。
+     ② 她**不回 token**：登录成功只有 `{id, username}` 加一个 `Set-Cookie`
+        （`aunt/server.py` 的 `login` / `set_session`）⇒ **成功判据只能是
+        `res.status === 200`**。照抄前两家的 `res.j.token` 会永远走 skip，
+        而且坏得毫无痕迹（HUD 上挂一句「没同步上」，抽屉里弹她自己的登录框）。
+     ③ **只登、绝不开号**：她的注册接口要密码 **≥8 位**（Pydantic `min_length=8`，
+        连直接写库都绕不过），而本机库里**只有 `admin` 一个账号** —— 这是用户明确定下
+        的口径。所以非 200 一律 skip，**不像老丁那样遇 401 就去 register**。
+        （地图登录门上的 `user/user123` 只有 7 位 ⇒ 阿姨这一家必然 skip，
+         按 C 时如实弹她自己的登录框。这是既定行为，不是 bug。） */
+const CMR_LOGIN = "/cmr/api/login";
+function cmrPost(url, u, p) {
+  return fetch(url, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: u, password: p })
+  }).then(r => r.json().then(j => ({ status: r.status, j: j })).catch(() => ({ status: r.status, j: {} })));
+}
+function cmrSync(u, p, left) {
+  return cmrPost(CMR_LOGIN, u, p).then(res => {
+    return res.status === 200 ? "ok" : "skip";      // ⚠️ 没有 token，只能看状态码（见上 ②）
+  }).catch(() => {
+    if (left > 0) return new Promise(r => setTimeout(r, 3000)).then(() => cmrSync(u, p, left - 1));
+    return "down";
   });
 }
-
-/* ⭐ 第四十六轮：**登录态自己 Maintaining 自己**，不等人按 C 才发现票凉了。
-   三条路都会把票焐回来：
-     ① 切回这个标签页（`visibilitychange` / `focus`）—— 挂机一会儿再回来的最常见路径；
-     ② 别的标签页登录了（`storage` 里 `token` 从无到有）—— 同源代理下 `localStorage` 是共享的，
-        刷题平台那个抽屉里的登录也会写到这里；
-     ③ 别的标签页登出了（`token` 被清）—— 四家的票已被 8081 一并作废（§9.2 铁律 4），
-        地图这边必须同步变回登录门，不能留着"已登录"的 HUD 骗人。
-   ⚠️ 8 秒节流：`focus` 在切窗口、点任务栏时反复触发，不节流就是对 8081 打点射。 */
-function mpAutoSync() {
-  /* 有票就补票；没票的话 `mpToken()` 自己会在**识破过期的那一刻**收场（`mpExpiredNotice`），
-     这里不必再判第二遍。
-     ⚠️ 本来人就停在登录门上时一个字都不能做：`loginGate()` 会清空正在输入的框，
-        用户切出去看一眼别的东西再回来，密码白打了，那就是新 bug。
-        而 `mpToken()` 只在"手里真有一张过期票"时才叫那一嗓子，登录门上没票 ⇒ 不动。 */
-  if (!mpToken()) return;
-  if (Date.now() - MP_LASTSYNC < 8000) return;
-  mpBootSync();
+/* 凭据：与 `XBG_CRED` / `LD_CRED` **分开存**（理由同老丁那段：一方登不上不该污染另一方）。 */
+const CMR_CRED = "cmr_cred";
+function cmrCredSave(u, p) {
+  try { localStorage.setItem(CMR_CRED, encodeURIComponent(u) + "\n" + encodeURIComponent(p)); } catch (e) {}
 }
-document.addEventListener("visibilitychange", () => { if (!document.hidden) mpAutoSync(); });
-window.addEventListener("focus", mpAutoSync);
-window.addEventListener("storage", ev => {
-  const k = ev && ev.key;
-  if (k !== "token" && k !== "user") return;      // 猫宠、缩放那些本地键不关这里的事
-  if (mpToken()) {
-    MP_LASTSYNC = 0;
-    mpBootSync();                                  // 别的标签页登进来了 ⇒ 这边立刻把票焐上
-    if (loginEl && !loginEl.hidden) loginGate();   // 有票了就把登录门收掉（这条路径不会清输入框）
-  } else if (CENTER.plat) ctrClosePlatform(true);  // 那边登出了 ⇒ 票已全废，抽屉留着就是死页
-  hudUserTick();
-}, false);
+function cmrCredLoad() {
+  try {
+    const s = localStorage.getItem(CMR_CRED) || "", i = s.indexOf("\n");
+    if (i < 0) return null;
+    const u = decodeURIComponent(s.slice(0, i)), p = decodeURIComponent(s.slice(i + 1));
+    return (u && p) ? { u: u, p: p } : null;
+  } catch (e) { return null; }
+}
+/* ⭐⭐ 第四十五轮改了口径（**用户拍板**）：**不再看当前是谁登录的，一律给 admin**。
+   ⚠️ 第四十四轮那个写法（"只有当前用户就叫 admin 时才兜底"）是**够不着**的：
+      用 `user` 登录地图时 `cmrCredLoad()` 非空（存的是 `user/user123`），
+      `cmrEnsure` 拿它去撞一次 422 就收手，**永远轮不到 admin** —— 按 C 照样弹她自己的登录框。
+   ⚠️ 本机库里她**只有 `admin` 一个账号**（注册要密码 ≥8 位，`user123` 只有 7 位进不来）
+      ⇒ 想"进食堂不弹框"，唯一的路就是**静默用 admin**。这不是新增秘密：
+      那对账号本来就明写在 `#lgQuick` 的按钮上。 */
+function cmrPresetCred() {
+  for (const p of CTR_USERS) if (p.u === "admin") return { u: p.u, p: p.p };
+  return null;
+}
+/* ⭐ 「进抽屉前 cookie 已就绪」的闸门（给 80 段 `auntTalk` 用）。
+   为什么需要它：`doLogin` 里那条 `cmrSync` 是**不 await** 的（谁都不许卡住进地图），
+   于是刚在登录门敲完回车、立刻走到食堂按 C —— iframe 可能赶在 `Set-Cookie` 落盘之前
+   加载，她的 `app.js` 开局 `GET /api/me` 拿 401 ⇒ **当面弹一个登录框**，
+   而 cookie 随后才到齐，iframe 自己不会重试。等这几十毫秒就能整掉这个闪。
+   ⚠️ 判据**不能**是"本地有没有票"：她根本没有票（HttpOnly cookie，JS 读不到），
+      所以这里请服务端自己回答 —— `GET /api/me` 200 就是"已经免登录了"。 */
+/* ⭐⭐ 第四十五轮：候选**逐个试**，第一个 200 收工。
+   ⚠️ 不能写成 `cmrCredLoad() || cmrPresetCred()`（第四十四轮的写法）：用 `user` 登录时
+      `cmrCredLoad()` 非空 ⇒ 只会拿 `user/user123` 撞一次 422 然后 skip，
+      **永远轮不到 admin**。顺序＝"先照本人凭据试，再退到 admin"。 */
+function cmrCandidates() {
+  const out = [];
+  for (const c of [campusBestCred(), cmrPresetCred()]) {
+    if (c && c.u && c.p && !out.some(o => o.u === c.u && o.p === c.p)) out.push(c);
+  }
+  return out;
+}
+function cmrTryAll(list, i) {
+  if (i >= list.length) return Promise.resolve("skip");
+  /* ⚠️ 只有**第一家**带网络重试（`left: 2`）：真连不上时两家各等 6 秒，开抽屉要干等十几秒。 */
+  return cmrSync(list[i].u, list[i].p, i === 0 ? 2 : 0).then(st => {
+    if (st === "ok") return "ok";
+    if (st === "down") return "down";           // 网都不通 ⇒ 再换账号也是白搭
+    return cmrTryAll(list, i + 1);
+  });
+}
+let CMR_READY = null;
+function cmrEnsure() {
+  if (CMR_READY) return CMR_READY;
+  CMR_READY = fetch("/cmr/api/me").then(r => {
+    if (r.ok) return "ok";                      // 已经登录（刷新后的常态走这条）
+    if (r.status === 401) return cmrTryAll(cmrCandidates(), 0);
+    return "skip";
+  }).catch(() => cmrTryAll(cmrCandidates(), 0))
+    .then(st => { CENTER.cmr = st; hudUserTick(); CMR_READY = null; return st; });
+  return CMR_READY;
+}
+/* ⚠️ 与上面两家同一个理由、同一个坑：登录门见 `localStorage.token` 就自己藏起来
+   （"24 小时内再来，直接进"）⇒ `doLogin` 根本不会被调用，`cmrCredSave` 也就没跑。 */
+function cmrBootSync() {
+  let tok = "";
+  try { tok = localStorage.getItem("token") || ""; } catch (e) {}
+  if (!tok) return;              // 没登平台 ⇒ 页面还停在登录门上，`doLogin` 那条路自己会同步
+  if (CENTER.cmr === "ok") return;
+  /* ⚠️ **不预先置 `CENTER.cmr`**（理由同 `xbgBootSync`：会让 HUD 在结果回来之前
+     先闪一句「没同步上」）。走同一条 `cmrEnsure`：cookie 还在就什么都不做。 */
+  cmrEnsure();
+}
 
-/* --- 主站登录门（全站唯一的一处口令输入，§9.2 铁律 1） ------------------- */
+/* ⭐⭐ 第四十五轮：**算法哥（刷题平台 8081）也进同一套闸门**。
+   为什么它比另外三家更急 —— 这三条连起来才是用户说的「明明我们事先登录过了」的真身：
+
+    ① 登录门 `loginGate`（见下）**只看票在不在、不看票活不活**；
+    ② 平台 JWT 寿命恰好 24 小时（`application.yml` 的 `expiration: 86400000`）；
+    ③ ⚠️⚠️ 票一过期，平台后端回的是 **HTTP 200 + `{code:401}`**（见 `GlobalExceptionHandler`）
+       ⇒ axios 走**成功**分支 ⇒ `utils/request.js` 调 `userStore.logout()` ⇒
+       **把 `localStorage.token` 和 `localStorage.user` 从整个源上删掉**。
+       ⇒ 一次过期访问 = 静默地把地图和所有模块**一起登出**，而登录门**不会再弹**
+          （它只在页面加载时跑一次）。
+
+   ⇒ 所以"按用户名去 `CTR_USERS` 里找回预设密码"这条兜底，到那一步已经没用了
+      （`localStorage.user` 已经不在）⇒ 必须有一把**模块碰不到的**凭据。 */
+const CAMPUS_CRED = "campus_cred";
+function campusCredSave(u, p) {
+  try { localStorage.setItem(CAMPUS_CRED, encodeURIComponent(u) + "\n" + encodeURIComponent(p)); } catch (e) {}
+}
+function campusCredLoad() {
+  try {
+    const s = localStorage.getItem(CAMPUS_CRED) || "", i = s.indexOf("\n");
+    if (i < 0) return null;
+    const u = decodeURIComponent(s.slice(0, i)), p = decodeURIComponent(s.slice(i + 1));
+    return (u && p) ? { u: u, p: p } : null;
+  } catch (e) { return null; }
+}
+/* 与 `ldPresetCred` **同语义**：只有当前用户命中 `CTR_USERS` 才兜底。
+   ⚠️ 命中不了就**原样放弃** —— 绝不把自建账号悄悄换成 admin（那是食堂那一家的特例，
+      用户单独拍过板，见 `cmrPresetCred`）。 */
+function campusPresetCred() {
+  let uname = "";
+  try {
+    const u = JSON.parse(localStorage.getItem("user") || "null");
+    uname = (u && (u.username || u.nickname)) || "";
+  } catch (e) {}
+  if (!uname) return null;
+  for (const p of CTR_USERS) if (p.u === uname) return { u: p.u, p: p.p };
+  return null;
+}
+/* ⭐ 候选链，**顺序**：本人凭据 → 别人家的凭据 → 预设兜底。
+   ⚠️ 为什么能白拿别人家的 `*_cred`：四家账号密码**本来就是同一对**（登录门一次输入、
+      四处同步，见 `doLogin`）⇒ 老会话只要在任一模块留过凭据就能救回来。
+      这一条正好补上「没留 `campus_cred`、而 `localStorage.user` 已被平台自己抹掉」的洞。 */
+function campusBestCred() {
+  return campusCredLoad() || ldCredLoad() || cmrCredLoad() || campusPresetCred();
+}
+/* 登录门那段"发登录请求"抽出来，与 `campusRelogin` 共用。
+   ⚠️ 抽出来还有个结构性理由：`build.py` 钉死了这个接口字面量全页只许出现**一次**。 */
 function campusLoginPost(u, p) {
   return fetch("/api/auth/login", {
     method: "POST",
@@ -6080,16 +6159,10 @@ function campusLoginPost(u, p) {
     body: JSON.stringify({ username: u, password: p })
   }).then(r => r.json());
 }
-/* 二期注册：昵称 + 密码，**没有邮箱字段**（§3.1.1）。昵称 2~16 字、密码 ≥8 位。 */
-function campusRegisterPost(u, p) {
-  return fetch("/api/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nickname: u, password: p })
-  }).then(r => r.json());
-}
-/* 字段名必须与 campus_game 的 `stores/user.js:31-36` 一致（`{id,username,nickname,role}`）——
-   那边路由守卫读 `user.role`，名字错了管理后台会被踢出来。 */
+/* 把服务端回的登录结果写进 localStorage。
+   ⚠️ 字段名必须与 campus_game 的 `stores/user.js:31-36` 一模一样
+      （`{id, username, nickname, role}`）—— 那边 `setUser` 就是这么存的，路由守卫读
+      `user.role`，名字错了管理后台会被踢出来。抽出来同样是为了那条"只许出现一次"的断言。 */
 function campusWriteSession(d) {
   try {
     localStorage.setItem("token", d.token);
@@ -6098,40 +6171,73 @@ function campusWriteSession(d) {
     }));
   } catch (e) {}
 }
+/* 票过期 / 被平台自己抹掉时重登一次，把 `token` 与 `user` 都写回去。 */
+function campusRelogin() {
+  const c = campusBestCred();
+  if (!c) return Promise.resolve("skip");
+  return campusLoginPost(c.u, c.p).then(res => {
+    if (res && res.code === 200 && res.data && res.data.token) {
+      campusWriteSession(res.data);
+      return "ok";
+    }
+    return "skip";
+  }).catch(() => "down");
+}
+/* ⭐ 算法哥的闸门。
+   ⚠️ 探活接口**不能**用 `/api/agent/status`：它在 `SecurityConfig` 的 permitAll 名单里，
+      永远 200，票死了也看不出来。`/api/user/info` 走 `/user/**`、**不在**名单里
+      ⇒ 401/403 就是票死了；而且它**自己不会**触发"登出 + 跳 /login"那条链
+      （那是 axios 拦截器干的，我们这里是裸 fetch）。
+   ⚠️ 票为空时**别发 `Bearer undefined`**，直接短路去补登。
+   ⚠️ 判据是"HTTP 2xx **且** body 的 `code === 200`"：平台的 401 有**两种**回法 ——
+      ① 过滤器链直接拦下（HTTP 401/403，body 不是 JSON）；
+      ② 控制器自己 `throw new BusinessException(401, ...)` ⇒ **HTTP 200** + `{code:401}`。
+      只看 `r.ok` 会把 ② 误判成"活着"。 */
+let CAMPUS_READY = null;
+function campusEnsure() {
+  if (CAMPUS_READY) return CAMPUS_READY;
+  CAMPUS_READY = (function () {
+    let tok = "";
+    try { tok = localStorage.getItem("token") || ""; } catch (e) {}
+    if (!tok) return campusRelogin();            // 没票 ⇒ 直接补登（见上）
+    return fetch("/api/user/info", { headers: { "Authorization": "Bearer " + tok } })
+      .then(r => r.json()
+        .then(j => (r.ok && j && j.code === 200) ? "ok" : campusRelogin())
+        .catch(() => campusRelogin()))
+      .catch(() => "down");
+  })().then(st => { CENTER.campus = st; hudUserTick(); CAMPUS_READY = null; return st; });
+  return CAMPUS_READY;
+}
 
 function hudUserTick() {
   if (!hudUser) return;
   let u = null;
   try { u = JSON.parse(localStorage.getItem("user") || "null"); } catch (e) {}
-  /* ⚠️ 先问票、再报名字：`user` 那份缓存会跟着过期票留下来，
-     只读它就等于 HUD 挂着"已登录 · ××"，人却一间房都进不去。
-     `mpToken()` 这一步顺带把过期票清了（见上），这里只是不再替它宣传。 */
-  let t = (mpToken() && u && (u.nickname || u.username)) ? ("已登录 · " + (u.nickname || u.username)) : "";
-  /* 尾巴只在"主站登上了、那家结果也回来了"时才挂 —— 主站都没登就什么都别说。
-     "没开起来"是服务没跑，"没登进去"是票没换上，两件事别混成一句。 */
-  if (t) for (const k in MP_SERVICES) {
-    const st = CENTER[k];
-    if (!st || st === "ok") continue;
-    t += "　·　" + MP_SERVICES[k].label + (st === "down" ? "没开起来" : "没登进去");
+  let t = (u && (u.nickname || u.username)) ? ("已登录 · " + (u.nickname || u.username)) : "";
+  /* ⭐ 学霸姐那边的结果用一行尾巴说清楚。⚠️ 只在"平台登上了、她那边的结果也回来了"
+     时才追加 —— 平台都没登就没有尾巴（否则会在地图上挂一句莫名其妙的话）。 */
+  if (t && CENTER.xbg && CENTER.xbg !== "ok") {
+    t += "　·　学霸姐" + (CENTER.xbg === "down" ? "没连上" : "没同步上");
+  }
+  if (t && CENTER.ld && CENTER.ld !== "ok") {
+    t += "　·　保卫处" + (CENTER.ld === "down" ? "没连上" : "没同步上");
+  }
+  if (t && CENTER.cmr && CENTER.cmr !== "ok") {
+    t += "　·　食堂阿姨" + (CENTER.cmr === "down" ? "没连上" : "没同步上");
+  }
+  if (t && CENTER.campus && CENTER.campus !== "ok") {
+    t += "　·　刷题平台" + (CENTER.campus === "down" ? "没连上" : "没同步上");
   }
   hudUser.textContent = t;
   if (lgOut) lgOut.hidden = !t;
 }
-
 /* 两个预设账号按钮：**只绑一次**（加载期）。
-   ⚠️ 绝不能放进 `loginGate()` 里 —— 那个函数每登出一次就会被再调一次，
-      于是每轮往同一批按钮上再叠一条监听。 */
-(function bindQuick() {
-  if (lgSwitch) lgSwitch.addEventListener("click", () => lgSetMode(LG_MODE === "register" ? "login" : "register"));
-  /* 密码显隐开关：只换 type、不动值 —— 切回打码时原来那串还在。
-     ⚠️ 和 #lgQuick 一样只绑一次；别搬进 loginGate()，那函数每登出一次就被再调一次。 */
-  if (lgPwEye && lgP) lgPwEye.addEventListener("click", () => {
-    const show = lgP.type === "password";
-    lgP.type = show ? "text" : "password";
-    lgPwEye.textContent = show ? "隐藏" : "显示";
-    lgPwEye.title = show ? "隐藏密码" : "显示密码";
-    lgP.focus();
-  });
+   ⚠️ 绝不能放进 `loginGate()` 里 —— 那个函数**每登出一次就会被再调一次**，
+      于是每轮往同一批按钮上再叠一条监听。叠到第三条时的症状是：
+      点一下「管理员」，用户名被填上 → 被下一条清掉 → 再被最后一条填上，
+      看起来像闪了一下；而"清空 → 重填"中间态在某些时序下会**留下空用户名**。
+      这类"看起来能用、只是偶尔怪一下"的 bug 最难查，索性从结构上让它不可能发生。 */
+(function bindQuick(){
   if (!loginEl) return;
   const btns = loginEl.querySelectorAll("#lgQuick button");
   for (const b of btns) {
@@ -6146,175 +6252,97 @@ function hudUserTick() {
   }
 })();
 
-/* 门上的模式：登录 ↔ 注册（二期新注册入口，§3.1.1「不填邮箱」）。 */
-let LG_MODE = "login";
-function lgSetMode(mode) {
-  LG_MODE = mode === "register" ? "register" : "login";
-  const reg = LG_MODE === "register";
-  if (lgGo) lgGo.textContent = reg ? "注册并进入像素校园" : "进入像素校园";
-  if (lgSwitch) lgSwitch.textContent = reg ? "已有账号？去登录" : "没有账号？注册一个";
-  /* 登录态那句提示按需求删掉了（#lgHint 空着就整块收起，不留一段空白）；
-     注册还留一句密码长度提醒 —— 那一条是注册才用得上的规则。 */
-  if (lgHint) {
-    lgHint.textContent = reg ? "起个 2~16 字的昵称，校园里别人看到的就是它。密码至少 8 位。" : "";
-    lgHint.hidden = !reg;
-  }
-  if (lgU) lgU.placeholder = "昵称";
-  /* ⭐ 注册**不**沿用预设测试账号：两颗演示按钮收起来，两个框也清空 ——
-     否则点过「管理员 admin」再切注册，会拿 admin/admin123 去抢注那个号。 */
-  if (lgQuick) lgQuick.hidden = reg;
-  if (reg) {
-    if (lgU) { lgU.value = ""; lgU.classList.remove("bad"); }
-    if (lgP) { lgP.value = ""; lgP.classList.remove("bad"); }
-    for (const b of loginEl.querySelectorAll("#lgQuick button")) b.classList.remove("on");
-  }
-  if (lgMsg) lgMsg.textContent = "";
-}
-
 function loginGate() {
   if (!loginEl) return;
+  let tok = "";
+  try { tok = localStorage.getItem("token") || ""; } catch (e) {}
   hudUserTick();
-  if (mpToken()) { loginEl.hidden = true; return; }        // 24 小时内再来，直接进
+  if (tok) { loginEl.hidden = true; return; }        // 24 小时内再来，直接进
   loginEl.hidden = false;
-  if (lgMsg) { lgMsg.textContent = ""; lgMsg.classList.remove("ok"); }
-  if (lgU) { lgU.value = ""; lgU.classList.remove("bad"); }
-  if (lgP) { lgP.value = ""; lgP.classList.remove("bad"); lgP.type = "password"; }
-  if (lgPwEye) { lgPwEye.textContent = "显示"; lgPwEye.title = "显示密码"; }
+  if (lgMsg) lgMsg.textContent = "";
+  if (lgU) lgU.value = ""; if (lgP) lgP.value = "";
   /* 只清高亮，不重新绑监听（绑在加载期那一次就够） */
   for (const b of loginEl.querySelectorAll("#lgQuick button")) b.classList.remove("on");
   if (lgU) lgU.focus();
 }
-
-/* 出错的话同一句话讲两处：底下那行红字 + 把要改的那个框描红一圈。
-   ⚠️ 只红一个框：两个一起红等于没说。 */
-function lgFail(msg, bad) {
-  if (lgMsg) { lgMsg.textContent = msg; lgMsg.classList.remove("ok"); }
-  if (lgU) lgU.classList.toggle("bad", bad === lgU);
-  if (lgP) lgP.classList.toggle("bad", bad === lgP);
-}
-
 function doLogin() {
   if (!lgU || !lgP) return;
   const u = (lgU.value || "").trim(), p = lgP.value || "";
-  lgU.classList.remove("bad"); lgP.classList.remove("bad");
-  if (!u || !p) { lgFail("昵称和密码都要填。", !u ? lgU : lgP); return; }
-  if (LG_MODE === "register" && p.length < 8) { lgFail("密码太短了，至少凑够 8 位。", lgP); return; }
-  if (lgGo) { lgGo.disabled = true; lgGo.textContent = LG_MODE === "register" ? "注册中…" : "登录中…"; }
+  if (!u || !p) { if (lgMsg) lgMsg.textContent = "用户名和密码都要填。"; return; }
+  if (lgGo) { lgGo.disabled = true; lgGo.textContent = "登录中…"; }
   if (lgMsg) lgMsg.textContent = "";
-  const go = LG_MODE === "register"
-    ? campusRegisterPost(u, p).then(res =>
-        (res && res.code === 200) ? campusLoginPost(u, p) : res)   // 注册成功 ⇒ 立刻登一次拿主票
-    : campusLoginPost(u, p);
-  go.then(res => {
+  /* ⚠️ 第四十五轮：请求与"写会话"两段抽成了 `campusLoginPost` / `campusWriteSession`
+     （定义见下面"算法哥的闸门"那一节）—— 一是 `campusRelogin` 要用同一份逻辑，
+     二是 `build.py` 钉死了这两处的字面量全页各只许出现**一次**。 */
+  campusLoginPost(u, p).then(res => {
     if (res && res.code === 200 && res.data && res.data.token) {
       campusWriteSession(res.data);
       loginEl.hidden = true;
       hudUserTick();
-      /* ⭐ 平台这一步过了 —— 现在才去换四家的票。
-         ⚠️ **不 await**：学霸姐要读 85 MB 向量，绝不能拿它卡住进地图。
-         用 `mpBootSync` 而不是光 `mpExchange`：顺手把四家问一遍，HUD 当场就能
-         说出"哪家没开起来"，不用等人走到门口按 C 才发现。 */
-      mpBootSync();
+      /* ⭐ 把凭据记下来：登录门**下次会自己藏起来**，那时候没有密码可问，
+         只能靠这一份补同步（见 `xbgBootSync`）。
+         ⚠️ `campusCredSave` 这一把比另外三把更要命：平台的 401 会把 `token` 与 `user`
+            从**整个源**上抹掉（见 `CAMPUS_CRED` 那段），到那时候只有它还认得你。 */
+      campusCredSave(u, p);
+      xbgCredSave(u, p);
+      ldCredSave(u, p);       // 同上：登录门下次会自己藏起来，那时候没有密码可问
+      cmrCredSave(u, p);      // 同上
+      /* ⭐ 平台这一步已经过了 —— **现在**才去动学霸姐（顺序反不得，见 xbgSync 的注释）。
+         不 await：她那边要读 85 MB 索引，十几秒，绝不能拿它卡住进地图。 */
+      xbgSync(u, p, 4).then(st => { CENTER.xbg = st; hudUserTick(); });
+      /* 老丁那边快得多（毫秒级），同样不 await —— 三条路谁都不许卡住进地图。 */
+      ldSync(u, p, 4).then(st => { CENTER.ld = st; hudUserTick(); });
+      /* 食堂阿姨（毫秒级）。⚠️ 这里把那条 promise 挂进 `CMR_READY`：
+         人可能敲完回车就走过去按 C，`cmrEnsure` 要能等到它（见 cmrEnsure 的注释）。 */
+      CMR_READY = cmrSync(u, p, 4).then(st => { CENTER.cmr = st; hudUserTick(); CMR_READY = null; return st; });
     } else {
-      lgFail((res && (res.message || res.msg)) ||
-        (LG_MODE === "register" ? "这个昵称已经有了，换一个试试。" : "昵称或密码不对，再看一眼。"),
-        LG_MODE === "register" ? lgU : lgP);
+      if (lgMsg) lgMsg.textContent = (res && res.message) || "登录失败，换个账号试试。";
     }
   }).catch(() => {
-    lgFail("连不上服务器。先双击「启动像素校园.bat」，等窗口都开起来再试。");
+    if (lgMsg) lgMsg.textContent = "连不上后端（8081）。先双击「启动像素校园.bat」。";
   }).then(() => {
-    /* ⚠️ 这里**不能**调 `lgSetMode()` —— 它末尾那句 `lgMsg.textContent = ""`
-       会把刚写上去的失败原因当场擦掉，于是"点了注册毫无反馈"。只把按钮恢复原样。 */
-    if (lgGo) {
-      lgGo.disabled = false;
-      lgGo.textContent = LG_MODE === "register" ? "注册并进入像素校园" : "进入像素校园";
-    }
+    if (lgGo) { lgGo.disabled = false; lgGo.textContent = "进入像素校园"; }
   });
 }
-
 function doLogout() {
-  /* 主票与账号信息清掉；四家的票是 HttpOnly cookie，JS 删不掉 —— 叫 8081 删，
-     它顺手把 `mp_ticket` 里那四行也清掉（§9.2 铁律 4：一次登出全退，不留残票）。 */
-  /* ⚠️ 先取票再清本地：反过来的话请求头里是空串，8081 认不出人，
-     `revoke()` 根本不会跑，三家 NPC 的票与 cookie 就都留下来了。 */
-  let tok = "";
-  try { tok = localStorage.getItem("token") || ""; } catch (e) {}
-  try { localStorage.removeItem("token"); localStorage.removeItem("user"); } catch (e) {}
   try {
-    fetch("/api/auth/logout", {
-      method: "POST", headers: { "Authorization": "Bearer " + tok },
-      credentials: "same-origin"
-    }).catch(() => {});
+    localStorage.removeItem("token"); localStorage.removeItem("user");
+    /* ⚠️⚠️ 第四十一轮：**必须一并清 `xbg_token`**。只清平台那两个的话，换账号后
+       进逸夫楼会**以上一个账号的身份**自动进去（iframe 直接从 localStorage 读到旧 token）。
+       这条第四十轮没有 —— 因为那时候还没有第二个系统。 */
+    localStorage.removeItem("xbg_token");
+    /* ⚠️ `xbg_cred` 同样要清，而且**比 `xbg_token` 更不能漏**：它是明文账号密码，
+       留着的话下一个在这台机器登录的人，会被 `xbgBootSync` 拿去
+       **以旧账号的身份**去登学霸姐（顺带把她那边的 token 也写回来）。 */
+    localStorage.removeItem(XBG_CRED);
+    /* ⚠️⚠️ 老丁那两把**同样一把都不能漏**，而且 `ld_token` 比 `xbg_token` 更要命：
+       `laoding/index.html` 是**直接认领**这个裸 token 的（那条 fallback 就是本轮加的），
+       留着它的话，下一个在这台机器登录的人按 C，抽屉里会**以上一个账号的身份**直接进去。 */
+    localStorage.removeItem("ld_token");
+    localStorage.removeItem(LD_CRED);
+    /* ⚠️ 食堂阿姨这一把**只有凭据、没有票**（她的会话是 HttpOnly cookie，
+       localStorage 里一个 aunt_* 的钥匙都没有）⇒ 没有 `cmr_token` 要清，
+       **但 `cmr_cred` 必须清** —— 它是明文账号密码，留着的话下一个在这台机器登录的人
+       会被 `cmrEnsure` 拿去**以旧账号的身份**登食堂（与老丁 `ld_cred` 同性质）。 */
+    localStorage.removeItem(CMR_CRED);
+    /* ⚠️ 第四十五轮新增的 `campus_cred` **更要清**：它是平台那一家的明文账号密码，
+       而且是"票被平台自己抹掉"时的**唯一救兵** ⇒ 留着它，下一个在这台机器登录的人
+       会被 `campusRelogin` **以旧账号的身份**把票种回来。 */
+    localStorage.removeItem(CAMPUS_CRED);
   } catch (e) {}
-  /* 兜底：各家自己的登出接口也喊一嗓子（fire-and-forget，失败不拦人退登）。
-     ⚠️ 阿姨的 `/api/logout` 挂了 `check_origin` ⇒ 依赖 Vite 那边 `changeOrigin:false`。 */
-  for (const k in MP_SERVICES) {
-    if (k === "campus") continue;
-    try { fetch(MP_SERVICES[k].probe.replace(/\/me$/, "/logout"), { method: "POST", credentials: "same-origin" }).catch(() => {}); } catch (e) {}
-  }
-  CENTER.xbg = ""; CENTER.ld = ""; CENTER.cmr = ""; CENTER.campus = "";
-  /* ⭐ §7.5「换人即换历史」在 UI 上的最后一道：抽屉里挂着的是**上一个人**的页面
-     （阿姨/老丁已经把他聊过的话渲染出来了），票一作废就必须整块摘掉，
-     只 `hidden` 不算 —— 下次别人进同一间房时 iframe 还活着，一秒就把旧历史亮出来。 */
-  ctrClosePlatform(true);
+  /* cookie 那份 JS 删不掉（HttpOnly，读不到也改不了）⇒ 叫服务自己删。
+     fire-and-forget：删不掉也不该拦着人退登。
+     ⚠️ 阿姨的 `POST /api/logout` 挂了 `check_origin`（`aunt/server.py`）⇒ 这条
+        依赖 Vite 那边 `changeOrigin:false`；配错时它会静默 403，被 catch 吞掉。 */
+  try { fetch("/xbg/api/logout", { method: "POST" }).catch(() => {}); } catch (e) {}
+  try { fetch("/cmr/api/logout", { method: "POST" }).catch(() => {}); } catch (e) {}
+  CENTER.xbg = "";
+  CENTER.ld = "";
+  CENTER.cmr = "";
+  CENTER.campus = "";
   hudUserTick();
   loginGate();
 }
-
-/* ⭐ 二期 §3.1.3：**抽屉里"认不出票"由 iframe 自己报上来**，宿主补票再把抽屉重载一次。
-   三家 Python 服务与刷题平台都读不到那张 HttpOnly cookie（JS 碰不上去），它们唯一
-   能做的就是把 401 如实说出来 —— 这里正是接住那句话的地方。
-   ⚠️ 与 §3.1.2 是一条绳上的：登录窗删掉之后，"认不出"必须有个出口，不然抽屉就成死页。 */
-window.addEventListener("message", ev => {
-  const d = ev.data;
-  if (!d || d.type !== "pixelcampus:need-ticket") return;
-  const key = d.from === "agent" ? "campus" : d.from;
-  if (!MP_SERVICES[key]) return;                 // 报上来的名字不认识 ⇒ 不当回事
-  mpEnsure(key).then(mark => {
-    if (mark !== "ok") {
-      /* 补不上票 ⇒ **别把一张死页留在人脸上**。第四十六轮的口径：抽屉不硬收，
-         摘掉 iframe 后把宿主那张告示摆在他面前，说清是"没开起来"还是"票没续上"，
-         人自己选重试还是回校园 —— 上一版直接 `ctrClosePlatform` 把他踢回地图，
-         什么解释都没有，看起来就像"按了 C 结果什么都没发生"。
-         只有主票都没了（campus 这一家）才落回地图那张登录门（§9.2 铁律 3 的最后一档）。 */
-      try { if (ctrF) ctrF.removeAttribute("src"); } catch (e) {}
-      if (key === "campus") { ctrClosePlatform(true); loginGate(); return; }
-      ctrGateShow(CG_R || CENTER.room, mark);
-      return;
-    }
-    /* 票补上了 ⇒ 把**这一个**抽屉重新过一遍水。⚠️ 先摘 src 再设回去：
-       同一个 URL 直接设 src 有些浏览器会当作无变化，不重新发请求。 */
-    ctrGateHide();
-    try {
-      if (ctrF && ctrF.getAttribute("src")) {
-        const s = ctrF.getAttribute("src");
-        ctrF.removeAttribute("src");
-        ctrF.setAttribute("src", s);
-      }
-    } catch (e) {}
-  });
-});
-
-/* ⭐ 二期：各家抽屉里那颗「退出」按下去以后的出口。
-   §3.1.2 把四家的登录窗连根拔掉之后，"退出"就没有可去的地方了 —— 留在原地只会露出
-   那张「这里不登录」的告示。用户要的是**退出即回大厅**，所以由宿主把抽屉收掉、
-   顺手摘掉 iframe（见 `ctrClosePlatform(detach)`），下一次按 C 重新过闸门补票。
-   ⚠️ 两道校验照 7.10.6 的 `aunt-exit`：`origin` 对得上**且** `source` 就是本抽屉那个
-      frame —— 少一道的话页面上任何 iframe / 弹窗都能凭一条消息关掉地图的抽屉。
-   ⚠️ 只有刷题平台那颗是**主站**退出（它清的是与地图同源的 `localStorage.token`），
-      这时四家的票一律作废，不留残票（§9.2 铁律 4）。 */
-window.addEventListener("message", ev => {
-  const d = ev.data;
-  if (!d || d.type !== "pixelcampus:exit") return;
-  if (ev.origin !== location.origin) return;
-  if (!ctrF || ev.source !== ctrF.contentWindow) return;
-  const key = d.from === "agent" ? "campus" : d.from;
-  if (!MP_SERVICES[key]) return;
-  if (key === "campus") { ctrClosePlatform(true); doLogout(); return; }
-  CENTER[key] = "";
-  ctrClosePlatform(true);
-  hudUserTick();
-}, false);
 
 /* --- 7.5.15 按键 -------------------------------------------------------
    ⚠️⚠️ **注册时机是本轮最要紧的一件事**：本段排在 `72_guide.js` **之前** ⇒ 这个监听
@@ -6333,15 +6361,7 @@ window.addEventListener("keydown", e => {
   if (e.isComposing || e.keyCode === 229) return;
   const k = (e.key || "").toLowerCase();
 
-  if (CENTER.plat) {                         // ① 交给 iframe
-    /* ⭐ 第四十六轮：闸门没过时抽屉里**没有页面**，iframe 那条 Esc 监听接不到东西。
-       摆着告示却按不动 Esc 是最容易被当成"卡死"的一种，这里补上：告示亮着就收它。 */
-    if (ctrGate && !ctrGate.hidden && (e.key === "Escape" || (e.key || "").toLowerCase() === "b")) {
-      ctrClosePlatform(true);
-      e.preventDefault(); e.stopImmediatePropagation();
-    }
-    return;
-  }
+  if (CENTER.plat) return;                       // ① 交给 iframe
 
   if (CENTER.active) {                           // ② 房间
     if (CTR_MOVE[k]) { CKEYS[k] = 1; e.preventDefault(); e.stopImmediatePropagation(); return; }
@@ -6390,13 +6410,6 @@ if (lgU) lgU.addEventListener("keydown", e => {
   if (e.key === "Enter") { doLogin(); e.preventDefault(); e.stopPropagation(); }
 });
 if (lgOut) lgOut.addEventListener("click", doLogout);
-/* ⚠️ 闸门告示这两条**只能绑在这里**（加载期一次）—— 绑进 `ctrGateShow` 就会随开门次数叠加，
-   同上面 #lgQuick 那笔账。 */
-if (cgRetry) cgRetry.addEventListener("click", ctrGateRetry);
-if (cgBack) cgBack.addEventListener("click", () => ctrClosePlatform(true));
-for (const el of [lgU, lgP]) {
-  if (el) el.addEventListener("input", () => el.classList.remove("bad"));
-}
 /* ⚠️ iframe 的 `load` 只在**这里**绑一次（见 `ctrBindFrameEsc` 上面那段：
    放进打开抽屉的函数里会随打开次数叠加监听）。 */
 if (ctrF) ctrF.addEventListener("load", ctrFrameBindEsc);
@@ -6404,7 +6417,7 @@ window.addEventListener("resize", () => { if (CENTER.active) { ctrResize(); ctrD
 
 /* ⚠️ 登录门与起搏都**推迟到下一次事件循环**再启动：本段加载期 `player` / `keys`
    还在 TDZ 里（它们在主循环切片里），任何一条路径碰上去都是整页 JS 静默死。 */
-setTimeout(() => { loginGate(); mpBootSync(); ctrHudPulse(); }, 0);
+setTimeout(() => { ctrHudPulse(); }, 0);
 
 console.log("[像素校园] 室内场景段就绪"
   + " · 房间 " + Object.keys(ROOMS).join(" / ")
@@ -6583,8 +6596,7 @@ defRoom({
   /* ⭐⭐ 第四十五轮：**开门前先验票**（见 `ctrOpenPlatform` 与 `xbgEnsure`）。
      ⚠️ 写成**函数**而不是直接引用 `xbgEnsure`：就为了探针能**按名字**替换它造负对照。 */
   ensure: function () { return xbgEnsure(); },
-  mpKey: "xbg",
-  coldTip: "学霸姐没在跑，正在叫启动器，浏览器问「是否打开」时点「打开」。"
+  coldTip: "学霸姐没在跑 —— 正在叫启动器（浏览器会问一次「是否打开」，点「打开」）…"
 });
 
 /* =========================================================
@@ -19132,10 +19144,6 @@ window.addEventListener("keydown", e => {
      于是"她在南门、你在北门"时按 E 毫无反应，而用户要的正是**随时**能叫。 */
   if ((e.key === "e" || e.key === "E") && !e.repeat) {
     if (GUIDE.mode === "lead") return;   // 她就在你面前带队；想换地方先按 Esc
-    /* ⚠️ 二期模块 7 改版：老丁的对话面板 `#gdlg` 与小北那块 `#dlg` **同一个位置**
-       ⇒ 两块不能同时开。gdOpen 那边早就有反过来的判据（GUIDE.open 时不让开），
-       这儿补上这一半；`typeof` 判空是为了 mp/guard.js 缺失时一句都不影响。 */
-    if (typeof gdIsOpen === "function" && gdIsOpen()) { guideToast("先把老丁的话说完（Esc 退出）。"); return; }
     guideCall();
     e.preventDefault(); e.stopImmediatePropagation();
   }
@@ -19251,11 +19259,11 @@ function guideBubbleOf() {
   }
   if (GUIDE.mode === "come") return "我来啦";
   if (GUIDE.mode === "back") return null;             // 回家路上不吭声
-  /* home / here / arrived：走近 2 格冒那颗动作提示。
+  /* home / here / arrived：原来那条"走近 2 格冒『按 E 说话』"。
      ⚠️ 这里保留 `<b>` 标记（`#tip` 的 CSS 有 `#tip b{color:#ffd76e}`），
         所以走 innerHTML；文案是写死的常量，不带任何外部输入。 */
   return (player.x - GUIDE.x) ** 2 + (player.y - GUIDE.y) ** 2 < GUIDE_NEAR2
-    ? "<b>E</b> 找小北" : null;
+    ? "<b>E</b> 说话" : null;
 }
 
 /* 气泡定位。⚠️ **不用 `getBoundingClientRect()`**（每帧读布局 = 强制重排）：
@@ -20457,16 +20465,11 @@ function catTick(dt) {
      走的是**向导那套栅格寻路**（`guidePath`：CELL 栅格 + Dijkstra + 视线拉直），
      不是直线 —— 直线会从两栋楼的斜缝里穿过去（`72_guide.js` 文件头 (2) 记着）。
 
-   · 交互（二期模块 7 改版）：走近 → 头顶冒「按 C 说话」→ 按 C 开**地图底部那块对话面板**
-     （`mp/guard.js` 造的 `#gdlg`，与小北同一位置、同一套按键规矩）—— 失物登记、找失物、
-     认领、报修、工单进度、门禁、我的记录**全在地图上说完**，不单开窗、不单开抽屉。
-     ⇒ 不再走 71b 那套 `ctrProbe` 探活 + `ctrOpenPlatform` iframe + 假房间对象：
-        老丁的业务是纯本地规则，断网也能把认领闭环走完（只有面板里那颗「照片」出网，
-        `/ld/api/vision/recognize` 不通时 guard.js 自己降级成「口头补两句特征」）。
-
-   · 呼叫（二期模块 7 改版）：左上角「呼叫老丁」`#mpCall` / 按 R ⇒ 他**自动寻路走到你面前**，
-     你在路上继续走他跟着重算，站定才开口进入对话（§7.9.7）。MVP 里他是
-     「**全图唯一叫得动的人**」，这一条以前只在独立版 `laoding/` 里按时长模拟，现在是真的走位。
+   · 交互：走近 → 头顶冒「按 C 说话」→ 按 C 打开**同源 iframe 抽屉**。
+     抽屉**复用 71b 的 `#ctrP` / `#ctrF`** 与 `ctrProbe` / `ctrOpenPlatform` /
+     `ctrClosePlatform`（`ctrOpenPlatform` 只认 `R.app`，所以给一个假房间对象即可），
+     观感与算法哥 / 学霸姐**同一套**。地址 `/ld/`：Vite 代理到 127.0.0.1:8000，
+     服务端 `PrefixStrip` 剥前缀（见 `campus_game/frontend/vite.config.js`）。
 
    ⚠️ 四条不许踩：
      ① **不进 props、不加 addSolid** —— 他是每帧换 img 的活人（同向导 / 猫），
@@ -20553,10 +20556,7 @@ const GUARD = (function () {
     name: "保安 · 老丁",
     x: s0.x, y: s0.y, dir: "down", step: IDLE_BASE, walk: 0, idle: 0,
     spot: 0, path: null, wi: 0, pauseT: 1.2, stuck: 0,
-    near: false, open: false,
-    /* 被呼叫时的三样（§7.9.7）：`call` = 他正在赶来，`callT` = 赶来已用秒数，
-       `callAnchor` = 上一次算路时你站的位置（你挪出够远就重算 = 「跟着你走」）。 */
-    call: false, callT: 0, callAnchor: null
+    near: false, open: false
   };
 })();
 
@@ -20627,21 +20627,13 @@ function guardFollow(dt) {
 
 /* --- 7.9.3 每帧心跳（由 build.py 补丁 27 挂在 `catTick` 之后）--------- */
 function guardTick(dt) {
-  /* 「对话开着」的判据：改版之后是地图内那块面板（`mp/guard.js` 的 `GD.open`）；
-     mp/guard.js 没加载（双击单文件那份）才退回一期抽屉那条 `CENTER.plat`。 */
-  GUARD.open = (typeof gdIsOpen === "function")
-    ? gdIsOpen()
-    : ((typeof CENTER !== "undefined") && !!CENTER.plat);
+  /* 抽屉开着 = `CENTER.plat`。在地图上这是**唯一**会把它置真的地方（房间那条路
+     还会同时置 `CENTER.active`，那时玩家本来就冻着）⇒ 拿它当"抽屉开着"的判据最省事。 */
+  GUARD.open = (typeof CENTER !== "undefined") && !!CENTER.plat;
   const dP = Math.hypot(player.x - GUARD.x, player.y - GUARD.y);
   GUARD.near = !GUARD.open && dP <= GUARD_TALK_R;
 
   if (GUARD.open) { guardStand(dt); guardTipPaint(); return; }
-
-  if (GUARD.call) {                        // ⭐ 有人在叫他 ⇒ 一路走到你跟前（§7.9.7）
-    guardCallStep(dt, dP);
-    guardTipPaint();
-    return;
-  }
 
   if (GUARD.pauseT > 0) {                       // 到站歇脚
     GUARD.pauseT -= dt;
@@ -20692,125 +20684,38 @@ function guardTipPaint() {
   guardTip.style.top  = y + "px";
 }
 
-/* --- 7.9.5 说话：按 C 开地图底部那块对话面板（二期模块 7 改版）--------
-   以前这里给 71b 的抽屉凑了个**假房间对象**（`ctrProbe` 探活 → `ldEnsure` 验票 →
-   `ctrOpenPlatform` 把整张 laoding 界面塞进 iframe）。现在一步都不要了：
-   按 C = `mp/guard.js` 的 `gdOpen()`，面板 `#gdlg` 就摆在地图底部、与小北同一位置、
-   同一套按键规矩 —— 失物登记 / 找失物 / 认领 / 报修 / 工单进度 / 门禁 / 我的记录，
-   **全部在地图上说完**，不单开窗、不单开抽屉。
-
-   ⇒ 老丁的这套业务是**纯本地规则**（意图分类 + 四维相似度匹配 + localStorage 分片），
-      所以不探活、不验票、不冷启动，断网也能把认领闭环走完；
-      唯一出网的一步是面板里那颗「照片」（`/ld/api/vision/recognize`），
-      8000 没起来时 guard.js 自己降级成「你口头补两句特征」，流程照走。
-   ⚠️ `gdOpen` / `gdIsOpen` / `GD` 都是 `mp/guard.js` 顶层的声明：这个文件在 chunks
-      之后加载 ⇒ **只能在函数体里用**（加载期引用撞 TDZ，整页 JS 静默死）。 */
-function guardOpen(via) {
-  if (typeof gdOpen !== "function") { guardToast("老丁的对话没加载（mp/guard.js 缺失）。"); return; }
-  gdOpen(via || "talk");
+/* --- 7.9.5 抽屉：走近按 C 开失物招领（与算法哥 / 学霸姐同一套）---------
+   `ctrProbe` 只看 `R.probe`、`ctrOpenPlatform` 只看 `R.app`、`ctrColdStart` 只看
+   `R.coldTip` ⇒ 给一个**假房间对象**就能整条复用，不必另写一套开关。 */
+const GUARD_APP = {
+  app: "/ld/", probe: "/ld/api/health",
+  /* ⭐⭐ 第四十五轮：**开门前先验票**（见 `ctrOpenPlatform` 与 `ldEnsure`）。
+     ⚠️ 写成**函数**而不是直接引用 `ldEnsure`：就为了探针能**按名字**替换它造负对照。 */
+  ensure: function () { return ldEnsure(); },
+  name: "保卫处", coldTip: "老丁的失物招领服务还没起来，正在拉起来，稍等一会儿……"
+};
+function guardOpen() {
+  ctrOpenPlatform(GUARD_APP);
+  /* 抽屉那个 iframe 的 title 是写死的「刷题平台」，切到老丁这边顺手改一下
+     （只影响无障碍读屏与浏览器标签提示，画面无关）。 */
+  if (ctrF) ctrF.setAttribute("title", "保卫处 · 老丁");
 }
 function guardTalk() {
-  if (typeof CENTER !== "undefined" && (CENTER.plat || CENTER.active || CENTER.waiting)) return;
-  /* 面板已经开着（呼叫到他来了、或上一句还没说完）⇒ 只把光标放回输入框，不重开、不清历史。 */
-  if (typeof gdIsOpen === "function" && gdIsOpen()) {
-    if (typeof GD !== "undefined" && GD.els) GD.els.in.focus();
-    return;
-  }
+  if (typeof CENTER !== "undefined" && (CENTER.plat || CENTER.waiting)) return;
+  /* ⚠️ 第四十五轮补的连按两次 C 并发保护（与 `auntTalk` 的 `AUNT.talking` 同款）：
+     闸门进了 `ctrOpenPlatform` 之后，`CENTER.plat` 要等 `ctrProbe` / `ldEnsure` 回来
+     才置真 —— 这中间几百毫秒里第二下 C 会再走一遍整条链（探两次、开两次抽屉）。 */
+  if (GUARD.talking) return;
   if (!GUARD.near) { guardToast("走近老丁再按 C。"); return; }
-  guardOpen("talk");
+  GUARD.talking = true;
+  ctrProbe(GUARD_APP).then(function (ok) {
+    GUARD.talking = false;
+    if (ok) guardOpen();                // 闸门（`GUARD_APP.ensure`）在 `ctrOpenPlatform` 里
+    else ctrColdStart(GUARD_APP);       // 服务没起来 → 走 71b 那套"请启动器拉起来"
+  });
 }
 /* 反馈复用向导那张 `guideToast`（2.6 秒自动隐藏）—— 地图上已经有这一块，不另做。 */
 function guardToast(t) { if (typeof guideToast === "function") guideToast(t); }
-
-/* --- 7.9.7 呼叫：他放下手里的活儿，一路走到你面前（§2「全图唯一叫得动的人」）
-   规矩（用户 2026-10-25 逐字要求）：点左上角「呼叫老丁」/ 按 R ⇒ 老丁**自动走到玩家
-   所在地**；你在路上继续走 ⇒ 他**按你的新位置重新算路跟过来**；直到**停在玩家面前**
-   才开口进入对话（对话面板就是 §7.9.5 那块 `#gdlg`，不另开窗）。
-
-   ⚠️ 五条实现要点：
-     · 寻路只用向导那份 `guidePath`（共享栅格 + Dijkstra + 视线拉直，**同步一次算完**）。
-       每帧重算会把主线程吃干 ⇒ 只在**你从他上次瞄准的位置挪出 `GUARD_CALL_REPATH`**
-       或**这一段走到头**时重算一次。
-     · 瞄准点是「玩家沿 玩家→老丁 方向前进 `GUARD_CALL_AIM`」那个点，再 `guardSnap` 吸附
-       ⇒ 他到站是**面对你站着**，不是和你重叠（重叠了他头顶气泡会盖住你、描边也糊在一起）。
-     · ⭐ `GUARD_CALL_AIM` **必须明显小于** `GUARD_CALL_R`：`guardFollow` 到点判定是
-       "离路点 ≤14px 就算踩到"，若瞄准点与停口判据取同一个数，最后那 9~14px 会被这个
-       阈值整段吞掉 —— 他走到 53px 就原地来回重算、永远不开口（浏览器实测撞到的）。
-       取 26 / 60 之后，最后一段还有 30+px 可走，撞不进这个缝。
-     · 寻路**无解**时（隔着楼、或只剩最后几像素）不许站着等：直接朝瞄准点蹭一小步
-       （`guardWalkToward` 自带可走判定，撞墙位移 0 就停，不会穿模）。
-     · 赶来期间**不碰巡逻状态**（`spot` / `pauseT` 原样留着）⇒ 对话一关他接着巡楼。
-     · 卡住 0.9 秒是**重算同一条目的地的路**，不是像巡逻那样换下一站 ——
-       换站会让他掉头走人，正对着"我叫他他却走了"。 */
-const GUARD_CALL_R       = 60;   // 停口判据：离你 60px 就站定开口（< 搭话半径 68）
-const GUARD_CALL_AIM     = 26;   // 瞄准点离你的距离 —— 必须 < 停口判据，见上面 ⭐
-const GUARD_CALL_REPATH  = 40;   // 你挪出 40px ⇒ 重算（这一条就是"跟着走"）
-const GUARD_CALL_TIMEOUT = 60;   // 秒：超过当他被别的事绊住了，礼貌收场
-function guardCallAim() {
-  const dx = GUARD.x - player.x, dy = GUARD.y - player.y;
-  const d = Math.hypot(dx, dy) || 1;
-  return guardSnap(player.x + dx / d * GUARD_CALL_AIM, player.y + dy / d * GUARD_CALL_AIM);
-}
-function guardCallPlan() {
-  const a = guardCallAim();
-  let p = null;
-  try { p = guidePath(GUARD.x, GUARD.y, a.x, a.y); } catch (e) { p = null; }
-  GUARD.path = (p && p.length) ? p : null;
-  GUARD.wi = 0;
-  GUARD.stuck = 0;
-  GUARD.callAnchor = { x: player.x, y: player.y };   // 记住"这条路是按哪儿算的"
-}
-function guardCallStop() {
-  GUARD.call = false; GUARD.callT = 0; GUARD.callRepathT = 0;
-  GUARD.path = null; GUARD.callAnchor = null;
-  if (typeof gdChipComing === "function") gdChipComing(false);
-}
-function guardCallStep(dt, dP) {
-  if (dP <= GUARD_CALL_R) {                          // 到站：站定、转身、开口
-    guardCallStop();
-    GUARD.pauseT = 0;
-    guardStand(dt); guardFace();
-    if (typeof gdArrive === "function") gdArrive();
-    return;
-  }
-  GUARD.callT += dt;
-  if (GUARD.callT > GUARD_CALL_TIMEOUT) {
-    guardCallStop();
-    guardToast("老丁被别的事绊住了，你走近按 C 找他。");
-    return;
-  }
-  const moved = GUARD.callAnchor
-    ? Math.hypot(player.x - GUARD.callAnchor.x, player.y - GUARD.callAnchor.y) : 1e9;
-  /* 重算的节流与向导「她追你」那一段同口径（§7.2.9：`GUIDE.comeT > 0.6` 才允许追一次新坐标）
-     —— 你一路小跑时按位移重算会密到每 0.17 秒一次 Dijkstra，寻路桶队列再快也不该这么花。 */
-  GUARD.callRepathT = (GUARD.callRepathT || 0) + dt;
-  if (!GUARD.path || (moved > GUARD_CALL_REPATH && GUARD.callRepathT > 0.6)) {
-    GUARD.callRepathT = 0;
-    guardCallPlan();
-  }
-  if (!GUARD.path) {                          // 无解 ⇒ 朝瞄准点蹭一小步，别站着干等
-    const a = guardCallAim();
-    if (!guardWalkToward(a.x, a.y, dt)) guardStand(dt);
-    return;
-  }
-  const r = guardFollow(dt);
-  if (r === "done") GUARD.path = null;               // 这段走完了 ⇒ 按你的新位置再来一段
-  else if (r === "stuck") {
-    GUARD.stuck += dt;
-    if (GUARD.stuck > 0.9) { GUARD.callRepathT = 0; guardCallPlan(); }
-  }
-}
-/* 呼叫的**唯一入口**（左上角那颗按钮与 R 键都走这儿，`mp/guard.js` 的 gdCall 也走这儿）。 */
-function guardCall() {
-  if (typeof gdIsOpen === "function" && gdIsOpen()) { guardTalk(); return; }
-  if (GUARD.call) { guardToast("已经在路上了，稍等。"); return; }
-  if (typeof gdOpen !== "function") { guardToast("老丁的对话没加载（mp/guard.js 缺失）。"); return; }
-  if (Math.hypot(player.x - GUARD.x, player.y - GUARD.y) <= GUARD_CALL_R) { guardOpen("call"); return; }
-  GUARD.call = true; GUARD.callT = 0; GUARD.callAnchor = null;
-  GUARD.path = null; GUARD.wi = 0; GUARD.stuck = 0; GUARD.pauseT = 0;
-  if (typeof gdChipComing === "function") gdChipComing(true);
-  guardToast("老丁正往你这边赶……");
-}
 
 /* --- 7.9.6 按键 ------------------------------------------------------
    ⚠️ 只在**真的站得够近**时才消费 C：别处的 C 一律放行，绝不改变既有按键语义。
@@ -20848,9 +20753,8 @@ window.addEventListener("keydown", function (e) {
      127.0.0.1:8020，服务端 `PrefixStrip` 剥前缀（见 `campus_game/frontend/vite.config.js`）。
 
    · 免登录：**白拿的**。她走的是 HttpOnly 会话 cookie，地图与她同源 ⇒ iframe 里的
-     请求天然带得上。二期起那张票由 8081 在主站登录时统一签发（`/api/auth/exchange`），
-     闸门是 `cmrEnsure`（它只问 `/cmr/api/me` 认不认得你，不认就补一次票），
-     **这里不必做任何认领动作** —— 她自己的登录页在二期已删。
+     请求天然带得上。地图那边 `doLogin` / `cmrBootSync` 只是顺手替她登一次
+     （见 `71b_center.js` 的 `cmrSync` / `cmrEnsure`），**这里不必做任何认领动作**。
 
    ⚠️ 四条不许踩（与老丁同款，理由见 `79_guard.js` 文件头）：
      ① **不进 props、不加 addSolid** —— 她是每帧换 img 的活人（同向导 / 猫 / 老丁），
@@ -20999,8 +20903,7 @@ const AUNT_APP = {
      ⚠️ 写成**函数**而不是直接引用 `cmrEnsure`：一是探针要**按名字**替换它造负对照，
         二是别让"引用"把函数名绑死在加载期。 */
   ensure: function () { return cmrEnsure(); },
-  mpKey: "cmr",
-  name: "学生一食堂", coldTip: "阿姨的值班室没在跑，正在叫启动器，浏览器问「是否打开」时点「打开」。"
+  name: "学生一食堂", coldTip: "阿姨的值班室还没起来，正在拉起来，稍等一会儿……"
 };
 function auntOpen() {
   ctrOpenPlatform(AUNT_APP);
@@ -21231,13 +21134,7 @@ function render() {
   const chClip = Math.round(CH_H * lakeSubmerge(player.x, player.y));
   /* 蹲姿（第四十四轮）：`player.act` 非空时换成蹲姿精灵。 */
   const _pfr = (player.act && (player.actD - player.actT) < 0.35) ? 0 : 1;
-  /* ⭐ 二期模块 3：有自定义形象就走 `charSpriteOf`（照片→配方→小人），没有就退回
-     一期那张脸。两条出口都是 18×30 / 锚点 (9,27) —— 生成器内部复用的就是下面
-     `buildChar`，规格不可能漂（§13 风险 1）。`mp/look.js` 没拷过来 ⇒ typeof 判空兜住。 */
-  const _pimg = player.act
-    ? (typeof mpSelfPose === "function" ? mpSelfPose(player.dir, player.act, _pfr) : poseSprite(player.dir, player.act, _pfr))
-    : (typeof mpSelfSprite === "function" ? mpSelfSprite(player.dir, player.step) : charSprite(player.dir, player.step));
-  drawList.push({ img: _pimg, ax: CH_AX, ay: CH_AY, x: player.x, y: player.y, baseY: player.y, clip: chClip, mp: "self" });
+  drawList.push({ img: window.MP && MP.connected ? (player.act ? MP.crouch(MP.look, player.dir, player.act, _pfr) : MP.sprite(MP.look, player.dir, player.step)) : (player.act ? poseSprite(player.dir, player.act, _pfr) : charSprite(player.dir, player.step)), ax: CH_AX, ay: CH_AY, x: player.x, y: player.y, baseY: player.y, clip: chClip });
   /* 向导「小北」：与补丁 9 同口径 —— FIT 档下 18px 的精灵只剩 1.6 背板像素，
      点采样会忽隐忽现，直接不画。 */
   if (Math.max(CH_W, CH_H) * zoom >= 1.5)
@@ -21264,11 +21161,7 @@ function render() {
   if (Math.max(CH_W, CH_H) * zoom >= 1.5)
     drawList.push({ img: auntSprite(AUNT.dir, AUNT.step), ax: CH_AX, ay: CH_AY,
                     x: AUNT.x, y: AUNT.y, baseY: AUNT.y });
-  /* ⭐ 二期模块 2：把同场景的其他玩家**并进这一条 drawList**，再一起排序。
-     这就是"人走进楼后面自然被挡住"的全部实现（§7.1 层级），一期那套 `baseY`
-     排序一个字都不改；别人**不参与碰撞**，撞上去直接穿过（§7.1 三条规则之一）。
-     ⚠️ 必须在 `sort` **之前**调用；单机回落时它自己 early-return，画面与一期逐字相同。 */
-  if (typeof mpCollectPeers === "function") mpCollectPeers(drawList, ox, oy, viewW, viewH);
+  if (window.MP) MP.appendOutdoorPeers(drawList);
   drawList.sort((a, b) => a.baseY - b.baseY);      // 3/4 视角：按落地线排序即得到正确遮挡
   /* ⚠️ 取整必须在**背板空间**：先 round 世界坐标再乘 zoom，会把物体相对间距量化到
      1/zoom 世界像素的网格上。宽高也必须显式传，否则 drawImage 不会放大。
@@ -21290,11 +21183,6 @@ function render() {
     } else {
       ctx.drawImage(it.img, dx, dy, it.img.width * zoom, it.img.height * zoom);
     }
-    /* ⭐ 二期模块 2：这条目要是"人"（自己 / 别的玩家），补一笔装饰 ——
-       自己 = 脚下青色淡光环，别人 = 头顶昵称（12 px 屏幕字号，不随缩放变大）。
-       ⚠️ 排在 `drawImage` **之后**：这样它天然继承上面 `occlAlpha` 的那层淡入淡出，
-          人被楼挡住时名字和光环一起淡，不会出现"楼里飘着一个名字"。 */
-    if (it.mp && typeof mpDrawDecor === "function") mpDrawDecor(ctx, it, dx, dy, zoom);
   }
 }
 
@@ -21306,37 +21194,15 @@ function loop(now) {
   const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
   last = now;
   update(dt);
+  if (window.MP) MP.onFrame(now);
   render();
+  if (window.MP) MP.drawLabels();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
 </script>
-<!-- ⭐ 二期模块 2：联机客户端独立成文件（任务书 §10.1 的文件策略）。
-     ⚠️ **必须排在主脚本之后**：它要读主脚本顶层那些 `const`（`player` / `CENTER` /
-        `charSprite` / `CH_AX` / `viewW` …）—— 同一个文档里的普通脚本共享一份全局词法
-        环境，排在前面就会在加载期撞 TDZ（"整页白屏、三套自动验收都查不出"那次）。
-     ⚠️ 这个文件**没拷过来也只是没有联机**：主脚本里三处挂载点全带 `typeof` 判空，
-        双击 HTML 照样能走、能看、能跟 NPC 说话（§7.7 单机回落）。 -->
 <script src="mp/look.js"></script>
-<script src="mp/chat.js"></script>
-<!-- ⭐ 二期模块 6：个人中心（`mp/profile.js`）—— 头像双选菜单 `showAvatarMenu`、
-     自己的全屏面板、别人的缩略主页。它自己造 DOM、自己挂 `P` 键监听，
-     **不改地图一个字**；排在 chat.js 之后（公告栏与聊天窗的头像点击往它转），
-     它只在运行期读全局，所以相对 client.js 前后都行。
-     ⚠️ 这个文件没拷过来也只是没个人中心：chat.js 那三处 `typeof showAvatarMenu`
-        判空会退回"点头像直接开聊"，一期的玩法一个字节都不动（§7.7）。 -->
-<script src="mp/profile.js"></script>
-<!-- ⭐ 二期模块 7 改版：老丁（保卫处）搬进地图（`mp/guard.js`）。
-     按 C 不再开 iframe 抽屉，而是开地图底部那块 `#gdlg`（与小北同一位置）；
-     左上角多一颗「呼叫老丁」（`#mpCall`，按 R 同一个入口），点了他一路走到你面前才开口。
-     ⚠️ 排在本文件的 chunks **之后**：它运行期要读 `player` / `keys` / `GDEST` /
-        `guideResolve` / `guidePath` / `guideToast`，加载期取会撞 TDZ。
-     ⚠️ 它调进来的地图侧入口是 `guardCall()`（§7.9.7 寻路与"跟着走"都在地图那边），
-        地图调进去的是 `gdOpen` / `gdIsOpen` / `gdArrive` / `gdChipComing`。
-     ⚠️ 这个文件没拷过来也只是没地图内对话：`guardOpen` 那句 `typeof` 判空会提示
-        "老丁的对话没加载"，一期的玩法一个字节都不动（§7.7 单机回落）。 -->
-<script src="mp/guard.js"></script>
-<script src="mp/client.js"></script>
+<script src="mp/lobby.js"></script>
 </body>
 </html>

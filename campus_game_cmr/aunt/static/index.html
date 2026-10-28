@@ -36,28 +36,11 @@
        styles.css 末尾）。独立跑时它永远 display:none，一个字都不影响。 -->
   <div id="aunt-boot" role="status">正在进入…</div>
   <div id="auth-screen" class="auth-screen">
-    <section class="auth-intro" aria-labelledby="auth-title">
-      <div class="brand-line"><span class="brand-mark" aria-hidden="true">食</span><span>像素校园 / 食堂值班室</span></div>
-      <div class="auth-intro-main">
-        <div class="auth-portrait aunt-portrait" data-emotion="neutral" role="img" aria-label="动漫风格的食堂阿姨，平静微笑"></div>
-        <p class="small-label">阿姨 · 丙</p>
-        <h1 id="auth-title">今天想吃什么，<br>先来问问阿姨。</h1>
-        <p>查窗口、看菜品、聊口碑。在像素校园地图登录一次，阿姨就记住你说过的话。</p>
-      </div>
-      <p class="intro-foot">七处餐厅资料 · 公开来源整理 · 室内视图为示意</p>
-    </section>
     <main class="auth-form-area">
-      <!-- ⭐⭐ 二期 §3.1.2：阿姨**不再有登录/注册入口**。全站只有主站那一张票，
-           认不出宿主给的票时，这里只**如实说**该回哪儿，绝不摆表单。
-           ⚠️ `#auth-screen` 这个 id 要留着 —— app.js 的 showAuth 判定认它。 -->
-      <div class="auth-form" role="status">
-        <p class="form-overline">值班室</p>
-        <h2 id="auth-heading">这里不登录</h2>
-        <p class="form-subtitle">食堂只认像素校园的账号，请先在地图里登录一次。</p>
-        <!-- 这句**只在被地图嵌着时**才露（app.js 判 window.top）。
-             独立开 8020 的人眼前根本没有抽屉，"按 Esc 退出"是指令上的错。 -->
-        <p class="form-subtitle" id="auth-embed-tip" hidden>退出请按 Esc，登录后再走到我门口按 C。</p>
-        <p id="auth-error" class="form-error" role="alert" hidden></p>
+      <div class="auth-form">
+        <h2>食堂阿姨</h2>
+        <p>请返回校园大厅登录后再进入。</p>
+        <a href="/">返回校园大厅</a>
       </div>
     </main>
   </div>
@@ -66,7 +49,7 @@
     <header class="topbar">
       <div class="brand-line"><span class="brand-mark" aria-hidden="true">食</span><span>校园食堂 · 阿姨</span></div>
       <span class="demo-badge">食堂资料体验版</span>
-      <div class="topbar-user"><span id="current-user"></span><button id="back-campus" class="subtle-button" type="button" hidden>← 返回校园</button><button id="logout-button" class="subtle-button" type="button">退出</button></div>
+      <div class="topbar-user"><span id="current-user"></span><button id="back-campus" class="subtle-button" type="button" hidden>← 返回校园</button></div>
     </header>
 
     <main class="workbench">

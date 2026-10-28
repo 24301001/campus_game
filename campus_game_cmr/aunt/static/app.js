@@ -17,7 +17,7 @@
   const state = {
     user: null, catalog: null, canteen: null, floor: null, ratings: {}, selectedStall: null,
     conversations: [], conversationId: null, loadVersion: 0,
-    emotion: "neutral", talkUntil: 0, sending: false
+    authMode: "login", emotion: "neutral", talkUntil: 0, sending: false
   };
 
   function element(tag, className, text) {
@@ -69,25 +69,9 @@
   }
 
   /* ⭐ 第四十五轮：撤掉"被地图嵌着时的开机纱幕"（见 index.html 的 <head> 与 styles.css 末尾）。
-     ⚠️ `showAuth` **也**必须撤：中途 401 时得把"回主站登录"那块提示露出来，
-     不能把人冻在纱幕上。二期 §3.1.2 后这里**没有表单可填** —— 认不出票只报给宿主。 */
+     ⚠️ `showAuth` **也**必须撤：中途 401 时得露出**真的**登录表单，不能把人冻在纱幕上。 */
   function unembed() {
     try { document.documentElement.classList.remove("aunt-embed"); } catch (_) {}
-  }
-
-  /* ⭐⭐ 二期 §3.1.3：被地图嵌在抽屉里时，「认不出票」和「用户退出」两件事都**交回宿主**，
-     而不是把「这里不登录」那张告示杵在人脸上 —— 宿主收到 `need-ticket` 会静默补一张票
-     再把本页重载一次，收到 `exit` 会直接收起抽屉回大厅。独立开 :8020 没有宿主，返回 false，
-     调用方各自落回原来的 `showAuth()`。
-     ⚠️ `targetOrigin` 写死 `location.origin`（抽屉与本同源），别家的页面嵌不走这条消息。
-     ⚠️ 与「← 返回校园」那颗按钮的 `aunt-exit` 是两回事：那条只是收起抽屉（会话还在），
-        这条 `exit` 是**阿姨这边的会话已经作废**。 */
-  function toHost(kind, reason) {
-    try {
-      if (window.self === window.top) return false;
-      window.parent.postMessage({ type: "pixelcampus:" + kind, from: "cmr", reason: reason || "" }, location.origin);
-      return true;
-    } catch (_) { return false; }
   }
 
   function showAuth() {
@@ -99,7 +83,6 @@
     unembed();
     authScreen.hidden = false;
     appScreen.hidden = true;
-    setError($("#auth-error"), "");
   }
 
   function showAuntEmotion(value) {
@@ -121,7 +104,7 @@
       api("/api/canteens"), api("/api/ratings"), api("/api/conversations")
     ]);
     state.user = user;
-    $("#current-user").textContent = user.username;
+    $("#current-user").textContent = localStorage.getItem("mpNickname") || user.username;
     unembed();                       // ⭐ 会话到手 ⇒ 撤掉开机的纱幕（正常路径）
     authScreen.hidden = true;
     appScreen.hidden = false;
@@ -132,12 +115,14 @@
     map.setRatings(ratings);
     const select = $("#canteen-select");
     select.replaceChildren();
-    for (const canteen of catalog.canteens) {
+    // [QODER-FIX #22] 用户要求“学活一和明湖一换位置”：下拉里明湖排第一，
+    // 进门默认就是明湖 1F（1F 平面图 P2）；学活排在它后面，不再抢占首屏。
+    for (const canteen of [...catalog.canteens].sort((a, b) => (a.id === "minghu" ? -1 : b.id === "minghu" ? 1 : 0))) {
       const option = element("option", "", canteen.name);
       option.value = canteen.id;
       select.append(option);
     }
-    state.canteen = catalog.canteens[0];
+    state.canteen = catalog.canteens.find(item => item.id === "minghu") || catalog.canteens[0];
     select.value = state.canteen.id;
     renderFloors();
     renderConversations();
@@ -188,18 +173,6 @@
     try { await newConversation(); } catch (error) { setError($("#chat-error"), error.message); }
   });
 
-  /* ⭐⭐ 二期 §3.1.2：这里的 setAuthMode / 表单提交 / 登录注册切换三块**整段删除**。
-     阿姨不再自己收账号密码 —— 会话只认宿主（8081）签发的同源 HttpOnly cookie，
-     开局 `start()` 里那一次 `/api/me` 认得出人就进值班室，认不出就露出
-     index.html 那张「这边没有登录入口」的说明卡。 */
-
-  $("#logout-button").addEventListener("click", async () => {
-    try { await api("/api/logout", { method: "POST" }); }
-    catch (_) { /* session may already have expired */ }
-    /* 退出即回大厅：交回宿主收抽屉 + 摘 iframe，下次按 C 重新过闸门补票。 */
-    if (!toHost("exit", "logout")) showAuth();
-  });
-
   // 「← 返回校园」：只在被地图抽屉挂载时出现（那时 PREFIX 非空），独立运行时按钮一直藏着。
   // 收件人是地图父页 —— 它收到 `aunt-exit` 就把抽屉收起来（Esc 那条路也仍然有效）。
   if (PREFIX) {
@@ -216,7 +189,8 @@
 
   function appendMessage(role, content, evidence = [], ranking = [], recommendations = [], emotion = "neutral") {
     const row = element("div", "message " + role);
-    const avatar = element("div", "message-avatar", role === "assistant" ? "姨" : (state.user ? state.user.username.charAt(0) : "我"));
+    const displayName = localStorage.getItem("mpNickname") || state.user?.username || "我";
+    const avatar = element("div", "message-avatar", role === "assistant" ? "姨" : displayName.charAt(0));
     avatar.setAttribute("aria-hidden", "true");
     if (role === "assistant") {
       avatar.textContent = "";
@@ -224,7 +198,7 @@
       avatar.dataset.emotion = emotion;
     }
     const body = element("div", "message-body");
-    body.append(element("p", "message-name", role === "assistant" ? "阿姨 · 丙" : "你"));
+    body.append(element("p", "message-name", role === "assistant" ? "阿姨 · 丙" : displayName));
     body.append(element("p", "message-bubble", content));
     if (ranking && ranking.length) {
       const card = element("ol", "ranking-card");
@@ -303,9 +277,7 @@
       pending.remove();
       chatInput.value = text;
       setError($("#chat-error"), error.message);
-      /* 中途掉票：先让宿主补一张（它会重载本页），补不上宿主自己收抽屉。
-         独立跑才落到 `showAuth()` 那张告示。 */
-      if (error.status === 401 && !toHost("need-ticket", "401")) showAuth();
+      if (error.status === 401) showAuth();
       return null;
     } finally {
       state.sending = false;
@@ -713,13 +685,18 @@
     const question = input.value.trim();
     if (!id || !question) return;
     const answerNode = $("#detail-chat-answer");
+    // [QODER-FIX #23] 右侧提问的答案直接显示在右侧同一个面板里，
+    // 不再只写一句“请看左侧对话”（用户反馈生成结果全跑到左边）。
+    answerNode.classList.remove("detail-answer-ready");
+    answerNode.classList.add("detail-answer-pending");
     answerNode.textContent = "阿姨正在查资料…";
     const result = await sendMessage(question, id);
     if (state.selectedStall !== id) return;
+    answerNode.classList.remove("detail-answer-pending");
     if (!result) { answerNode.textContent = $("#chat-error").textContent || "提问没有发出，请再试一次。"; return; }
     input.value = "";
-    const dishes = (result.recommendations || []).map(item => "• " + item.dish + "（" + item.floorLabel + "）");
-    answerNode.textContent = result.reply + (dishes.length ? "\n" + dishes.join("\n") : "");
+    answerNode.textContent = "阿姨：" + result.reply;
+    answerNode.classList.add("detail-answer-ready");
     map.sayAtStall(id, result.reply);
   });
 
@@ -814,13 +791,9 @@
 
   async function start() {
     setupVoiceInput();
-    // 只有真被嵌在地图抽屉里才提"按 Esc 退出"—— 独立开这一页的人眼前没有抽屉。
-    try { if (window.self !== window.top) $("#auth-embed-tip").hidden = false; } catch (_) { /* private mode */ }
     requestAnimationFrame(animate);
     try { await showApp(await api("/api/me")); }
-    /* ⭐ 开局就没票：被嵌着时**纱幕继续挂着**（那是「正在进入…」），先请宿主补票再重载；
-       补不上宿主会收抽屉。独立开 :8020 才露「这里不登录」那张告示。 */
-    catch (_) { if (!toHost("need-ticket", "no-ticket")) showAuth(); }
+    catch (_) { showAuth(); }
   }
   start();
 })();

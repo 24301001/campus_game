@@ -13,10 +13,10 @@
             <template v-if="userStore.user">
               <el-button text @click="$router.push('/profile')">个人中心</el-button>
               <el-button text v-if="userStore.user.role === 'ADMIN'" @click="$router.push('/admin/dashboard')">管理</el-button>
-              <el-button text @click="handleLogout">退出</el-button>
+              <el-button text @click="goLobby">返回校园</el-button>
             </template>
             <template v-else>
-              <el-button text type="primary" @click="$router.push('/login')">登录</el-button>
+              <el-button text type="primary" @click="goLobby">返回校园登录</el-button>
             </template>
           </div>
         </div>
@@ -582,18 +582,14 @@ const loadCategories = async () => {
   }
 }
 
+const goLobby = () => window.top.location.assign('/')
+
 const loadTags = async () => {
   try {
     const res = await getTagList()
     tags.value = res.data
   } catch (e) {
   }
-}
-
-const handleLogout = () => {
-  userStore.logout(true)
-  ElMessage.success('退出成功')
-  router.push('/home')
 }
 
 onMounted(async () => {

@@ -37,18 +37,29 @@ input{font:inherit}
 #ld-boot{display:none}
 html.ld-embed #ld-boot{display:flex;height:100%;align-items:center;justify-content:center;
   background:var(--bg);color:var(--dim);font-size:13px;letter-spacing:3px}
-html.ld-embed #noauth-view{display:none!important}
+html.ld-embed #login-view{display:none!important}
 
-/* ---------- ① 无票提示（二期 §3.1.2：本页**没有登录入口**了） ---------- */
-#noauth-view{height:100%;display:flex;align-items:center;justify-content:center;background:
+/* ---------- 登录窗口 ---------- */
+#login-view{height:100%;display:flex;align-items:center;justify-content:center;background:
   repeating-linear-gradient(0deg,transparent 0 31px,rgba(37,99,235,.05) 31px 32px),
   repeating-linear-gradient(90deg,transparent 0 31px,rgba(37,99,235,.05) 31px 32px),var(--bg)}
-.noauth-card{width:360px;background:var(--panel);border:2px solid var(--line);padding:26px 26px 20px;image-rendering:pixelated}
-.noauth-card h1{font-size:17px;letter-spacing:2px;color:var(--amber);text-align:center;margin-bottom:2px}
-.noauth-card .sub{text-align:center;color:var(--dim);font-size:12px;margin-bottom:14px}
-.noauth-sprite{display:block;margin:0 auto 10px;image-rendering:pixelated}
-#noauth-msg{text-align:center;font-size:12px;color:var(--dim);line-height:1.8}
-#noauth-again{text-align:center;font-size:12px;color:var(--amber);line-height:1.8;margin-top:8px}
+.login-card{width:360px;background:var(--panel);border:2px solid var(--line);padding:26px 26px 20px;image-rendering:pixelated}
+.login-card h1{font-size:17px;letter-spacing:2px;color:var(--amber);text-align:center;margin-bottom:2px}
+.login-card .sub{text-align:center;color:var(--dim);font-size:12px;margin-bottom:14px}
+.login-sprite{display:block;margin:0 auto 10px;image-rendering:pixelated}
+.tabs{display:flex;border:1px solid var(--line);margin-bottom:14px}
+.tabs button{flex:1;background:transparent;border:none;color:var(--dim);padding:7px 0;letter-spacing:2px}
+.tabs button.on{background:var(--line2);color:var(--txt)}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:12px;color:var(--dim);margin-bottom:3px;letter-spacing:1px}
+.field input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:8px 10px;outline:none}
+.field input:focus{border-color:var(--blue)}
+#li-submit{width:100%;background:var(--amber);color:#ffffff;border:none;padding:9px 0;font-weight:700;letter-spacing:4px;margin-top:6px}
+#li-submit:hover{filter:brightness(1.08)}
+#li-msg{min-height:18px;font-size:12px;color:var(--red);margin-top:8px;text-align:center}
+#li-health{text-align:center;font-size:12px;color:var(--dim);margin-top:6px}
+#li-health b{font-weight:400}
+#li-health .ok{color:var(--green)} #li-health .bad{color:var(--red)}
 
 /* ---------- 聊天界面 ---------- */
 #chat-view{height:100%;display:flex;flex-direction:column}
@@ -218,7 +229,7 @@ header .sp{flex:1}
 <div id="ld-boot">正在进入…</div>
 <script>
 /* ⚠️ 这段必须**紧跟在纱幕元素之后**（浏览器顺序解析，这里加类 ⇒ 后面解析到的
-   `#noauth-view` 从一开始就是隐藏的，一闪都不会有）。
+   `#login-view` 从一开始就是隐藏的，一闪都不会有）。
    ⚠️ 类加在 `document.documentElement`（`<html>`）上而不是 `<body>` 上。 */
 (function () {
   try {
@@ -234,19 +245,13 @@ header .sp{flex:1}
 })();
 </script>
 
-<!-- ======================= ① 无票提示（二期 §3.1.2：登录卡整段删除） =======================
-     本页**不再问你要昵称和密码**。老丁只认主站那张票（`/api/auth/exchange` 种的
-     HttpOnly cookie `ld_t`，或抽屉宿主递过来的 Bearer）。认不出就把话说清楚，
-     让宿主去补票 —— 绝不在这里弹第二个登录框。
-     ⚠️ 文案分两层：`#noauth-again` 只在**被地图嵌着**时才露（由 init 判 `window.top`）。
-        独立跑（直开 :8000）根本没有抽屉，让人"按 Esc 退出"是指令上的错。 -->
-<section id="noauth-view">
-  <div class="noauth-card">
-    <canvas id="noauth-sprite" class="noauth-sprite" width="12" height="13"></canvas>
+<!-- 身份由校园大厅统一签发；这里没有独立登录入口。 -->
+<section id="login-view">
+  <div class="login-card">
     <h1>保卫处 · 值班窗口</h1>
     <div class="sub">北交大像素校园 —— 保安 · 老丁</div>
-    <p id="noauth-msg">这里不登录。老丁只认像素校园的账号，请先在地图里登录一次。</p>
-    <p id="noauth-again" class="hidden">退出请按 Esc，登录后再走到我身边按 C。</p>
+    <p>请返回校园大厅登录后再进入。</p>
+    <a href="/">返回校园大厅</a>
   </div>
 </section>
 
@@ -259,7 +264,6 @@ header .sp{flex:1}
     <button id="clock" title="点击可拨时间（演示用）">--:--</button>
     <span class="sp"></span>
     <button id="btn-reset" class="hbtn" title="清空本地数据重新来">重置数据</button>
-    <button id="btn-logout" class="hbtn">退出</button>
   </header>
   <div id="main">
     <div id="chat-col">
@@ -277,7 +281,6 @@ header .sp{flex:1}
         <button class="qa" data-act="lost_intake">登记失物</button>
         <button class="qa" data-act="repair">报修</button>
         <button class="qa" data-act="claim">认领核对</button>
-        <button class="qa" data-act="call">呼叫老丁</button>
       </div>
       <div id="draft-bar" class="hidden"></div>
       <div id="input-row">
@@ -288,10 +291,10 @@ header .sp{flex:1}
       </div>
     </div>
     <aside id="map-panel">
-      <div class="ph-title">地图联动 · MapBridge</div>
-      <div class="ph-sub">下面这些调用老丁已经发出去了（focus / addPin / highlight / setLayer / findPath / nearestWalkable / on），地图按总体设计 §8 接上之后就自动生效。</div>
-      <div id="map-holder"><div class="ph-txt">地图还没接上</div></div>
-      <div id="map-log-title">调用记录</div>
+      <div class="ph-title">地图层 · MapBridge</div>
+      <div class="ph-sub">预留接口（本期不实现）。focus / addPin / highlight / setLayer / findPath / nearestWalkable / on——功能调用点已接入，待地图组按总体设计 §8 实现后自动生效。</div>
+      <div id="map-holder"><div class="ph-txt">地图未接入</div></div>
+      <div id="map-log-title">接口调用记录</div>
       <div id="map-log"></div>
     </aside>
   </div>
@@ -797,7 +800,7 @@ window.GuardAPI = {
 /* ============================================================
  * 会话与界面
  * ============================================================ */
-const state = { user:null, msgs:[], flow:null, lastHits:[], idleCount:0, lastMsgAt:0, summon:'idle', pendingPhoto:null };
+const state = { user:null, msgs:[], flow:null, lastHits:[], idleCount:0, lastMsgAt:0, summon:'idle', pendingPhoto:null, lastUi:null };
 const msgsEl = $('#msgs');
 
 function saveChat(){
@@ -809,12 +812,57 @@ function saveChat(){
 function loadChat(){
   try{ state.msgs = JSON.parse(localStorage.getItem(Store.key('chat_' + state.user.user_id)) || '[]'); }catch(e){ state.msgs = []; }
 }
+/* 递给地图面板的**可点界面**：卡片上那颗「认领这条」、当面认一眼那排选项。
+   只带面板渲染要用的纯字段（Store 的对象和函数过不了 postMessage），
+   话术仍走 campus.guard.reply 那一条，这里不带 text/note，免得面板重复印一遍。 */
+function bridgeUi(m){
+  if(m.kind === 'options'){
+    return { kind:'options', stage:m.stage || null, entryId:m.entryId || null,
+      options:(m.options || []).map(o => ({ label:o.label, value:o.value, ghost:!!o.ghost })) };
+  }
+  if(m.kind === 'cards'){
+    const items = (m.hits || []).filter(h => h && h.it).map((h, i) => ({
+      id: h.it.id, best: i === 0, category: h.it.category, desc: h.it.desc,
+      place: h.it.place, time: fmtTime(h.it.foundTime),
+      score: Math.round(h.s.total * 100), detail: Math.round(h.s.dims.text * 100),
+      owner: h.it.studentId ? (h.it.studentId + (h.it.name ? ' · ' + h.it.name : '')) : ''
+    }));
+    return items.length ? { kind:'cards', mode:m.mode || 'text', items } : null;
+  }
+  return null;
+}
+/* 面板关掉再打开时日志是整片重画的 ⇒ 上一轮那排按钮跟着没了，玩家回来只能重问一遍。
+   面板重新接通后发这一条，按"这套界面现在还能不能走"决定要不要再递一次：
+     options —— 还停在它对应的那一步才递（否则等于让玩家把已经办结的东西再认一遍）
+     cards   —— 卡片里还有在库的就递（东西被领走了就不递） */
+function replayUi(){
+  const ui = state.lastUi;
+  if(!ui || window.parent === window) return;
+  if(ui.kind === 'options'){
+    const f = state.flow;
+    if(!f || f.type !== 'claim' || !f.data || f.data.entryId !== ui.entryId || f.stage !== ui.stage) return;
+  } else {
+    if(!(ui.items || []).some(x => { const it = Store.itemById(x.id); return it && it.status === 'in_storage'; })) return;
+  }
+  window.parent.postMessage({type:'campus.guard.ui', ui}, location.origin);
+}
 function pushMsg(m, save = true){
   m.ts = nowMs(); state.msgs.push(m); state.lastMsgAt = nowMs();
   if(save) saveChat();
   msgsEl.appendChild(renderMsg(m));
   msgsEl.scrollTop = msgsEl.scrollHeight;
   const mood = autoMood(m); if(mood) setMood(mood);
+  /* 嵌在地图面板里时把话递出去。⚠️ `sys` 那一路也要递：快捷流程的提示、"正在看这张照片……"
+     这类系统行以前被 `who==='guard'` 挡在 iframe 里，地图面板那头就是半天不回话。 */
+  if(window.parent !== window && (m.who === 'guard' || m.who === 'sys')) {
+    const text = m.text || m.note || '';
+    if(text) window.parent.postMessage({type:'campus.guard.reply', text, who:m.who}, location.origin);
+    /* ⚠️ 光递文字不够：比对出来的卡片和"是不是这一件"那排选项本身就是处理入口，
+       按以前只发 text 的写法，按钮全留在隐藏 iframe 里点不着 ⇒ 玩家看到"比出来了"，
+       却进不了认领核销那一步。 */
+    const ui = bridgeUi(m);
+    if(ui){ state.lastUi = ui; window.parent.postMessage({type:'campus.guard.ui', ui}, location.origin); }
+  }
 }
 function say(text){ pushMsg({ who:'guard', kind:'text', text }); }
 function me(text){ pushMsg({ who:'me', kind:'text', text }); }
@@ -1104,16 +1152,22 @@ const FLOWS = {
       text = (text || '').trim();
       // 追问轮：先处理确认 / 否定短路，其余按补充描述继续查
       if(f.stage === 'refine'){
-        if(/^(都不是|不是我的|没有我的|算了|不对)$/.test(text) || /^(没有|没了|没有了|记不清|想不起来|不知道)$/.test(text)){
+        /* 否定/确认这两条正则都是**整句匹配**，所以宁可多列几种口语说法：
+           实测玩家对着卡片回一句「就是这个」，旧正则不认，被当成新描述又查一轮，
+           回出来"按你说的查了一轮，不太像"——玩家看到的正是"对上了却不能认领"。 */
+        if(/^(都不是|不是我的|没有我的|算了|不对|不是这个|不是它|这个不是|那个不是)$/.test(text) || /^(没有|没了|没有了|记不清|想不起来|不知道)$/.test(text)){
           confirmNone(d, d.showedHedge ? '行，这几条都不是的话，那就是还没人捡到。' : '行，先这样。');
           return;
         }
-        if(d.showedHedge && /^(是这条|就是这条|对上了|对|是|第一条|第1条|第二|第二条|第2条)$/.test(text)){
+        if(d.showedHedge && /^(是这条|就是这个|就是这|就这个|是这个|这个|就是它|就它|是它|它|对上了|对就是这个|对|是|对对|嗯|第一条|第1条|第二|第二条|第2条|第三|第三条|第3条)$/.test(text)){
           d.showedHedge = false;
           const pick = state.lastHits[0] && state.lastHits[0].it;
           if(pick) MapBridge.addPin({ placeId: pick.placeId, label: pick.place + ' · ' + pick.category, type:'lost', ref: pick.id });
-          say(claimLine());
           Store.memPush('认领候选' + (pick ? '：' + pick.id : ''), 3);
+          /* 回一句「是这条」就等于点了卡片上那颗按钮 —— 以前这里只报服务时间然后
+             endFlow()，认领核销那一步压根没进，玩家还得回头去点按钮。 */
+          if(pick){ endFlow(); startClaimFor(pick.id); return }
+          say(claimLine());
           endFlow(); return;
         }
         d.showedHedge = false;
@@ -1419,7 +1473,7 @@ function missingDims(d){
   return m;
 }
 function claimLine(){
-  return '来保卫处值班点领——' + Store.agent.service_hours.start + '到' + Store.agent.service_hours.end + '有人。卡类的得学号姓名都对上才给。';
+  return '点这张卡片底下的「认领这条」，我把东西取出来给你当面认。值班时间' + Store.agent.service_hours.start + '到' + Store.agent.service_hours.end + '，卡类的还得学号姓名都对上才给。';
 }
 function showHitCards(hits, note){
   state.lastHits = hits;
@@ -1446,7 +1500,12 @@ function evaluateSearch(d){
     showHitCards(hits, '比对下来，最像的是这一条——' + (d.category ? '' : '（没听出类别，已全网搜）'));
     say(claimLine());
     Store.memPush('寻找' + (d.category || '失物') + '：' + (d.desc || '').slice(0, 30), 3);
-    endFlow(); return;
+    /* ⚠️ 命中阈值这一支以前直接 endFlow()，于是"对上之后还是不能认领核销"：
+       老丁只说了一句"点卡片底下的「认领这条」"，玩家照着回一句「就是这个」，
+       流程已经断了 ⇒ 这句话落到路由里变成"没听明白"。留成 refine 并把这一轮
+       标成"已摆出候选"，回话的确认词就走下面 handle 里同一条认领路（和点按钮等效）。 */
+    d.showedHedge = true; f.stage = 'refine';
+    return;
   }
   // ② 类别已定且零命中：类别是硬筛选，库里压根没有这个类别的在库物品
   if(d.category && !hits.length){ confirmNone(d, '库里现在没登记着「' + d.category + '」这类的东西。'); return; }
@@ -1455,7 +1514,7 @@ function evaluateSearch(d){
     showHitCards(hits, '这几条有点像，但我不敢打包票——');
     d.showedHedge = true; f.stage = 'refine';
     const miss = missingDims(d).map(x => x.label).join('、');
-    say('有没有对上的？回「是这条」我带你走认领；都不是就回「都不是」，或者再补点' + (miss ? '——' + miss : '特征') + '，我再帮你查。');
+    say('有没有对上的？点卡片底下的「认领这条」，或者回一句「是这条」，我带你走认领；都不是就回「都不是」，再补点' + (miss ? '——' + miss : '特征') + '，我再帮你查。');
     return;
   }
   // ④ 信息不全：追问缺失的维度，同一个维度不重复问，不硬凑结果
@@ -1481,7 +1540,7 @@ async function runImageSearch(photo, d, preVision){
     const b = r.hits[0].it;
     MapBridge.addPin({ placeId: b.placeId, label: b.place + ' · ' + b.category, type:'lost', ref: b.id });
     MapBridge.setLayer('lost', r.hits.map(h => h.it.placeId).filter(Boolean));
-    say('看着像就来保卫处领。要是觉得不太对，再补两句文字描述，我再帮你查一遍。');
+    say('就是这条的话，点卡片底下的「认领这条」，我当场把东西取出来给你认。觉得不太对，再补两句文字描述，我重查一遍。');
   } else if(r.mode === 'image_empty'){
     // 库里没有匹配物品——如实告知，不编造
     if(r.summary) sys('Qwen 看图：' + r.summary);
@@ -1600,6 +1659,7 @@ function createRepair(d){
 /* ---------- 呼叫（全图唯一叫得动，总体设计 §12） ---------- */
 // to: 玩家当前位置 {x,y}。合体时由引擎/地图层传入；独立交付期未接入地图，用保卫处前台点兜底。
 function doCall(to){
+  if(window.parent !== window){ say('我就在你身边，有事直接说。'); return; }
   if(!inServiceHours()){ say(Store.agent.offduty_line); return; }      // 只在 08:00–22:00 应答
   if(state.summon === 'walking'){ say('已经在路上了，稍等。'); return; }
   state.summon = 'walking';
@@ -1785,15 +1845,29 @@ function parseQueryFromText(text){
   d.desc = text;
   return d;
 }
-async function onPhoto(file){
-  const dataURL = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file); });
+/* 压到长边 512 的 JPEG：识别和存档都吃这一份。抽成函数是因为地图面板那头也会直接递一张图进来。 */
+async function shrinkToB64(dataURL){
   const img = await new Promise(res => { const im = new Image(); im.onload = () => res(im); im.src = dataURL; });
   const k = Math.min(1, 512 / Math.max(img.width, img.height));
   const c = document.createElement('canvas'); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
   c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-  const b64 = c.toDataURL('image/jpeg', 0.85);
+  return c.toDataURL('image/jpeg', 0.85);
+}
+async function onPhoto(file){
+  const dataURL = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file); });
+  const b64 = await shrinkToB64(dataURL);
   state.idleCount = 0;
   showDraft(b64);
+}
+/* 地图面板直接递一张照片进来（可选带一句话当检索条件）。
+   ⚠️ 不走 showDraft()：那条要用户再点一次"发送"，而地图面板里没有草稿条也没有那个按钮。 */
+async function embedPhoto(dataURL, text){
+  if(!dataURL) return;
+  let b64 = dataURL;
+  try{ b64 = await shrinkToB64(dataURL) }catch(e){ /* 压不动就将就原图，识别那头自己会拒 */ }
+  state.idleCount = 0;
+  if(text) me(text);
+  await handlePhotoWithText(b64, text || '');
 }
 FLOWS.photo_route = {
   enter(){}, 
@@ -1815,9 +1889,6 @@ const API = {
     const r = await fetch(this.base + path, {
       method: opts.method || 'GET',
       headers: { 'Content-Type':'application/json', ...(this.token ? { Authorization:'Bearer ' + this.token } : {}) },
-      // ⭐ 二期 §3.1.3：宿主递的票是一张 HttpOnly cookie（`ld_t`），JS 读不到、
-      //    只能靠浏览器自己带 —— 不带这道 credentials，抽屉里就永远认不出票。
-      credentials: 'same-origin',
       body: opts.body ? JSON.stringify(opts.body) : undefined
     });
     const data = await r.json().catch(() => ({}));
@@ -1825,24 +1896,11 @@ const API = {
     return data;
   }
 };
-/* ⭐⭐ 二期 §3.1.3：被地图嵌在抽屉里时，「认不出票」和「用户退出」这两件事都**交回宿主**，
-   而不是把「这里不登录」那张告示杵在人脸上 —— 宿主收到 `need-ticket` 会静默补一张票再把
-   本页重载一次，收到 `exit` 会直接收起抽屉回大厅。独立跑（地址栏直开 :8000）没有宿主，
-   返回值就是 false，调用方各自落回原来的告示页 / reload。
-   ⚠️ `targetOrigin` 写死 `location.origin`：抽屉与本非同源，别家的页面嵌不走这条消息。 */
-function toHost(kind, reason){
-  try{
-    if(window.self === window.top) return false;
-    window.parent.postMessage({ type: 'pixelcampus:' + kind, from: 'ld', reason: reason || '' }, location.origin);
-    return true;
-  }catch(_e){ return false; }
-}
 function enterChat(auth){
   state.user = auth; API.token = auth.token;
-  localStorage.setItem(Store.key('auth'), JSON.stringify(auth));
   /* ⭐ 第四十五轮：会话到手 ⇒ **撤掉开机的纱幕**（这是正常路径；那 8 秒兜底只管"JS 炸了"）。 */
   try{ document.documentElement.classList.remove('ld-embed'); }catch(_e){}
-  $('#noauth-view').classList.add('hidden');
+  $('#login-view').classList.add('hidden');
   $('#chat-view').classList.remove('hidden');
   loadChat();
   renderAll(); updateStatus(); updateFlowHint();
@@ -1853,57 +1911,30 @@ function enterChat(auth){
   }
   // MAP: 玩家进入保卫处触发圈（地图层接入后由 on('enter') 驱动）
   MapBridge.on('enter', { placeId:'baoweichu' });
+  if(window.parent !== window) window.parent.postMessage({type:'campus.guard.ready'}, location.origin);
 }
-async function logout(){
-  /* 二期：票是宿主给的一张 cookie，只清本地那份存档会**马上被 cookie 顶回来** ——
-     必须让服务端把票作废、把 cookie 删掉，再 reload。 */
-  localStorage.removeItem(Store.key('auth'));
-  try{ await API.req('/api/logout', { method: 'POST' }); }catch(_e){}
-  /* ⭐ 被地图嵌着 ⇒ 交回宿主收抽屉（它同时摘掉 iframe，下次按 C 会重新过闸门补票，
-     所以"退出 → 再进来"是通的）。留在本页 reload 只会露出那张无票告示。 */
-  if(toHost('exit', 'logout')) return;
-  location.reload();
-}
-
 /* ============================================================
  * 启动
  * ============================================================ */
 (async function init(){
-  drawSprite($('#noauth-sprite'), 7);
   drawSprite($('#hd-sprite'), 2);
   await Store.init();
-  /* ⭐⭐ 二期 §3.1.3：**只认宿主那张票**。
-     主站 `/api/auth/exchange` 把老丁的票种成 HttpOnly cookie `ld_t`，本页 JS 读不到它，
-     所以问服务端本人（`/api/me` 现在 Bearer 与 cookie 两条都认）。
-     一期那个「地图往 localStorage 种裸 `ld_token`」的约定**整段删除** ——
-     它就是「登录一次、开别家还要再登」这个 bug 的根（票的存活期两边各管一半）。 */
+  // 仅认大厅下发的票；不恢复旧模块自己的账号会话。
   try{
-    enterChat(await API.req('/api/me'));
-    return;
-  }catch(e){
-    /* ⚠️ **只清 401**（票过期 / 服务端换过库）。网络没通时抛的不是 401 ——
-       这时候清存档等于把一段**还可能接得上**的会话毁了。 */
-    if(e && e.status === 401){ try{ localStorage.removeItem(Store.key('auth')); }catch(_e){} }
-  }
-  /* 独立跑（地址栏直开 :8000，没有宿主、也没有 cookie）才落到本模块自己的存档。 */
-  try{
-    const saved = JSON.parse(localStorage.getItem(Store.key('auth')) || 'null');
-    if(saved && saved.token){
-      API.token = saved.token;
-      enterChat({ ...saved, ...(await API.req('/api/me')) });
+    const shared = localStorage.getItem('ld_token');
+    if(shared){
+      API.token = shared;
+      const meInfo = await API.req('/api/me');   // `/api/me` 本来就是校验 Bearer token 的接口
+      enterChat({ token: shared, user_id: meInfo.user_id, nickname: localStorage.getItem('mpNickname') || meInfo.nickname });
       return;
     }
-  }catch(e){ localStorage.removeItem(Store.key('auth')); }
-  /* ⭐⭐ 走到这里 = **任何票都没有**。
-     被地图嵌着 ⇒ 先请宿主补一张票再把本页重载一次（§9.2 铁律 3）：这时候**纱幕继续挂着**，
-     人看到的是「正在进入…」而不是告示页；补不上宿主会自己把抽屉收掉。
-     独立跑（没有宿主）才把「这里不登录」那块提示如实露出来。
-     ⚠️ 上面那段开机脚本有一条 8 秒无条件摘纱幕的兜底：万一宿主根本没在听，
-        人最多多等 8 秒就能看到告示，不会被永久冻在「正在进入…」上。 */
-  if(toHost('need-ticket', 'no-ticket')) return;
+  }catch(e){
+    /* ⚠️ **只清 401**（票过期 / 服务端换过库）。网络没通时抛的不是 401 ——
+       这时候清票等于把一张**可能还有效**的票毁了，用户还得白登一次。 */
+    if(e && e.status === 401){ try{ localStorage.removeItem('ld_token'); }catch(_e){} }
+  }
+  try{ localStorage.removeItem(Store.key('auth')); }catch(_e){}
   try{ document.documentElement.classList.remove('ld-embed'); }catch(_e){}
-  // 只有真被嵌在抽屉里才提"按 Esc 退出"—— 独立跑这页没有抽屉可退。
-  try{ if(window.self !== window.top) $('#noauth-again').classList.remove('hidden'); }catch(_e){}
   updateStatus();
   setInterval(updateStatus, 15000);
   // 空闲自语（附录 F ③：最便宜的「活着」信号，模板填充不调 LLM，每天 ≤ dailyBudget 条）
@@ -1918,23 +1949,54 @@ async function logout(){
 
 /* ---------- 事件绑定 ---------- */
 $('#btn-send').onclick = onSend;
+/* 和地图面板（`mp/lobby.js` 的 #mpGuard）之间的通道，全部同源 + 只认父窗口：
+     ask    —— 面板里敲的一句话，等价于用户在自己的输入框按发送
+     action —— 面板上那四个快捷键，等价于用户点本页的 .qa 按钮
+     photo  —— 面板上传的一张照片，等价于用户点「图」再按发送
+     pick   —— 面板上卡片/选项按钮的一击，等价于用户点本页卡片底下的那颗按钮（回程）
+     replay —— 面板重新打开，把还走得通的那套处理界面再递一次（回程）
+   ⚠️ 状态机（FLOWS）、失物库/工单库（Store，浏览器 localStorage）全在这一侧，
+      面板只是遥控器：不要在面板那头另起一套业务逻辑。 */
+window.addEventListener('message', e => {
+  if(e.origin !== location.origin || e.source !== window.parent) return;
+  const type = e.data && e.data.type;
+  if(type === 'campus.guard.replay'){ replayUi(); return }
+  if(type !== 'campus.guard.ask' && type !== 'campus.guard.action' && type !== 'campus.guard.photo' && type !== 'campus.guard.pick') return;
+  if(!state.user) { window.parent.postMessage({type:'campus.guard.reply', text:'老丁还在准备，请稍后再试。', who:'guard'}, location.origin); return; }
+  if(type === 'campus.guard.action'){ runQuickAction(e.data.act); return }
+  if(type === 'campus.guard.photo'){ embedPhoto(String(e.data.image || ''), String(e.data.text || '').slice(0, 500)); return }
+  if(type === 'campus.guard.pick'){
+    const entryId = String(e.data.entryId || '');
+    if(e.data.act === 'claim'){ startClaimFor(entryId); return }
+    if(e.data.act === 'option'){
+      const value = String(e.data.value || '').slice(0, 200);
+      pickClaimOption({ entryId, stage: e.data.stage || null }, { label: String(e.data.label || value).slice(0, 200), value });
+      return;
+    }
+    return;
+  }
+  const text = String(e.data.text || '').trim().slice(0, 500);
+  if(!text) return;
+  $('#inp').value = text;
+  onSend();
+});
 $('#inp').addEventListener('keydown', e => { if(e.key === 'Enter') onSend(); });
 $('#btn-photo').onclick = () => $('#file-in').click();
 $('#file-in').addEventListener('change', e => { if(e.target.files[0]) onPhoto(e.target.files[0]); e.target.value = ''; });
 document.addEventListener('paste', e => { for(const it of (e.clipboardData ? e.clipboardData.items : [])){ if(it.type.startsWith('image/')){ onPhoto(it.getAsFile()); break; } } });
-document.querySelectorAll('.qa').forEach(b => {
-  b.onclick = () => {
-    state.idleCount = 0;
-    const act = b.dataset.act;
-    if(act === 'call') return doCall();
-    me(b.textContent);
-    if(state.flow) endFlow();
-    if(act === 'claim'){ startFlow('claim'); updateFlowHint(); return; }
-    startFlow(act);
-    updateFlowHint();
-  }
-});
-$('#btn-logout').onclick = logout;
+/* 快捷功能键：本页的 .qa 和地图面板的按钮共用这一个入口（`claim` 那条多一步提示刷新）。 */
+const QUICK_ACTS = ['lost_search', 'lost_intake', 'repair', 'claim'];
+function runQuickAction(act){
+  if(!QUICK_ACTS.includes(act)) return;
+  state.idleCount = 0;
+  const btn = document.querySelector('.qa[data-act="' + act + '"]');
+  me(btn ? btn.textContent : act);
+  if(state.flow) endFlow();
+  if(act === 'claim'){ startFlow('claim'); updateFlowHint(); return; }
+  startFlow(act);
+  updateFlowHint();
+}
+document.querySelectorAll('.qa').forEach(b => { b.onclick = () => runQuickAction(b.dataset.act) });
 $('#btn-reset').onclick = () => {
   if(!confirm('清空本地公共层数据（失物库 / 工单库）并重新播种？')) return;
   Store.reset(); location.reload();

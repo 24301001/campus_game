@@ -9,6 +9,7 @@
 node_modules/
 .venv/
 venv/
+.localdeps/
 
 # ---- 构建产物 ----
 target/
@@ -24,6 +25,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 *.log
+mp/runlogs/
 
 # ---- 运行时数据（数据库、上传件）----
 uploads/
@@ -32,9 +34,10 @@ uploads/
 *.sqlite3-wal
 *.db-shm
 *.db-wal
+mp/原地图*.png
+mp/mysql-dev/
+mp/mysql-pass
 .env
-# 二期换票的内部密钥：启动器第一次跑随机生成，只留在这台机器上
-/.mp_secret
 
 # ---- 本机专用 / 大件（不进仓库）----
 # Windows 版 MinGW 939MB：Linux 上装 build-essential 代替

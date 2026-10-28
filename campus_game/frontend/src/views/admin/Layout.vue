@@ -36,7 +36,7 @@
       <el-header>
         <div class="header-right">
           <span>{{ userStore.user?.nickname || userStore.user?.username }}</span>
-          <el-button type="danger" @click="handleLogout">退出</el-button>
+          <el-button @click="goLobby">返回校园</el-button>
         </div>
       </el-header>
       <el-main>
@@ -57,12 +57,8 @@ const router = useRouter()
 const route = useRoute()
 
 const activeMenu = computed(() => route.path)
+const goLobby = () => window.top.location.assign('/')
 
-const handleLogout = () => {
-  userStore.logout(true)
-  ElMessage.success('退出成功')
-  router.push('/home')
-}
 </script>
 
 <style scoped>

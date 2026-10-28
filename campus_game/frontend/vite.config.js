@@ -19,7 +19,9 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
+    // 3000 is the unified lobby gateway; the coding platform is proxied at /agent.
+    port: 3001,
+    strictPort: true,
     proxy: {
       /* ⚠️ 不能 rewrite 掉 /api：后端 server.servlet.context-path 就是 /api
          （nginx.conf 也是 /api/ → http://backend:8081/api/，保留前缀）。

@@ -24,9 +24,9 @@ import time
 import urllib.error
 import urllib.request
 
-from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -115,17 +115,10 @@ def issue_token(user_id: str) -> str:
     return token
 
 
-def auth(authorization: str, cookie_token: str = "") -> dict:
-    """认出这个人：**cookie 优先于 Bearer**。
-
-    抽屉里那张 `ld_t` 是主站每次登录现签的（§3.1.2：宿主给的票才是身份），而 Bearer
-    是页面自己的存档 —— 一期往里种过裸票，早晚会过期。反过来排会出两种事故：
-    人明明登着、却因为一张过期 Bearer 被判定"没登录"；或者同一台电脑换了账号，
-    页面还在拿上一个人的 Bearer 答话（验收 12 说的串号）。
-    """
-    token = cookie_token or (authorization[7:] if authorization and authorization.startswith("Bearer ") else "")
-    if not token:
+def auth(authorization: str) -> dict:
+    if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "未登录")
+    token = authorization[7:]
     with db() as conn:
         row = conn.execute(
             """SELECT u.user_id, u.nickname FROM tokens t
@@ -142,40 +135,6 @@ def auth(authorization: str, cookie_token: str = "") -> dict:
 class AuthBody(BaseModel):
     nickname: str
     password: str
-
-
-LD_COOKIE = "ld_t"
-
-
-def cookie_ticket(request: Request, name: str = LD_COOKIE) -> str:
-    """从 Cookie 头里挑出**路径最长**那张票。
-
-    浏览器同名不同路径的票会一起寄过来，并按「路径最长优先」排（RFC 6265 §5.4）：
-    8081 换票种的 `path=/ld` 在前，一期在 :8000 独立登录种的 `path=/` 旧票在后。
-    而 Starlette 的 `request.cookies` 是普通字典，同一个键后写的覆盖先写的 ——
-    直接 `cookies.get()` 拿到的正是那张**旧票**，于是「`/api/auth/exchange` 报了
-    `ld:ok`，`/api/me` 还是上一个人」。这里自己扫一遍，取第一条。
-    """
-    for item in request.headers.get("cookie", "").split(";"):
-        key, _, value = item.partition("=")
-        if key.strip() == name:
-            return value.strip()
-    return ""
-
-
-def with_ticket(payload: dict) -> JSONResponse:
-    """把老丁的票同时写进 **HttpOnly cookie**（二期 §3.1.2：抽屉里不再有自己的登录表单，
-    身份只认宿主给的票）。
-
-    · path=`/`：独立跑在 :8000（`/api/me`）和被地图挂在 `/ld`（`/ld/api/me`）两条路
-      都要能带上，限到 `/ld` 会让独立跑失效。
-    · 浏览器只按**请求路径**匹配，同名 cookie 按「路径最长优先」发送，所以将来
-      8081 的 `/api/auth/exchange` 用 `path=/ld` 再种一张时，抽屉里的请求会优先带那张。
-    """
-    response = JSONResponse(payload)
-    response.set_cookie(LD_COOKIE, payload["token"], max_age=TOKEN_TTL,
-                        httponly=True, samesite="lax", path="/")
-    return response
 
 
 @app.get("/api/health")
@@ -200,7 +159,7 @@ def register(body: AuthBody):
             )
     except sqlite3.IntegrityError:
         raise HTTPException(409, "昵称已被注册")
-    return with_ticket({"token": issue_token(user_id), "user_id": user_id, "nickname": nickname})
+    return {"token": issue_token(user_id), "user_id": user_id, "nickname": nickname}
 
 
 @app.post("/api/login")
@@ -214,81 +173,12 @@ def login(body: AuthBody):
     stored, salt = row["pw_hash"].split(":")
     if not secrets.compare_digest(stored, hash_pw(body.password, salt)):
         raise HTTPException(401, "昵称或密码不对")
-    return with_ticket({"token": issue_token(row["user_id"]), "user_id": row["user_id"], "nickname": body.nickname.strip()})
-
-
-@app.post("/api/logout")
-def logout(request: Request):
-    """退登：作废服务端这张票，并把浏览器 cookie 删掉。
-
-    ⚠️ 票同时存在两处（一期 localStorage `ld_token` / 二期 cookie），只清一边会
-    留下「页面说退出了、`/api/me` 还是上一个人」的串号口子。
-    ⚠️ 作废的必须是 `auth()` 当下认的那一张（cookie 优先），不然主站来收票时
-    删掉的是浏览器里那张无关的旧票 —— 真凶还在库里活着，而这个人已经退不干净了。
-    """
-    authorization = request.headers.get("Authorization", "")
-    token = cookie_ticket(request) or (authorization[7:] if authorization.startswith("Bearer ") else "")
-    if token:
-        with db() as conn:
-            conn.execute("DELETE FROM tokens WHERE token = ?", (token,))
-    response = JSONResponse({"ok": True})
-    response.delete_cookie(LD_COOKIE, path="/")
-    response.delete_cookie(LD_COOKIE, path="/ld")
-    return response
+    return {"token": issue_token(row["user_id"]), "user_id": row["user_id"], "nickname": body.nickname.strip()}
 
 
 @app.get("/api/me")
-def me(request: Request, authorization: str = Header(default="")):
-    return auth(authorization, cookie_ticket(request))
-
-
-class HostTicketBody(BaseModel):
-    nickname: str
-    campus_user_id: int
-
-
-def internal_guard(request: Request) -> None:
-    """服务间互信那道门闩（任务书 §3.1.3 第③步：8081 替玩家向各家换票）。
-
-    密钥只从环境变量 `CAMPUS_INTERNAL_SECRET` 读，**没设就当场 503** ——
-    宁可换不到票（地图上会挂「老丁没登进去」），也不能开一条不鉴权的发票通道。
-    """
-    secret = os.environ.get("CAMPUS_INTERNAL_SECRET", "")
-    if not secret:
-        raise HTTPException(503, "未配置 CAMPUS_INTERNAL_SECRET，内部换票通道没开")
-    # ⚠️ 两边都 .encode() 再比：compare_digest 收 str 时只认 ASCII，
-    #    有人拿中文当密钥会直接抛 TypeError 变成 500，而不是老老实实的 403。
-    if not secrets.compare_digest(request.headers.get("x-campus-internal", "").encode("utf-8"),
-                                  secret.encode("utf-8")):
-        raise HTTPException(403, "内部密钥不对")
-
-
-@app.post("/api/host-ticket")
-def host_ticket(body: HostTicketBody, request: Request):
-    """主站登录后替玩家领一张老丁认的票 —— 抽屉里已经没有登录表单了（§3.1.2）。
-
-    `pw_hash` 写的是 `"!host:" + 随机` ：形状上还是 `存储值:盐`，`login()` 那行
-    `split(":")` 不会炸，但 `hash_pw()` 怎么算都对不上，所以这个号在老丁这儿
-    **永远登录不进来**，只能由主站过完门闩才拿得到。
-    """
-    internal_guard(request)
-    nickname = body.nickname.strip()
-    if not nickname or len(nickname) > 16:
-        raise HTTPException(400, "昵称不合法（1~16 字符）")
-    with db() as conn:
-        row = conn.execute("SELECT user_id FROM users WHERE nickname = ?", (nickname,)).fetchone()
-        if row:
-            user_id = row["user_id"]
-        else:
-            # ⚠️ 别拿主站的 user_id 当本地主键：本地是按**昵称**找人的，同一个人改了昵称
-            #    再换票，就会拿同一个 host_<主站ID> 插第二次，撞 PRIMARY KEY 直接 500。
-            #    主站 ID 与本地 ID 的对应关系记在 8081 的 mp_ticket 表里，不在这儿。
-            user_id = "u_" + secrets.token_hex(4)
-            conn.execute(
-                "INSERT INTO users(user_id, nickname, pw_hash, created) VALUES(?,?,?,?)",
-                (user_id, nickname, "!host:" + secrets.token_hex(32), time.time()),
-            )
-    return with_ticket({"token": issue_token(user_id), "user_id": user_id, "nickname": nickname})
+def me(authorization: str = Header(default="")):
+    return auth(authorization)
 
 
 # ---------------- 视觉识别代理（qwen3.8-flash，阿里云百炼 OpenAI 兼容接口） ----------------

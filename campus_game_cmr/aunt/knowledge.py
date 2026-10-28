@@ -448,6 +448,19 @@ def answer(text, user_id, connection, context_zone_id=None):
     if context_zone_id in ZONES:
         zone_id = context_zone_id
         canteen = CANTEENS[ZONE_CONTEXT[zone_id]["canteenId"]]
+    # [QODER-FIX #24] 甜品/蛋糕问题不再一句“没有资料”拒答：
+    # 按示意图（P5）上能看到的陈列品类回答，并说明没有品种/售价记录。
+    # 只在没指定食堂、或指定学活一楼/甜品窗口时接管；问其他食堂的蛋糕仍走通用流程。
+    if (any(word in text for word in ("蛋糕", "甜品", "烘焙", "面包", "三明治"))
+            and zone_id in (None, "xh-1-dessert")
+            and (canteen is None or canteen["id"] == "xuehuo")):
+        dessert = ZONES.get("xh-1-dessert")
+        if dessert is not None:
+            names = "、".join(dish["name"] for dish in dessert.get("dishes", []))
+            return _result(
+                "学活一楼的“甜品文创”窗口，示意图上能看到" + (names or "烘焙类陈列") +
+                "；但图上没有标具体品种、是否在售和价格，我不能替它报价。想吃哪一类，可以到窗口确认当天菜单。",
+                ["P5"], emotion="thinking")
     dishes = matched_dishes(text, canteen)
     question = any(word in text for word in ("？", "?", "吗", "多少", "什么", "哪个", "哪家", "有没有", "几点", "在哪", "怎么样", "推荐不"))
     if "推荐" in text and "我推荐" not in text and "不推荐" not in text:

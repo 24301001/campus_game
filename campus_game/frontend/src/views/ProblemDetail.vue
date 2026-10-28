@@ -13,10 +13,10 @@
             <template v-if="userStore.user">
               <el-button @click="$router.push('/profile')">个人中心</el-button>
               <el-button v-if="userStore.user.role === 'ADMIN'" @click="$router.push('/admin/dashboard')">管理后台</el-button>
-              <el-button type="danger" @click="handleLogout">退出</el-button>
+              <el-button @click="goLobby">返回校园</el-button>
             </template>
             <template v-else>
-              <el-button type="primary" @click="$router.push('/login')">登录</el-button>
+              <el-button type="primary" @click="goLobby">返回校园登录</el-button>
             </template>
           </div>
         </div>
@@ -221,7 +221,6 @@ import * as agentWatcher from '@/utils/agentWatcher'
 import { setupPixelTheme } from '@/utils/monacoTheme'
 import { renderMarkdown, handleMarkdownClick } from '@/utils/markdown'
 import { getProblemDetail } from '@/api/problem'
-import { loginHint } from '@/utils/hostAuth'
 import { compileAndJudge, getJudgeLanguages } from '@/api/judge'
 import { solveProblem } from '@/api/agent'
 import { recordView, likeComment } from '@/api/profile'
@@ -441,7 +440,7 @@ const runCode = async () => {
   } catch (e) {
     /* 不能空吞：请求失败（比如代码为空返回 400）时把原因显示在结果区，
        否则界面上毫无反应，用户只会以为"判题坏了"。 */
-    judgeResult.value = { status: 'ERROR', message: (e && e.message) || '判题这边没接上，看启动器有没有把它带起来' }
+    judgeResult.value = { status: 'ERROR', message: (e && e.message) || '判题请求失败，检查后端是否在运行' }
   } finally {
     judging.value = false
   }
@@ -467,7 +466,7 @@ const submitCode = async () => {
       window.dispatchEvent(new CustomEvent('problemCompleted'))
     }
   } catch (e) {
-    judgeResult.value = { status: 'ERROR', message: (e && e.message) || '判题这边没接上，看启动器有没有把它带起来' }
+    judgeResult.value = { status: 'ERROR', message: (e && e.message) || '判题请求失败，检查后端是否在运行' }
   } finally {
     judging.value = false
   }
@@ -506,15 +505,11 @@ const getAlertType = (status) => {
   return map[status] || 'info'
 }
 
-const handleLogout = () => {
-  userStore.logout(true)
-  ElMessage.success('退出成功')
-  router.push('/home')
-}
+const goLobby = () => window.top.location.assign('/')
 
 const handleLike = () => {
   if (!userStore.user) {
-    ElMessage.warning(loginHint())
+    ElMessage.warning('请先登录')
     return
   }
   liked.value = !liked.value
@@ -524,7 +519,7 @@ const handleLike = () => {
 
 const handleCollect = async () => {
   if (!userStore.user) {
-    ElMessage.warning(loginHint())
+    ElMessage.warning('请先登录')
     return
   }
   
@@ -545,7 +540,7 @@ const handleCollect = async () => {
 
 const submitComment = async () => {
   if (!userStore.user) {
-    ElMessage.warning(loginHint())
+    ElMessage.warning('请先登录')
     return
   }
   if (!commentContent.value.trim()) {
@@ -579,7 +574,7 @@ const submitComment = async () => {
 
 const handleCommentLike = async (comment) => {
   if (!userStore.user) {
-    ElMessage.warning(loginHint())
+    ElMessage.warning('请先登录')
     return
   }
   

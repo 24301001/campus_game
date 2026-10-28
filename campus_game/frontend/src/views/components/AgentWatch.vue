@@ -728,9 +728,7 @@ async function send(text) {
       userStore.fetchUserInfo().catch(() => {})
     }
   } catch (e) {
-    // 同上：配置项名进控制台，不进气泡
-    console.warn('[算法哥] 这一句没接上：查后端服务与 agent.llm.api-key', e)
-    push('assistant', '这句话我没接上。可能是服务没起来，也可能是我还没配上网上的钥匙 —— 稍等一下再问一遍。')
+    push('assistant', '我这边出了点问题，检查一下后端服务或者 `agent.llm.api-key`。')
   } finally {
     sending.value = false
     await nextTick()

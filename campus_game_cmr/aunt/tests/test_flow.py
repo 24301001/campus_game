@@ -101,6 +101,10 @@ class AuntFlowTest(unittest.TestCase):
         self.assertIn("没有可靠资料", unknown)
         queue = self.client.post("/api/chat", json={"message": "学四风味餐厅排队吗？"}).json()["reply"]
         self.assertIn("没有可核实的排队反馈", queue)
+        cake = self.client.post("/api/chat", json={"message": "学活一楼甜品店有蛋糕吗？"}).json()
+        self.assertIn("甜品文创", cake["reply"])
+        self.assertIn("现有资料没有蛋糕", cake["reply"])
+        self.assertIn("P5", [source["id"] for source in cake["evidence"]])
 
     def test_sourced_window_offer_is_historical(self):
         self.register("档口测试")

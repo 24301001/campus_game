@@ -105,7 +105,7 @@ const GUARD = (function () {
     name: "保安 · 老丁",
     x: s0.x, y: s0.y, dir: "down", step: IDLE_BASE, walk: 0, idle: 0,
     spot: 0, path: null, wi: 0, pauseT: 1.2, stuck: 0,
-    near: false, open: false
+    near: false, open: false, summoned: false, summonRepath: 0
   };
 })();
 
@@ -129,7 +129,7 @@ function guardFace() {
 function guardWalkToward(tx, ty, dt) {
   const dx = tx - GUARD.x, dy = ty - GUARD.y, d = Math.hypot(dx, dy);
   if (d < 0.6) return false;
-  const ux = dx / d, uy = dy / d, s = (player.speed || 150) * 0.5 * dt;
+  const ux = dx / d, uy = dy / d, s = (player.speed || 150) * (GUARD.summoned ? 2.4 : 0.5) * dt;
   const nx = GUARD.x + ux * s, ny = GUARD.y + uy * s;
   let moved = 0;
   if (guardWalkable(nx, GUARD.y)) { moved += Math.abs(nx - GUARD.x); GUARD.x = nx; }
@@ -181,6 +181,25 @@ function guardTick(dt) {
   GUARD.open = (typeof CENTER !== "undefined") && !!CENTER.plat;
   const dP = Math.hypot(player.x - GUARD.x, player.y - GUARD.y);
   GUARD.near = !GUARD.open && dP <= GUARD_TALK_R;
+
+  if (GUARD.summoned && !CENTER.active) {
+    if (dP <= 54) {
+      GUARD.summoned = false; GUARD.path = null; guardStand(dt); guardFace();
+      if (window.MP && MP.guardArrived) MP.guardArrived();
+    } else {
+      GUARD.summonRepath -= dt;
+      if (GUARD.summonRepath <= 0 || !GUARD.path) {
+        GUARD.summonRepath = 0.75;
+        try { GUARD.path = guidePath(GUARD.x, GUARD.y, player.x, player.y); } catch (e) { GUARD.path = null; }
+        GUARD.wi = 0;
+      }
+      if (GUARD.path && GUARD.path.length) guardFollow(dt);
+      else guardStand(dt);
+    }
+    GUARD.near = dP <= GUARD_TALK_R;
+    guardTipPaint();
+    return;
+  }
 
   if (GUARD.open) { guardStand(dt); guardTipPaint(); return; }
 
@@ -250,6 +269,10 @@ function guardOpen() {
   if (ctrF) ctrF.setAttribute("title", "保卫处 · 老丁");
 }
 function guardTalk() {
+  if (window.MP && MP.openGuardTalk) {
+    if (!GUARD.near) { guardToast("走近老丁再按 C。"); return; }
+    MP.openGuardTalk(); return;
+  }
   if (typeof CENTER !== "undefined" && (CENTER.plat || CENTER.waiting)) return;
   /* ⚠️ 第四十五轮补的连按两次 C 并发保护（与 `auntTalk` 的 `AUNT.talking` 同款）：
      闸门进了 `ctrOpenPlatform` 之后，`CENTER.plat` 要等 `ctrProbe` / `ldEnsure` 回来

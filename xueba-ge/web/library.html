@@ -66,10 +66,11 @@ a.dl{text-decoration:none;display:inline-block}
 </div>
 <script>
 (async () => {
-  // ⭐ 二期 §3.1.3：这一页本来就**公开**（无鉴权），不用再拿 localStorage 的票当门闩。
-  //    认票的事交给聊天首页 —— 没票就把它领回 `/xbg/`，那里会如实说「回主站登录」。
-  const res = await fetch("/xbg/api/library");
-  if (res.status === 401) { location.replace("/xbg/"); return; }
+  const tok = localStorage.getItem("xbg_token");
+  if (!tok) { location.replace("/xbg/"); return; }
+  const H = { headers: { Authorization: "Bearer " + tok } };
+  const res = await fetch("/xbg/api/library", H);
+  if (res.status === 401) { localStorage.removeItem("xbg_token"); location.replace("/xbg/"); return; }
   const data = await res.json();
   let health = {};
   try { health = await (await fetch("/xbg/api/health")).json(); } catch (e) {}
