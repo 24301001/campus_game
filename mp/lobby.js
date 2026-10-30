@@ -17,7 +17,7 @@
       <div id="mpBoardError" class="mp-error" role="alert" style="padding:0 10px"></div>
     </section>
     <section id="mpChat" class="mp-panel" hidden aria-label="私聊">
-      <div class="mp-head"><span id="mpChatAvatar"></span><span id="mpChatTitle"></span><button class="mp-icon" id="mpChatClose" aria-label="关闭私聊">×</button></div>
+      <div class="mp-head"><span id="mpChatAvatar"></span><span id="mpChatTitle"></span><button type="button" id="mpChatHistory" class="mp-chat-history" title="查看与这位玩家的聊天记录">聊天记录</button><button class="mp-icon" id="mpChatClose" aria-label="关闭私聊">×</button></div>
       <div id="mpChatLog"></div>
       <form id="mpChatForm"><textarea id="mpChatInput" class="mp-field" maxlength="500" rows="1" placeholder="输入消息，Enter 发送" aria-label="私聊消息"></textarea><button class="mp-primary">发送</button></form>
       <div id="mpChatError" class="mp-error" role="alert" style="padding:0 10px"></div>
@@ -71,9 +71,11 @@
   function soloUi(msg='单机游览中，可进入食堂与 NPC 功能'){hideAuth();$('mpSoloCanteen').hidden=false;$('mpSoloExit').hidden=false;status(msg,true)}
   function currentScene(){return typeof CENTER!=='undefined'&&CENTER.active&&CENTER.room?CENTER.room.key:'out'}
   function myPos(){return scene==='out'?{x:player.x,y:player.y,dir:player.dir}:{x:CENTER.x,y:CENTER.y,dir:CENTER.dir}}
-  function avatarEl(recipe,id,online=true,interactive=true){const c=L.avatar(recipe);c.className='mp-avatar'+(interactive?'':' mp-avatar-static');if(interactive){c.title='查看头像菜单';c.dataset.user=id;c.setAttribute('role','button');c.setAttribute('tabindex','0')}c.style.opacity=online?1:.65;return c}
-  function iconTo(parent,recipe,id,online=true){parent.replaceChildren(avatarEl(recipe,id,online))}
+  function avatarEl(recipe,id,online=true,interactive=true,title='查看头像菜单'){const c=L.avatar(recipe);c.className='mp-avatar'+(interactive?'':' mp-avatar-static');if(interactive){c.title=title;c.dataset.user=id;c.setAttribute('role','button');c.setAttribute('tabindex','0');c.setAttribute('aria-label',title)}c.style.opacity=online?1:.65;return c}
+  function iconTo(parent,recipe,id,online=true){parent.replaceChildren(avatarEl(recipe,id,online,true,'查看个人主页'))}
   function timeText(iso){if(!iso)return '';const d=new Date(iso),sec=Math.max(0,(Date.now()-d.getTime())/1000);return sec<60?'刚刚':sec<3600?Math.floor(sec/60)+' 分钟前':d.toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}
+  function chatTime(iso){const d=new Date(iso);return Number.isNaN(d.getTime())?'':d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false})}
+  function chatDay(iso){const d=new Date(iso);if(Number.isNaN(d.getTime()))return '';const today=new Date(),yesterday=new Date(today);yesterday.setDate(today.getDate()-1);const key=x=>x.getFullYear()+'-'+x.getMonth()+'-'+x.getDate();return key(d)===key(today)?'今天':key(d)===key(yesterday)?'昨天':d.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'})}
   function setAuthMode(mode){authMode=mode;$('mpAuthSubmit').textContent=mode==='register'?'注册并进入':'登录并进入';$('mpAuthPhotoLine').hidden=mode!=='register';$('mpAuthPhoto').required=false;$('mpLoginTab').style.borderColor=mode==='login'?'#ffd76e':'';$('mpRegisterTab').style.borderColor=mode==='register'?'#ffd76e':'';$('mpAuthError').textContent=''}
   /* [QODER-FIX #1] 退出登录后给一张干净的登录页：除了 reset()，再显式清空账号密码，
      防止浏览器自动填充把上一位用户的昵称/密码又填回来。 */
@@ -187,8 +189,8 @@
   function openBoard(){if(!MP.connected)return;$('mpBoard').hidden=false;unread=0;updateUnread();socketSend({type:'announce.list',limit:50});$('mpBoardInput').focus()}
   function chatProfile(id){return profiles.get(id)||{id,nickname:'玩家 '+id,look:L.fallback,online:false}}
   function renderChatTitle(){if(!chatWith)return;const p=chatProfile(chatWith);iconTo($('mpChatAvatar'),p.look,chatWith,p.online);$('mpChatTitle').replaceChildren();const b=document.createElement('b');b.textContent=p.nickname;const small=document.createElement('div');small.className='mp-muted';small.textContent=p.online?(peers.has(chatWith)?'同场景在线':'在线 · 已离开当前场景'):'离线 · 上线后可收到消息';$('mpChatTitle').append(b,small)}
-  function renderChat(){if(!chatWith)return;renderChatTitle();const log=$('mpChatLog');log.replaceChildren();const data=chatCache.get(chatWith)||[];if(!data.length){log.innerHTML='<div class="mp-empty">还没有消息，先打个招呼吧。</div>';return}
-    for(const m of data){const mine=m.from===me.id,p=mine?me:chatProfile(chatWith),wrap=document.createElement('div'),side=document.createElement('div'),bubble=document.createElement('div'),small=document.createElement('small');wrap.className='mp-message'+(mine?' mine':'');bubble.className='mp-bubble';bubble.textContent=m.content;small.textContent=p.nickname+' · '+timeText(m.at);side.append(small,bubble);wrap.append(avatarEl(p.look,p.id,p.online),side);log.append(wrap)}log.scrollTop=log.scrollHeight;
+  function renderChat(){if(!chatWith)return;renderChatTitle();const log=$('mpChatLog'),stick=log.scrollHeight-log.scrollTop-log.clientHeight<48,previousScroll=log.scrollTop;log.replaceChildren();const data=chatCache.get(chatWith)||[];if(!data.length){log.innerHTML='<div class="mp-empty">还没有消息，向对方打个招呼吧。</div>';return}
+    let lastDay='',lastTime=0;for(const m of data){const at=new Date(m.at).getTime(),day=chatDay(m.at);if(day!==lastDay||at-lastTime>5*60*1000){const sep=document.createElement('div');sep.className='mp-chat-separator';sep.textContent=day+' '+chatTime(m.at);log.append(sep)}lastDay=day;lastTime=at;const mine=Number(m.from)===Number(me.id),p=mine?me:chatProfile(chatWith),wrap=document.createElement('div'),side=document.createElement('div'),bubble=document.createElement('div'),small=document.createElement('small');wrap.className='mp-message'+(mine?' mine':'');bubble.className='mp-bubble';bubble.textContent=m.content;small.textContent=chatTime(m.at);side.className='mp-message-content';side.append(bubble,small);wrap.append(avatarEl(p.look,p.id,p.online,true,'查看个人主页'),side);log.append(wrap)}if(stick)log.scrollTop=log.scrollHeight;else log.scrollTop=previousScroll;
   }
   function openChat(id){if(!MP.connected||id===me.id)return;chatWith=Number(id);$('mpBoard').hidden=true;$('mpNearby').hidden=true;$('mpChat').hidden=false;$('mpChatError').textContent='';renderChat();socketSend({type:'chat.history',withUser:chatWith,limit:30});$('mpChatInput').focus();for(const k in keys)keys[k]=0;for(const k in CKEYS)CKEYS[k]=0}
   async function ensureProfile(id){const p=await api('/profile/'+id);profiles.set(id,p);return p}
@@ -198,7 +200,7 @@
   async function colleges(){if(collegeList)return collegeList;try{collegeList=(await api('/colleges')).colleges||[]}catch{collegeList=[]}return collegeList}
   function fillColleges(sel,current){colleges().then(list=>{sel.replaceChildren();const blank=document.createElement('option');blank.value='';blank.textContent='（未选择）';sel.append(blank);for(const name of list){const o=document.createElement('option');o.value=name;o.textContent=name;sel.append(o)}if(current&&!list.includes(current)){const old=document.createElement('option');old.value=current;old.textContent=current+'（原来填的，请重新选择）';sel.append(old)}sel.value=current})}
   function closeProfile(){profileUser=null;$('mpProfileShade').hidden=true}
-  function showProfile(id){$('mpMenu').hidden=true;$('mpNearby').hidden=true;profileUser=id;const mine=id===me.id;$('mpProfile').classList.toggle('mp-other-profile',!mine);$('mpProfileShade').hidden=false;$('mpProfileTitle').textContent=mine?'个人中心':'个人主页';const body=$('mpProfileBody');body.replaceChildren();
+  function showProfile(id,historyPeer=0){id=Number(id);$('mpMenu').hidden=true;$('mpNearby').hidden=true;profileUser=id;const mine=id===me.id;$('mpProfile').classList.toggle('mp-other-profile',!mine);$('mpProfileShade').hidden=false;$('mpProfileTitle').textContent=mine?'个人中心':'个人主页';const body=$('mpProfileBody');body.replaceChildren();
     ensureProfile(id).then(p=>{if($('mpProfileShade').hidden||profileUser!==id||!me)return;body.replaceChildren();const top=document.createElement('div');top.className='mp-profile-top';top.append(avatarEl(p.look,id,p.online,false));const details=document.createElement('div');const name=document.createElement('strong');name.textContent=p.nickname;const line=document.createElement('div');line.className='mp-muted';line.textContent=mine?'昵称不可修改 · ID '+id:(p.online?'● 在线 · ID '+id:'○ 离线 · ID '+id+' · '+(p.lastSeen?timeText(p.lastSeen):'暂无记录'));details.append(name,line);top.append(details);body.append(top);
       /* [QODER-FIX #16] 别人的主页按公开/隐藏设置显示：后端已把隐藏项清空，
          这里再按 visibility 兜一层（防止接口变化时把隐藏资料又渲染出来）。 */
@@ -236,14 +238,16 @@
           const conversations=data.conversations&&data.conversations.length?data.conversations:groupByPeer(data.private||[]);
           const ch=document.createElement('h4');ch.textContent='我的私聊 · 按对话对象（'+conversations.length+' 位）';chats.append(ch);
           if(!conversations.length){const empty=document.createElement('p');empty.className='mp-muted';empty.textContent='还没有私聊记录';chats.append(empty)}
-          for(const c of conversations){const group=document.createElement('details'),sum=document.createElement('summary');
+          for(const c of conversations){const group=document.createElement('details'),sum=document.createElement('summary');group.dataset.peer=String(c.peer);
             sum.textContent=(c.nickname||'玩家 '+c.peer)+' · ID '+c.peer+' · '+c.items.length+' 条';group.append(sum);
+            const jump=document.createElement('button');jump.type='button';jump.className='mp-secondary mp-his-jump';jump.textContent='打开与 TA 的聊天 →';jump.onclick=()=>{closeProfile();openChat(c.peer)};group.append(jump);
             const list=document.createElement('div');list.className='mp-his-list';let shown=0;
             const more=()=>{const batch=c.items.slice(shown,shown+30);for(const m of batch){const row=document.createElement('p'),who=document.createElement('span');who.className='mp-his-who';who.textContent=(m.mine===false?c.nickname:'我说')+' · '+timeText(m.at);row.append(who,document.createTextNode(m.content));list.append(row)}shown+=batch.length;
               if(shown<c.items.length){const btn=document.createElement('button');btn.type='button';btn.className='mp-secondary mp-his-more';btn.textContent='再看 30 条（还有 '+(c.items.length-shown)+' 条）';btn.onclick=()=>{btn.remove();more()};list.append(btn)}else if(c.items.length>30){const end=document.createElement('div');end.className='mp-muted';end.textContent='到这里为止，共 '+c.items.length+' 条';list.append(end)}};
             more();group.append(list);chats.append(group)}
           mkTab('📌 公告 · '+data.announcements.length,board);mkTab('💬 私聊 · '+conversations.length,chats);
-          box.append(tabs,board,chats)}catch(err){box.textContent=err.message}});
+          box.append(tabs,board,chats);if(historyPeer){tabs.lastElementChild.click();const target=[...chats.querySelectorAll('details')].find(group=>Number(group.dataset.peer)===Number(historyPeer));if(target){target.open=true;target.scrollIntoView({block:'nearest'})}else{const empty=document.createElement('p');empty.className='mp-muted';empty.textContent='还没有与这位玩家的聊天记录';chats.append(empty)}}}catch(err){box.textContent=err.message}});
+      if(historyPeer)history.open=true;
       function syncFields(){for(const k of ['hairStyle','eye','eyeColor','acc','hairColor','cloth','clothPattern','clothAlt','skin','pants','accColor'])form.elements[k].value=draft[k];preview()}
       function preview(){const box=$('mpLookPreview');box.replaceChildren();for(const d of ['down','left','right','up']){const c=L.sprite(draft,d,4).cloneNode();c.getContext('2d').drawImage(L.sprite(draft,d,4),0,0);box.append(c)}}
       syncFields();for(const k of ['hairStyle','eye','eyeColor','acc','hairColor','cloth','clothPattern','clothAlt','skin','pants','accColor']){const apply=()=>{draft[k]=form.elements[k].value;preview()};form.elements[k].addEventListener('input',apply);form.elements[k].addEventListener('change',apply)}
@@ -406,7 +410,7 @@
     const id=clientId();if(!socketSend({type:'announce.post',content,clientMsgId:id})){error.textContent='当前未连接，公告没有发送';return}
     boardSending=id;button.disabled=true;error.textContent='正在发送…';
     clearTimeout(boardTimer);boardTimer=setTimeout(()=>{if(boardSending!==id)return;boardSending='';button.disabled=false;error.textContent='发送超时：联机通道没有确认，请检查网络后重试'},8000)};
-  $('mpChatClose').onclick=closeChat;$('mpChatForm').onsubmit=e=>{e.preventDefault();const input=$('mpChatInput'),content=input.value.trim();if(!content||!chatWith)return;const clientMsgId=clientId();pending.set(clientMsgId,{from:me.id,to:chatWith,content,fromNickname:me.nickname,look,clientMsgId});if(socketSend({type:'chat.send',to:chatWith,content,clientMsgId})){input.value='';$('mpChatError').textContent='';input.focus()}else pending.delete(clientMsgId)};
+  $('mpChatClose').onclick=closeChat;$('mpChatHistory').onclick=()=>{if(chatWith)showProfile(me.id,chatWith)};$('mpChatForm').onsubmit=e=>{e.preventDefault();const input=$('mpChatInput'),content=input.value.trim();if(!content||!chatWith)return;const clientMsgId=clientId();pending.set(clientMsgId,{from:me.id,to:chatWith,content,fromNickname:me.nickname,look,clientMsgId});if(socketSend({type:'chat.send',to:chatWith,content,clientMsgId})){input.value='';$('mpChatError').textContent='';input.focus()}else pending.delete(clientMsgId)};
   $('mpChatInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();$('mpChatForm').requestSubmit()}};
   $('mpProfileClose').onclick=closeProfile;$('mpProfileShade').onclick=e=>{if(e.target===$('mpProfileShade'))closeProfile()};
   /* [QODER-FIX #5/#8] 双选菜单的两个入口：发起对话 / 查看个人主页 */
@@ -424,8 +428,8 @@
   window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==$('mpGuardBridge').contentWindow)return;if(e.data?.type==='campus.guard.ready'){guardReady=true;guardConnectingDone();return}if($('mpGuard').hidden)return;if(e.data?.type==='campus.guard.reply')guardLine(e.data.who==='sys'?'sys':'guard',String(e.data.text||''));else if(e.data?.type==='campus.guard.ui')guardUi(e.data.ui)});
   /* [QODER-FIX #8] menuAt：pointerup 打开双选菜单后，浏览器还会补发一次 click，
      旧逻辑会立刻把菜单关掉。250ms 内的点击不算“点空白处关闭”。 */
-  root.addEventListener('click',e=>{const av=e.target.closest('.mp-avatar');if(av&&av.dataset.user){showMenu(av.dataset.user,av);e.stopPropagation()}else if(!$('mpMenu').hidden&&!e.target.closest('#mpMenu')&&performance.now()-menuAt>250)$('mpMenu').hidden=true});
-  root.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('mp-avatar')){showMenu(e.target.dataset.user,e.target);e.stopPropagation()}});
+  root.addEventListener('click',e=>{const av=e.target.closest('.mp-avatar');if(av&&av.dataset.user){if(av.closest('#mpChat'))showProfile(av.dataset.user);else showMenu(av.dataset.user,av);e.stopPropagation()}else if(!$('mpMenu').hidden&&!e.target.closest('#mpMenu')&&performance.now()-menuAt>250)$('mpMenu').hidden=true});
+  root.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('mp-avatar')){e.preventDefault();if(e.target.closest('#mpChat'))showProfile(e.target.dataset.user);else showMenu(e.target.dataset.user,e.target);e.stopPropagation()}});
   /* ⚠️ 大厅内部的按键**不能**在 window 捕获阶段 stopImmediatePropagation：
      捕获比输入框自己的 keydown 先跑，一挡就等于把 mpRoot 里所有内部处理器废掉 ——
      标签框那句 preventDefault 跑不到，回车就落到浏览器的"表单默认提交"上，

@@ -176,3 +176,35 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpBoard{top:101px}
 #huduser{display:none}
 @media(max-width:650px){#mpRoot #mpBoard,#mpRoot #mpChat{right:8px;width:min(350px,calc(100vw - 16px))}#mpRoot #mpSelf{top:12px;left:8px}#mpRoot #mpSprite{top:82px;left:8px}#mpRoot #mpSpriteMenu{top:128px;left:8px}#mpRoot #mpBoardToggle{right:8px;top:12px}#mpRoot #mpSoloCanteen{bottom:58px;left:8px}#mpRoot #mpSoloExit{bottom:14px;left:8px}#mpRoot #mpGuard{right:8px;bottom:8px;max-height:calc(100vh - 24px)}#mpRoot #mpGuardLog{min-height:150px}}
 @media(prefers-reduced-motion:reduce){#mpRoot *,#mpRoot *::before,#mpRoot *::after{animation:none!important;transition:none!important}}
+
+/* 私聊：保留校园的像素头像，用清爽的白色会话界面呈现消息。 */
+#mpRoot #mpChat{width:min(420px,calc(100vw - 32px));background:#fff;color:#202832;border:0;border-radius:12px;overflow:hidden;box-shadow:0 12px 36px rgba(9,18,27,.26)}
+#mpRoot #mpChat .mp-head{min-height:65px;padding:10px 14px;background:#fff;border-bottom:1px solid #e8edf0;gap:10px}
+#mpRoot #mpChatTitle{line-height:1.35}
+#mpRoot #mpChatTitle b{font-size:15px;color:#1f2a32}
+#mpRoot #mpChatTitle .mp-muted{font-size:11px;color:#52636e}
+#mpRoot #mpChat .mp-icon{color:#64747d}
+#mpRoot #mpChat .mp-icon:hover{color:#1c2b34}
+#mpRoot #mpChat .mp-avatar{width:34px;height:34px;background:#e8f1ed;outline:0;border-radius:7px}
+#mpRoot #mpChat .mp-avatar:hover{outline:2px solid #58a985}
+#mpRoot #mpChat #mpChatAvatar .mp-avatar{width:39px;height:39px}
+#mpRoot .mp-chat-history{flex:none;background:transparent;border:0;color:#326f5a;font-size:12px;font-weight:700;padding:6px 4px}
+#mpRoot .mp-chat-history:hover{text-decoration:underline}
+#mpRoot #mpChatLog{background:#fff;padding:16px 15px;scrollbar-color:#cad6d1 transparent}
+#mpRoot #mpChatLog .mp-empty{color:#63756d;padding:36px 12px}
+#mpRoot .mp-chat-separator{text-align:center;color:#6d7d78;font-size:11px;margin:11px 0 19px;font-variant-numeric:tabular-nums}
+#mpRoot .mp-message{align-items:flex-start;gap:9px;margin:0 0 16px}
+#mpRoot .mp-message-content{max-width:min(76%,290px);min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+#mpRoot .mp-message.mine .mp-message-content{align-items:flex-end}
+#mpRoot .mp-bubble{max-width:100%;padding:9px 12px;border:1px solid #e1e8e5;border-radius:3px 12px 12px 12px;background:#fff;color:#26333b;line-height:1.55;font-size:13px;box-shadow:0 1px 2px rgba(20,45,35,.05)}
+#mpRoot .mp-message.mine .mp-bubble{border-color:#b6e0c6;background:#d9f4df;border-radius:12px 3px 12px 12px;color:#213d2c}
+#mpRoot .mp-message small{color:#63736d;font-size:10px;margin-top:4px;font-variant-numeric:tabular-nums}
+#mpRoot #mpChatForm{padding:11px 12px;background:#fff;border-top:1px solid #e8edf0;align-items:flex-end}
+#mpRoot #mpChatInput{background:#f5f7f6;border:1px solid #dce5df;color:#25312b;min-height:40px;border-radius:8px}
+#mpRoot #mpChatInput::placeholder{color:#65776e}
+#mpRoot #mpChatForm .mp-primary{min-height:40px;border:0;border-radius:8px;background:#248254;color:#fff;padding:8px 16px}
+#mpRoot #mpChatForm .mp-primary:hover{background:#176a43}
+#mpRoot #mpChatError{background:#fff;color:#a42c36}
+
+#mpRoot .mp-his-jump{display:block;margin:8px 0 10px 6px;font-size:12px}
+@media(max-width:650px){#mpRoot #mpChat{right:8px;top:70px;bottom:8px;width:calc(100vw - 16px);max-height:none}#mpRoot #mpChat .mp-head{gap:7px}#mpRoot .mp-chat-history{font-size:11px}}
