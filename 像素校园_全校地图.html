@@ -4651,10 +4651,11 @@ const GAIT = [
   { m: 0, fl: 0, spread: 0, bob: 0, sw: 0 },   // 4 待机：呼气
   { m: 0, fl: 0, spread: 0, bob: 1, sw: 0 }    // 5 待机：吸气（上身抬 1px）
 ];
-/* 一个完整步态周期走过的世界像素。1× 档速度 200 px/s → 200/160 = 1.25 周期/秒
-   = 2.5 步/秒（真人 1.8~2.0，游戏里略快是合适的）。3× 档世界速度减半，步频跟着慢下来。
+/* 一个完整步态周期走过的屏幕像素。1× 档速度 200 px/s → 200/160 = 1.25 周期/秒
+   = 2.5 步/秒；近景放大时世界速度下降，但屏幕速度与步频保持一致。
    ⚠️ 两个数都必须在这里声明：主循环补丁 11 要用，而主循环段排在角色段之后。 */
 const WALK_STRIDE = 160;
+const PLAYER_WALK_STRIDE = 112;             // four clear foot poses per 112 screen pixels
 const IDLE_HZ = 0.4;                   // 待机呼吸约 2.5 秒一个来回
 
 const A2 = {
@@ -5227,7 +5228,7 @@ const CTR_W = 720, CTR_H = 450;
 const CTR_WALL = 14;
 const CTR_R = 7, CTR_H2 = 22;              // 玩家碰撞半宽 / 身体高（脚点往上算）
 const CTR_SPEED = 155;                     // 逻辑像素/秒
-const CTR_STRIDE = 40;                     // 走多少逻辑像素换一个步态相位
+const CTR_STRIDE = 30;                     // 室内约每 0.19 秒换一帧，能看清腿部交替
 
 /* --- 7.5.6 计算机中心 · 房内布局 --------------------------------------
    碰撞盒 [x, y, w, h]。⚠️ 一条都不许进 `solids`。 */
@@ -5427,7 +5428,7 @@ function ctrDraw() {
   const n = R.npc;
   const who = [
     { y: n.y,      f: () => ctrDrawChar(g, n.spr(n.dir, n.step), n.x, n.y) },
-    { y: CENTER.y, f: () => ctrDrawChar(g, window.MP && MP.connected ? MP.sprite(MP.look, CENTER.dir, CENTER.step) : charSprite(CENTER.dir, CENTER.step), CENTER.x, CENTER.y) }
+    { y: CENTER.y, f: () => ctrDrawChar(g, window.MP && (MP.connected || MP.offlineSolo) ? MP.sprite(MP.look, CENTER.dir, CENTER.step) : charSprite(CENTER.dir, CENTER.step), CENTER.x, CENTER.y) }
   ];
   if (window.MP) MP.appendIndoorPeers(who, g);
   who.sort((a, b) => a.y - b.y);
@@ -5463,6 +5464,7 @@ function ctrUpdate(dt) {
   if (moving) {
     const L = Math.hypot(dx, dy) || 1;
     dx /= L; dy /= L;
+    const oldX = CENTER.x, oldY = CENTER.y;
     const nx = CENTER.x + dx * CTR_SPEED * dt, ny = CENTER.y + dy * CTR_SPEED * dt;
     /* ⚠️ 两轴分开判：斜着撞墙时会顺着墙滑，而不是整个卡死（地图主循环同款做法）。
        ⚠️ 碰撞表是**当前房间**的 —— 引擎泛化后这里最容易出的错就是还读着计算机中心那张。 */
@@ -5470,8 +5472,11 @@ function ctrUpdate(dt) {
     if (roomFree(R, CENTER.x, ny)) CENTER.y = ny;
     if (Math.abs(dx) > Math.abs(dy)) CENTER.dir = dx < 0 ? "left" : "right";
     else                             CENTER.dir = dy < 0 ? "up" : "down";
-    CENTER.walk += CTR_SPEED * dt;
-    CENTER.step = Math.floor(CENTER.walk / CTR_STRIDE) % WALK_FRAMES;
+    const moved = Math.hypot(CENTER.x - oldX, CENTER.y - oldY);
+    if (moved > 0.01) {
+      CENTER.walk += moved;
+      CENTER.step = Math.floor(CENTER.walk / CTR_STRIDE) % WALK_FRAMES;
+    } else CENTER.step = IDLE_BASE;
   } else {
     /* 待机呼吸：与地图上的角色同一张相位表、同一个 IDLE_HZ，站姿节拍一致 */
     CENTER.step = IDLE_BASE + (Math.floor(CENTER.t * IDLE_HZ * 2) % IDLE_FRAMES);
@@ -5590,6 +5595,8 @@ function ctrOpenPlatform(R) {
 }
 function ctrClosePlatform() {
   if (ctrP) ctrP.hidden = true;
+  // 离开后卸载内嵌应用，避免代码编辑器和页面动画在地图背后继续占用内存与 CPU。
+  if (ctrF && ctrF.getAttribute("src") !== "about:blank") ctrF.setAttribute("src", "about:blank");
   CENTER.plat = false;
   CENTER.waiting = false;
   _ctrLast = performance.now();                        // 免得回来第一帧 dt 巨大
@@ -19951,14 +19958,13 @@ function guardFace() {
   else GUARD.dir = dy < 0 ? "up" : "down";
 }
 
-/* 朝目标走一步。⚠️ 步态照抄 `guideWalkToward`（也是抄玩家主循环那两行）：
-   走按**实际位移**推进（顶墙位移 0 ⇒ 脚立刻停，不空踏）。
-   速度取 `player.speed` 的 **0.5 倍** —— 巡逻该明显慢于赶路的人（实测玩家约 230 px/s，
-   别问我为什么不是 Demo 里写的 94，探针量的是这个数）。 */
+/* 朝目标走一步。按实际位移推进步态；召唤时的速度不随地图缩放大幅变慢。 */
 function guardWalkToward(tx, ty, dt) {
   const dx = tx - GUARD.x, dy = ty - GUARD.y, d = Math.hypot(dx, dy);
   if (d < 0.6) return false;
-  const ux = dx / d, uy = dy / d, s = (player.speed || 150) * (GUARD.summoned ? 3 : 0.5) * dt;
+  const ux = dx / d, uy = dy / d;
+  const speed = GUARD.summoned ? Math.min(600, Math.max(420, (player.speed || 150) * 3)) : (player.speed || 150) * 0.5;
+  const s = Math.min(d, speed * dt);
   const nx = GUARD.x + ux * s, ny = GUARD.y + uy * s;
   let moved = 0;
   if (guardWalkable(nx, GUARD.y)) { moved += Math.abs(nx - GUARD.x); GUARD.x = nx; }
@@ -20336,15 +20342,14 @@ function auntTalk() {
 /* 反馈复用向导那张 `guideToast`（2.6 秒自动隐藏）—— 地图上已经有这一块，不另做。 */
 function auntToast(t) { if (typeof guideToast === "function") guideToast(t); }
 
-/* --- 7.10.6 退出：接她页面里那颗「← 返回校园」按钮 ---------------------
-   ⚠️ 她那边是 `window.parent.postMessage({type:"aunt-exit"}, location.origin)`
-      （见 `campus_game_cmr/aunt/static/app.js`）。同源 iframe 的 `message` 事件
+/* --- 7.10.6 退出：阿姨和算法哥页面内的「返回地图」按钮 -----------------
+   同源 iframe 的 `message` 事件
       父页收得到 —— 这正是「同源」换来的东西之一。
    ⚠️ 两道校验缺一不可：`origin` 对得上**且** `source` 就是本抽屉那个 frame。
       少一道的话，页面上任何别的 iframe / 弹窗都能凭一条消息关掉地图的抽屉。
    ⚠️ Esc 那条路仍然有效（71b 的 `ctrFrameBindEsc`），两者不冲突。 */
 window.addEventListener("message", function (e) {
-  if (!e || !e.data || e.data.type !== "aunt-exit") return;   // 只认她自己发的那一条
+  if (!e || !e.data || !["aunt-exit", "campus-platform-exit"].includes(e.data.type)) return;
   if (e.origin !== location.origin) return;
   if (!ctrF || e.source !== ctrF.contentWindow) return;
   if (typeof CENTER === "undefined" || !CENTER.plat) return;
@@ -20479,11 +20484,13 @@ function update(dt) {
     /* 步态按**实际位移**推进，不是按时间 ——
        ⚠️ 原版是 `player.walk += dt`：顶着墙走时它照常累加，人会原地踏步
           （贴墙滑行时尤其明显）。改成累加碰撞后的真实位移，顶墙 → 位移 0 → 脚立刻停。
-       一个完整步态周期 = WALK_STRIDE 世界像素（4 帧 = 左右各一步），
-       所以档位越高（世界速度越慢）步频越低，屏幕上的节奏始终对得上。 */
+        一个完整步态周期 = WALK_STRIDE 屏幕像素（4 帧 = 左右各一步），
+        放大后按屏幕位移计算，腿部换帧不会因为世界速度降低而停住。 */
     player.idle = 0;
-    player.walk += Math.hypot(player.x - _wx, player.y - _wy);
-    player.step = (Math.floor(player.walk / WALK_STRIDE * WALK_FRAMES)) & (WALK_FRAMES - 1);
+     // Zoom slows world movement to keep screen speed constant. Count screen
+     // distance here too, so 2x/3x views do not hold each leg pose for seconds.
+    player.walk += Math.hypot(player.x - _wx, player.y - _wy) * Math.max(1, zoom);
+    player.step = (Math.floor(player.walk / PLAYER_WALK_STRIDE * WALK_FRAMES)) & (WALK_FRAMES - 1);
   } else {
     player.walk = 0;
     player.idle = (player.idle || 0) + dt;              // 待机呼吸：慢速两帧
@@ -20568,7 +20575,7 @@ function render() {
   const chClip = Math.round(CH_H * lakeSubmerge(player.x, player.y));
   /* 蹲姿（第四十四轮）：`player.act` 非空时换成蹲姿精灵。 */
   const _pfr = (player.act && (player.actD - player.actT) < 0.35) ? 0 : 1;
-  drawList.push({ img: window.MP && MP.connected ? (player.act ? MP.crouch(MP.look, player.dir, player.act, _pfr) : MP.sprite(MP.look, player.dir, player.step)) : (player.act ? poseSprite(player.dir, player.act, _pfr) : charSprite(player.dir, player.step)), ax: CH_AX, ay: CH_AY, x: player.x, y: player.y, baseY: player.y, clip: chClip, ch: 1 });
+  drawList.push({ img: window.MP && (MP.connected || MP.offlineSolo) ? (player.act ? MP.crouch(MP.look, player.dir, player.act, _pfr) : MP.sprite(MP.look, player.dir, player.step)) : (player.act ? poseSprite(player.dir, player.act, _pfr) : charSprite(player.dir, player.step)), ax: CH_AX, ay: CH_AY, x: player.x, y: player.y, baseY: player.y, clip: chClip, ch: 1 });
   /* 向导「小北」：与补丁 9 同口径 —— FIT 档下 18px 的精灵只剩 1.6 背板像素，
      点采样会忽隐忽现，直接不画。 */
   if (Math.max(CH_W, CH_H) * zoom >= 1.5)
@@ -20637,6 +20644,6 @@ requestAnimationFrame(loop);
 
 </script>
 <script src="mp/look.js"></script>
-<script src="mp/lobby.js"></script>
+<script src="mp/lobby.js?v=20261030-guardstatus"></script>
 </body>
 </html>

@@ -34,15 +34,26 @@ def request(port, path, data=None, token=None, method=None):
         return json.load(r)
 
 
-def check_static_files(port):
+def check_static_files(port, ws_port):
     with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=3) as response:
         assert response.status == 200 and b"mp/lobby.js" in response.read()
+    with urllib.request.urlopen(f"http://127.0.0.1:{port}/mp/lobby.js", timeout=3) as response:
+        script = response.read()
+        assert b"__MP_WS_PORT__" not in script and f"Number('{ws_port}')".encode() in script
     for path in ("/mp/server.py", "/README.md", "/mp/lobby.sqlite3"):
         try:
             urllib.request.urlopen(f"http://127.0.0.1:{port}{path}", timeout=3)
             raise AssertionError(f"private file served: {path}")
         except urllib.error.HTTPError as exc:
             assert exc.code == 404, (path, exc.code)
+    colleges = request(port, "/colleges")["colleges"]
+    assert len(colleges) == 23 and "碳中和与环境学院" in colleges
+    assert "环境学院" not in colleges and "其他" not in colleges
+    try:
+        request(port, "/look/from-photo", {"image": "not-a-photo"})
+        raise AssertionError("server photo upload route should be disabled")
+    except urllib.error.HTTPError as exc:
+        assert exc.code == 410
 
 
 async def recv_type(ws, typ, timeout=2):
@@ -171,7 +182,7 @@ def main():
                     time.sleep(.1)
             else:
                 raise RuntimeError("server failed to start: " + process.stderr.read().decode(errors="replace"))
-            check_static_files(hp)
+            check_static_files(hp, wp)
             asyncio.run(scenario(hp, wp, Path(tmp) / "test.sqlite3"))
         finally:
             process.terminate()

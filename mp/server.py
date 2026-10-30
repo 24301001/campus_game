@@ -18,8 +18,6 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from http.cookies import SimpleCookie
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
-import urllib.error
-import urllib.request
 
 from websockets.asyncio.server import serve
 
@@ -29,24 +27,32 @@ HOST = os.environ.get("MP_HOST", "0.0.0.0")
 HTTP_PORT = int(os.environ.get("MP_HTTP_PORT", "3000"))
 WS_PORT = int(os.environ.get("MP_WS_PORT", "8090"))
 CMR_PORT = int(os.environ.get("CMR_PORT", "8020"))  # [QODER-FIX #22] 食堂阿姨可跑独立实例(如 8021)，不碰 /opt
+XBG_PORT = int(os.environ.get("XBG_PORT", "8010"))
+LD_PORT = int(os.environ.get("LD_PORT", "8000"))
+AGENT_PORT = int(os.environ.get("AGENT_PORT", "8081"))
+AGENT_WEB_PORT = int(os.environ.get("AGENT_WEB_PORT", "3001"))
 DEFAULT_LOOK = {"skin": "#f2c9a0", "hairStyle": "short", "hairColor": "#30251e", "eye": "round", "eyeColor": "#332a2b", "cloth": "#c94954", "clothAlt": "#f3eee7", "clothPattern": "solid", "pants": "#38516d", "acc": "none", "accColor": "#b67a56"}
 LOOK_COLORS = ("skin", "hairColor", "eyeColor", "cloth", "clothAlt", "pants", "accColor")
 LOOK_CHOICES = {"hairStyle": ("short", "mid", "long", "ponytail", "bun", "twintails"), "eye": ("round", "narrow", "dot"), "acc": ("none", "glasses", "cap", "scarf"), "clothPattern": ("solid", "stripe")}
 DEFAULT_VISIBILITY = {"bio": True, "college": True, "grade": True, "tags": True}
-# 学院不手填：主页上是下拉，名单只有这里这一份（与 8081 那套 MpProfileService.COLLEGES 对齐）。
-CAMPUS_COLLEGES = ("计算机科学与技术学院", "电子信息工程学院", "自动化与智能学院", "电气工程学院",
-                   "机械与电子控制工程学院", "交通运输学院", "土木建筑工程学院", "环境学院",
-                   "化学化工学院", "建筑与艺术学院", "数学与统计学院", "物理科学与工程学院",
-                   "系统科学学院", "软件学院", "网络空间安全学院（国家保密学院）", "经济管理学院",
-                   "法学院", "语言与传播学院", "马克思主义学院", "体育与健康学院",
-                   "詹天佑学院", "威海国际学院", "国际教育学院", "继续教育学院", "其他")
+# 北京交通大学官网“机构设置 → 直属学院”现列的 23 个学院。
+# 主页只提供下拉选择；旧名称仍可显示为待重新选择的历史值。
+CAMPUS_COLLEGES = (
+    "自动化与智能学院", "电子信息工程学院", "计算机科学与技术学院", "经济管理学院",
+    "交通运输学院", "土木建筑工程学院", "机械与电子控制工程学院", "电气工程学院",
+    "数学与统计学院", "物理科学与工程学院", "马克思主义学院", "外国语与新闻传播学院",
+    "软件学院", "建筑与设计学院", "法学院", "碳中和与环境学院", "系统科学学院",
+    "网络空间安全学院（国家保密学院）", "詹天佑学院（智慧交通未来技术学院）",
+    "国家卓越工程师学院", "威海国际学院", "国际教育学院", "体育学院",
+)
 SCENES = {"out", "center", "yifu"}
-NPC_PORTS = {"xbg": 8010, "ld": 8000, "cmr": CMR_PORT, "agent": 8081}
-PROXY_PREFIXES = (("/xbg", 8010), ("/ld", 8000), ("/cmr", CMR_PORT),
-                  ("/api/", 8081), ("/agent", 3001), ("/assets/", 3001),
-                  ("/@vite/", 3001), ("/@id/", 3001), ("/@fs/", 3001),
-                  ("/__vite_ping", 3001), ("/src/", 3001), ("/node_modules/", 3001),
-                  ("/favicon.ico", 3001))
+NPC_PORTS = {"xbg": XBG_PORT, "ld": LD_PORT, "cmr": CMR_PORT, "agent": AGENT_PORT}
+PROXY_PREFIXES = (("/xbg", XBG_PORT), ("/ld", LD_PORT), ("/cmr", CMR_PORT),
+                  ("/api/", AGENT_PORT), ("/algo", AGENT_WEB_PORT),
+                  ("/agent", AGENT_WEB_PORT), ("/assets/", AGENT_WEB_PORT),
+                  ("/@vite/", AGENT_WEB_PORT), ("/@id/", AGENT_WEB_PORT), ("/@fs/", AGENT_WEB_PORT),
+                  ("/__vite_ping", AGENT_WEB_PORT), ("/src/", AGENT_WEB_PORT), ("/node_modules/", AGENT_WEB_PORT),
+                  ("/favicon.ico", AGENT_WEB_PORT))
 NPC_HEALTH_PATHS = {"/xbg/api/health", "/ld/api/health", "/cmr/api/health", "/api/agent/status"}
 
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -112,155 +118,6 @@ def valid_look(value):
             raise ValueError("形象选项无效")
         result[key] = item
     return result
-
-
-# ---------- 照片 → 形象：交给多模态模型看，浏览器里那套 128px 颜色统计只当断网兜底 ----------
-# 密钥不出服务端：环境变量 DASHSCOPE_API_KEY 优先，否则复用老丁那侧已 gitignore 的 key 文件。
-QWEN_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
-QWEN_MODEL = "qwen3.8-flash"
-QWEN_TIMEOUT = 25
-QWEN_KEY_FILE = ROOT / "laoding" / "server" / "qwen_key.txt"
-# 肤色和瞳色给的是**档位**不是自由值：像素小人脸只有 7 格宽，模型报回来的
-# #e8c8a9 和 #f2c9a0 这种差别画不出来，反而每次刷新都换一个色。
-SKIN_TONES = ("#f7d9bd", "#f2c9a0", "#e0ac7e", "#c68642", "#8d5524", "#5c3a21")
-EYE_TONES = ("#332a2b", "#4a3423", "#6b4a2f", "#3d5a6c", "#4a5d4e", "#2f2f38")
-LOOK_PROMPT = (
-    "你是像素风卡通形象生成助手。看这张人物照片，抽出把**这个人**画成像素小人所需的特征。\n"
-    "只根据图片里看得见的内容判断；被挡住、看不清的按最接近的选项，严禁编造。\n"
-    '只输出一个 JSON 对象（不要 markdown 代码块、不要任何解释文字）：\n'
-    '{"skin":"肤色","hairStyle":"发型","hairColor":"发色hex","eye":"眼型","eyeColor":"瞳色",'
-    '"cloth":"上衣主色hex","clothPattern":"solid或stripe","clothAlt":"条纹副色hex",'
-    '"pants":"裤子颜色hex","acc":"配饰","accColor":"配饰颜色hex"}\n'
-    "取值规则：\n"
-    "- 所有颜色写成 # 加 6 位十六进制，例如 #3a2b1f。\n"
-    "- skin 必须从这 6 档里原样选一个：" + " ".join(SKIN_TONES) + "。\n"
-    "- eyeColor 必须从这 6 档里原样选一个：" + " ".join(EYE_TONES) + "。\n"
-    "- hairStyle 只能取 short(短发、露耳) mid(齐肩) long(过肩披发) ponytail(在脑后扎成一束) "
-    "bun(盘成丸子) twintails(左右两束)；看不出扎没扎起来就选 short。\n"
-    "- eye 只能取 round(圆而大) narrow(细长) dot(小而圆)。\n"
-    "- hairColor 以头顶头发为准，避开高光、发丝反光和背景。\n"
-    "- cloth/clothAlt/pants 取照片里这个人**身上实际穿的那件衣服和裤子**的颜色，"
-    "不要取背景、不要取皮肤；上衣明显是条纹才 clothPattern=stripe，否则 solid。\n"
-    "- acc 只能取 none glasses(戴眼镜) cap(戴帽子) scarf(围围巾)；没戴就 none。"
-    "accColor 是镜框/帽子/围巾的颜色，none 时填 #b67a56。\n"
-)
-
-
-def qwen_api_key() -> str:
-    key = os.environ.get("DASHSCOPE_API_KEY", "").strip()
-    if key:
-        return key
-    try:
-        return QWEN_KEY_FILE.read_text(encoding="utf-8").strip()
-    except OSError:
-        return ""
-
-
-def _hex_color(value, fallback: str) -> str:
-    text = str(value or "").strip().lower()
-    digits = text[1:] if text.startswith("#") else ""
-    if len(digits) == 3 and all(c in "0123456789abcdef" for c in digits):
-        return "#" + "".join(c * 2 for c in digits)          # 模型爱写 #abc 这种缩写
-    if len(digits) == 6 and all(c in "0123456789abcdef" for c in digits):
-        return "#" + digits
-    return fallback
-
-
-def _nearest_tone(value, palette) -> str:
-    """把模型给的任意颜色吸到最近的档位上（档位就是渲染器认的那几种肤色/瞳色）。"""
-    text = _hex_color(value, "")
-    if not text:
-        return palette[0]
-    rgb = [int(text[i:i + 2], 16) for i in (1, 3, 5)]
-    def gap(color: str) -> int:
-        tone = [int(color[i:i + 2], 16) for i in (1, 3, 5)]
-        return sum((rgb[i] - tone[i]) ** 2 for i in range(3))
-    return min(palette, key=gap)
-
-
-def _one_of(value, choices, fallback: str) -> str:
-    text = str(value or "").strip().lower()
-    return text if text in choices else fallback
-
-
-def model_look(data):
-    """模型输出 → 合法 look。⚠️ 每个字段各自兜底：模型漏一个字段不该让整张脸回到默认。"""
-    if not isinstance(data, dict):
-        raise ValueError("模型没给出对象")
-    return valid_look({
-        "skin": _nearest_tone(data.get("skin"), SKIN_TONES),
-        "hairStyle": _one_of(data.get("hairStyle"), LOOK_CHOICES["hairStyle"], DEFAULT_LOOK["hairStyle"]),
-        "hairColor": _hex_color(data.get("hairColor"), DEFAULT_LOOK["hairColor"]),
-        "eye": _one_of(data.get("eye"), LOOK_CHOICES["eye"], DEFAULT_LOOK["eye"]),
-        "eyeColor": _nearest_tone(data.get("eyeColor"), EYE_TONES),
-        "cloth": _hex_color(data.get("cloth"), DEFAULT_LOOK["cloth"]),
-        "clothAlt": _hex_color(data.get("clothAlt"), DEFAULT_LOOK["clothAlt"]),
-        "clothPattern": _one_of(data.get("clothPattern"), LOOK_CHOICES["clothPattern"], DEFAULT_LOOK["clothPattern"]),
-        "pants": _hex_color(data.get("pants"), DEFAULT_LOOK["pants"]),
-        "acc": _one_of(data.get("acc"), LOOK_CHOICES["acc"], DEFAULT_LOOK["acc"]),
-        "accColor": _hex_color(data.get("accColor"), DEFAULT_LOOK["accColor"]),
-    })
-
-
-def strip_json(text: str) -> dict:
-    body = (text or "").strip()
-    if body.startswith("```"):
-        body = body.split("\n", 1)[-1] if "\n" in body else body
-        if body.rstrip().endswith("```"):
-            body = body.rstrip()[:-3]
-    start, end = body.find("{"), body.rfind("}")
-    if 0 <= start < end:
-        body = body[start:end + 1]
-    return json.loads(body)
-
-
-def look_from_photo(image: str):
-    """POST 一张 data:image 给 Qwen，换回一份 look 配方。失败抛 ValueError / OSError。"""
-    if not isinstance(image, str) or not image.startswith("data:image/") or len(image) < 100:
-        raise ValueError("image 必须是 data:image base64")
-    key = qwen_api_key()
-    if not key:
-        raise LookupError("未配置 DASHSCOPE_API_KEY")
-    payload = {
-        "model": QWEN_MODEL,
-        "messages": [{
-            "role": "user",
-            "content": [
-                {"type": "image_url", "image_url": {"url": image[:12 * 1024 * 1024]}},
-                {"type": "text", "text": LOOK_PROMPT},
-            ],
-        }],
-        "response_format": {"type": "json_object"},
-        "enable_thinking": False,
-        "temperature": 0.1,
-    }
-    request = urllib.request.Request(
-        QWEN_URL, data=json.dumps(payload).encode("utf-8"),
-        headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"}, method="POST")
-    # 百炼是国内服务，显式绕过系统代理（Clash 之类会把请求绕到海外节点，超时就是这么来的）
-    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-    with opener.open(request, timeout=QWEN_TIMEOUT) as response:
-        out = json.loads(response.read().decode("utf-8"))
-    return model_look(strip_json(out["choices"][0]["message"]["content"]))
-
-
-# 匿名可调（注册前就要生成形象），所以按来源 IP 限流：模型调用是要花钱的。
-LOOK_RATE_WINDOW = 60.0
-LOOK_RATE_LIMIT = 8
-look_calls: dict[str, list[float]] = {}
-look_rate_lock = threading.Lock()
-
-
-def look_rate_limited(ip: str) -> bool:
-    moment = time.time()
-    with look_rate_lock:
-        hits = [t for t in look_calls.get(ip, []) if moment - t < LOOK_RATE_WINDOW]
-        if len(hits) >= LOOK_RATE_LIMIT:
-            look_calls[ip] = hits
-            return True
-        hits.append(moment)
-        look_calls[ip] = hits
-        return False
 
 
 def token_user(token: str):
@@ -437,7 +294,7 @@ class Handler(BaseHTTPRequestHandler):
         port = next((port for prefix, port in PROXY_PREFIXES if path == prefix or path.startswith(prefix)), None)
         if port is None:
             return self.send_json(404, {"error": "页面不存在"})
-        kind = {8010: "xbg", 8000: "ld", CMR_PORT: "cmr"}.get(port, "agent")
+        kind = next((name for name in ("xbg", "ld", "cmr") if path == "/" + name or path.startswith("/" + name + "/")), "agent")
         with lock:
             permitted = kind in grants.get(digest, set())
         if not permitted and path not in NPC_HEALTH_PATHS:
@@ -449,7 +306,7 @@ class Handler(BaseHTTPRequestHandler):
             body = self.rfile.read(size) if size else None
             headers = {k: v for k, v in self.headers.items()
                        if k.lower() not in ("connection", "content-length", "transfer-encoding", "host")}
-            headers["Host"] = self.headers.get("Host", "localhost:3000") if port == CMR_PORT else f"127.0.0.1:{port}"
+            headers["Host"] = self.headers.get("Host", f"localhost:{HTTP_PORT}") if kind == "cmr" else f"127.0.0.1:{port}"
             conn = http.client.HTTPConnection("127.0.0.1", port, timeout=30)
             try:
                 conn.request(self.command, self.path, body=body, headers=headers)
@@ -473,19 +330,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         try:
             if path == "/api/mp/look/from-photo":
-                # 注册前就要生成形象 ⇒ 这个口不带 token，只能按 IP 限流（一次调用是要花钱的）
-                if look_rate_limited(self.client_address[0]):
-                    return self.send_json(429, {"error": "生成太频繁，请一分钟后再试", "code": "rate_limited"})
-                image = self.body(4 << 20).get("image")
-                try:
-                    look = look_from_photo(image)
-                except LookupError as exc:
-                    return self.send_json(503, {"error": str(exc), "code": "no_key"})
-                except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError) as exc:
-                    return self.send_json(504, {"error": "识别服务连不上：" + str(exc)[:160], "code": "upstream"})
-                except (KeyError, ValueError, TypeError, json.JSONDecodeError) as exc:
-                    return self.send_json(502, {"error": "识别结果读不出来：" + str(exc)[:160], "code": "bad_result"})
-                return self.send_json(200, {"ok": True, "model": QWEN_MODEL, "look": look})
+                return self.send_json(410, {"error": "形象照片只在浏览器处理"})
             if path == "/api/mp/register":
                 data = self.body()
                 name, password = str(data.get("nickname", "")).strip(), str(data.get("password", ""))
@@ -629,6 +474,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
             return
         body = target.read_bytes()
+        if requested == "mp/lobby.js":
+            body = body.replace(b"__MP_WS_PORT__", str(WS_PORT).encode("ascii"))
         self.send_response(200)
         self.send_header("Content-Type", (mimetypes.guess_type(target.name)[0] or "application/octet-stream") + ("; charset=utf-8" if target.suffix in (".html", ".js", ".css") else ""))
         # 这四个文件是改完直接生效的源码，绝不能让浏览器拿缓存：

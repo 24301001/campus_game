@@ -29,7 +29,7 @@
 #mpRoot .mp-avatar-static:hover{outline-color:#607080}
 #mpRoot .mp-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#72d798;margin-right:5px}
 #mpRoot .mp-dot.off{background:#87929b}
-#mpRoot #mpStatus{position:absolute;top:0;left:50%;transform:translateX(-50%);padding:4px 12px;background:#232b35;border:1px solid var(--mp-line);border-top:0;border-radius:0 0 5px 5px;pointer-events:none;font-size:12px;opacity:1;transition:opacity .42s}
+#mpRoot #mpStatus{position:absolute;z-index:4;top:clamp(50px,22vh,200px);left:50%;transform:translateX(-50%);max-width:min(560px,calc(100vw - 24px));padding:10px 20px;background:rgba(24,33,43,.96);border:1px solid #d7bb73;border-radius:8px;box-shadow:0 5px 18px rgba(0,0,0,.4);pointer-events:none;text-align:center;font-size:16px;font-weight:700;line-height:1.5;opacity:1;transition:opacity .42s}
 #mpRoot #mpStatus.mp-fade{opacity:0}
 #mpRoot #mpSelf{position:absolute;left:14px;top:76px;display:flex;align-items:center;gap:7px;padding:5px 8px;border:1px solid var(--mp-line);border-radius:4px;background:var(--mp-bg);color:var(--mp-ink);pointer-events:auto}
 #mpRoot #mpSelf:hover{border-color:var(--mp-gold)}
@@ -71,14 +71,8 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpBoard{top:101px}
 #mpRoot .mp-message small{display:block;color:var(--mp-muted);font-size:10px}
 #mpRoot #mpChatForm{display:flex;gap:6px;padding:10px;border-top:1px solid var(--mp-line)}
 #mpRoot #mpChatInput{flex:1;resize:none;min-height:38px;max-height:95px}
-#mpRoot #mpAuthShade,#mpRoot #mpProfileShade,#mpRoot #mpOfflineShade{position:absolute;inset:0;background:rgba(8,12,18,.72);pointer-events:auto;display:flex;align-items:center;justify-content:center;padding:16px}
+#mpRoot #mpAuthShade,#mpRoot #mpProfileShade{position:absolute;inset:0;background:rgba(8,12,18,.72);pointer-events:auto;display:flex;align-items:center;justify-content:center;padding:16px}
 #mpRoot #mpAuth{width:min(370px,100%);padding:18px}
-/* 断网提示框：以前只有一行小字"连接中断，正在重连…"挂在顶部，用户看不出自己掉线了，
-   更找不到进单机的入口。这张框放在正中间，两个按钮一个走单机、一个继续等。 */
-#mpRoot #mpOffline{width:min(420px,100%)}
-#mpRoot #mpOffline p{color:var(--mp-muted);margin:0;padding:12px 14px 0;line-height:1.7}
-#mpRoot .mp-offline-actions{display:flex;gap:8px;padding:14px}
-#mpRoot .mp-offline-actions button{flex:1}
 #mpRoot #mpAuth h2{font-size:18px;color:var(--mp-gold);margin:0 0 5px}
 #mpRoot #mpAuth p{color:var(--mp-muted);margin:0 0 15px}
 #mpRoot #mpAuth .mp-tabs{display:flex;gap:6px;margin-bottom:12px}

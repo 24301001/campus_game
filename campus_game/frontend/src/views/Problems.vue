@@ -258,6 +258,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { returnToCampus } from '@/utils/returnToCampus'
 import { useRouter } from 'vue-router'
 import { getProblemList } from '@/api/problem'
 import { getCategoryList } from '@/api/category'
@@ -582,7 +583,7 @@ const loadCategories = async () => {
   }
 }
 
-const goLobby = () => window.top.location.assign('/')
+const goLobby = returnToCampus
 
 const loadTags = async () => {
   try {

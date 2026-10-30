@@ -21,10 +21,10 @@
             <span class="nav-user" @click="$router.push('/profile')">
               {{ userStore.user.nickname || userStore.user.username }}
             </span>
-            <a class="btn btn-outline btn-sm" href="/">返回校园</a>
+            <a class="btn btn-outline btn-sm" href="/" @click.prevent="returnToCampus">返回地图</a>
           </template>
           <template v-else>
-            <a class="btn btn-primary btn-sm" href="/">进入校园大厅</a>
+            <a class="btn btn-primary btn-sm" href="/" @click.prevent="returnToCampus">进入校园大厅</a>
           </template>
         </div>
         <!-- Mobile menu toggle -->
@@ -39,10 +39,10 @@
           <router-link to="/agent" class="mobile-link" @click="mobileOpen = false">算法哥</router-link>
           <router-link to="/profile" class="mobile-link" @click="mobileOpen = false">个人中心</router-link>
           <router-link v-if="userStore.user.role === 'ADMIN'" to="/admin/dashboard" class="mobile-link" @click="mobileOpen = false">管理</router-link>
-          <a class="btn btn-outline btn-full" href="/">返回校园</a>
+          <a class="btn btn-outline btn-full" href="/" @click.prevent="returnToCampus">返回地图</a>
         </template>
         <template v-else>
-          <a class="btn btn-primary btn-full" href="/">进入校园大厅</a>
+          <a class="btn btn-primary btn-full" href="/" @click.prevent="returnToCampus">进入校园大厅</a>
         </template>
       </div>
     </nav>
@@ -209,6 +209,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { returnToCampus } from '@/utils/returnToCampus'
 
 const userStore = useUserStore()
 const router = useRouter()

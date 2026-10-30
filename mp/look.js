@@ -1,7 +1,5 @@
-/* 照片 → 形象的**本机兜底**那一路：识别的主路径已经改走服务端多模态模型
-   （mp/server.py 的 /api/mp/look/from-photo）。下面 fromPhoto 这套 128px 颜色统计
-   只在模型不可用时才用，认不出脸时会套一个固定假脸框，所以结果只能算粗略估算。
-   存进库的始终只有那一小份 look 配方，不留原图。 */
+/* 照片 → 形象完全在浏览器处理：定位脸、分区取色并拼装像素部件。
+   认不出脸时会用默认脸框和可手动调整的配方。服务端只保存 look，不接收照片。 */
 (() => {
   const fallback = {skin:'#f2c9a0',hairStyle:'short',hairColor:'#30251e',eye:'round',eyeColor:'#332a2b',cloth:'#c94954',clothAlt:'#f3eee7',clothPattern:'solid',pants:'#38516d',acc:'none',accColor:'#b67a56'};
   const oldFallback = {skin:'#e9bb92',hairStyle:'short',hairColor:'#241d1a',eye:'round',cloth:'#3f6ea8',pants:'#454c5a',acc:'none'};
@@ -89,11 +87,13 @@
     function pxr(x, y, w, h, col) { if (w > 0 && h > 0) { g.fillStyle = col; g.fillRect(x, y, w, h) } }
     const cx = 9, HW = 7, H2 = 3, HH = 6, FACE = 4, SHOE_TOP = 25;
     const F = crouched ? { m: 0, fl: 0, spread: 0, bob: 0, sw: 0 } : (GAIT[step] || GAIT[4]);
-    const b = F.bob;
+    // Walking is carried by feet and arms. Moving the whole head by one source
+    // pixel becomes a three-pixel jolt in close view and shakes the name tag.
+    const b = step < 4 ? 0 : F.bob;
     const TOP = crouched ? 10 : 1, TORSO = crouched ? 4 : 9;
     const HY = TOP + b, ty = TOP + HH + 1 + b, ly = TOP + HH + 1 + TORSO + b;
     const KNEE = crouched ? 23 : 21, ARMR = crouched ? 4 : 6;
-    const EY = HY + 2 + (FACE >= 5 ? 2 : 1);   // 眼睛行：与地图 head() 同一个式子（FACE=4 ⇒ HY+3）
+    const EY = HY + 4; // Leave a full forehead row between the fringe and the upper eye pixel.
 
     /* ---------- 躯干：肩宽 9 → 腰宽 7 → 衣摆压实腰线（逐格照搬 buildChar 的 torso） ---------- */
     function torsoFront() {
@@ -111,13 +111,18 @@
         px(cx + 2, ty + 1, 1, TORSO - 4, C.packD);
         px(cx - 2, ty - 1, 5, 1, 'rgba(0,0,0,0.26)');              // 背带压肩
       } else {
+        if (!crouched) {
+          px(cx - 2, ty + 1, 2, 1, C.coatL);                  // collar catches the light
+          px(cx + 1, ty + 1, 2, 1, C.coatL);
+          px(cx - 1, ty + 2, 1, 1, C.skinD);                  // a narrow V at the neckline
+        }
         px(cx, ty + 1, 1, TORSO - 2, C.coatD);                     // 前襟
         if (!crouched) px(cx - 2, ty + chest + 2, 4, 1, C.coatD);  // 口袋线（蹲姿躯干只有 4 行，画不下）
       }
       if (v.clothPattern === 'stripe' && !back) for (let r = ty + 2; r < ty + TORSO - 1; r += 3) { px(cx - 4, r, 9, 1, v.clothAlt); px(cx - 6, r + 1, 2, 1, v.clothAlt); px(cx + 5, r + 1, 2, 1, v.clothAlt) }
     }
     function armsFront() {
-      const aL = ty + 1 + F.sw, aR = ty + 1 + (F.sw ? 0 : 1);
+      const aL = ty + 1 + F.sw, aR = ty + 1 + ((step === 4 || crouched) ? 0 : (F.sw ? 0 : 1));
       px(cx - 6, aL, 2, ARMR, back ? C.coat : C.coatL); px(cx - 6, aL + ((ARMR / 2) | 0), 1, 1, C.coatD);
       px(cx - 6, aL + ARMR, 2, 2, C.skin);
       px(cx + 5, aR, 2, ARMR, C.coatD); px(cx + 6, aR + ((ARMR / 2) | 0), 1, 1, C.hairD);
@@ -141,6 +146,7 @@
     /* ---------- 侧视：厚度 6px，前臂摆到身前，两条腿靠横向错位表达迈步 ---------- */
     function bodySide() {
       px(cx - 3, ty, 6, 1, C.coatL); px(cx - 3, ty + 1, 6, TORSO - 1, C.coat);
+      if (!crouched) px(cx - 3, ty + 1, 2, 1, C.coatL);          // side collar
       px(cx - 3, ty + 1, 1, TORSO - 1, C.coatL); px(cx + 2, ty + 1, 1, TORSO - 1, C.coatD);
       px(cx - 3, ty + TORSO - 1, 6, 1, C.coatD);
       px(cx + 1, ty + 1, 3, TORSO - 3, C.pack);                    // 书包露在背后
@@ -151,14 +157,24 @@
       px(cx - 4, ty + 2 + ao, 2, ARMR, C.coatL); px(cx - 4, ty + 2 + ao + ARMR, 2, 2, C.skin);
     }
     function legsSide() {
-      const s = F.m === 0 ? 2 : 0, fx = cx - 3 + s, bx = cx + 1 - s;
-      const fl = F.m === 1 || (F.m === 0 && !F.sw), th = KNEE - ly;
-      px(fx, ly, 3, th, C.pant); px(fx + (fl ? 0 : 2), ly, 1, th, fl ? C.pantL : C.pantD);
-      px(fx, KNEE, 3, SHOE_TOP - KNEE, C.pant);
-      px(fx - 1, SHOE_TOP, 4, 2, C.shoe); px(fx - 1, SHOE_TOP, 4, 1, C.shoeL);
-      px(bx, ly, 3, th + 1, C.pant); px(bx + (fl ? 2 : 0), ly, 1, th + 1, fl ? C.pantD : C.pantL);
-      px(bx, KNEE + 1, 3, SHOE_TOP - KNEE - 1, C.pant);
-      px(bx, SHOE_TOP, 4, 2, C.shoe); px(bx, SHOE_TOP, 4, 1, C.shoeL);
+      // One foot plants while the other passes one pixel above the ground.
+      // The old passing frames drew both legs and both shoes on the same
+      // columns, which looked like a rigid figure sliding across the map.
+      function leg(upper, lower, shoe, raised, light) {
+        const foot = SHOE_TOP - (raised ? 1 : 0);
+        px(upper, ly, 3, KNEE - ly, C.pant);
+        px(upper + (light ? 0 : 2), ly, 1, KNEE - ly, light ? C.pantL : C.pantD);
+        px(lower, KNEE, 3, foot - KNEE, C.pant);
+        px(lower, KNEE, 3, 1, C.pantD); // articulated knee
+        px(shoe, foot, 4, 2, C.shoe);
+        px(shoe, foot, 4, 1, C.shoeL);
+      }
+      const phase = crouched ? 4 : step;
+      if (phase === 0) { leg(cx, cx + 1, cx + 1, false, false); leg(cx - 2, cx - 3, cx - 4, false, true); }
+      else if (phase === 1) { leg(cx, cx + 1, cx, true, false); leg(cx - 2, cx - 2, cx - 3, false, true); }
+      else if (phase === 2) { leg(cx - 2, cx - 3, cx - 4, false, false); leg(cx, cx + 1, cx + 1, false, true); }
+      else if (phase === 3) { leg(cx - 2, cx - 3, cx - 4, true, false); leg(cx, cx, cx, false, true); }
+      else { leg(cx - 2, cx - 2, cx - 3, false, true); leg(cx, cx, cx, false, false); }
     }
 
     /* ---------- 头与五官（骨架逐格照搬 buildChar 的 head / sideBody） ----------
@@ -204,13 +220,15 @@
       px(cx + H2, HY + 2, 1, FACE, C.skinD);                   // 右颊背光
       eyesFront();
       eyesTop();
-      px(cx - 1, HY + FACE, 3, 1, shade(C.skinD, -.28));       // 嘴（脸的倒数第二行）
-      px(cx - H2 + 1, HY + FACE + 1, HW - 2, 1, C.skinD);      // 下颌收边
+      px(cx - H2, EY + 1, 1, 1, shade(C.skin, -.08));            // warm cheek shadows
+      px(cx + H2, EY + 1, 1, 1, shade(C.skin, -.08));
+      px(cx - 1, HY + FACE + 1, 3, 1, shade(C.skinD, -.28)); // Mouth stays below every eye style.
+      px(cx - H2 + 1, HY + FACE + 2, HW - 2, 1, C.skinD);
     }
     function headBack() {
       px(cx - H2 + 1, HY, HW - 2, 1, C.hairL);
       px(cx - H2, HY + 1, HW, 1, C.hair);
-      px(cx - H2, HY + 2, HW, HH - 2, C.hair);                 // 后脑整片是发
+      px(cx - H2, HY + 2, HW, HH - 1, C.hair);                 // 后脑整片是发
       px(cx - H2, HY + 1, 1, HH - 1, C.hairL);
       px(cx + H2, HY + 1, 1, HH - 1, C.hairD);
       px(cx - 1, HY + 2, 2, 1, shade(C.hair, .2));             // 发旋小高光（不是横贯亮带）
@@ -219,8 +237,8 @@
       px(cx - H2 + 1, HY, HW - 2, 1, C.hairL);
       px(cx - H2, HY + 1, HW, 1, C.hair);
       px(cx - H2, HY + 2, HW, HH - 2, C.skin);
-      px(cx + 1, HY + 2, 3, HH - 2, C.hair);                   // 后脑
-      px(cx + H2, HY + 2, 1, HH - 2, C.hairD);
+      px(cx + 1, HY + 2, 3, HH - 1, C.hair);                   // 后脑
+      px(cx + H2, HY + 2, 1, HH - 1, C.hairD);
       px(cx - H2, HY + 2, H2 + 1, 1, C.hair);                  // 刘海压额（额头有台阶）
       /* 侧视只有靠近镜头这一只眼（x7）：细眼朝**后**拖成 2 格实线，与正面同款；
          圆眼那一行高的差别在 eyesTop() 里补（要压在刘海/镜框之上才看得见）。 */
@@ -228,7 +246,7 @@
       else { px(cx - 2, EY, 1, 1, C.eye); eyesTop() }
       px(cx - H2, EY - 1, 1, 1, C.skinL);                      // 额头受光
       px(cx - H2, EY + 1, 1, 1, C.skinL);                      // 鼻尖受光（侧脸第二个台阶）
-      px(cx - H2, HY + FACE, 2, 1, C.skinD);                   // 下巴
+      px(cx - H2, HY + FACE + 1, 2, 1, C.skinD);              // 下巴
     }
     /* ⚠️ 顺序不能反：先头/躯干再腿，腿压在躯干下沿（反过来衣摆会盖住大腿根）。 */
     if (side) { headSide(); bodySide(); legsSide(); }
@@ -309,6 +327,7 @@
         px(cx - H2, GE, 1, 1, frame);                              // 左外框 x6
         px(cx, GE, 1, 1, frame);                                   // 鼻梁：圆眼时两眼之间只剩这一格
         px(cx + H2, GE, 1, 1, frame);                              // 右外框 x12
+         px(cx - 2, GE + 1, 1, 1, frame); px(cx + 2, GE + 1, 1, 1, frame); // 两侧下沿，不压住嘴
       }
       eyesTop();                    // 圆眼的上排补在镜框之上，否则三档退回两档
     }
@@ -331,7 +350,7 @@
        ⚠️ 描边必须先把变换复位；接地影必须在描边之后，否则影子会被描一圈边。
           影子的几何是地图上量出来的：足迹落在 x6..16 / y27..29 内，不会被画布硬切。 */
     outlineSprite(c, .45);
-    shadowBlob(g, cx + 2, 28, 5, 2, .46, 3);
+    shadowBlob(g, flip ? cx - 1 : cx, 28, 5, 2, .46, 3);
     return c;
   }
   function sprite(look,dir='down',step=4) {
@@ -555,7 +574,7 @@
       if(density(.16,.46)>.20&&density(.54,.84)>.20)glassesRows++;
     }
     // The photo's shaded cheek is too gray at 18 pixels; warm the sampled tone for the sprite.
-    const paintedSkin=[skin[0]+25,skin[1]+20,skin[2]+14];
+    const paintedSkin=[skin[0]+35,skin[1]+22,skin[2]+5];
     return {...fallback,skin:hex(paintedSkin),hairColor:hairHex,...shirt,pants:hex(pantsRgb),hairStyle,acc:glassesRows>=2?'glasses':'none',accColor:glassesRows>=2?'#777a83':fallback.accColor};
   }
   window.MPLook={fallback,norm,isDefault,sprite,crouch,avatar,portrait,fromPhoto};

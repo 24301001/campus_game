@@ -3,7 +3,7 @@
   const L = window.MPLook;
   const root=document.createElement('div');root.id='mpRoot';
   root.innerHTML=`
-    <div id="mpStatus" hidden></div>
+    <div id="mpStatus" role="status" aria-live="polite" hidden></div>
     <button id="mpSelf" type="button" hidden title="个人中心"></button>
     <button id="mpSprite" type="button" hidden>🧍 玩家精灵</button>
     <div id="mpSpriteMenu" class="mp-panel" hidden><div id="mpSpriteFigure"></div><button type="button" id="mpSummonGuard" class="mp-primary">📣 呼叫老丁</button></div>
@@ -13,7 +13,7 @@
     <section id="mpBoard" class="mp-panel" hidden aria-label="公告栏">
       <div class="mp-head"><span class="mp-title">公告栏 · 全校</span><button class="mp-icon" id="mpBoardClose" aria-label="关闭公告">×</button></div>
       <div id="mpBoardList"><div class="mp-empty">还没有公告，发第一条吧。</div></div>
-      <form id="mpBoardForm" class="mp-compose"><input id="mpBoardInput" class="mp-field" maxlength="200" placeholder="说点什么…" aria-label="公告内容"><button class="mp-primary">发送</button></form>
+      <form id="mpBoardForm" class="mp-compose"><input id="mpBoardInput" class="mp-field" maxlength="200" placeholder="输入公告，按回车发送" aria-label="公告内容"><button class="mp-primary">发送</button></form>
       <div id="mpBoardError" class="mp-error" role="alert" style="padding:0 10px"></div>
     </section>
     <section id="mpChat" class="mp-panel" hidden aria-label="私聊">
@@ -25,37 +25,34 @@
     <div id="mpAuthShade" hidden><section id="mpAuth" class="mp-panel" aria-label="大厅登录">
       <h2>进入联机大厅</h2><p>注册或登录后，就能看见同场景的同学。</p>
       <div class="mp-tabs"><button type="button" class="mp-secondary" id="mpLoginTab">登录</button><button type="button" class="mp-secondary" id="mpRegisterTab">注册</button></div>
-      <form id="mpAuthForm" autocomplete="off"><input id="mpName" class="mp-field" minlength="2" maxlength="16" placeholder="昵称（2–16 字）" autocomplete="off" required><input id="mpPass" class="mp-field" type="password" minlength="8" placeholder="密码（至少 8 位）" autocomplete="new-password" required><label id="mpAuthPhotoLine" hidden>上传照片生成卡通小人（可选，失败也能进入）<input id="mpAuthPhoto" type="file" accept="image/*" class="mp-field"></label><div id="mpAuthLookPreview" hidden></div><button class="mp-primary" id="mpAuthSubmit">登录并进入</button><div id="mpAuthError" class="mp-error" role="alert"></div></form>
+      <form id="mpAuthForm" autocomplete="off"><input id="mpName" class="mp-field" minlength="2" maxlength="16" placeholder="昵称（2–16 字）" autocomplete="off" required><input id="mpPass" class="mp-field" type="password" minlength="8" placeholder="密码（至少 8 位）" autocomplete="new-password" required><label id="mpAuthPhotoLine" hidden>选择照片在浏览器生成卡通小人（可选，照片不上传）<input id="mpAuthPhoto" type="file" accept="image/*" class="mp-field"></label><div id="mpAuthLookPreview" hidden></div><button class="mp-primary" id="mpAuthSubmit">登录并进入</button><div id="mpAuthError" class="mp-error" role="alert"></div></form>
       <button type="button" class="mp-secondary" id="mpSolo">暂时单机游览</button>
     </section></div>
     <div id="mpProfileShade" hidden><section id="mpProfile" class="mp-panel" aria-label="个人主页"><div class="mp-head"><span class="mp-title" id="mpProfileTitle">个人中心</span><button class="mp-icon" id="mpProfileClose" aria-label="关闭主页">×</button></div><div id="mpProfileBody"></div></section></div>
     <div id="mpNearby" class="mp-panel" hidden><div id="mpNearbyWho"></div><div class="mp-near-actions"><button type="button" id="mpNearbyChat" class="mp-primary">💬 发起私聊</button><button type="button" id="mpNearbyProfile" class="mp-secondary">查看主页</button></div></div>
-    <section id="mpGuard" class="mp-panel" hidden aria-label="地图上和老丁对话"><div class="mp-head"><span class="mp-title">保安 · 老丁</span><button id="mpGuardClose" class="mp-icon" aria-label="关闭老丁对话">×</button></div><div id="mpGuardLog" role="log" aria-live="polite"></div><div id="mpGuardQuick" role="group" aria-label="快捷功能"><button type="button" data-act="lost_search">找失物</button><button type="button" data-act="lost_intake">登记失物</button><button type="button" data-act="repair">报修</button><button type="button" data-act="claim">认领核对</button></div><form id="mpGuardForm"><button type="button" id="mpGuardPhoto" title="拍照或选图——找东西、认证件">图</button><input id="mpGuardFile" type="file" accept="image/*" hidden><input id="mpGuardInput" class="mp-field" maxlength="500" placeholder="和老丁说句话…" aria-label="给老丁发消息"><button class="mp-primary">发送</button></form></section>
+    <section id="mpGuard" class="mp-panel" hidden aria-label="地图上和老丁对话"><div class="mp-head"><span class="mp-title">保安 · 老丁</span><button id="mpGuardClose" class="mp-icon" aria-label="关闭老丁对话">×</button></div><div id="mpGuardLog" role="log" aria-live="polite"></div><div id="mpGuardQuick" role="group" aria-label="快捷功能"><button type="button" data-act="lost_search">找失物</button><button type="button" data-act="lost_intake">登记失物</button><button type="button" data-act="repair">报修</button><button type="button" data-act="claim">认领核对</button></div><form id="mpGuardForm"><button type="button" id="mpGuardPhoto" title="拍照或选图——找东西、认证件">图</button><input id="mpGuardFile" type="file" accept="image/*" hidden><input id="mpGuardInput" class="mp-field" maxlength="500" placeholder="和老丁说句话，回车发送" aria-label="给老丁发消息"><button class="mp-primary">发送</button></form></section>
     <iframe id="mpGuardBridge" src="about:blank" hidden title="老丁对话服务"></iframe>
     <div id="mpMenu" class="mp-panel" hidden><button id="mpMenuChat">💬 发起对话</button><button id="mpMenuProfile">👤 个人主页</button></div>
-    <div id="mpOfflineShade" hidden><section id="mpOffline" class="mp-panel" role="alertdialog" aria-label="网络中断">
-      <div class="mp-head"><span class="mp-title">网络中断</span><button class="mp-icon" id="mpOfflineClose" aria-label="关闭提示">×</button></div>
-      <p id="mpOfflineText">和联机服务器的连接断了，重连几次都没成功。你可以先进单机模式继续逛校园（其他同学、公告和私聊会暂停），网络恢复后随时回到大厅。</p>
-      <div class="mp-offline-actions"><button type="button" class="mp-primary" id="mpOfflineSolo">进入单机模式</button><button type="button" class="mp-secondary" id="mpOfflineRetry">继续等重连</button></div>
-    </section></div>`;
+    `;
   document.body.append(root);
   const $=id=>document.getElementById(id), tokenKey='mpToken';
-  let token='',me=null,ws=null,chatWith=null,authMode='login',authLook=null,showLookPrompt=false,retries=0,reconnectTimer=0,pingTimer=0,moveAt=0,lastMove='',scene='out',unread=0,menuUser=null,menuAnchor=null,boardSending='',nearUser=null,profileUser=null,guardReady=false,guardOpening=false,soloMode=false,allowReconnect=true,lastRx=0,netTimer=0;
+  let token='',me=null,ws=null,chatWith=null,authMode='login',authLook=null,showLookPrompt=false,retries=0,reconnectTimer=0,connectTimer=0,pingTimer=0,moveAt=0,lastMove='',scene='out',unread=0,menuUser=null,menuAnchor=null,boardSending='',nearUser=null,profileUser=null,guardReady=false,guardOpening=false,soloMode=false,offlineSolo=false,allowReconnect=true,lastRx=0,netTimer=0;
   const peers=new Map(),profiles=new Map(),chatCache=new Map(),pending=new Map(),seenMsgs=new Set();
   let boardItems=[],look=L.fallback,boardTimer=0,menuAt=0;
   let statusTimer=0;
   /* keep=false 的那条到点先淡出再收起；keep=true 是"连接中断，正在重连…"这类要一直挂着的状态。
      ⚠️ 淡出用 class 不用 hidden：hidden 是瞬时消失，用户报的就是"老丁已到达"那条硬挂在地图顶上。 */
-  function status(text,keep=false){const e=$('mpStatus');clearTimeout(statusTimer);e.classList.remove('mp-fade');e.textContent=text;e.hidden=!text;if(text&&!keep)statusTimer=setTimeout(()=>{e.classList.add('mp-fade');statusTimer=setTimeout(()=>{e.hidden=true;e.classList.remove('mp-fade')},420)},3000)}
-  /* [QODER-FIX #70] 断网要有明确的对话框。以前掉线只在顶部留一行"连接中断，正在重连…"，
-     而网络波动时 TCP 常常是半开的：onclose 根本不触发，用户看到的是"人物不动了、
-     也没人告诉我断在哪"。所以除了 onclose 计数，再加一条"多久没收到服务器任何消息"
-     的看门狗；两者都归到 scheduleReconnect，连续 3 次重连失败就弹这张框，给两个出口：
-     进单机继续逛，或者关掉提示继续等后台重连。 */
-  const OFFLINE_AFTER_RETRIES=3, RX_STALL_MS=32000;
-  function showOffline(){if(!allowReconnect||soloMode||$('mpAuthShade').hidden===false)return;const s=$('mpOfflineShade');if(s.hidden){s.hidden=false;$('mpOfflineSolo').focus()}}
-  function hideOffline(){$('mpOfflineShade').hidden=true}
-  function scheduleReconnect(){if(!allowReconnect)return;retries++;status('连接中断，正在重连…',true);if(retries>=OFFLINE_AFTER_RETRIES)showOffline();clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,Math.min(30000,1000*2**Math.min(retries-1,5)))}
+  function status(text,keep=false){const e=$('mpStatus');clearTimeout(statusTimer);e.classList.remove('mp-fade');e.textContent=text;e.hidden=!text;if(text&&!keep)statusTimer=setTimeout(()=>{e.classList.add('mp-fade');statusTimer=setTimeout(()=>{e.hidden=true;e.classList.remove('mp-fade')},420)},4200)}
+  /* A silent half-open socket needs its own timeout; a close event is not guaranteed.
+     Both failure paths keep the current player in the map and retry in the background. */
+  const RX_STALL_MS=32000;
+  function enterOfflineSolo(){
+    if(!me||soloMode||!allowReconnect)return;
+    offlineSolo=true;MP.connected=false;peers.clear();connectedUI(false);
+    $('mpSoloCanteen').hidden=false;$('mpSoloExit').hidden=false;
+    status('网络中断，已自动进入单机游览；正在后台重连…',true);
+  }
+  function scheduleReconnect(){if(!allowReconnect||!token)return;enterOfflineSolo();retries++;clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,Math.min(30000,1000*2**Math.min(retries-1,5)))}
   function authHeader(){return {'Content-Type':'application/json',Authorization:'Bearer '+token}}
   async function api(path,options={}){const r=await fetch('/api/mp'+path,{...options,headers:{...authHeader(),...(options.headers||{})}});let data=await r.json();if(!r.ok)throw Error(data.error||'请求失败');return data}
   function saveToken(v){token=v;try{v?localStorage.setItem(tokenKey,v):localStorage.removeItem(tokenKey)}catch{}}
@@ -105,9 +102,9 @@
     scene='out';lastMove='';hudTick();
   }
   function clearAccountState(){
-    soloMode=false;clearTimeout(boardTimer);boardSending='';
-    allowReconnect=true;hideOffline();clearInterval(netTimer);
-    clearTimeout(reconnectTimer);clearInterval(pingTimer);const old=ws;ws=null;old?.close();
+    soloMode=false;offlineSolo=false;clearTimeout(boardTimer);boardSending='';
+    allowReconnect=true;clearInterval(netTimer);
+    clearTimeout(reconnectTimer);clearTimeout(connectTimer);clearInterval(pingTimer);const old=ws;ws=null;old?.close();
     saveToken('');clearNpcTickets();MP.connected=false;me=null;look=L.fallback;showLookPrompt=false;
     peers.clear();profiles.clear();chatCache.clear();boardItems=[];pending.clear();seenMsgs.clear();
     chatWith=null;menuUser=null;menuAnchor=null;nearUser=null;profileUser=null;unread=0;boardSending='';updateUnread();
@@ -118,7 +115,7 @@
   async function submitAuth(e){e.preventDefault();const nickname=$('mpName').value.trim(),password=$('mpPass').value,button=$('mpAuthSubmit');button.disabled=true;$('mpAuthError').textContent='';try{
     if(authMode==='register'){
       authLook={...L.fallback};
-      if($('mpAuthPhoto').files[0])try{authLook=(await lookFromPhoto($('mpAuthPhoto').files[0])).look}catch{status('照片无法处理，已使用默认形象，可在个人中心调整',true)}
+      if($('mpAuthPhoto').files[0])try{authLook=(await lookFromPhoto($('mpAuthPhoto').files[0])).look}catch{status('照片无法处理，已使用默认形象，可在个人中心调整')}
       await api('/register',{method:'POST',body:JSON.stringify({nickname,password})});
     }
     /* [QODER-FIX #3] 注册/登录成功后先把上一位用户的本地缓存整个清掉（公告、私聊、
@@ -128,25 +125,26 @@
     showLookPrompt=L.isDefault(look);hideAuth();connect();
   }catch(err){$('mpAuthError').textContent=err.message}finally{button.disabled=false}}
   function socketSend(payload){if(ws&&ws.readyState===WebSocket.OPEN){ws.send(JSON.stringify(payload));return true}status('联机暂不可用，消息未发送',true);return false}
-  function connect(){if(!token||location.protocol==='file:'||!allowReconnect)return;if(ws&&ws.readyState<=1)ws.close();clearTimeout(reconnectTimer);
+  function connect(){if(!token||location.protocol==='file:'||!allowReconnect||soloMode)return;if(ws&&ws.readyState<=1)return;clearTimeout(reconnectTimer);
     const scheme=location.protocol==='https:'?'wss':'ws';let socket;
-    try{socket=new WebSocket(`${scheme}://${location.hostname}:8090/mp?token=${encodeURIComponent(token)}`)}catch{scheduleReconnect();return}
+    try{socket=new WebSocket(`${scheme}://${location.hostname}:${Number('__MP_WS_PORT__')||8090}/mp?token=${encodeURIComponent(token)}`)}catch{scheduleReconnect();return}
     ws=socket;
-    socket.onopen=()=>{if(ws!==socket)return;retries=0;allowReconnect=true;lastRx=performance.now();hideOffline();scene=currentScene();const p=myPos();socketSend({type:'hello',scene,...p,look});socketSend({type:'announce.list',limit:50});clearInterval(pingTimer);pingTimer=setInterval(()=>socketSend({type:'ping'}),15000);clearInterval(netTimer);netTimer=setInterval(()=>{
+    clearTimeout(connectTimer);connectTimer=setTimeout(()=>{if(ws===socket&&socket.readyState===WebSocket.CONNECTING){ws=null;try{socket.close()}catch{}scheduleReconnect()}},8000);
+    socket.onopen=()=>{if(ws!==socket)return;clearTimeout(connectTimer);retries=0;allowReconnect=true;lastRx=performance.now();scene=currentScene();const p=myPos();socketSend({type:'hello',scene,...p,look});socketSend({type:'announce.list',limit:50});clearInterval(pingTimer);pingTimer=setInterval(()=>socketSend({type:'ping'}),15000);clearInterval(netTimer);netTimer=setInterval(()=>{
       if(ws!==socket){clearInterval(netTimer);return}
       /* 服务器对每条 ping 都会回 pong（server.py:670），所以 32 秒收不到任何东西
          就是链路断了。半开 TCP 的 close 事件要等浏览器自己的超时，这里不等了：
          直接按断开处理并弹提示，真到 onclose 时 ws 已换人，那边会自己 return。 */
       if(performance.now()-lastRx>RX_STALL_MS){
         lastRx=performance.now();try{socket.close()}catch{}
-        ws=null;clearInterval(netTimer);clearInterval(pingTimer);MP.connected=false;connectedUI(false);peers.clear();scheduleReconnect();
+        ws=null;clearInterval(netTimer);clearInterval(pingTimer);scheduleReconnect();
       }
-    },4000);status('已连接联机大厅')};
+    },4000);status(offlineSolo?'正在恢复联机大厅…':'已连接联机大厅',offlineSolo)};
     socket.onmessage=e=>{if(ws!==socket)return;lastRx=performance.now();try{onPacket(JSON.parse(e.data))}catch(err){console.error('[mp]',err)}};
-    socket.onclose=e=>{if(ws!==socket)return;ws=null;clearInterval(pingTimer);clearInterval(netTimer);MP.connected=false;if(e.code===4001||e.code===4003){clearAccountState();showAuth(e.code===4001?'该账号已在另一处登录':'请重新登录');return}if(boardSending){boardSending='';$('mpBoardForm').querySelector('button').disabled=false;$('mpBoardError').textContent='连接中断，公告未确认，请重试'}connectedUI(false);peers.clear();scheduleReconnect()};
+    socket.onclose=e=>{if(ws!==socket)return;ws=null;clearTimeout(connectTimer);clearInterval(pingTimer);clearInterval(netTimer);if(e.code===4001||e.code===4003){clearAccountState();showAuth(e.code===4001?'该账号已在另一处登录':'请重新登录');return}if(boardSending){boardSending='';$('mpBoardForm').querySelector('button').disabled=false;$('mpBoardError').textContent='连接中断，公告未确认，请重试'}scheduleReconnect()};
   }
   function onPacket(m){switch(m.type){
-    case 'welcome':me=m.me;look=me.look;profiles.set(me.id,me);scene=m.scene;peers.clear();m.peers.forEach(addPeer);MP.connected=true;connectedUI(true);updateSelf();if(showLookPrompt){showLookPrompt=false;showProfile(me.id);status('请上传照片生成你的卡通形象',true)}break;
+    case 'welcome':{const recovered=offlineSolo;offlineSolo=false;$('mpSoloCanteen').hidden=true;$('mpSoloExit').hidden=true;me=m.me;look=me.look;profiles.set(me.id,me);scene=m.scene;peers.clear();m.peers.forEach(addPeer);MP.connected=true;lastMove='';connectedUI(true);updateSelf();if(recovered)status('网络已恢复，自动返回联机大厅');if(showLookPrompt){showLookPrompt=false;showProfile(me.id);status('请上传照片生成你的卡通形象')}break}
     case 'scene.peers':scene=m.scene;peers.clear();m.peers.forEach(addPeer);break;
     case 'peer.join':addPeer(m.peer);break;
     case 'peer.move':{const p=peers.get(m.id);if(p){const v=point(p,performance.now());p.fromX=v.x;p.fromY=v.y;p.x=m.x;p.y=m.y;p.dir=m.dir;p.at=performance.now()}break}
@@ -186,7 +184,7 @@
   function renderBoard(){const list=$('mpBoardList');list.replaceChildren();if(!boardItems.length){list.innerHTML='<div class="mp-empty">还没有公告，发第一条吧。</div>';return}
     for(const a of [...boardItems].reverse()){const item=document.createElement('div');item.className='mp-post';const av=avatarEl(a.look,a.userId,a.online!==false),body=document.createElement('div'),meta=document.createElement('div'),content=document.createElement('div');body.className='mp-post-body';meta.className='mp-post-meta';meta.textContent=a.nickname+' · '+timeText(a.at);content.textContent=a.content;body.append(meta,content);item.append(av,body);list.append(item)}
   }
-  function openBoard(){if(!MP.connected)return;$('mpBoard').hidden=false;unread=0;updateUnread();socketSend({type:'announce.list',limit:50})}
+  function openBoard(){if(!MP.connected)return;$('mpBoard').hidden=false;unread=0;updateUnread();socketSend({type:'announce.list',limit:50});$('mpBoardInput').focus()}
   function chatProfile(id){return profiles.get(id)||{id,nickname:'玩家 '+id,look:L.fallback,online:false}}
   function renderChatTitle(){if(!chatWith)return;const p=chatProfile(chatWith);iconTo($('mpChatAvatar'),p.look,chatWith,p.online);$('mpChatTitle').replaceChildren();const b=document.createElement('b');b.textContent=p.nickname;const small=document.createElement('div');small.className='mp-muted';small.textContent=p.online?(peers.has(chatWith)?'同场景在线':'在线 · 已离开当前场景'):'离线 · 上线后可收到消息';$('mpChatTitle').append(b,small)}
   function renderChat(){if(!chatWith)return;renderChatTitle();const log=$('mpChatLog');log.replaceChildren();const data=chatCache.get(chatWith)||[];if(!data.length){log.innerHTML='<div class="mp-empty">还没有消息，先打个招呼吧。</div>';return}
@@ -205,7 +203,7 @@
       /* [QODER-FIX #16] 别人的主页按公开/隐藏设置显示：后端已把隐藏项清空，
          这里再按 visibility 兜一层（防止接口变化时把隐藏资料又渲染出来）。 */
       if(!mine){const vis=p.visibility||{},info=document.createElement('dl');info.className='mp-public-info';for(const [key,label] of [['bio','签名'],['college','学院'],['grade','年级'],['tags','兴趣标签']]){if(vis[key]===false)continue;const row=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;const value=key==='tags'?(p.tags||[]):p[key];if(key==='tags'&&value.length){for(const tag of value){const chip=document.createElement('span');chip.className='mp-tag';chip.textContent=tag;dd.append(chip)}}else dd.textContent=key==='tags'?'未填写':(value||'未填写');row.append(dt,dd);info.append(row)}body.append(info);const button=document.createElement('button');button.className='mp-primary';button.textContent='💬 发起私聊';button.onclick=()=>{closeProfile();openChat(id)};body.append(button);return}
-      const form=document.createElement('form');form.id='mpProfileForm';form.innerHTML=`<div class="mp-form-grid"><label class="wide">签名<input name="bio" class="mp-field" maxlength="40"></label><label>学院（从学校院系名单里选）<select name="college" class="mp-field" title="只能从下拉名单里选，不接受手填"></select></label><label>年级<select name="grade" class="mp-field"><option value="">未填写</option><option>大一</option><option>大二</option><option>大三</option><option>大四</option><option>硕士</option><option>博士</option></select></label><label class="wide">兴趣标签（输入后按逗号，最多 5 个）<span id="mpTagChips" class="mp-tag-list"></span><input name="tags" class="mp-field" maxlength="6" placeholder="输入标签后按逗号（,）生成"></label></div><fieldset class="mp-privacy"><legend>别人能看到的资料</legend><label><input type="checkbox" name="showBio"> 签名</label><label><input type="checkbox" name="showCollege"> 学院</label><label><input type="checkbox" name="showGrade"> 年级</label><label><input type="checkbox" name="showTags"> 兴趣标签</label></fieldset><p class="mp-muted mp-privacy-hint">勾选 = 公开；取消勾选后，其他玩家在你的主页看不到这一项。</p><div class="mp-look-preview" id="mpLookPreview"></div><label>从照片生成形象（照片会送到本机识别服务，只用来生成形象，不留原图）<input name="photo" type="file" accept="image/*" class="mp-field"></label><div class="mp-look-controls"><label>发型<select name="hairStyle" class="mp-field"><option value="short">短发</option><option value="mid">中发</option><option value="long">长发</option><option value="ponytail">马尾</option><option value="bun">丸子头</option><option value="twintails">双马尾</option></select></label><label>眼型<select name="eye" class="mp-field"><option value="round">圆眼</option><option value="narrow">细眼</option><option value="dot">豆豆眼</option></select></label><label>瞳色<input name="eyeColor" type="color" class="mp-field"></label><label>配饰<select name="acc" class="mp-field"><option value="none">无</option><option value="glasses">眼镜</option><option value="cap">帽子</option><option value="scarf">围巾</option></select></label><label>发色<input name="hairColor" type="color" class="mp-field"></label><label>上衣主色<input name="cloth" type="color" class="mp-field"></label><label>上衣样式<select name="clothPattern" class="mp-field"><option value="solid">纯色</option><option value="stripe">横条纹</option></select></label><label>条纹副色<input name="clothAlt" type="color" class="mp-field"></label><label>肤色<input name="skin" type="color" class="mp-field"></label><label>裤子<input name="pants" type="color" class="mp-field"></label><label id="mpAccColorRow"><span id="mpAccColorName">配饰颜色</span><input name="accColor" type="color" class="mp-field"></label></div><div class="mp-profile-actions"><button type="button" id="mpResetLook" class="mp-secondary">恢复默认形象</button><button type="button" id="mpDownloadLook" class="mp-secondary">下载卡通头像 PNG</button><button class="mp-primary">保存资料</button><button type="button" id="mpLogout" class="mp-secondary">退出登录</button></div><div class="mp-error" id="mpProfileError" role="alert"></div>`;
+      const form=document.createElement('form');form.id='mpProfileForm';form.innerHTML=`<div class="mp-form-grid"><label class="wide">签名<input name="bio" class="mp-field" maxlength="40"></label><label>学院（从学校院系名单里选）<select name="college" class="mp-field" title="只能从下拉名单里选，不接受手填"></select></label><label>年级<select name="grade" class="mp-field"><option value="">未填写</option><option>大一</option><option>大二</option><option>大三</option><option>大四</option><option>硕士</option><option>博士</option></select></label><label class="wide">兴趣标签（输入后按逗号，最多 5 个）<span id="mpTagChips" class="mp-tag-list"></span><input name="tags" class="mp-field" maxlength="6" placeholder="输入标签后按逗号（,）生成"></label></div><fieldset class="mp-privacy"><legend>别人能看到的资料</legend><label><input type="checkbox" name="showBio"> 签名</label><label><input type="checkbox" name="showCollege"> 学院</label><label><input type="checkbox" name="showGrade"> 年级</label><label><input type="checkbox" name="showTags"> 兴趣标签</label></fieldset><p class="mp-muted mp-privacy-hint">勾选 = 公开；取消勾选后，其他玩家在你的主页看不到这一项。</p><div class="mp-look-preview" id="mpLookPreview"></div><label>从照片生成形象（只在浏览器处理，保存时仅上传形象配方）<input name="photo" type="file" accept="image/*" class="mp-field"></label><div class="mp-look-controls"><label>发型<select name="hairStyle" class="mp-field"><option value="short">短发</option><option value="mid">中发</option><option value="long">长发</option><option value="ponytail">马尾</option><option value="bun">丸子头</option><option value="twintails">双马尾</option></select></label><label>眼型<select name="eye" class="mp-field"><option value="round">圆眼</option><option value="narrow">细眼</option><option value="dot">豆豆眼</option></select></label><label>瞳色<input name="eyeColor" type="color" class="mp-field"></label><label>配饰<select name="acc" class="mp-field"><option value="none">无</option><option value="glasses">眼镜</option><option value="cap">帽子</option><option value="scarf">围巾</option></select></label><label>发色<input name="hairColor" type="color" class="mp-field"></label><label>上衣主色<input name="cloth" type="color" class="mp-field"></label><label>上衣样式<select name="clothPattern" class="mp-field"><option value="solid">纯色</option><option value="stripe">横条纹</option></select></label><label>条纹副色<input name="clothAlt" type="color" class="mp-field"></label><label>肤色<input name="skin" type="color" class="mp-field"></label><label>裤子<input name="pants" type="color" class="mp-field"></label><label id="mpAccColorRow"><span id="mpAccColorName">配饰颜色</span><input name="accColor" type="color" class="mp-field"></label></div><div class="mp-profile-actions"><button type="button" id="mpResetLook" class="mp-secondary">恢复默认形象</button><button type="button" id="mpDownloadLook" class="mp-secondary">下载卡通头像 PNG</button><button class="mp-primary">保存资料</button><button type="button" id="mpLogout" class="mp-secondary">退出登录</button></div><div class="mp-error" id="mpProfileError" role="alert"></div>`;
       body.append(form);form.elements.bio.value=p.bio||'';fillColleges(form.elements.college,p.college||'');form.elements.grade.value=p.grade||'';for(const field of ['Bio','College','Grade','Tags'])form.elements['show'+field].checked=p.visibility?.[field.toLowerCase()]!==false;let draft=L.norm(p.look);
       const tags=[...(p.tags||[])],chips=$('mpTagChips');
       function renderTags(){chips.replaceChildren();for(const value of tags){
@@ -254,7 +252,7 @@
       const accRow=form.querySelector('#mpAccColorRow'),accName=form.querySelector('#mpAccColorName');
       function syncAccColor(){const acc=form.elements.acc.value,names={glasses:'眼镜镜框颜色',cap:'帽子颜色',scarf:'围巾颜色'};accRow.hidden=acc==='none';accName.textContent=names[acc]||'配饰颜色'}
       form.elements.acc.addEventListener('change',syncAccColor);syncAccColor();
-      form.elements.photo.onchange=async()=>{try{const result=await lookFromPhoto(form.elements.photo.files[0]);draft=result.look;syncFields();$('mpProfileError').textContent=result.source==='model'?'已按照片生成，可微调后保存':'识别服务不可用（'+lastLookError+'），已按本机粗略估算，请微调'}catch(err){$('mpProfileError').textContent=err.message}};
+      form.elements.photo.onchange=async()=>{try{const result=await lookFromPhoto(form.elements.photo.files[0]);draft=result.look;syncFields();$('mpProfileError').textContent='已在浏览器按照片生成，可微调后保存'}catch(err){$('mpProfileError').textContent=err.message}};
       $('mpResetLook').onclick=()=>{draft={...L.fallback};syncFields()};
       $('mpDownloadLook').onclick=()=>{const a=document.createElement('a');a.download='像素校园卡通头像.png';a.href=L.portrait(draft).toDataURL('image/png');a.click()};
       $('mpLogout').onclick=async()=>{try{await api('/logout',{method:'POST',body:'{}'})}catch{}clearAccountState();showAuth()};
@@ -275,7 +273,11 @@
   }
   function guardLine(who,message){const row=document.createElement('div');row.className='mp-guard-line '+who;row.textContent=(who==='self'?(me?.nickname||'我')+'：':who==='sys'?'':'老丁：')+message;$('mpGuardLog').append(row);$('mpGuardLog').scrollTop=$('mpGuardLog').scrollHeight}
   function guardPost(msg){const w=$('mpGuardBridge').contentWindow;if(w)w.postMessage(msg,location.origin)}
-  function guardLive(){if(guardReady)return true;status('正在接通老丁，请稍等',true);return false}
+  const GUARD_CONNECTING_STATUS='正在接通老丁，请稍等';
+  function guardConnectingDone(message='老丁已接通'){
+    if($('mpStatus').textContent===GUARD_CONNECTING_STATUS)status($('mpGuard').hidden?'':message);
+  }
+  function guardLive(){if(guardReady)return true;status(GUARD_CONNECTING_STATUS,true);return false}
   /* 老丁那头的「处理界面」——比对卡片和当面认一眼那排选项。
      ⚠️ 这里只画按钮、只把点击原样送回 iframe（campus.guard.pick），认领状态机、
         失物库、销账全在 iframe 那一侧；面板自己判定"能不能领"就会两套逻辑打架。
@@ -314,31 +316,18 @@
   }
   function guardLock(box){for(const b of box.querySelectorAll('button'))b.disabled=true}
   function guardPick(body){guardPost({type:'campus.guard.pick',...body})}
-  let lastLookError='';
   /* 照片压到长边 512 的 JPEG：手机原图动辄七八兆，整张 base64 走 postMessage 或 fetch
-     都会先把页面卡住。（老丁识图和形象生成两条路共用这一份。） */
+     都会先把页面卡住。此函数只供老丁的识图入口使用。 */
   function shrinkPhoto(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,512/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.85))};im.onerror=()=>rej(Error('图片读不出来'));im.src=r.result};r.onerror=()=>rej(Error('图片读不出来'));r.readAsDataURL(file)})}
-  /* 照片 → 形象：主路径是服务端拿多模态模型看（/api/mp/look/from-photo）；
-     只有模型不可用（没配 key / 断网 / 限流）才退回浏览器里那套 128px 颜色统计。
-     ⚠️ 那套兜底是启发式：找不到脸时会静默套一个固定假脸框，出来的形象常和本人无关，
-        所以它只能当备胎，并且退回时要如实告诉用户。 */
+  /* 形象照片只在浏览器解析。服务端只接收保存后的 look 配方。 */
   async function lookFromPhoto(file){
-    lastLookError='';
-    let image='';try{image=await shrinkPhoto(file)}catch{}
-    if(image){try{
-      const r=await fetch('/api/mp/look/from-photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image})});
-      const d=await r.json().catch(()=>({}));
-      if(r.ok&&d.look)return{look:L.norm(d.look),source:'model'};
-      lastLookError=d.error||('识别失败（HTTP '+r.status+'）');
-    }catch(err){lastLookError='识别服务连不上：'+err.message}}
-    else lastLookError='这张图片读不出来';
     return{look:await L.fromPhoto(file),source:'local'};
   }
   /* [QODER-FIX #18/#22] 老丁全程只在地图右下角这块面板里说完：验票 → 拉隐藏 iframe 桥 → 等 ready。
      任何一步不通都在面板里落一行说明 + 一个"重试"按钮，绝不退回"开抽屉 / 冷启动提示窗"
      那条路（地图侧 guardTalk 已经把那条分支整体删掉了）。 */
-  function guardWaitReady(ms){return new Promise(res=>{const on=e=>{if(e.origin===location.origin&&e.data&&e.data.type==='campus.guard.ready')done(true)};function done(ok){clearTimeout(t);window.removeEventListener('message',on);res(ok)}const t=setTimeout(()=>done(false),ms);window.addEventListener('message',on)})}
-  function guardFail(text){const log=$('mpGuardLog'),row=document.createElement('div');row.className='mp-guard-line';row.textContent=text+' ';const btn=document.createElement('button');btn.type='button';btn.className='mp-secondary';btn.textContent='重试';btn.onclick=()=>openGuardTalk();row.append(btn);log.append(row);log.scrollTop=log.scrollHeight}
+  function guardWaitReady(ms){return new Promise(res=>{const on=e=>{if(e.origin===location.origin&&e.source===$('mpGuardBridge').contentWindow&&e.data?.type==='campus.guard.ready')done(true)};function done(ok){clearTimeout(t);window.removeEventListener('message',on);res(ok)}const t=setTimeout(()=>done(false),ms);window.addEventListener('message',on)})}
+  function guardFail(text){guardConnectingDone('老丁接通失败，请重试');const log=$('mpGuardLog'),row=document.createElement('div');row.className='mp-guard-line';row.textContent=text+' ';const btn=document.createElement('button');btn.type='button';btn.className='mp-secondary';btn.textContent='重试';btn.onclick=()=>openGuardTalk();row.append(btn);log.append(row);log.scrollTop=log.scrollHeight}
   async function openGuardTalk(){
     if(guardOpening)return;
     if(!token){showAuth('请先登录再与老丁对话');return}
@@ -352,6 +341,7 @@
       const result=await MP.ensureNpc('ld');
       if(result!=='ok'){guardFail(result==='auth'?'登录票据没换成，请重新登录后再呼叫老丁':'老丁的服务没起来（本机 127.0.0.1:8000），起好后点重试');return}
       if(!guardReady){$('mpGuardBridge').src='/ld/';if(!await guardWaitReady(8000)){guardFail('桥没响应：老丁的页面没加载出来，点重试再连一次');return}}
+      guardConnectingDone();
       /* 中途关过面板再打开的，让 iframe 把还走得通的那套处理界面（比对卡片 / 当面认一眼）
          再递一次；那句"已经接通"晚 150ms 再说，恢复出来的按钮才排在我这句话上面。 */
       guardPost({type:'campus.guard.replay'});
@@ -367,26 +357,31 @@
     closeProfile();$('mpSpriteMenu').hidden=true;GUARD.summoned=true;GUARD.summonRepath=0;status('已呼叫老丁，他正沿路赶来',true);
   }
   const MP={connected:false,get look(){return look},sprite:L.sprite,crouch:L.crouch,requireLogin(){connectedUI(false);showAuth('请在大厅重新登录')},async ensureNpc(kind){if(!token&&soloMode){try{await soloSignIn()}catch(e){return 'auth'}}if(!token)return 'auth';try{const t=await api('/npc/'+kind,{method:'POST',body:'{}'});if(kind==='xbg')localStorage.setItem('xbg_token',t.token);if(kind==='ld')localStorage.setItem('ld_token',t.token);if(kind==='agent'){localStorage.setItem('token',t.user.token);localStorage.setItem('user',JSON.stringify({id:t.user.userId,username:t.user.username,nickname:me.nickname,role:t.user.role}))}return 'ok'}catch(e){return /重新登录/.test(e.message)?'auth':'down'}},changeScene(next,x,y){scene=next;peers.clear();if(MP.connected)socketSend({type:'scene.change',to:next,x,y})},onFrame(now){if(!MP.connected||now-moveAt<100)return;moveAt=now;updateNearby();const p=myPos(),key=[scene,p.x.toFixed(1),p.y.toFixed(1),p.dir].join('|');if(key!==lastMove){socketSend({type:'move',...p});lastMove=key}},appendOutdoorPeers(list){if(!MP.connected||scene!=='out')return;for(const p of [...peers.values()].sort((a,b)=>Math.hypot(a.x-player.x,a.y-player.y)-Math.hypot(b.x-player.x,b.y-player.y)).slice(0,30)){const v=point(p,performance.now());if(Math.abs(v.x-cam.x)>viewW+30||Math.abs(v.y-cam.y)>viewH+30)continue;const step=performance.now()-p.at<500?Math.floor(performance.now()/135)%4:4;list.push({img:L.sprite(p.look,p.dir,step),ax:CH_AX,ay:CH_AY,x:v.x,y:v.y,baseY:v.y,clip:Math.round(CH_H*lakeSubmerge(v.x,v.y)),ch:1})}},appendIndoorPeers(who,g){if(!MP.connected||scene==='out')return;for(const p of [...peers.values()].slice(0,30)){const v=point(p,performance.now()),step=performance.now()-p.at<500?Math.floor(performance.now()/135)%4:4;who.push({y:v.y,f:()=>ctrDrawChar(g,L.sprite(p.look,p.dir,step),v.x,v.y)})}},drawLabels(){
-    if(!MP.connected||scene!=='out')return;
+    if(!me||(!MP.connected&&!offlineSolo&&!soloMode)||scene!=='out')return;
     const metrics=outdoorLabelMetrics(zoom);
     if(!metrics)return;
     const now=performance.now(),drawn=[];
     ctx.save();ctx.font=`bold ${metrics.font}px system-ui`;ctx.textAlign='center';ctx.textBaseline='bottom';
     const self={id:me.id,nickname:me.nickname+' #'+me.id,x:player.x,y:player.y,fromX:player.x,fromY:player.y,at:now};
     for(const p of [self,...[...peers.values()].sort((a,b)=>Math.hypot(a.x-player.x,a.y-player.y)-Math.hypot(b.x-player.x,b.y-player.y)).slice(0,30)]){
-      const v=point(p,now),G=window.CAMG||{x:Math.round(cam.x),y:Math.round(cam.y)},x=(v.x-G.x)*zoom,y=(v.y-CH_AY-G.y)*zoom-metrics.gap;
+      const v=point(p,now),G=window.CAMG||{x:Math.round(cam.x),y:Math.round(cam.y)};
+      // Use the same rounded sprite origin as render(): fractional text coordinates
+      // change glyph antialiasing every walking frame at 2x/3x zoom.
+      const sx=Math.round((v.x-CH_AX-G.x)*zoom),sy=Math.round((v.y-CH_AY-G.y)*zoom);
+      const x=sx+Math.round(CH_AX*zoom),y=sy-metrics.gap;
       if(x<0||x>VIEW_W||y<0||y>VIEW_H)continue;
       const own=p.id===me.id,font=own?Math.max(7,metrics.font):metrics.font,height=own?font+4:metrics.height,pad=own?2:metrics.pad;
       ctx.font=`bold ${font}px system-ui`;
       const name=own&&zoom<.5?'#'+me.id:(p.nickname.length>metrics.maxChars?p.nickname.slice(0,metrics.maxChars)+'…':p.nickname);
-      const w=ctx.measureText(name).width+pad*2,box={left:x-w/2,right:x+w/2,top:y-height,bottom:y};
+      const w=Math.ceil(ctx.measureText(name).width+pad*2),left=Math.round(x-w/2),box={left,right:left+w,top:y-height,bottom:y};
       if(drawn.some(q=>box.left<q.right&&box.right>q.left&&box.top<q.bottom&&box.bottom>q.top))continue;
       drawn.push(box);
       ctx.fillStyle='rgba(19,27,35,.88)';ctx.fillRect(box.left,box.top,w,height);
       ctx.fillStyle='#fff';ctx.fillText(name,x,y-2);
     }
     ctx.restore()
-  },drawIndoorLabels(g){if(!MP.connected||scene==='out')return;g.save();g.font='bold 10px system-ui';g.textAlign='center';const own=myPos();for(const p of [{id:me.id,nickname:me.nickname+' #'+me.id,x:own.x,y:own.y,fromX:own.x,fromY:own.y,at:performance.now()},...peers.values()]){const v=point(p,performance.now()),w=g.measureText(p.nickname).width+6;g.fillStyle='rgba(19,27,35,.9)';g.fillRect(v.x-w/2,v.y-43,w,13);g.fillStyle='#fff';g.fillText(p.nickname,v.x,v.y-33)}g.restore()}};
+  },drawIndoorLabels(g){if(!me||(!MP.connected&&!offlineSolo&&!soloMode)||scene==='out')return;g.save();g.font='bold 10px system-ui';g.textAlign='center';const own=myPos();for(const p of [{id:me.id,nickname:me.nickname+' #'+me.id,x:own.x,y:own.y,fromX:own.x,fromY:own.y,at:performance.now()},...peers.values()]){const v=point(p,performance.now()),w=g.measureText(p.nickname).width+6;g.fillStyle='rgba(19,27,35,.9)';g.fillRect(v.x-w/2,v.y-43,w,13);g.fillStyle='#fff';g.fillText(p.nickname,v.x,v.y-33)}g.restore()}};
+  Object.defineProperty(MP,'offlineSolo',{get:()=>offlineSolo||soloMode});
   MP.openGuardTalk=openGuardTalk;
   MP.guardArrived=()=>{status('老丁已到达');openGuardTalk()};
   MP.callGuard=callGuard;
@@ -400,21 +395,9 @@
     }catch(error){$('mpAuthError').textContent='单机服务暂不可用：'+error.message}
     finally{button.disabled=false}
   };
-  /* [QODER-FIX #70] 断网弹框的两个出口。进单机时**不换账号**：这时用户早就带着
-     身份进过场了，再走一次 soloSignIn 会把他替换成"游客xxxx"，形象、公告、私聊
-     记录全丢了。所以这里只停掉重连、关掉那条链路，人还是原来的人。 */
-  $('mpOfflineSolo').onclick=()=>{
-    allowReconnect=false;clearTimeout(reconnectTimer);clearInterval(pingTimer);clearInterval(netTimer);
-    const old=ws;ws=null;try{old?.close()}catch{}
-    MP.connected=false;peers.clear();connectedUI(false);
-    if(!me){allowReconnect=true;hideOffline();showAuth('网络恢复后请重新登录');return}
-    soloMode=true;hideOffline();soloUi('单机游览中，联网恢复后可用"退出单机 · 登录"回到大厅');
-  };
-  $('mpOfflineRetry').onclick=()=>{hideOffline();allowReconnect=true;retries=0;clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,800)};
-  $('mpOfflineClose').onclick=()=>$('mpOfflineRetry').onclick();
   $('mpSoloCanteen').onclick=()=>ctrOpenPlatform(AUNT_APP);
   $('mpSoloExit').onclick=async()=>{try{if(token)await api('/logout',{method:'POST',body:'{}'})}catch{}clearAccountState();showAuth()};
-  $('mpAuthPhoto').onchange=async()=>{const file=$('mpAuthPhoto').files[0];if(!file)return;const box=$('mpAuthLookPreview');box.hidden=false;box.replaceChildren(document.createTextNode('正在按照片生成形象……'));$('mpAuthError').textContent='';try{const result=await lookFromPhoto(file);authLook=result.look;box.replaceChildren(L.portrait(authLook),document.createTextNode(result.source==='model'?'像素卡通形象已生成，进入后还可以微调':'识别服务不可用（'+lastLookError+'），先给了个粗略形象，进入后可在个人中心微调'));$('mpAuthError').textContent=''}catch(e){authLook=null;box.replaceChildren();$('mpAuthError').textContent=e.message}};
+  $('mpAuthPhoto').onchange=async()=>{const file=$('mpAuthPhoto').files[0];if(!file)return;const box=$('mpAuthLookPreview');box.hidden=false;box.replaceChildren(document.createTextNode('正在按照片生成形象……'));$('mpAuthError').textContent='';try{const result=await lookFromPhoto(file);authLook=result.look;box.replaceChildren(L.portrait(authLook),document.createTextNode('像素卡通形象已在浏览器生成，进入后还可以微调'));$('mpAuthError').textContent=''}catch(e){authLook=null;box.replaceChildren();$('mpAuthError').textContent=e.message}};
   $('mpSelf').onclick=()=>showProfile(me.id);$('mpBoardToggle').onclick=()=>{$('mpBoard').hidden?openBoard():$('mpBoard').hidden=true};$('mpBoardClose').onclick=()=>$('mpBoard').hidden=true;
   $('mpSprite').onclick=()=>{$('mpSpriteMenu').hidden=!$('mpSpriteMenu').hidden};$('mpSummonGuard').onclick=callGuard;
   $('mpBoardForm').onsubmit=e=>{e.preventDefault();const input=$('mpBoardInput'),content=input.value.trim(),error=$('mpBoardError'),button=$('mpBoardForm').querySelector('button');if(!content||content.length>200){error.textContent='公告须为 1 至 200 字';return}/* [QODER-FIX #7] 上一条没收到服务器确认时，旧代码在这里静默 return，
@@ -424,12 +407,12 @@
     boardSending=id;button.disabled=true;error.textContent='正在发送…';
     clearTimeout(boardTimer);boardTimer=setTimeout(()=>{if(boardSending!==id)return;boardSending='';button.disabled=false;error.textContent='发送超时：联机通道没有确认，请检查网络后重试'},8000)};
   $('mpChatClose').onclick=closeChat;$('mpChatForm').onsubmit=e=>{e.preventDefault();const input=$('mpChatInput'),content=input.value.trim();if(!content||!chatWith)return;const clientMsgId=clientId();pending.set(clientMsgId,{from:me.id,to:chatWith,content,fromNickname:me.nickname,look,clientMsgId});if(socketSend({type:'chat.send',to:chatWith,content,clientMsgId})){input.value='';$('mpChatError').textContent='';input.focus()}else pending.delete(clientMsgId)};
-  $('mpChatInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('mpChatForm').requestSubmit()}};
+  $('mpChatInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();$('mpChatForm').requestSubmit()}};
   $('mpProfileClose').onclick=closeProfile;$('mpProfileShade').onclick=e=>{if(e.target===$('mpProfileShade'))closeProfile()};
   /* [QODER-FIX #5/#8] 双选菜单的两个入口：发起对话 / 查看个人主页 */
   $('mpMenuChat').onclick=()=>{const id=menuUser;$('mpMenu').hidden=true;openChat(id)};$('mpMenuProfile').onclick=()=>showProfile(menuUser);
   $('mpNearbyChat').onclick=()=>{if(nearUser)openChat(nearUser)};$('mpNearbyProfile').onclick=()=>{if(nearUser)showProfile(nearUser)};
-  $('mpGuardClose').onclick=()=>$('mpGuard').hidden=true;
+  $('mpGuardClose').onclick=()=>{$('mpGuard').hidden=true;guardConnectingDone()};
   $('mpGuardForm').onsubmit=e=>{e.preventDefault();const input=$('mpGuardInput'),value=input.value.trim();if(!value)return;if(!guardLive())return;guardLine('self',value);guardPost({type:'campus.guard.ask',text:value});input.value=''};
   /* 四个快捷功能键 + 「图」：全部只是把动作转递给隐藏 iframe 里那套原生状态机
      （FLOWS / 失物库 / Qwen 识图都在那一侧），面板不另起一套业务。 */
@@ -438,7 +421,7 @@
   $('mpGuardFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!guardLive())return;
     try{const image=await shrinkPhoto(f);const text=$('mpGuardInput').value.trim();$('mpGuardInput').value='';guardLine('self','【照片】'+f.name);guardPost({type:'campus.guard.photo',image,text})}
     catch(err){guardLine('sys','这张照片读不出来，换一张再试')}};
-  window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==$('mpGuardBridge').contentWindow)return;if(e.data?.type==='campus.guard.ready'){guardReady=true;return}if($('mpGuard').hidden)return;if(e.data?.type==='campus.guard.reply')guardLine(e.data.who==='sys'?'sys':'guard',String(e.data.text||''));else if(e.data?.type==='campus.guard.ui')guardUi(e.data.ui)});
+  window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==$('mpGuardBridge').contentWindow)return;if(e.data?.type==='campus.guard.ready'){guardReady=true;guardConnectingDone();return}if($('mpGuard').hidden)return;if(e.data?.type==='campus.guard.reply')guardLine(e.data.who==='sys'?'sys':'guard',String(e.data.text||''));else if(e.data?.type==='campus.guard.ui')guardUi(e.data.ui)});
   /* [QODER-FIX #8] menuAt：pointerup 打开双选菜单后，浏览器还会补发一次 click，
      旧逻辑会立刻把菜单关掉。250ms 内的点击不算“点空白处关闭”。 */
   root.addEventListener('click',e=>{const av=e.target.closest('.mp-avatar');if(av&&av.dataset.user){showMenu(av.dataset.user,av);e.stopPropagation()}else if(!$('mpMenu').hidden&&!e.target.closest('#mpMenu')&&performance.now()-menuAt>250)$('mpMenu').hidden=true});
@@ -452,8 +435,8 @@
   window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('mpMenu').hidden)$('mpMenu').hidden=true;else if(!$('mpProfileShade').hidden)closeProfile();else if(!$('mpChat').hidden)closeChat();else if(!$('mpBoard').hidden)$('mpBoard').hidden=true;return}if(e.target.closest?.('#mpRoot')){for(const k in keys)keys[k]=0;for(const k in CKEYS)CKEYS[k]=0;return}if(e.key.toLowerCase()==='p'&&MP.connected){showProfile(me.id);e.preventDefault();e.stopImmediatePropagation()}},true);
   root.addEventListener('keydown',e=>{e.stopPropagation();for(const k in keys)keys[k]=0;for(const k in CKEYS)CKEYS[k]=0});
   root.addEventListener('keyup',e=>{e.stopPropagation();for(const k in keys)keys[k]=0;for(const k in CKEYS)CKEYS[k]=0});
-  window.addEventListener('online',()=>{if(token&&!MP.connected){clearTimeout(reconnectTimer);retries=0;connect()}});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&token&&!MP.connected&&(!ws||ws.readyState>1)){clearTimeout(reconnectTimer);connect()}});
+  window.addEventListener('online',()=>{if(token&&!MP.connected&&!soloMode){clearTimeout(reconnectTimer);retries=0;connect()}});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&token&&!MP.connected&&!soloMode&&(!ws||ws.readyState>1)){clearTimeout(reconnectTimer);connect()}});
   if(location.protocol==='file:'){status('当前为单机模式');return}
   try{token=localStorage.getItem(tokenKey)||''}catch{}
   if(token){api('/session',{method:'POST',body:'{}'}).then(()=>api('/profile/me')).then(p=>{me=p;look=p.look;profiles.set(p.id,p);localStorage.setItem('mpNickname',p.nickname);showLookPrompt=L.isDefault(look);connect()}).catch(()=>{clearAccountState();showAuth()})}else showAuth();
