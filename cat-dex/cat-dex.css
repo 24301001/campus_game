@@ -1,0 +1,120 @@
+/* cat-dex.css — 猫咪图鉴模块的全部样式（配套 cat-dex.js，别处不用引第二份）
+   ⚠️ 变量在 #catDexRoot 上自带一份，和联机大厅那套 mp/theme.css 同色板：
+      本模块要能在**没有 lobby** 的纯静态地图页上也长一个样（用户就是拿
+      `python -m http.server` 直接开这张地图的）。 */
+/* 层序：本模块挂在 #mpRoot 里面，所以这里的 52 是**在联机层内部**编号 ——
+   联机自己的弹窗（个人中心 / 登录门 / 断网框）都是 z-index:auto，52 会把它们全压住。
+   压住常驻面板（公告栏、私聊）是想要的：图鉴本身就是一张弹窗，打开它的时候玩家
+   不需要同时盯着公告。压住那些**弹窗**不是 —— 所以那三张门开着时整块让位（见下面）。
+   ⚠️ 别改成"根节点 z-index:auto + 按钮 30 / 弹窗 52"：挂在 #mpRoot 里的时候
+   这两个数都只在联机层内部比较，跟 #mpRoot 的 50 没关系，实测按下去按钮照样盖在
+   个人中心脸上（本轮踩过）。 */
+#catDexRoot{--cdx-bg:#1d2129;--cdx-deep:#11151b;--cdx-line:#475261;--cdx-ink:#f3efe3;--cdx-muted:#b9c9d5;--cdx-gold:#ffd76e;--cdx-teal:#7fd6c8;position:fixed;inset:0;z-index:52;pointer-events:none;color:var(--cdx-ink);font:13px/1.55 system-ui,"Microsoft YaHei",sans-serif}
+#catDexRoot *{box-sizing:border-box}
+#catDexRoot [hidden]{display:none!important}
+#catDexRoot button{font:inherit;cursor:pointer}
+#catDexRoot canvas{display:block;image-rendering:pixelated}
+
+/* 入口按钮就贴在「玩家精灵」下面那一格（精灵按钮 top:146、高约 33）。
+   ⚠️ 点精灵按钮弹出的 mpSpriteMenu 也占 top:192 那一块 —— 不挪开的话菜单会被
+      这颗按钮压出一个洞，所以菜单开着时把它让到菜单下沿。 */
+#catDexRoot #catDexBtn{position:absolute;left:14px;top:196px;padding:7px 11px;border:1px solid var(--cdx-line);border-radius:4px;background:var(--cdx-bg);color:var(--cdx-ink);pointer-events:auto}
+#catDexRoot #catDexBtn:hover{border-color:var(--cdx-gold);color:var(--cdx-gold)}
+body:has(#mpSpriteMenu:not([hidden])) #catDexRoot #catDexBtn{top:384px}
+/* 联机那三张**弹窗式**的门（登录门 / 个人中心 / 断网框）开着的时候，整块让位：
+   它们各自是全屏幕障，玩家此刻要看的只有它们，图鉴这颗按钮留在上面就是压脸。 */
+body:has(#mpAuthShade:not([hidden])) #catDexRoot,
+body:has(#mpProfileShade:not([hidden])) #catDexRoot,
+body:has(#mpOfflineShade:not([hidden])) #catDexRoot{display:none}
+
+.cdx-shade{position:absolute;inset:0;background:rgba(8,10,14,.58);display:flex;align-items:center;justify-content:center;padding:16px;pointer-events:auto}
+.cdx-panel{width:min(430px,100%);max-height:100%;overflow:auto;display:flex;flex-direction:column;background:var(--cdx-bg);border:1px solid var(--cdx-line);border-radius:8px;box-shadow:0 8px 0 rgba(0,0,0,.34)}
+.cdx-head{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--cdx-line);position:sticky;top:0;background:var(--cdx-bg)}
+.cdx-title{font-weight:700;letter-spacing:.04em;color:var(--cdx-gold)}
+.cdx-count{margin-left:auto;color:var(--cdx-muted);font-size:12px}
+.cdx-x{background:transparent;border:0;color:var(--cdx-muted);font-size:18px;line-height:1;padding:3px 6px}
+.cdx-x:hover{color:#fff}
+.cdx-foot{padding:8px 12px;border-top:1px solid var(--cdx-line);color:var(--cdx-muted);font-size:12px}
+
+/* --- 图鉴格 --- */
+.cdx-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.cdx-card{display:flex;align-items:center;gap:9px;padding:8px;background:var(--cdx-deep);border:1px solid var(--cdx-line);border-radius:6px;color:var(--cdx-ink);text-align:left;position:relative}
+.cdx-card:hover{border-color:var(--cdx-gold)}
+.cdx-card.cdx-on{border-color:var(--cdx-gold);box-shadow:inset 0 0 0 1px var(--cdx-gold)}
+.cdx-thumb{width:54px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;flex:none}
+/* ⚠️ 一律 height:auto：本模块烘出来的猫图统一在头顶多留 4 行透明（戴头饰不被画布顶边
+   裁掉，见 cat-dex.js §5.3），写死 54×54 会把这 22 行压回 18 行的高度 = 猫被压扁。
+   宽度锁死、高度按原比例走，戴饰与不戴的猫在格子里就是同一个体量。 */
+.cdx-thumb canvas{width:54px;height:auto}
+/* 没遇见过的猫：图还是给（图鉴要求收录全部猫咪的图片），只把它压成灰影 */
+.cdx-dim .cdx-thumb{filter:grayscale(1) brightness(.6)}
+.cdx-line{display:flex;flex-direction:column;gap:1px;min-width:0}
+.cdx-line b{font-size:13px}
+.cdx-line i{font-style:normal;color:var(--cdx-muted);font-size:11px}
+.cdx-flag{position:absolute;right:6px;top:5px;font-style:normal;font-size:10px;color:#1b2028;background:var(--cdx-teal);border-radius:3px;padding:1px 4px}
+
+/* --- 单只猫详情 --- */
+.cdx-detail{padding:0 12px 12px;display:flex;flex-direction:column;gap:9px}
+.cdx-hero{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 0}
+.cdx-hero-cell{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--cdx-deep);border:1px solid var(--cdx-line);border-radius:6px;padding:6px 2px}
+.cdx-hero-cell canvas{width:72px;height:auto}
+.cdx-hero-cell span{color:var(--cdx-muted);font-size:11px}
+.cdx-h1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cdx-h1 b{font-size:16px;color:var(--cdx-gold)}
+.cdx-tag{background:#2a303b;border:1px solid var(--cdx-line);border-radius:3px;padding:1px 6px;font-size:11px;color:var(--cdx-muted)}
+.cdx-warn{border-color:#8a5a2c;color:#ffce8a}
+.cdx-trait{margin:0;color:var(--cdx-muted)}
+.cdx-rows{display:grid;grid-template-columns:64px 1fr;gap:3px 10px;margin:0;padding:9px 10px;background:var(--cdx-deep);border:1px solid var(--cdx-line);border-radius:6px}
+.cdx-rows dt{color:var(--cdx-muted);font-size:12px}
+.cdx-rows dd{margin:0;font-size:12px}
+.cdx-slot{color:var(--cdx-ink)}
+.cdx-slot + .cdx-slot{margin-top:2px}
+
+.cdx-aff{padding:9px 10px;background:var(--cdx-deep);border:1px solid var(--cdx-line);border-radius:6px;display:flex;flex-direction:column;gap:6px}
+.cdx-aff-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.cdx-aff-h b{color:var(--cdx-gold);font-size:14px}
+.cdx-aff-h span{color:var(--cdx-muted);font-size:11px}
+.cdx-bar{height:7px;background:#0d1116;border:1px solid var(--cdx-line);border-radius:4px;overflow:hidden}
+.cdx-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cdx-teal),var(--cdx-gold))}
+/* 饱腹那条走"粮色"（草绿→炒粮褐），和好感的青→金分开：两栏上下挨着，
+   同一条配色的话读不出这是两笔独立的账。排得比 .cdx-max 前面 —— 吃满时
+   两个类同时挂上，后写的 .cdx-max 转暖橙红，一眼看出"再喂也没用"。 */
+.cdx-bar.cdx-full i{background:linear-gradient(90deg,#7fae5a,#c98a3e)}
+.cdx-bar.cdx-max i{background:linear-gradient(90deg,#e0a53c,#d9634f)}
+.cdx-steps{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+.cdx-steps li{font-size:11px;color:#8b98a6;display:flex;gap:6px}
+.cdx-steps li b{color:inherit;min-width:38px}
+.cdx-steps li.cdx-done{color:var(--cdx-teal)}
+
+.cdx-ops{display:flex;align-items:center;gap:8px}
+.cdx-btn{border:1px solid var(--cdx-line);background:#2a303b;color:var(--cdx-ink);border-radius:4px;padding:7px 12px}
+.cdx-btn:hover:not(:disabled){background:#354052;border-color:var(--cdx-gold)}
+.cdx-btn:disabled{opacity:.5;cursor:not-allowed}
+.cdx-btn.cdx-act{background:var(--cdx-teal);border-color:#4e9c90;color:#12201f;font-weight:700}
+.cdx-hint{color:var(--cdx-muted);font-size:11px}
+.cdx-wear{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:9px 10px;background:var(--cdx-deep);border:1px solid var(--cdx-line);border-radius:6px}
+.cdx-wear-h{width:100%;color:var(--cdx-muted);font-size:11px}
+.cdx-wear-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 6px;background:transparent;border:1px solid var(--cdx-line);border-radius:5px;color:var(--cdx-muted);font-size:11px}
+.cdx-wear-item canvas{width:54px;height:auto}
+.cdx-wear-item:hover{border-color:var(--cdx-gold);color:var(--cdx-ink)}
+.cdx-wear-item.cdx-on{border-color:var(--cdx-gold);color:var(--cdx-gold);box-shadow:inset 0 0 0 1px rgba(255,215,110,.35)}
+.cdx-lock{margin:0;padding:7px 10px;border:1px dashed var(--cdx-line);border-radius:5px;color:var(--cdx-muted);font-size:11px}
+
+/* 靠近猫时那颗键位气泡（Q 抚摸 / R 喂食 / G 更多）。
+   ⚠️ 刻意逐条抄地图门口 #dtip（§7.5.16）那条规则 —— 项目里所有"按 X 做 Y"的气泡
+      （向导 / 老丁 / 阿姨 / 门口）共用这一张脸，换样式就等于第四种说法。 */
+#catDexRoot .cdx-keytip{position:absolute;left:0;top:0;pointer-events:none;transform:translate(-50%,-100%);
+  padding:2px 6px;background:#1d2129;color:#e9e5d8;border:1px solid #39404d;border-radius:4px;
+  font:12px/1.4 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
+  box-shadow:0 2px 8px rgba(0,0,0,.45);white-space:nowrap}
+#catDexRoot .cdx-keytip b{color:#ffd76e}
+/* 轮盘扇区里补的键位角标（摸 = Q / 喂 = R），金色与 .wn 同色，读作"这是键，不是动作名"。 */
+#wheel .cdx-wk{fill:#ffd76e;font:600 12px ui-monospace,Consolas,"Courier New",monospace;
+  letter-spacing:1px;pointer-events:none}
+
+@media(max-width:650px){
+  #catDexRoot #catDexBtn{left:8px;top:132px}
+  body:has(#mpSpriteMenu:not([hidden])) #catDexRoot #catDexBtn{top:320px}
+  .cdx-grid{grid-template-columns:1fr}
+  .cdx-hero{grid-template-columns:repeat(2,1fr)}
+}
