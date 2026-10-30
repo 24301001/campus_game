@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>像素校园 · 全校地图</title>
-<link rel="stylesheet" href="mp/theme.css">
+<link rel="stylesheet" href="mp/theme.css?v=20261031-face">
+<link rel="stylesheet" href="cat-dex/cat-dex.css">
 <style>
   html,body{margin:0;height:100%;background:#101216;overflow:hidden;}
   #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
@@ -20643,7 +20644,9 @@ function loop(now) {
 requestAnimationFrame(loop);
 
 </script>
-<script src="mp/look.js"></script>
-<script src="mp/lobby.js?v=20261030-guardstatus"></script>
+<script src="mp/look.js?v=20261031-face"></script>
+<script src="mp/lobby.js?v=20261031-face"></script>
+<!-- 猫咪图鉴在地图与大厅脚本之后接入猫宠行为。 -->
+<script src="cat-dex/cat-dex.js"></script>
 </body>
 </html>

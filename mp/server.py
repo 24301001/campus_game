@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import gzip
 import http.client
 import hashlib
 import hmac
@@ -31,9 +32,9 @@ XBG_PORT = int(os.environ.get("XBG_PORT", "8010"))
 LD_PORT = int(os.environ.get("LD_PORT", "8000"))
 AGENT_PORT = int(os.environ.get("AGENT_PORT", "8081"))
 AGENT_WEB_PORT = int(os.environ.get("AGENT_WEB_PORT", "3001"))
-DEFAULT_LOOK = {"skin": "#f2c9a0", "hairStyle": "short", "hairColor": "#30251e", "eye": "round", "eyeColor": "#332a2b", "cloth": "#c94954", "clothAlt": "#f3eee7", "clothPattern": "solid", "pants": "#38516d", "acc": "none", "accColor": "#b67a56"}
+DEFAULT_LOOK = {"skin": "#f2c9a0", "faceShape": "round", "hairStyle": "short", "hairColor": "#30251e", "eye": "round", "eyeColor": "#332a2b", "mouth": "soft", "cloth": "#c94954", "clothAlt": "#f3eee7", "clothPattern": "solid", "pants": "#38516d", "acc": "none", "accColor": "#b67a56"}
 LOOK_COLORS = ("skin", "hairColor", "eyeColor", "cloth", "clothAlt", "pants", "accColor")
-LOOK_CHOICES = {"hairStyle": ("short", "mid", "long", "ponytail", "bun", "twintails"), "eye": ("round", "narrow", "dot"), "acc": ("none", "glasses", "cap", "scarf"), "clothPattern": ("solid", "stripe")}
+LOOK_CHOICES = {"faceShape": ("square", "round"), "hairStyle": ("short", "mid", "long", "ponytail", "bun", "twintails"), "eye": ("round", "narrow", "dot"), "mouth": ("soft", "smile"), "acc": ("none", "glasses", "cap", "scarf"), "clothPattern": ("solid", "stripe")}
 DEFAULT_VISIBILITY = {"bio": True, "college": True, "grade": True, "tags": True}
 # 北京交通大学官网“机构设置 → 直属学院”现列的 23 个学院。
 # 主页只提供下拉选择；旧名称仍可显示为待重新选择的历史值。
@@ -466,7 +467,7 @@ class Handler(BaseHTTPRequestHandler):
         if any(path == prefix or path.startswith(prefix) for prefix, _ in PROXY_PREFIXES):
             return self.proxy(path)
         requested = unquote(path.lstrip("/")) or "像素校园_全校地图.html"
-        if requested not in {"像素校园_全校地图.html", "mp/look.js", "mp/lobby.js", "mp/theme.css"}:
+        if requested not in {"像素校园_全校地图.html", "mp/look.js", "mp/lobby.js", "mp/theme.css", "mp/avatar3d.js", "mp/three.module.js"} and not requested.startswith("cat-dex/"):
             self.send_error(404)
             return
         target = (ROOT / requested).resolve()
@@ -476,11 +477,17 @@ class Handler(BaseHTTPRequestHandler):
         body = target.read_bytes()
         if requested == "mp/lobby.js":
             body = body.replace(b"__MP_WS_PORT__", str(WS_PORT).encode("ascii"))
+        compressed = target.suffix in (".html", ".js", ".css") and "gzip" in self.headers.get("Accept-Encoding", "").lower()
+        if compressed:
+            body = gzip.compress(body, compresslevel=6)
         self.send_response(200)
         self.send_header("Content-Type", (mimetypes.guess_type(target.name)[0] or "application/octet-stream") + ("; charset=utf-8" if target.suffix in (".html", ".js", ".css") else ""))
-        # 这四个文件是改完直接生效的源码，绝不能让浏览器拿缓存：
+        # 这些文件是改完直接生效的源码，绝不能让浏览器拿缓存：
         # 以前没发这个头，改完 look.js/lobby.js 后刷新仍是旧画面，看起来像"根本没改"。
         self.send_header("Cache-Control", "no-store, must-revalidate")
+        self.send_header("Vary", "Accept-Encoding")
+        if compressed:
+            self.send_header("Content-Encoding", "gzip")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)

@@ -206,5 +206,35 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpBoard{top:101px}
 #mpRoot #mpChatForm .mp-primary:hover{background:#176a43}
 #mpRoot #mpChatError{background:#fff;color:#a42c36}
 
+/* 动态 3D 肖像使用透明画布，手势直接控制视角。 */
+#mpRoot .mp-look-preview{display:block;width:100%;padding:0;background:transparent;border:0}
+#mpRoot .mp-avatar-viewer{position:relative;width:100%;overflow:hidden;background:transparent;touch-action:none;cursor:grab;user-select:none;outline-offset:3px}
+#mpRoot .mp-avatar-viewer.dragging{cursor:grabbing}
+#mpRoot .mp-avatar-stage{width:100%;height:360px;position:relative;overflow:hidden}
+#mpRoot .mp-avatar-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none}
+#mpRoot .mp-look-preview .mp-avatar-stage{height:420px}
+#mpRoot .mp-look-preview .mp-avatar-canvas{width:100%;height:100%;image-rendering:auto}
+#mpRoot .mp-avatar-floor{position:absolute;left:50%;bottom:17px;width:116px;height:19px;transform:translateX(-50%);border-radius:50%;background:rgba(15,32,30,.24);filter:blur(9px);pointer-events:none}
+#mpRoot .mp-avatar-loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--mp-muted);font-size:12px}
+#mpRoot .mp-avatar-viewer-controls{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--mp-muted);font-size:11px;text-align:center}
+#mpRoot .mp-avatar-viewer-controls button{border:1px solid var(--mp-line);border-radius:50%;width:29px;height:29px;flex:none;background:transparent;color:var(--mp-ink);font-size:18px;line-height:1}
+#mpRoot .mp-avatar-viewer-controls button:hover{border-color:var(--mp-gold);color:var(--mp-gold)}
+#mpRoot .mp-avatar-view-modes{display:flex;justify-content:center;gap:5px;margin:7px 0 13px}
+#mpRoot .mp-avatar-view-modes button{border:1px solid var(--mp-line);border-radius:6px;padding:5px 12px;background:transparent;color:var(--mp-muted);font-size:12px}
+#mpRoot .mp-avatar-view-modes button[aria-pressed="true"]{background:#345a4a;border-color:#609b7d;color:#fff}
+#mpRoot #mpProfile.mp-other-profile .mp-avatar-view-modes button{color:#eff8f1;border-color:rgba(232,255,245,.45)}
+#mpRoot #mpProfile.mp-other-profile .mp-avatar-view-modes button[aria-pressed="true"]{background:#237d59;border-color:#70b692;color:#fff}
 #mpRoot .mp-his-jump{display:block;margin:8px 0 10px 6px;font-size:12px}
-@media(max-width:650px){#mpRoot #mpChat{right:8px;top:70px;bottom:8px;width:calc(100vw - 16px);max-height:none}#mpRoot #mpChat .mp-head{gap:7px}#mpRoot .mp-chat-history{font-size:11px}}
+
+#mpRoot #mpProfileShade:has(#mpProfile.mp-other-profile){background:rgba(8,15,17,.38)}
+#mpRoot #mpProfile.mp-other-profile{width:min(440px,100%);background:rgba(14,27,29,.34);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);color:#f5faf8;border:1px solid rgba(226,255,246,.3);border-radius:15px;box-shadow:0 20px 48px rgba(4,13,15,.3)}
+#mpRoot #mpProfile.mp-other-profile .mp-head{border-color:rgba(232,255,245,.25)}
+#mpRoot #mpProfile.mp-other-profile .mp-title{color:#e8fff2}
+#mpRoot #mpProfile.mp-other-profile .mp-icon,#mpRoot #mpProfile.mp-other-profile .mp-muted,#mpRoot #mpProfile.mp-other-profile p,#mpRoot #mpProfile.mp-other-profile .mp-public-info dt{color:#e0eee9}
+#mpRoot #mpProfile.mp-other-profile .mp-public-info{border-color:rgba(232,255,245,.28)}
+#mpRoot #mpProfile.mp-other-profile .mp-public-info>div{border-color:rgba(232,255,245,.2)}
+#mpRoot #mpProfile.mp-other-profile .mp-avatar-viewer-controls{color:#f1faf5}
+#mpRoot #mpProfile.mp-other-profile .mp-avatar-viewer-controls button{color:#f1faf5;border-color:rgba(232,255,245,.7);background:rgba(7,22,20,.25)}
+#mpRoot #mpProfile.mp-other-profile .mp-tag{background:rgba(208,245,221,.18);border-color:rgba(208,245,221,.45);color:#f2fff6}
+#mpRoot #mpProfile.mp-other-profile .mp-primary{background:#237d59;border:0;color:#fff}
+@media(max-width:650px){#mpRoot #mpChat{right:8px;top:70px;bottom:8px;width:calc(100vw - 16px);max-height:none}#mpRoot #mpChat .mp-head{gap:7px}#mpRoot .mp-chat-history{font-size:11px}#mpRoot #mpProfile.mp-other-profile{max-height:calc(100vh - 20px)}}

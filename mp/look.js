@@ -1,7 +1,7 @@
 /* 照片 → 形象完全在浏览器处理：定位脸、分区取色并拼装像素部件。
    认不出脸时会用默认脸框和可手动调整的配方。服务端只保存 look，不接收照片。 */
 (() => {
-  const fallback = {skin:'#f2c9a0',hairStyle:'short',hairColor:'#30251e',eye:'round',eyeColor:'#332a2b',cloth:'#c94954',clothAlt:'#f3eee7',clothPattern:'solid',pants:'#38516d',acc:'none',accColor:'#b67a56'};
+  const fallback = {skin:'#f2c9a0',faceShape:'round',hairStyle:'short',hairColor:'#30251e',eye:'round',eyeColor:'#332a2b',mouth:'soft',cloth:'#c94954',clothAlt:'#f3eee7',clothPattern:'solid',pants:'#38516d',acc:'none',accColor:'#b67a56'};
   const oldFallback = {skin:'#e9bb92',hairStyle:'short',hairColor:'#241d1a',eye:'round',cloth:'#3f6ea8',pants:'#454c5a',acc:'none'};
   const cache = new Map();
   const hex = ([r,g,b]) => '#' + [r,g,b].map(x => Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,'0')).join('');
@@ -17,7 +17,9 @@
     const result={...fallback};
     for(const k of ['skin','hairColor','eyeColor','cloth','clothAlt','pants','accColor'])if(typeof v[k]==='string'&&/^#[0-9a-f]{6}$/i.test(v[k]))result[k]=v[k].toLowerCase();
     if(['short','mid','long','ponytail','bun','twintails'].includes(v.hairStyle))result.hairStyle=v.hairStyle;
+    if(['square','round'].includes(v.faceShape))result.faceShape=v.faceShape;
     if(['round','narrow','dot'].includes(v.eye))result.eye=v.eye;
+    if(['soft','smile'].includes(v.mouth))result.mouth=v.mouth;
     if(['none','glasses','cap','scarf'].includes(v.acc))result.acc=v.acc;
     if(['solid','stripe'].includes(v.clothPattern))result.clothPattern=v.clothPattern;
     return result;
