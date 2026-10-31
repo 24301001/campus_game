@@ -359,7 +359,7 @@
     for(const shell of log.querySelectorAll('.mp-guard-cards'))if(!shell.childElementCount)shell.remove();
     try{
       const result=await MP.ensureNpc('ld');
-      if(result!=='ok'){guardFail(result==='auth'?'登录票据没换成，请重新登录后再呼叫老丁':'老丁的服务没起来（本机 127.0.0.1:8000），起好后点重试');return}
+      if(result!=='ok'){guardFail(result==='auth'?'登录票据没换成，请重新登录后再呼叫老丁':'当前站点服务器的老丁服务暂不可用，请稍后重试');return}
       if(!guardReady){$('mpGuardBridge').src='/ld/';if(!await guardWaitReady(8000)){guardFail('桥没响应：老丁的页面没加载出来，点重试再连一次');return}}
       guardConnectingDone();
       /* 中途关过面板再打开的，让 iframe 把还走得通的那套处理界面（比对卡片 / 当面认一眼）
