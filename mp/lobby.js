@@ -79,13 +79,13 @@
   let avatarModulePromise;
   function avatarViewer(recipe){
     const el=document.createElement('div');el.className='mp-avatar-viewer';el.tabIndex=0;el.setAttribute('role','group');el.setAttribute('aria-label','可上下左右拖动旋转的动态立体人物');
-    el.innerHTML='<div class="mp-avatar-stage"><div class="mp-avatar-floor"></div><div class="mp-avatar-loading">正在绘制立体人物…</div></div><div class="mp-avatar-viewer-controls"><button type="button" data-turn="-45" aria-label="向左旋转">↶</button><span>按住人物上下左右拖动</span><button type="button" data-turn="45" aria-label="向右旋转">↷</button></div><div class="mp-avatar-view-modes"><button type="button" data-view="full" aria-pressed="true">全身</button><button type="button" data-view="face" aria-pressed="false">面部特写</button></div>';
+    el.innerHTML='<div class="mp-avatar-stage"><div class="mp-avatar-floor"></div><div class="mp-avatar-loading">正在绘制立体人物…</div></div><div class="mp-avatar-viewer-controls"><button type="button" data-turn="-45" aria-label="向左旋转">↶</button><span>按住人物上下左右拖动</span><button type="button" data-turn="45" aria-label="向右旋转">↷</button></div>';
     const stage=el.querySelector('.mp-avatar-stage'),loading=el.querySelector('.mp-avatar-loading');
-    let viewer=null,current=recipe,yaw=-15,pitch=-8,viewMode='full',startX=0,startY=0,startYaw=0,startPitch=0,dragging=false;
+    let viewer=null,current=recipe,yaw=-15,pitch=-8,startX=0,startY=0,startYaw=0,startPitch=0,dragging=false;
     const rotate=()=>viewer?.setAngles(yaw,pitch);
     const load=()=>{
-      avatarModulePromise ||= import('/mp/avatar3d.js?v=20261031-face');
-      avatarModulePromise.then(module=>{if(!el.isConnected)return;try{viewer=module.mount(stage,current);loading.remove();rotate();viewer.setView(viewMode)}catch(e){loading.textContent='当前浏览器无法显示立体人物'}}).catch(()=>{loading.textContent='立体人物加载失败，请刷新页面重试'});
+      avatarModulePromise ||= import('/mp/avatar3d.js?v=20261031-sculpt2');
+      avatarModulePromise.then(module=>{if(!el.isConnected)return;try{viewer=module.mount(stage,current);loading.remove();rotate()}catch(e){loading.textContent='当前浏览器无法显示立体人物'}}).catch(()=>{loading.textContent='立体人物加载失败，请刷新页面重试'});
     };
     requestAnimationFrame(load);
     el.update=look=>{current=look;viewer?.update(look)};
@@ -93,7 +93,6 @@
     el.addEventListener('pointermove',e=>{if(!dragging)return;yaw=startYaw+(e.clientX-startX)*.65;pitch=Math.max(-78,Math.min(78,startPitch-(e.clientY-startY)*.55));rotate()});
     const end=()=>{dragging=false;el.classList.remove('dragging')};el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
     el.querySelectorAll('[data-turn]').forEach(button=>button.onclick=()=>{yaw+=Number(button.dataset.turn);rotate()});
-    el.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>{viewMode=button.dataset.view;viewer?.setView(viewMode);el.querySelectorAll('[data-view]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)))});
     el.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();e.stopPropagation();if(e.key==='ArrowLeft')yaw-=15;if(e.key==='ArrowRight')yaw+=15;if(e.key==='ArrowUp')pitch=Math.min(78,pitch+15);if(e.key==='ArrowDown')pitch=Math.max(-78,pitch-15);rotate()});
     return el;
   }

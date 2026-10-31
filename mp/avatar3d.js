@@ -62,6 +62,64 @@ function outlinedPrism(parent, color, outline, depth, bevel = .025) {
   return mesh(parent, geometry, color);
 }
 
+// Each horizontal ring has its own cheek, jaw and brow depth. Unlike a flat
+// extruded outline, this keeps a readable human profile at every rotation.
+function sculptedHead(parent, color, faceShape) {
+  const round = faceShape === 'round';
+  const rings = round
+    ? [[.035,.22,.25,.23],[.09,.29,.30,.28],[.16,.35,.35,.31],
+       [.25,.40,.40,.34],[.35,.44,.43,.36],[.47,.44,.40,.36],
+       [.59,.42,.39,.35],[.72,.39,.36,.33],[.82,.34,.31,.30],
+       [.89,.25,.24,.24],[.93,.13,.14,.15]]
+    : [[.035,.23,.24,.23],[.09,.31,.29,.28],[.16,.36,.33,.31],
+       [.25,.40,.37,.34],[.35,.42,.39,.35],[.47,.42,.39,.35],
+       [.59,.41,.38,.34],[.72,.40,.36,.33],[.82,.36,.31,.30],
+       [.89,.28,.24,.24],[.93,.15,.14,.15]];
+  const sides = 24, power = round ? 1.0 : .58;
+  const positions = [], indices = [];
+  for (const [y, width, front, back] of rings) {
+    for (let j = 0; j < sides; j++) {
+      const angle = j * Math.PI * 2 / sides;
+      const cx = Math.cos(angle), cz = Math.sin(angle);
+      const x = width * Math.sign(cx) * Math.abs(cx) ** power;
+      const cheek = cz > 0 ? .050 *
+        Math.exp(-Math.pow((Math.abs(x) - .27) / .16, 2) - Math.pow((y - .34) / .15, 2)) : 0;
+      positions.push(x, y,
+        (cz >= 0 ? front : back) * Math.sign(cz) * Math.abs(cz) ** power + cheek);
+    }
+  }
+  for (let i = 0; i < rings.length - 1; i++) for (let j = 0; j < sides; j++) {
+    const a = i * sides + j, b = i * sides + (j + 1) % sides;
+    const c = (i + 1) * sides + j, d = (i + 1) * sides + (j + 1) % sides;
+    indices.push(a, c, b, b, c, d);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return mesh(parent, geometry, color);
+}
+
+function voxelTiles(parent, color, tiles) {
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshStandardMaterial({color: 0xffffff, roughness: .82});
+  const instanced = new THREE.InstancedMesh(geometry, material, tiles.length);
+  const transform = new THREE.Object3D();
+  const base = new THREE.Color(color);
+  tiles.forEach(([x, y, z, sx, sy, sz, factor], index) => {
+    transform.position.set(x, y, z);
+    transform.scale.set(sx, sy, sz);
+    transform.updateMatrix();
+    instanced.setMatrixAt(index, transform.matrix);
+    instanced.setColorAt(index, base.clone().multiplyScalar(factor));
+  });
+  instanced.instanceMatrix.needsUpdate = true;
+  instanced.instanceColor.needsUpdate = true;
+  instanced.castShadow = true;
+  parent.add(instanced);
+  return instanced;
+}
+
 function shade(color, factor) {
   return new THREE.Color(color).multiplyScalar(factor).getStyle();
 }
@@ -78,7 +136,6 @@ function buildAvatar(recipe) {
   const darkHair = shade(hair, .72), lightHair = shade(hair, 1.14);
   const trouserShade = shade(v.pants, .74), shoeColor = shade(v.pants, .47);
   const lip = new THREE.Color(skin).lerp(new THREE.Color('#96555b'), .48).getStyle();
-  const cheek = new THREE.Color(skin).lerp(new THREE.Color('#d98882'), .22).getStyle();
   const refs = {model, arms: [], legs: [], eyes: []};
 
   // A shoulder-to-waist taper and two separate pant legs read as a person
@@ -89,28 +146,30 @@ function buildAvatar(recipe) {
   outlinedPrism(body, shirt, [
     [-.41, -.49], [.41, -.49], [.49, .43], [.36, .49],
     [-.36, .49], [-.49, .43]
-  ], .43, .025);
-  block(body, v.pants, 0, -.55, 0, .77, .18, .43, .018);
-  block(body, v.clothAlt, 0, .465, .223, .28, .055, .025, .01);
+  ], .55, .025);
+  block(body, v.pants, 0, -.55, 0, .77, .18, .51, .018);
+  block(body, v.clothAlt, 0, .465, .287, .28, .055, .025, .01);
   block(body, skin, 0, .55, 0, .20, .22, .22, .018);
 
   if (v.clothPattern === 'stripe') {
     for (const y of [.31, .18, .05, -.08, -.21, -.34]) {
       const width = y > .2 ? .81 : .77 + (y + .34) * .05;
-      block(body, v.clothAlt, 0, y, .249, width, .042, .014, .004);
+      block(body, v.clothAlt, 0, y, .309, width, .042, .014, .004);
     }
   } else {
     // Small collar and shirt seam details stay visible without changing the
     // player's chosen solid color.
-    block(body, shade(shirt, .86), 0, -.46, .246, .76, .025, .014, .004);
+    block(body, shade(shirt, .86), 0, -.46, .306, .76, .025, .014, .004);
   }
 
   for (const sign of [-1, 1]) {
     const arm = new THREE.Group();
     arm.position.set(sign * .53, .45, 0);
     model.add(arm);
-    block(arm, shirt, sign * .025, -.37, 0, .25, .78, .36, .03);
-    block(arm, shade(shirt, .72), sign * .025, -.77, 0, .255, .055, .365, .009);
+    block(arm, shirt, sign * .025, -.37, 0, .25, .78, .40, .03);
+    block(arm, shade(shirt, 1.025), sign * .025, -.18, .204, .22, .31, .02, .012);
+    block(arm, shade(shirt, .985), sign * .025, -.53, .203, .21, .26, .016, .009);
+    block(arm, shade(shirt, .72), sign * .025, -.77, 0, .255, .055, .405, .009);
     block(arm, skin, sign * .025, -.93, .005, .205, .23, .27, .021);
     block(arm, skin, -sign * .07, -.91, .14, .07, .12, .075, .015);
     refs.arms.push({arm, sign});
@@ -119,6 +178,8 @@ function buildAvatar(recipe) {
     leg.position.set(sign * .20, -.60, 0);
     model.add(leg);
     block(leg, v.pants, 0, -.43, 0, .33, .86, .42, .025);
+    block(leg, shade(v.pants, 1.018), 0, -.33, .217, .29, .39, .012, .009);
+    block(leg, shade(v.pants, .978), 0, -.61, .218, .30, .12, .012, .009);
     block(leg, trouserShade, 0, -.83, .21, .33, .045, .016, .004);
     block(leg, trouserShade, 0, -.37, .217, .012, .65, .012, .003);
     block(leg, shoeColor, 0, -.96, .13, .36, .18, .59, .023);
@@ -131,12 +192,7 @@ function buildAvatar(recipe) {
   head.position.y = .65;
   model.add(head);
   refs.head = head;
-  const faceOutline = v.faceShape === 'round'
-    ? [[-.25,.05],[.25,.05],[.36,.15],[.43,.32],[.44,.59],[.39,.78],
-      [.30,.88],[-.30,.88],[-.39,.78],[-.44,.59],[-.43,.32],[-.36,.15]]
-    : [[-.29,.05],[.29,.05],[.39,.18],[.40,.79],[.34,.88],
-      [-.34,.88],[-.40,.79],[-.39,.18]];
-  outlinedPrism(head, skin, faceOutline, .64, v.faceShape === 'round' ? .052 : .035);
+  sculptedHead(head, skin, v.faceShape);
   for (const sign of [-1, 1]) {
     const earX = v.faceShape === 'round' ? .47 : .435;
     block(head, skin, sign * earX, .43, 0, .13, .21, .19, .022);
@@ -146,16 +202,14 @@ function buildAvatar(recipe) {
     const eye = new THREE.Group();
     eye.position.set(sign * .18, .49, .379);
     head.add(eye);
-    const eyeHeight = v.eye === 'narrow' ? .077 : v.eye === 'dot' ? .09 : .135;
-    block(eye, '#f9f6ef', 0, 0, 0, .16, eyeHeight, .03, .014);
-    block(eye, v.eyeColor, 0, -.007, .023, .085, eyeHeight * .82, .018, .016);
-    block(eye, '#19202a', 0, -.010, .037, .040, eyeHeight * .56, .012, .008);
-    block(eye, '#ffffff', -.018, .021, .048, .023, .027, .008, .004);
-    block(eye, shade(skin, .80), 0, eyeHeight / 2 + .012, .024, .18, .025, .021, .009);
-    block(eye, shade(skin, .92), 0, -eyeHeight / 2 - .008, .012, .16, .018, .015, .006);
+    const eyeHeight = v.eye === 'narrow' ? .10 : v.eye === 'dot' ? .11 : .165;
+    block(eye, '#f9f6ef', 0, 0, 0, .205, eyeHeight, .03, .018);
+    block(eye, v.eyeColor, 0, -.007, .023, .118, eyeHeight * .84, .018, .019);
+    block(eye, '#19202a', 0, -.010, .037, .048, eyeHeight * .58, .012, .008);
+    block(eye, '#ffffff', -.025, .028, .048, .026, .030, .008, .004);
+    block(eye, shade(skin, .80), 0, eyeHeight / 2 + .013, .024, .215, .026, .021, .009);
+    block(eye, shade(skin, .92), 0, -eyeHeight / 2 - .009, .012, .19, .018, .015, .006);
     refs.eyes.push(eye);
-    block(head, shade(skin, 1.03), sign * .285, .30, .36, .16, .10, .025, .021);
-    block(head, cheek, sign * .30, .285, .379, .075, .026, .010, .006);
   }
   block(head, shade(skin, 1.04), 0, .365, .39, .071, .15, .070, .015);
   block(head, shade(skin, .94), 0, .305, .425, .10, .065, .060, .015);
@@ -167,21 +221,53 @@ function buildAvatar(recipe) {
 
   // Layered locks make the hair legible as sculpted geometry in side/back views.
   block(head, hair, 0, .89, -.015, .92, .25, .80, .025);
+  block(head, hair, -.04, 1.048, .065, .73, .105, .62, .022);
+  block(head, shade(hair, 1.045), -.11, 1.110, .025, .48, .085, .44, .014);
   const hairLength = v.hairStyle === 'long' ? .93 : v.hairStyle === 'mid' ? .72 : .57;
-  block(head, darkHair, 0, .80 - hairLength / 2, -.356, .78, hairLength, .13, .019);
+  const sideLength = v.hairStyle === 'short' ? .43 : hairLength;
+  const backSections = Math.ceil(hairLength / .14);
+  for (let row = 0; row < backSections; row++) {
+    const y = .79 - row * .135;
+    const width = .80 - Math.max(0, row - 1) * .045;
+    block(head, darkHair, 0, y, -.354, width, .145, .13, .015);
+  }
   for (const sign of [-1, 1]) {
-    block(head, hair, sign * .393, .83 - hairLength / 2, .015, .105, hairLength, .67, .019);
+    block(head, hair, sign * .393, .83 - sideLength / 2, .015, .105, sideLength, .67, .019);
     block(head, lightHair, sign * .27, .988, .09, .20, .035, .32, .007);
   }
   const fringe = ['ponytail','bun'].includes(v.hairStyle)
-    ? [[-.30,.78,.21,.20],[-.11,.83,.18,.17],[.13,.82,.20,.17],[.31,.78,.17,.20]]
+    ? [[-.34,.79,.14,.19],[-.21,.82,.15,.17],[-.07,.84,.15,.16],[.09,.83,.16,.17],[.24,.81,.15,.18],[.36,.78,.13,.19]]
     : v.hairStyle === 'short'
-      ? [[-.30,.78,.20,.23],[-.10,.82,.20,.19],[.11,.81,.19,.19],[.31,.76,.18,.25]]
-      : [[-.31,.78,.19,.23],[-.11,.83,.20,.17],[.12,.83,.19,.17],[.31,.78,.18,.23]];
-  for (const [x, y, w, h] of fringe)
-    block(head, hair, x, y, .373, w, h, .115, .015);
+      ? [[-.34,.78,.15,.24],[-.20,.85,.16,.18],[-.05,.88,.16,.17],[.11,.83,.16,.22],[.26,.77,.15,.27],[.38,.76,.12,.22]]
+      : [[-.35,.79,.14,.22],[-.21,.82,.15,.19],[-.06,.84,.16,.16],[.10,.84,.16,.17],[.25,.81,.15,.19],[.37,.79,.12,.22]];
+  for (const [index, [x, y, w, h]] of fringe.entries()) {
+    const lock = block(head, index % 3 === 0 ? shade(hair, 1.025) : hair,
+      x, y, .376 + (index % 2) * .009, w, h, .115, .015);
+    lock.rotation.z = (index - 2.5) * .015;
+  }
   for (const [x,y,w] of [[-.31,1.004,.16],[-.08,1.018,.18],[.18,1.008,.17],[.36,.997,.11]])
     block(head, lightHair, x, y, .17, w, .028, .34, .006);
+  const hairTiles = [];
+  for (let ix = -4; ix <= 4; ix++) for (let iz = -3; iz <= 3; iz++) {
+    const x = ix * .105, z = iz * .106;
+    const centerLift = .035 * (1 - Math.abs(ix) / 5) * (1 - Math.abs(iz) / 4);
+    hairTiles.push([x, 1.039 + centerLift, z, .104, .073 + centerLift, .105,
+      .90 + ((ix * 7 + iz * 11 + 53) % 5) * .042]);
+  }
+  const backRows = Math.ceil(hairLength / .104);
+  for (let row = 0; row < backRows; row++) for (let ix = -3; ix <= 3; ix++) {
+    const y = .77 - row * .104;
+    hairTiles.push([ix * .108, y, -.430, .107, .103, .070,
+      .84 + ((ix * 5 + row * 3 + 41) % 5) * .048]);
+  }
+  const sideRows = Math.ceil(sideLength / .104);
+  for (const sign of [-1, 1]) for (let row = 0; row < sideRows; row++) for (let iz = -2; iz <= 2; iz++) {
+    const y = .78 - row * .104, z = iz * .12;
+    if (y < .58 && z > -.13 && z < .19) continue; // leave the ear visible
+    hairTiles.push([sign * .457, y, z, .067, .102, .118,
+      .86 + ((row * 3 + iz * 7 + 29) % 5) * .044]);
+  }
+  voxelTiles(head, hair, hairTiles);
   if (v.hairStyle === 'ponytail') {
     block(head, hair, .35, .51, -.50, .24, .53, .23, .032);
     block(head, v.accColor, .35, .74, -.50, .17, .065, .24, .01);
@@ -221,11 +307,11 @@ export function mount(stage, recipe) {
   stage.append(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.add(new THREE.HemisphereLight(0xf7f9ff, 0x58616e, 1.7));
-  const key = new THREE.DirectionalLight(0xfff4e6, 2.5);
-  key.position.set(-3, 5, 6);
+  scene.add(new THREE.HemisphereLight(0xfff7ef, 0x58616e, 1.25));
+  const key = new THREE.DirectionalLight(0xffdfba, 2.9);
+  key.position.set(-4, 5, 5);
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0xb3d9f1, 1.25);
+  const rim = new THREE.DirectionalLight(0xb3d9f1, 1.4);
   rim.position.set(3, 2, -4);
   scene.add(rim);
   const camera = new THREE.PerspectiveCamera(38, 1, .1, 30);
@@ -235,7 +321,7 @@ export function mount(stage, recipe) {
   scene.add(orbit);
   let figure = buildAvatar(recipe);
   orbit.add(figure.model);
-  let yaw = -.22, pitch = -.10, viewMode = 'full', alive = true, frame = 0;
+  let yaw = -.22, pitch = -.10, alive = true, frame = 0;
   const size = () => {
     const width = Math.max(1, stage.clientWidth), height = Math.max(1, stage.clientHeight);
     renderer.setSize(width, height, false);
@@ -275,14 +361,6 @@ export function mount(stage, recipe) {
     const blink = Math.abs((t % 4.7) - 4.25) < .075 ? .12 : 1;
     for (const eye of figure.eyes) eye.scale.y = blink;
     orbit.rotation.set(pitch, yaw, 0, 'YXZ');
-    if (viewMode === 'face') {
-      const focus = new THREE.Vector3(0, 1.10 + figure.model.position.y, 0).applyQuaternion(orbit.quaternion);
-      camera.position.set(focus.x, focus.y, focus.z + 1.95);
-      camera.lookAt(focus);
-    } else {
-      camera.position.set(0, .04, 5.65);
-      camera.lookAt(0, .04, 0);
-    }
     if (!document.hidden && !stage.closest('#mpProfileShade')?.hidden) renderer.render(scene, camera);
     frame = requestAnimationFrame(tick);
   };
@@ -292,7 +370,6 @@ export function mount(stage, recipe) {
       yaw = radians(nextYaw);
       pitch = radians(THREE.MathUtils.clamp(nextPitch, -78, 78));
     },
-    setView(mode) { viewMode = mode === 'face' ? 'face' : 'full'; },
     update(nextRecipe) {
       orbit.remove(figure.model);
       disposeModel(figure.model);

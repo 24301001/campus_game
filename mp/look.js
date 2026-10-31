@@ -1,7 +1,8 @@
 /* 照片 → 形象完全在浏览器处理：定位脸、分区取色并拼装像素部件。
    认不出脸时会用默认脸框和可手动调整的配方。服务端只保存 look，不接收照片。 */
 (() => {
-  const fallback = {skin:'#f2c9a0',faceShape:'round',hairStyle:'short',hairColor:'#30251e',eye:'round',eyeColor:'#332a2b',mouth:'soft',cloth:'#c94954',clothAlt:'#f3eee7',clothPattern:'solid',pants:'#38516d',acc:'none',accColor:'#b67a56'};
+  const fallback = {skin:'#e0ae87',faceShape:'round',hairStyle:'short',hairColor:'#3c291f',eye:'round',eyeColor:'#238d9a',mouth:'soft',cloth:'#f1f0ea',clothAlt:'#293944',clothPattern:'stripe',pants:'#3d5274',acc:'none',accColor:'#b67a56'};
+  const previousFallback = {skin:'#f2c9a0',faceShape:'round',hairStyle:'short',hairColor:'#30251e',eye:'round',eyeColor:'#332a2b',mouth:'soft',cloth:'#c94954',clothAlt:'#f3eee7',clothPattern:'solid',pants:'#38516d',acc:'none',accColor:'#b67a56'};
   const oldFallback = {skin:'#e9bb92',hairStyle:'short',hairColor:'#241d1a',eye:'round',cloth:'#3f6ea8',pants:'#454c5a',acc:'none'};
   const cache = new Map();
   const hex = ([r,g,b]) => '#' + [r,g,b].map(x => Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,'0')).join('');
@@ -24,7 +25,7 @@
     if(['solid','stripe'].includes(v.clothPattern))result.clothPattern=v.clothPattern;
     return result;
   };
-  const isDefault = value => [fallback,oldFallback].some(v=>JSON.stringify(norm(value))===JSON.stringify(norm(v)));
+  const isDefault = value => [fallback,previousFallback,oldFallback].some(v=>JSON.stringify(norm(value))===JSON.stringify(norm(v)));
   /* 骨架照搬地图自带的 buildChar（像素校园_全校地图.html 第 4710 行起）：4.3 头身 ——
      头 6 行（第 1..6 行）· 颈 1 行 · 躯干 9 行（8..16）· 腿 8 行（17..24）· 鞋 2 行（25..26），
      头宽 7 格（x6..12），眼睛各 1 格（x7 与 x11，关于脸中线 x9 镜像，和嘴 x8..x10 同轴），落地锚点 (9,27)，最后统一过一遍彩色自动描边。
