@@ -1,0 +1,46 @@
+/* pixel-3d · 3D 像素小人查看器样式（模块自带，不依赖 mp/theme.css）
+   配色一律写成 var(--mp-*, 兜底值)：挂进联机大厅时跟着宿主主题走，
+   单独放在别的页面也能自己成立。 */
+.p3d-root{
+  --p3d-line:var(--mp-line,#475261);
+  --p3d-ink:var(--mp-ink,#f3efe3);
+  --p3d-muted:var(--mp-muted,#b9c9d5);
+  --p3d-gold:var(--mp-gold,#ffd76e);
+  --p3d-deep:var(--mp-deep,#11151b);
+  --p3d-face:var(--mp-bg,#1d2129);
+  display:flex;flex-direction:column;gap:7px;min-width:0;
+  color:var(--p3d-ink);font:12px/1.5 system-ui,"Microsoft YaHei",sans-serif
+}
+.p3d-root *{box-sizing:border-box}
+.p3d-stage{position:relative;display:flex;justify-content:center}
+/* ⚠️ width/height 必须带 !important：宿主把这一格里的每种 canvas 都写死成
+   `#mpRoot .mp-look-preview canvas{width:72px;height:120px}`（那是给四视图留的），
+   其选择器优先级比这里高，会把 3D 画面压成一条。默认尺寸可用 --p3d-w/--p3d-h 覆盖。 */
+.p3d-cv{
+  display:block;width:var(--p3d-w,100%)!important;height:var(--p3d-h,200px)!important;
+  max-width:100%;border:1px solid var(--p3d-line);border-radius:4px;box-shadow:none;
+  background:linear-gradient(#182029,#101820);image-rendering:pixelated;cursor:grab
+}
+.p3d-cv:active{cursor:grabbing}
+.p3d-cv:focus-visible{outline:2px solid var(--p3d-gold);outline-offset:2px}
+.p3d-hint{
+  position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
+  padding:2px 8px;border-radius:999px;background:rgba(8,12,16,.68);
+  color:var(--p3d-muted);font-size:11px;white-space:nowrap;pointer-events:none;user-select:none
+}
+.p3d-bar{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.p3d-gap{flex:1 1 auto}
+.p3d-v,.p3d-t{
+  border:1px solid var(--p3d-line);border-radius:4px;background:#2a303b;color:var(--p3d-ink);
+  padding:5px 9px;font:inherit;cursor:pointer
+}
+.p3d-v{color:var(--p3d-muted)}
+.p3d-v:hover{background:#354052;color:#fff}
+.p3d-t{min-width:28px}
+.p3d-t:hover{background:#354052}
+.p3d-spin.on{border-color:var(--p3d-gold);background:var(--p3d-gold);color:var(--p3d-deep);font-weight:700}
+.p3d-v:focus-visible,.p3d-t:focus-visible{outline:2px solid var(--p3d-gold);outline-offset:2px}
+.p3d-v:active,.p3d-t:active{transform:translateY(1px)}
+/* 无交互模式（缩略图）：只剩画布，不留空白槽 */
+.p3d-static{gap:0}
+@media(prefers-reduced-motion:reduce){.p3d-cv,.p3d-v,.p3d-t{transition:none!important}}
