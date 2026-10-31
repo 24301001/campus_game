@@ -233,3 +233,8 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpBoard{top:101px}
 #mpRoot #mpProfile.mp-other-profile .mp-tag{background:rgba(208,245,221,.18);border-color:rgba(208,245,221,.45);color:#f2fff6}
 #mpRoot #mpProfile.mp-other-profile .mp-primary{background:#237d59;border:0;color:#fff}
 @media(max-width:650px){#mpRoot #mpChat{right:8px;top:70px;bottom:8px;width:calc(100vw - 16px);max-height:none}#mpRoot #mpChat .mp-head{gap:7px}#mpRoot .mp-chat-history{font-size:11px}#mpRoot #mpProfile.mp-other-profile{max-height:calc(100vh - 20px)}}
+
+/* Pixel3D 全身查看器在本人及他人主页使用相同的控制。 */
+#mpRoot .mp-pixel3d-host{width:100%;min-width:0;--p3d-h:360px}
+#mpRoot #mpProfile.mp-other-profile .mp-pixel3d-host{--p3d-h:300px}
+#mpRoot .mp-pixel3d-host .p3d-cv{height:var(--p3d-h)!important}

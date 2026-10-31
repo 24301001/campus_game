@@ -1,7 +1,7 @@
 /* 照片 → 形象完全在浏览器处理：定位脸、分区取色并拼装像素部件。
    认不出脸时会用默认脸框和可手动调整的配方。服务端只保存 look，不接收照片。 */
 (() => {
-  const fallback = {skin:'#e0ae87',faceShape:'round',hairStyle:'short',hairColor:'#3c291f',eye:'round',eyeColor:'#238d9a',mouth:'soft',cloth:'#f1f0ea',clothAlt:'#293944',clothPattern:'stripe',pants:'#3d5274',acc:'none',accColor:'#b67a56'};
+  const fallback = {skin:'#e0ae87',faceShape:'round',hairStyle:'short',hairColor:'#3c291f',eye:'round',eyeColor:'#238d9a',mouth:'soft',cloth:'#f1f0ea',clothAlt:'#293944',clothPattern:'stripe',pants:'#3d5274',acc:'none',accColor:'#b67a56',packColor:'#b4552f'};
   const previousFallback = {skin:'#f2c9a0',faceShape:'round',hairStyle:'short',hairColor:'#30251e',eye:'round',eyeColor:'#332a2b',mouth:'soft',cloth:'#c94954',clothAlt:'#f3eee7',clothPattern:'solid',pants:'#38516d',acc:'none',accColor:'#b67a56'};
   const oldFallback = {skin:'#e9bb92',hairStyle:'short',hairColor:'#241d1a',eye:'round',cloth:'#3f6ea8',pants:'#454c5a',acc:'none'};
   const cache = new Map();
@@ -16,7 +16,7 @@
   const norm = value => {
     const v=value&&typeof value==='object'?value:{};
     const result={...fallback};
-    for(const k of ['skin','hairColor','eyeColor','cloth','clothAlt','pants','accColor'])if(typeof v[k]==='string'&&/^#[0-9a-f]{6}$/i.test(v[k]))result[k]=v[k].toLowerCase();
+    for(const k of ['skin','hairColor','eyeColor','cloth','clothAlt','pants','accColor','packColor'])if(typeof v[k]==='string'&&/^#[0-9a-f]{6}$/i.test(v[k]))result[k]=v[k].toLowerCase();
     if(['short','mid','long','ponytail','bun','twintails'].includes(v.hairStyle))result.hairStyle=v.hairStyle;
     if(['square','round'].includes(v.faceShape))result.faceShape=v.faceShape;
     if(['round','narrow','dot'].includes(v.eye))result.eye=v.eye;
@@ -83,7 +83,7 @@
       coat: v.cloth, coatL: shade(v.cloth, .20), coatD: shade(v.cloth, -.26),
       pant: v.pants, pantL: shade(v.pants, .18), pantD: shade(v.pants, -.23),
       shoe: '#26282e', shoeL: '#454a54', eye: v.eyeColor,
-      pack: '#b4552f', packL: '#d1704a', packD: '#8a3f22',   // 与地图 A2 同款书包：进图后 silhouette 才对得上
+      pack: v.packColor, packL: shade(v.packColor,.18), packD: shade(v.packColor,-.24),   // 与地图 A2 同款书包：进图后 silhouette 才对得上
       tie: shade(v.cloth, .30)
     };
     function px(x, y, w, h, col) { if (w > 0 && h > 0) { g.fillStyle = col; g.fillRect(flip ? 18 - x - w : x, y, w, h) } }

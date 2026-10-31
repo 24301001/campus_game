@@ -36,7 +36,7 @@
     acc: ['none', 'glasses', 'cap', 'scarf'],
     clothPattern: ['solid', 'stripe']
   };
-  const FALLBACK = { skin: '#f2c9a0', hairStyle: 'short', hairColor: '#30251e', eye: 'round', eyeColor: '#332a2b', cloth: '#c94954', clothAlt: '#f3eee7', clothPattern: 'solid', pants: '#38516d', acc: 'none', accColor: '#b67a56', packColor: '#b4552f' };
+  const FALLBACK = { skin: '#e0ae87', hairStyle: 'short', hairColor: '#3c291f', eye: 'round', eyeColor: '#238d9a', cloth: '#f1f0ea', clothAlt: '#293944', clothPattern: 'stripe', pants: '#3d5274', acc: 'none', accColor: '#b67a56', packColor: '#b4552f' };
   function normLook(value) {
     const v = value && typeof value === 'object' ? value : {};
     const out = { ...FALLBACK };

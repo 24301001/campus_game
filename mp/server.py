@@ -32,8 +32,8 @@ XBG_PORT = int(os.environ.get("XBG_PORT", "8010"))
 LD_PORT = int(os.environ.get("LD_PORT", "8000"))
 AGENT_PORT = int(os.environ.get("AGENT_PORT", "8081"))
 AGENT_WEB_PORT = int(os.environ.get("AGENT_WEB_PORT", "3001"))
-DEFAULT_LOOK = {"skin": "#e0ae87", "faceShape": "round", "hairStyle": "short", "hairColor": "#3c291f", "eye": "round", "eyeColor": "#238d9a", "mouth": "soft", "cloth": "#f1f0ea", "clothAlt": "#293944", "clothPattern": "stripe", "pants": "#3d5274", "acc": "none", "accColor": "#b67a56"}
-LOOK_COLORS = ("skin", "hairColor", "eyeColor", "cloth", "clothAlt", "pants", "accColor")
+DEFAULT_LOOK = {"skin": "#e0ae87", "faceShape": "round", "hairStyle": "short", "hairColor": "#3c291f", "eye": "round", "eyeColor": "#238d9a", "mouth": "soft", "cloth": "#f1f0ea", "clothAlt": "#293944", "clothPattern": "stripe", "pants": "#3d5274", "acc": "none", "accColor": "#b67a56", "packColor": "#b4552f"}
+LOOK_COLORS = ("skin", "hairColor", "eyeColor", "cloth", "clothAlt", "pants", "accColor", "packColor")
 LOOK_CHOICES = {"faceShape": ("square", "round"), "hairStyle": ("short", "mid", "long", "ponytail", "bun", "twintails"), "eye": ("round", "narrow", "dot"), "mouth": ("soft", "smile"), "acc": ("none", "glasses", "cap", "scarf"), "clothPattern": ("solid", "stripe")}
 DEFAULT_VISIBILITY = {"bio": True, "college": True, "grade": True, "tags": True}
 # 北京交通大学官网“机构设置 → 直属学院”现列的 23 个学院。
@@ -467,7 +467,7 @@ class Handler(BaseHTTPRequestHandler):
         if any(path == prefix or path.startswith(prefix) for prefix, _ in PROXY_PREFIXES):
             return self.proxy(path)
         requested = unquote(path.lstrip("/")) or "像素校园_全校地图.html"
-        if requested not in {"像素校园_全校地图.html", "mp/look.js", "mp/lobby.js", "mp/theme.css", "mp/avatar3d.js", "mp/three.module.js"} and not requested.startswith("cat-dex/"):
+        if requested not in {"像素校园_全校地图.html", "mp/look.js", "mp/lobby.js", "mp/theme.css", "mp/avatar3d.js", "mp/three.module.js", "pixel-3d/pixel-3d.js", "pixel-3d/pixel-3d.css"} and not requested.startswith("cat-dex/"):
             self.send_error(404)
             return
         target = (ROOT / requested).resolve()
