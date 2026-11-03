@@ -1,0 +1,20 @@
+[Unit]
+Description=躲猫猫 · 房间桥接服务（CF 式游戏房间大厅）
+Documentation=file:/opt/campus_bridge/README.md
+After=network.target campus-lobby.service
+
+[Service]
+Type=simple
+User=wr
+WorkingDirectory=/opt/campus_bridge
+Environment=BRIDGE_HOST=127.0.0.1
+Environment=BRIDGE_PORT=8300
+Environment=MP_LOBBY=http://127.0.0.1:3000
+ExecStart=/opt/campus_venv/bin/python -u /opt/campus_bridge/bridge.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

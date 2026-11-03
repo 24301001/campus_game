@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>指针锁实测 · iframe 内嵌 duo1</title>
+<style>
+  body{margin:0;background:#0d0f13;color:#d9d2c4;font:14px/1.7 ui-monospace,Consolas,monospace}
+  header{padding:10px 16px;border-bottom:1px solid #4a453f;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  #verdict{padding:4px 12px;border:1px solid #4a453f;border-radius:3px;color:#8b8578}
+  #verdict.ok{border-color:#7fd07f;color:#7fd07f}
+  #verdict.bad{border-color:#e08585;color:#e08585}
+  #log{padding:8px 16px;white-space:pre-wrap;color:#8b8578;max-height:120px;overflow:auto}
+  #box{position:fixed;inset:150px 12px 12px;border:1px solid #4a453f}
+  iframe{width:100%;height:100%;border:0;display:block}
+</style>
+</head>
+<body>
+<header>
+  <b>这一页只回答一个问题：</b>
+  <span>duo1 开在 iframe 里，鼠标指针锁**能不能锁上**（锁不上 = <code>started</code> 永远为假 = 进不了局）</span>
+  <span id="verdict">等待你在下面的画面里点一下</span>
+</header>
+<div id="log"></div>
+<div id="box"><iframe id="f" allow="pointer-lock; fullscreen; autoplay" title="duo1 探针"></iframe></div>
+
+<script>
+/* 用法：浏览器开 http://<服务器>/game/probe-pointer-lock
+   下面会出现 3D 画面。⚠ 必须**你自己点一下画面**——指针锁要真实用户手势，脚本点的不算。
+   点了之后本页每 400 毫秒读一次 iframe 里的 document.pointerLockElement：
+     非 null  ⇒ 锁上了 ⇒ ENTER_MODE="iframe" 可用
+     一直 null ⇒ 被拦 ⇒ 把 mp/duo1-bridge.js 顶上 ENTER_MODE 改成 "tab"
+   两个标签页同机自测会被节流（交付文档 §4.1），所以这页只测指针锁，不测联机。 */
+(function () {
+  var f = document.getElementById("f");
+  var v = document.getElementById("verdict");
+  var log = document.getElementById("log");
+  var t0 = Date.now(), locked = null, sameOrigin = null, netReads = [];
+  f.src = "/duo1/?room=PROBE1&nick=指针锁探针&v=" + t0;
+
+  function say(s) { log.textContent += ("[" + ((Date.now() - t0) / 1000).toFixed(1) + "s] " + s + "\n");
+                    log.scrollTop = log.scrollHeight; }
+
+  setInterval(function () {
+    var d;
+    try { d = f.contentDocument; } catch (e) { sameOrigin = false; }
+    if (!d) { v.className = "bad"; v.textContent = "读不到 iframe 内部（跨源或还没加载）"; return; }
+    sameOrigin = true;
+    var el = d.pointerLockElement;
+    if (el && el !== locked) {
+      locked = el;
+      v.className = "ok";
+      v.textContent = "PASS · 锁上了：" + (el.tagName + "#" + el.id);
+      say("pointerLockElement = " + el.tagName + "#" + el.id + " ⇒ iframe 内指针锁可用");
+    }
+    /* 顺手把 duo1 自己的同步观测口读出来（同源才读得到），确认页面真的活着 */
+    try {
+      var n = f.contentWindow.__net;
+      if (n) {
+        var line = "connected=" + n.connected + " role=" + n.role + " frames=" + n.frames;
+        if (netReads[netReads.length - 1] !== line) { netReads.push(line); say("__net " + line); }
+      }
+    } catch (e) { /* __net 还没建起来，正常 */ }
+
+    if (!locked) {
+      var waited = (Date.now() - t0) / 1000;
+      if (waited > 20) {
+        v.className = "bad";
+        v.textContent = "FAIL · 20 秒还没锁上（如果你确实点过画面）";
+        say("结论：iframe 里锁不上 ⇒ 把 mp/duo1-bridge.js 顶上 ENTER_MODE 改成 \"tab\"");
+      } else if (waited > 3 && waited < 4) {
+        say("提示：画面加载完（约 20MB）后，**用鼠标点一下 3D 画面**，这页才能判。");
+      }
+    }
+  }, 400);
+})();
+</script>
+</body>
+</html>
