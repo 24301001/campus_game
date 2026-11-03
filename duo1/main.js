@@ -334,9 +334,9 @@ const playerModel = buildPlayer();
 scene.add(playerModel);
 
 /* =========================================================================
-   武器：AK-47 / M4A1 / M870 霰弹枪
-   —— 三把枪共用同一套第一人称手套手臂骨架（cktang88/3d-fps，CC BY 4.0）
-   —— 1/2/3 切枪，每把枪有自己的弹匣容量、射速、散布、伤害和音效
+   武器：M4A1 / M870 霰弹枪
+   —— 两把枪共用同一套第一人称手套手臂骨架（cktang88/3d-fps，CC BY 4.0）
+   —— 1/2 选枪，每把枪有自己的弹匣容量、射速、散布、伤害和音效
    ========================================================================= */
 const LAYER_VIEWMODEL = 2;
 camera.layers.enable(LAYER_VIEWMODEL);
@@ -417,16 +417,6 @@ gunView.add(flash);
      sg  6.25 × 8 弹丸    → 全部打中 = 50，两枪打死（散布大，近身才算满）
    备弹也压小了：60 / 90 / 16，逼着抓捕者去翻抽屉。 */
 const WEAPONS = {
-  ak: {
-    key: 'ak', name: 'AK-47', file: './assets/ak47.glb',
-    magSize: 30, ammo: 30, reserve: 60, reserveMax: 999,
-    mode: 'mag', auto: true,                       // 整匣换弹 / 全自动
-    interval: 0.088, pellets: 1, damage: 10, headMul: 2, spread: 0.009,
-    reloadTime: 2.6, kick: 1.0,
-    sound: ['ak1', 'ak2', 'ak3', 'ak4'], reloadSfx: 'reload_rifle', fireSfxVol: 0.95,
-    flashPos: new THREE.Vector3(0.02, 0.01, -0.64), flashScale: 1.0,
-    loaded: false, rt: null,
-  },
   m4: {
     key: 'm4', name: 'M4A1', file: './assets/m4a1.glb',
     magSize: 30, ammo: 30, reserve: 90, reserveMax: 999,
@@ -448,8 +438,8 @@ const WEAPONS = {
     loaded: false, rt: null,
   },
 };
-const WEAPON_ORDER = ['ak', 'm4', 'sg'];
-let currentWeapon = 'ak';
+const WEAPON_ORDER = ['m4', 'sg'];
+let currentWeapon = 'm4';
 const curWeapon = () => WEAPONS[currentWeapon];
 
 // ③ 真枪模型（cktang88/3d-fps，CC BY 4.0，自带第一人称手套手臂）
@@ -740,7 +730,7 @@ for (const key of WEAPON_ORDER) {
 }
 
 // ② 角色手上那把（只在镜子里出现，由镜像相机渲染）
-let mirrorGun = null;                 // ak47.glb 载入后生成的精细版，用来顶替下面的方块 AK
+let mirrorGun = null;                 // 当前这把枪的精细模型（激活武器时指向 rt.mirror），顶替下面的方块 AK
 const gunWorld = buildAK47();
 gunWorld.position.set(0.18, 1.275, -0.49);
 gunWorld.rotation.y = 0.10;
@@ -1088,7 +1078,7 @@ function peerDrive(st, dt) {
   const tilt = st.tl !== undefined ? st.tl : (u >= 0 ? reloadPose(u).tilt : 0);
 
   if (pr.wantGun && st.w && pr.gunKey !== st.w) peerGun(st.w);
-  if (!pr.grp) peerGun(st.w || 'ak');
+  if (!pr.grp) peerGun(st.w || 'm4');
 
   // 弹匣：没在换弹就归位，在换就照同一条时间轴摆（setMagPose 本来就只看 rec + u）
   if (pr.magRec) {
@@ -2333,7 +2323,7 @@ function restart() {
     d.reserve = d.reserveMax;
   }
   resetPumpState();
-  if (WEAPONS.ak.loaded) activateWeapon('ak', true);
+  if (WEAPONS.m4.loaded) activateWeapon('m4', true);
   else cancelReload();
   clearDroppedMags();
 
@@ -2840,7 +2830,7 @@ function useAmmoSpot(s) {
   /* 抽屉只刷抓捕者**这一局选的那把枪**的子弹：ak 30 / m4 45 / sg 8。
      以前是一把抽屉同时给步枪和霰弹两种，那等于逼他三把枪都留着，和"开局选一把"
      冲突。枪还没锁定时兜到 ak，不至于给 0 发。 */
-  const key = WEAPONS[hs.gun] ? hs.gun : 'ak';
+  const key = WEAPONS[hs.gun] ? hs.gun : 'm4';
   const d = WEAPONS[key];
   const add = Math.min(DRAWER_AMMO[key] || 0, d.reserveMax - d.reserve);
   s.open = true;
@@ -2934,9 +2924,8 @@ window.addEventListener('keydown', (e) => {
   /* 这三键现在是"选枪"而不是"随便换枪"：结果要写进 hs.gun（主机权威），并且
      躲藏者一躲完就锁死。锁了之后再按没有反应 —— 抽屉只刷手上这把的弹，
      允许中途换枪会让"哪把枪有补给"这件事变得没有意义。 */
-  if (e.code === 'Digit1') chooseGun('ak');
-  if (e.code === 'Digit2') chooseGun('m4');
-  if (e.code === 'Digit3') chooseGun('sg');
+  if (e.code === 'Digit1') chooseGun('m4');
+  if (e.code === 'Digit2') chooseGun('sg');
   if (e.code === 'KeyQ') {
     const i = WEAPON_ORDER.indexOf(hs.gun);
     chooseGun(WEAPON_ORDER[(i + 1) % WEAPON_ORDER.length]);
@@ -3052,7 +3041,7 @@ const DRAWER_AMMO = { ak: 30, m4: 45, sg: 8 };
    只有抓捕者选，选的结果记在 hs.gun 上（主机权威、随快照广播，两边同一把）。
    时间闸在"躲藏者躲完"那一刻：hide→hunt 一切换就 lockGun()，那时还没选就随机
    发一把，之后整局不许再换（换了抽屉刷的弹就对不上了）。
-   hs.gun 初值是空串而不是 'ak'：默认成 AK 的话，抓捕者会以为自己已经选过了。 */
+   hs.gun 初值是空串而不是 'm4'：给了默认值，抓捕者会以为自己已经选过了。 */
 /* 什么时候点得动：只有躲藏者挑形象(pick)和他正在躲(hide)这两段。
    lobby（准备界面）不算 —— 那会儿两个人还在"点准备"那一屏，枪却在同一块遮罩里
    能点，点完了没人能改（锁定看的是躲藏者躲完那一刻，不是开局那一刻）。 */
@@ -3063,7 +3052,7 @@ function chooseGun(key) {
   else netSendGun(key);
   /* 选完枪就把鼠标收回游戏。第一局抓捕者本来没锁鼠标，如果等他进场再点
      那层"点击进入"，浏览器重新给指针锁会晚一帧以上，就是"视角卡一下再动"。
-     借这次按键/点击的用户手势提前锁上；之后要换枪仍然按 1/2/3。 */
+     借这次按键/点击的用户手势提前锁上；之后要换枪仍然按 1/2。 */
   if (LOAD.ready && !locked && !iAmHider() && (hs.phase === 'pick' || hs.phase === 'hide')) {
     try {
       const p = canvas.requestPointerLock();
@@ -4651,7 +4640,7 @@ function hideUpdateUI() {
      再点一次遮罩重新申请；浏览器收回/重给指针锁不是同一帧完成的，表现出来
      就是"刚变成抓捕者，视角先卡一下再能动"。现在只有真需要光标时才松：
      开场点「准备」，以及躲藏者选形象点卡片/换一批。抓捕者等待时保持锁定，
-     用 1/2/3 选枪（枪卡上也印了数字）。 */
+     用 1/2 选枪（枪卡上也印了数字）。 */
   const needCursor = hs.phase === 'lobby' || (hs.phase === 'pick' && meHider);
   if (needCursor && document.pointerLockElement) document.exitPointerLock();
 

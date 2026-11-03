@@ -19,7 +19,7 @@
   #overlay.hidden { opacity: 0; pointer-events: none; }
   #overlay h1 { margin: 0; font-size: 30px; font-weight: 600; letter-spacing: .12em; }
   #overlay .sub { font-size: 14px; color: #b9b0a4; letter-spacing: .08em; }
-  /* 模型加载进度：3 把枪 + 人物合计约 5.6 MB，1 Mbps 上要半分钟以上。
+  /* 模型加载进度：2 把枪 + 人物合计约 3.9 MB，1 Mbps 上仍要二十多秒。
      加载完之前 #overlay 的点击不生效 —— 否则进游戏就是一局空场。 */
   #overlay .loadbar {
     width: min(420px, 68vw); height: 8px; border-radius: 4px;
@@ -359,7 +359,7 @@
   <div class="wsub" id="waitMsg">点下面的「准备」，两个人都准备好才开局</div>
   <div class="wsub" id="waitReady">准备：0/2</div>
   <div class="guns hidden" id="guns">
-    <div class="gtip">按 <b>1 / 2 / 3</b> 选枪 · 没选就随机发一把<br>抽屉里只刷这把枪的子弹，一格抽屉一回合只能拿一次</div>
+    <div class="gtip">按 <b>1 / 2</b> 选枪 · 没选就随机发一把<br>抽屉里只刷这把枪的子弹，一格抽屉一回合只能拿一次</div>
     <div class="grow" id="gunRow"></div>
   </div>
   <button id="readyBtn" type="button">准 备</button>
@@ -380,7 +380,7 @@
           <dt>左键</dt><dd>抓捕者开枪 / 躲藏者翻滚（贴着墙/天花板时没反应）</dd>
           <dt>E</dt><dd>开门 / 拉抽屉 / 拿子弹 / 偷子弹</dd>
           <dt>R</dt><dd>换弹（抓捕者）</dd>
-          <dt>1 / 2 / 3</dt><dd>抓捕者选枪（锁定前）/ 躲藏者选形象</dd>
+          <dt>1 / 2</dt><dd>抓捕者选枪（锁定前）/ 躲藏者选形象</dd>
           <dt>Q</dt><dd>抓捕者切换待选的枪（锁定前）</dd>
           <dt>滚轮</dt><dd>躲藏者转动自己的形象</dd>
           <dt>Tab</dt><dd>躲藏者开关爬墙</dd>
@@ -417,6 +417,6 @@
   }
 }
 </script>
-<script type="module" src="./main.js?v=duo103"></script>
+<script type="module" src="./main.js?v=duo104"></script>
 </body>
 </html>
