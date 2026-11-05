@@ -643,6 +643,8 @@
     lists: "社区情报",
     console: "云端控制台"
   };
+  /* 怎么处理的：默认是整包丢掉，少数场景配成弹验证码或只记录 */
+  var WAF_ACTION = { ban: "", captcha: "弹验证码", bypass: "只记录", throttle: "限速" };
 
   function loadWaf() {
     return api("/api/mp/admin/waf").then(function (d) { WAF.data = d; renderWaf(); })
@@ -684,15 +686,32 @@
     }
     var table = el("table", "ad-ut");
     var thead = el("thead"), htr = el("tr");
-    ["IP", "干了什么", "还剩多久", "来源"].forEach(function (h) { htr.append(el("th", "", h)); });
+    ["IP / 归属地", "干了什么", "本站记录", "还剩多久", "来源"].forEach(function (h) { htr.append(el("th", "", h)); });
     thead.append(htr);
     var tbody = el("tbody");
     d.decisions.forEach(function (x) {
       var tr = el("tr");
-      tr.append(el("td", "", x.ip || "—"));
+      /* IP 那格复用安全页的写法：上面 IP，下面小字「省市区 · 运营商」 */
+      tr.append(ipTd(x));
       tr.append(el("td", "muted", WAF_REASON[x.reason] || x.reason || "—"));
+      /* 我们自己日志里的痕迹：打 SSH 的人从没碰过网站，这里就是空的 */
+      var v = x.visits || {};
+      var tdVisit = el("td", "muted");
+      if (v.n) {
+        tdVisit.append(el("span", "", "24 小时 " + v.n + " 次"));
+        var dt = el("span", "ad-detail", (v.path || "") + (v.at ? " · " + v.at : ""));
+        dt.title = dt.textContent;
+        tdVisit.append(dt);
+      } else {
+        tdVisit.append(el("span", "ad-detail", "没访问过本站"));
+      }
+      tr.append(tdVisit);
       tr.append(el("td", "", wafLeft(x.left)));
-      tr.append(el("td", "muted", WAF_ORIGIN[x.origin] || x.origin || "—"));
+      var tdSrc = el("td", "muted");
+      tdSrc.append(el("span", "", WAF_ORIGIN[x.origin] || x.origin || "—"));
+      var how = WAF_ACTION[x.action] || "";
+      if (how) tdSrc.append(el("span", "ad-detail", how));
+      tr.append(tdSrc);
       tbody.append(tr);
     });
     table.append(thead, tbody);

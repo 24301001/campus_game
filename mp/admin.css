@@ -107,6 +107,9 @@ table.ad-ut{width:100%;border-collapse:collapse;font-size:12.5px;min-width:860px
 .ad-ut .ad-geo{display:block;margin-top:2px;max-width:190px;overflow:hidden;text-overflow:ellipsis;
   font-family:system-ui,"Microsoft YaHei",sans-serif;
   font-style:normal;font-size:11px;color:#8aa0b2;white-space:nowrap}
+/* WAF 表里「干了什么」下面那行：对方具体请求了什么、用什么工具、猜的哪个用户名 */
+.ad-ut .ad-detail{display:block;margin-top:2px;max-width:250px;overflow:hidden;text-overflow:ellipsis;
+  font-size:11px;color:#7f8c9b;white-space:nowrap}
 .ad-ut .muted{color:var(--muted)}
 .tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;border:1px solid}
 .tag.admin{color:var(--gold);border-color:#6b5a2a;background:#2a2413}
