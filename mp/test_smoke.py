@@ -34,15 +34,29 @@ def request(port, path, data=None, token=None, method=None):
         return json.load(r)
 
 
-def check_static_files(port):
+def check_static_files(port, ws_port):
     with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=3) as response:
         assert response.status == 200 and b"mp/lobby.js" in response.read()
+    with urllib.request.urlopen(f"http://127.0.0.1:{port}/mp/lobby.js", timeout=3) as response:
+        script = response.read()
+        assert b"__MP_WS_PORT__" not in script and f"Number('{ws_port}')".encode() in script
+    for path in ("/pixel-3d/pixel-3d.js", "/pixel-3d/pixel-3d.css"):
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}{path}", timeout=3) as response:
+            assert response.status == 200 and response.read()
     for path in ("/mp/server.py", "/README.md", "/mp/lobby.sqlite3"):
         try:
             urllib.request.urlopen(f"http://127.0.0.1:{port}{path}", timeout=3)
             raise AssertionError(f"private file served: {path}")
         except urllib.error.HTTPError as exc:
             assert exc.code == 404, (path, exc.code)
+    colleges = request(port, "/colleges")["colleges"]
+    assert len(colleges) == 23 and "碳中和与环境学院" in colleges
+    assert "环境学院" not in colleges and "其他" not in colleges
+    try:
+        request(port, "/look/from-photo", {"image": "not-a-photo"})
+        raise AssertionError("server photo upload route should be disabled")
+    except urllib.error.HTTPError as exc:
+        assert exc.code == 410
 
 
 async def recv_type(ws, typ, timeout=2):
@@ -112,13 +126,13 @@ async def scenario(http_port, ws_port, db_path):
             raise AssertionError("nickname update accepted")
         except urllib.error.HTTPError as exc:
             assert exc.code == 400
-        striped_look = {**profile["look"], "cloth": "#cfccd2", "clothAlt": "#28242a", "clothPattern": "stripe"}
+        striped_look = {**profile["look"], "cloth": "#cfccd2", "clothAlt": "#28242a", "clothPattern": "stripe", "packColor": "#3a74b2"}
         changed = request(http_port, "/profile/me", {"bio": "测试签名", "look": striped_look}, a["token"], "PUT")
         assert changed["nickname"] == "联机测试甲" and changed["bio"] == "测试签名"
-        assert changed["look"]["clothPattern"] == "stripe" and changed["look"]["clothAlt"] == "#28242a"
+        assert changed["look"]["clothPattern"] == "stripe" and changed["look"]["clothAlt"] == "#28242a" and changed["look"]["packColor"] == "#3a74b2"
         public = request(http_port, f"/profile/{a['user']['id']}", token=c["token"])
         assert set(public) == {"id", "nickname", "look", "bio", "college", "grade", "tags", "visibility", "online", "lastSeen"}
-        assert public["look"]["clothPattern"] == "stripe"
+        assert public["look"]["clothPattern"] == "stripe" and public["look"]["packColor"] == "#3a74b2"
         visibility = {"bio": False, "college": True, "grade": True, "tags": False}
         mine = request(http_port, "/profile/me", {"bio": "私密签名", "tags": ["保密"], "look": striped_look, "visibility": visibility}, a["token"], "PUT")
         assert mine["bio"] == "私密签名" and mine["visibility"] == visibility
@@ -171,7 +185,7 @@ def main():
                     time.sleep(.1)
             else:
                 raise RuntimeError("server failed to start: " + process.stderr.read().decode(errors="replace"))
-            check_static_files(hp)
+            check_static_files(hp, wp)
             asyncio.run(scenario(hp, wp, Path(tmp) / "test.sqlite3"))
         finally:
             process.terminate()

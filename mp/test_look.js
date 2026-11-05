@@ -62,23 +62,40 @@ vm.runInNewContext(source,sandbox);
   assert.deepEqual(right.map(r=>r.slice(0,4)),left.map(([x,y,w,h])=>[18-x-w,y,w,h]),'right direction must mirror left');
   const leftFace=sandbox.window.MPLook.sprite(dark,'left',4);
   const rightFace=sandbox.window.MPLook.sprite(dark,'right',4);
-  assert.notEqual(pixel(leftFace,4,5),null,'left-facing nose must project to the left');
-  assert.equal(pixel(leftFace,4,5),pixel(rightFace,13,5),'nose must switch sides with direction');
-  assert.notEqual(pixel(leftFace,4,5),dark.hairColor,'nose must show skin rather than hair');
+  assert.notEqual(pixel(leftFace,6,6),null,'left-facing nose must project to the left');
+  assert.equal(pixel(leftFace,6,6),pixel(rightFace,11,6),'nose must switch sides with direction');
+  assert.notEqual(pixel(leftFace,6,6),dark.hairColor,'nose must show skin rather than hair');
   assert.equal(pixel(leftFace,12,5),pixel(rightFace,5,5),'back of head must switch sides');
   const front=sandbox.window.MPLook.sprite(dark,'down',4);
-  assert.equal(pixel(front,7,5),'#ffffff');
-  assert.equal(pixel(front,10,5),'#ffffff');
+  assert.equal(pixel(front,7,5),dark.eyeColor);
+  assert.equal(pixel(front,11,5),dark.eyeColor);
+  assert.notEqual(pixel(front,7,3),dark.eyeColor,'forehead must separate eyes from hairline');
   const blueEyes=sandbox.window.MPLook.sprite({...dark,eye:'dot',eyeColor:'#317ac1'},'down',4);
-  assert.equal(pixel(blueEyes,8,6),'#317ac1','custom pupil color must be visible');
+  assert.equal(pixel(blueEyes,7,5),'#317ac1','custom pupil color must be visible');
+  for(const dir of ['down','left']){
+    const eyeShapes=['round','narrow','dot'].map(eye=>{
+      const frame=sandbox.window.MPLook.sprite({...dark,eye},dir,4);
+      return Array.from({length:4},(_,row)=>Array.from({length:9},(_,col)=>pixel(frame,col+5,row+2)===dark.eyeColor?'1':'0').join('')).join('/');
+    });
+    assert.equal(new Set(eyeShapes).size,3,dir+' round, narrow and dot eyes must look different');
+  }
   for(const dir of ['down','left']){
     const feet=[0,1,2,3,4].map(step=>[5,6,7,8,9,10,11,12,13].map(x=>pixel(sandbox.window.MPLook.sprite(dark,dir,step),x,27)));
     for(const frame of feet.slice(1))assert.deepEqual(frame,feet[0],'walk frames must keep shoes at the fixed anchor');
   }
+  for(const dir of ['down','left']){
+    const silhouettes=[0,1,2,3].map(step=>{
+      const frame=sandbox.window.MPLook.sprite(dark,dir,step);
+      return Array.from({length:10},(_,row)=>Array.from({length:14},(_,col)=>pixel(frame,col+2,row+17)?'1':'0').join('')).join('/');
+    });
+    assert(new Set(silhouettes).size>=3,dir+' walking legs must show distinct planted and passing poses');
+    const crown=[0,1,2,3].map(step=>pixel(sandbox.window.MPLook.sprite(dark,dir,step),9,1));
+    assert(crown.every(value=>value===crown[0]),dir+' walking frames must not bounce the head');
+  }
   const recolored=sandbox.window.MPLook.sprite({...dark,pants:'#e33275',acc:'glasses',accColor:'#39d4c8'},'down',4);
   assert(recolored.rects.some(r=>r[4]==='#e33275'),'pants color must reach sprite');
   assert(recolored.rects.some(r=>r[4]==='#39d4c8'),'accessory color must reach sprite');
-  assert.equal(pixel(recolored,7,7),'#39d4c8','front glasses need a bottom rim');
+  assert.equal(pixel(recolored,7,6),'#39d4c8','front glasses need a bottom rim');
   const sideGlasses=sandbox.window.MPLook.sprite({...dark,acc:'glasses',accColor:'#39d4c8'},'left',4);
   assert.notEqual(pixel(sideGlasses,5,7),'#39d4c8','side glasses must not hang below the face');
   const bun=sandbox.window.MPLook.sprite({...dark,hairStyle:'bun'},'down',4);
@@ -92,5 +109,7 @@ vm.runInNewContext(source,sandbox);
   assert(sandbox.window.MPLook.isDefault(sandbox.window.MPLook.fallback));
   assert(sandbox.window.MPLook.isDefault({skin:'#e9bb92',hairStyle:'short',hairColor:'#241d1a',eye:'round',cloth:'#3f6ea8',pants:'#454c5a',acc:'none'}));
   assert(!/fetch\s*\(|XMLHttpRequest|WebSocket/.test(sandbox.window.MPLook.fromPhoto.toString()),'photo processing must not send pixels');
+  const lobby=fs.readFileSync(require('node:path').join(__dirname,'lobby.js'),'utf8');
+  assert(!lobby.includes('/api/mp/look/from-photo'),'profile and registration must not upload photos');
   console.log('PASS: local photo extraction including stripes, 18x30/9,27 sprites, visible left/right-facing head, shared 24x24 avatar, 20 unique looks');
 })().catch(e=>{console.error(e);process.exitCode=1});

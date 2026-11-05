@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>像素校园 · 全校地图</title>
-<link rel="stylesheet" href="mp/theme.css">
+<link rel="stylesheet" href="mp/theme.css?v=20261105-reg">
+<link rel="stylesheet" href="pixel-3d/pixel-3d.css?v=20261031-main3d">
+<link rel="stylesheet" href="cat-dex/cat-dex.css?v=20261104-look">
+<link rel="stylesheet" href="building/building.css?v=20261104-bldz">
 <style>
   html,body{margin:0;height:100%;background:#101216;overflow:hidden;}
   #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
@@ -3039,11 +3042,22 @@ const DUCK_AREA = { x: WATER[0].x, y: WATER[0].y, w: WATER[0].w,
 /* 湖的南岸线（= 石板路北缘）。鸭子越过它就算"上岸"，换陆地版精灵（见 animateWater）。 */
 const WATER_S = WATER[0].y + WATER[0].h;
 
-/* 惊走参数（世界像素 / 每秒）。⚠️ 上升快（RISE）回落慢（FALL）—— 这是用户要的
-   "看到人会跑走，游远了再慢慢游回来"的全部实现：外扩用 RISE、归位用 FALL。
-   safe 是警戒半径（人进这个圈就开始慌），run 是满恐慌时额外游出的距离。 */
-const DUCK_SAFE = 64, DUCK_RUN = 46, DUCK_RISE = 3.2, DUCK_FALL = 0.45;
-const FISH_SAFE = 40, FISH_RUN = 60, FISH_RISE = 4.0, FISH_FALL = 0.35;
+/* 【2026-11-04 第二轮】鸭子和鱼**不再退避**了。
+   用户原话：「鸭子和鱼退避还是太机械了感觉。也别弧线了。直接不退避了得了。」
+   —— 上一轮已经把"反应延迟 / smoothstep / 切向弧线"都叠上了，读起来仍是机械，
+   说明问题不在曲线而在"绕着你躲"这件事本身。于是整条惊走逻辑连 panicStep 一起删掉，
+   鸭子和鱼只按自己的轨道游，人挡在路上也不让。
+   取而代之的是**鸭子会咬人**：人贴到 DUCK_BITE 以内，鸭子**追着你咬**，
+   屏幕底部弹一条提示「鸭子正在驱赶你」（见 animateWater 里的三态机）。
+   ⚠️ 用户第三句话把"探一下头"否掉了：「直接对着我追着咬就行，我跑远才走」
+      ⇒ 不是啄一口就散，而是一路追；只有距离拉开到 DUCK_GIVEUP 才罢休、游回轨道。 */
+const DUCK_BITE = 30;       // 触发追击的距离（世界像素）≈ 人走到鸭子跟前半步
+const DUCK_GIVEUP = 130;    // 拉开这么远就放弃（世界像素），之后游回自己的轨道
+const DUCK_CHASE = 105;     // 追击速度（px/s）—— 玩家 BASE_SPEED=200，跑得掉
+const DUCK_RETURN = 70;     // 放弃后归位的速度（px/s），比追击慢，像"不情不愿地回去"
+const DUCK_PECK = 0.17;     // 啄一下的时长（秒）
+const DUCK_PECK_GAP = 0.17; // 两下之间正常帧的时长（秒）
+let _duckToastT = 0;        // 提示条自己的冷却：九只鸭子围过来也只喊一次
 
 /* --- 4.5.1 静态底 --- */
 function paintWaterBase(g, rng) {
@@ -3206,35 +3220,46 @@ function drawWater(ox, oy, z) {
    ⚠️ 只把水痕换成接地影是不够的 —— 用户 2026-09-13：「鸭子上岸是用腿走路，不是游动」。
       没有腿的鸭子站在砖面上依然是"漂"着的，一眼假。所以两版的**身体整套差 3 行**：
       水面版 dy=3（下沉），走路版 dy=0，走路版空出的 y11..13 正好画腿。
-   ⚠️ 两版必须共用 16×16 画布与同一个锚点 ay = 14（= 落地线那一行）—— spawnDucks 只存
-      一份 w/h/ax/ay，两版尺寸不一致另一版就会画歪。水面版的绝对落点**逐像素与旧版相同**
-      （旧 16×13 / ay 11 / 身顶画布 y5 ⇒ 世界 y−6；新 16×16 / ay 14 / 身顶画布 y8 ⇒ 同式）。
+   ⚠️ 四版（水面/陆地 × 平常/咬人）必须共用**同一个画布尺寸与锚点** ax=10 / ay=14 ——
+      spawnDucks 只存一份 w/h/ax/ay 和一组图，尺寸不一致换帧就会错位。
+      水面版的绝对落点**逐像素与旧版相同**（身顶画布 y8、锚点 ay14 ⇒ 世界 y−6）。
+   ⚠️ 画布 **20×16**，旧图整体右移 OX=2 像素：
+      ① 咬人那两帧要把头和喙往前伸 2px，16 宽会把喙切掉；
+      ② 画布必须在身体两侧留出**同样宽**的透明边，否则 flipH 镜像后左右朝向的
+         落点会差 2px（旧图贴满 0..15，左朝向是天然对齐的；加宽后若不居中就会抖）。
+         旧图 [0,15] 右移 2 → [2,17]，中轴 9.5 = 画布中轴 ⇒ 镜像后仍在 [2,17] ✓。
    ⚠️ 原形参 `seed` 是个**死参数**（函数体从头到尾没引用过它，三只鸭子本来就是同一张
-      图）—— 第七轮顺手换成有意义的 land，调用点只有 spawnDucks 一处。 */
-function makeDuck(land) {
-  const c = mkCanvas(16, 16), g = c.getContext("2d");
+      图）—— 第七轮顺手换成有意义的 land；第八轮再加 bite（脖子伸出来咬人那两帧）。
+      调用点只有 spawnDucks 一处。 */
+function makeDuck(land, bite) {
+  const OX = 2;                                  // 旧 16 宽图整体右移量，见上
+  const c = mkCanvas(20, 16), g = c.getContext("2d");
   const dy = land ? 0 : 3;                       // 身体整套的纵向偏移（见上）
   if (land) {
-    px(g, 2, 13, 11, 1, "rgba(24,20,16,0.22)");        // 接地影
+    px(g, 2 + OX, 13, 11, 1, "rgba(24,20,16,0.22)");   // 接地影
     /* 两条腿**一长一短**：后腿撑地（落到落地线 y14）、前腿抬起 1px —— 两腿等长就是
        "立正站着"，有腿也读不出"走路"。长短差 1px 在 1× 下是 1 像素，3× 下看得清。 */
-    px(g, 4, 11, 2, 3, "#c8862e");                     // 后腿（支撑脚，背光偏暗）
-    px(g, 9, 11, 2, 2, "#e0a03a");                     // 前腿（抬起）
-    px(g, 3, 14, 4, 1, "#b87c28");                     // 后脚蹼（踩在落地线上）
-    px(g, 8, 13, 4, 1, "#d0902f");                     // 前脚蹼（离地 1px）
+    px(g, 4 + OX, 11, 2, 3, "#c8862e");                // 后腿（支撑脚，背光偏暗）
+    px(g, 9 + OX, 11, 2, 2, "#e0a03a");                // 前腿（抬起）
+    px(g, 3 + OX, 14, 4, 1, "#b87c28");                // 后脚蹼（踩在落地线上）
+    px(g, 8 + OX, 13, 4, 1, "#d0902f");                // 前脚蹼（离地 1px）
   } else {
-    px(g, 1, 13, 13, 2, "rgba(8,22,36,0.34)");         // 水面版：水痕
+    px(g, 1 + OX, 13, 13, 2, "rgba(8,22,36,0.34)");    // 水面版：水痕
   }
-  px(g, 2, 5 + dy, 9, 6, "#e8e4d8");                   // 身
-  px(g, 3, 5 + dy, 7, 3, "#f4f1e8");
-  px(g, 2, 10 + dy, 9, 1, "#bfb9a8");
-  px(g, 9, 2 + dy, 5, 4, "#e8e4d8");                   // 头
-  px(g, 10, 3 + dy, 3, 2, "#f4f1e8");
-  px(g, 13, 3 + dy, 3, 2, "#d99a3c");                  // 喙
-  px(g, 13, 3 + dy, 3, 1, "#eab24f");
-  px(g, 11, 3 + dy, 1, 1, "#2c2b28");                  // 眼
-  px(g, 3, 7 + dy, 6, 1, "#cfc9b8");                   // 翅
-  return { canvas: c, ax: 8, ay: 14, w: 16, h: 16 };
+  px(g, 2 + OX, 5 + dy, 9, 6, "#e8e4d8");              // 身
+  px(g, 3 + OX, 5 + dy, 7, 3, "#f4f1e8");
+  px(g, 2 + OX, 10 + dy, 9, 1, "#bfb9a8");
+  /* 咬人帧：先铺一段脖子（从肩部伸出去），头整体右移 2px，最后画头把脖子接缝盖住。
+     头左沿 hx：平常 9（= 旧版坐标），咬人 11。 */
+  const hx = (bite ? 11 : 9) + OX;
+  if (bite) px(g, 9 + OX, 4 + dy, 4, 3, "#e8e4d8");    // 伸出的脖子
+  px(g, hx, 2 + dy, 5, 4, "#e8e4d8");                  // 头
+  px(g, hx + 1, 3 + dy, 3, 2, "#f4f1e8");
+  px(g, hx + 4, 3 + dy, 3, 2, "#d99a3c");              // 喙（咬人帧伸到画布最右一列 x19）
+  px(g, hx + 4, 3 + dy, 3, 1, "#eab24f");
+  px(g, hx + 2, 3 + dy, 1, 1, "#2c2b28");              // 眼
+  px(g, 3 + OX, 7 + dy, 6, 1, "#cfc9b8");              // 翅
+  return { canvas: c, ax: 8 + OX, ay: 14, w: 20, h: 16 };
 }
 
 /* --- 4.5.3b 鱼（有状态的水下实体，但**不是道具** —— 见 drawWater 里的注释） --- */
@@ -3244,11 +3269,13 @@ function spawnFish() {
   const rng = makeRng(20260914);
   for (const R of WATER) {
     for (let i = 0; i < 3; i++) {
+      /* 【2026-11-04 第二轮】鱼不再躲人：safe/run/rise/fall/side/delay 整套退避参数删掉。
+         轨道是椭圆的，rx = 0.24w、圆心在 0.30..0.70w ⇒ 游动范围天然落在 0.06..0.94w，
+         不出水域，所以也不再需要"落点夹回湖面矩形"那一步。 */
       const f = {
-        area: R, safe: FISH_SAFE, run: FISH_RUN, rise: FISH_RISE, fall: FISH_FALL,
         cx: R.x + R.w * (0.30 + 0.20 * i), cy: R.y + R.h * (0.28 + 0.22 * i),
         rx: R.w * 0.24, ry: R.h * 0.26, ph: rng() * 6.28, sp: 0.20 + i * 0.05,
-        sc: 0, dir: 1, x0: 0, y0: 0, x: 0, y: 0
+        dir: 1, x0: 0, y0: 0, x: 0, y: 0
       };
       f.x0 = f.x = f.cx; f.y0 = f.y = f.cy;
       fishes.push(f);
@@ -3264,7 +3291,7 @@ function spawnFish() {
 
    做法是**推出**而不是改轨道：轨道公式一个数都不动，只在落点落进障碍里时，沿
    "穿得最浅"的那条轴推出去 —— 永远推最短的路，鸭子才会贴着石头滑过去而不是弹开。
-   人在远处时 o.sc=0 ⇒ 落点与旧版逐像素相同，这处修复对远景零影响。 */
+   落点不在障碍里时原样返回 ⇒ 对没撞上石头的鸭子/鱼零影响。 */
 function avoidPush(x, y) {
   const M = 6;                                          // 离石头的余量（世界像素）
   for (const b of WATER_AVOID) {
@@ -3278,46 +3305,34 @@ function avoidPush(x, y) {
   return [x, y];
 }
 
-/* --- 4.5.3c 恐慌包络（鸭与鱼共用） ---
-   人靠近 → 迅速外扩；人走开 → 缓慢漂回原轨道。**上升快、回落慢正是用户要的
-   "游远了再慢慢游回来"** —— 不需要额外的状态机与目标点，包络本身就是那件事。
-
-   ⚠️ 方向必须取**轨道点**（x0/y0，不含惊慌位移）指向玩家的反方向，不能取当前位置 ——
-      当前位置已经含了外扩量，再拿它算方向就是正反馈，人会眼睁睁看着鸭子一路顶到湖岸。
-   ⚠️ 出口一律按湖面矩形内缩 M 夹一次：鸭子不会游上岸。 */
-function panicStep(o, dt, px_, py_) {
-  const dxo = o.x0 - px_, dyo = o.y0 - py_;
-  const dist = Math.hypot(dxo, dyo) || 1;
-  const want = dist < o.safe ? 1 - dist / o.safe : 0;
-  o.sc += (want - o.sc) * (want > o.sc ? o.rise : o.fall) * dt;
-  if (o.sc < 0) o.sc = 0; else if (o.sc > 1) o.sc = 1;
-  /* ⚠️ 字段叫 `area` 而不是 `lake`：对鱼它是湖面，对鸭子它是"湖面 ∪ 南岸石板路"。
-     继续叫 lake 的话，下一个人会以为鸭子还泡在水里 —— 而第七轮之后它会上岸。 */
-  const R = o.area, k = o.sc * o.run / dist, M = 10;
-  let x = o.x0 + dxo * k, y = o.y0 + dyo * k;
-  if (x < R.x + M) x = R.x + M; else if (x > R.x + R.w - M) x = R.x + R.w - M;
-  if (y < R.y + M) y = R.y + M; else if (y > R.y + R.h - M) y = R.y + R.h - M;
-  /* 最后再躲一次水里的障碍（第六轮是岛与塔，第七轮加上了影壁 / 月亮门门垛 / 假山）。
-     这一步必须在活动域夹取**之后**：否则被夹回边界的落点会重新落进障碍里。 */
-  return avoidPush(x, y);
-}
+/* --- 4.5.3c 恐慌包络 —— 【2026-11-04 第二轮已整段删除】
+   上一轮这里还留着"反应延迟 / smoothstep 起势 / 切向弧线"三件套，用户仍然觉得机械，
+   于是这轮按用户要求**直接取消退避**：人和鸭子鱼各走各的，谁也不躲谁。
+   鸭子贴脸时改为咬人（见 animateWater 里的 DUCK_BITE 分支）。
+   ⚠️ 以后不要再"把退避加回来调参数" —— 用户否掉的是这件事本身，不是它的曲线。 */
 
 function spawnDucks(rng) {
   const A = DUCK_AREA;                                  // 活动域 = 湖面 ∪ 南岸石板路
-  const sW = makeDuck(false), sL = makeDuck(true);      // 水面版 / 陆地版（见 makeDuck 头注）
+  const sW = makeDuck(false, false), sL = makeDuck(true, false);   // 水面版 / 陆地版
+  const bW = makeDuck(false, true),  bL = makeDuck(true, true);    // 同上，脖子伸出来咬人那两帧
+  /* 【2026-11-04】不再抽"逃跑距离 / 绕向 / 反应延迟"——退避整套已经删了。
+     这里只留轨道相位（ph/sp），取自 §6.7 传进来的 rng，多抽少抽都不影响别人。 */
   for (const R of WATER) {
     for (let i = 0; i < 3; i++) {
       const d = {
         img: sW.canvas, imgR: sW.canvas, imgL: flipH(sW.canvas),
-        landR: sL.canvas, landL: flipH(sL.canvas), dir: 1,
+        landR: sL.canvas, landL: flipH(sL.canvas),
+        biteR: bW.canvas, biteL: flipH(bW.canvas),
+        biteLandR: bL.canvas, biteLandL: flipH(bL.canvas),
+        dir: 1,
         ax: sW.ax, ay: sW.ay, w: sW.w, h: sW.h,
-        area: A, safe: DUCK_SAFE, run: DUCK_RUN, rise: DUCK_RISE, fall: DUCK_FALL,
+        mode: "orbit", peckT: 0, stuckT: 0,                     // 三态机：orbit / chase / back
         /* 圆心与半轴照**活动域**算，不能照湖面（R）：照 R 的话三只鸭子永远只在湖北半部
            绕圈，南边那 96px 宽的砖面一辈子等不来一只鸭子 —— 而用户这轮要的正是
            「上岸走动」。rx 仍取 A.w*0.24，因为 A.w === R.w 本来就同源（§4.5.3d）。 */
         cx: A.x + A.w * (0.30 + 0.20 * i), cy: A.y + A.h * (0.28 + 0.22 * i),
         rx: A.w * 0.24, ry: A.h * 0.22, ph: rng() * 6.28, sp: 0.16 + rng() * 0.12,
-        sc: 0, x0: 0, y0: 0, x: 0, y: 0, baseY: 0
+        x0: 0, y0: 0, x: 0, y: 0, baseY: 0
       };
       d.x0 = d.x = d.cx; d.y0 = d.y = d.cy; d.baseY = d.cy;
       ducks.push(d);
@@ -3330,31 +3345,84 @@ function animateWater(dt) {
   /* ⚠️ 闸①：dt 非正一律当 0（负 dt 会一路污染累积相位，见 build.py 补丁 12 的注释） */
   if (!(dt > 0)) dt = 0;
   waterT += dt;
+  if (_duckToastT > 0) _duckToastT -= dt;
   for (const d of ducks) {
     const t = waterT * d.sp + d.ph;
-    d.x0 = d.cx + Math.cos(t) * d.rx;                             // 轨道点：不含惊慌位移
+    d.x0 = d.cx + Math.cos(t) * d.rx;                             // 轨道点
     d.y0 = d.cy + Math.sin(t * 1.25) * d.ry;
-    const p = panicStep(d, dt, player.x, player.y);
-    const nx = p[0], ny = p[1] + Math.round(Math.sin(waterT * 2.2 + d.ph) * 1.2);
-    /* 朝向按**合成位移**翻（绕圈 + 逃跑两种运动都涵盖）。0.05 的死区是防微抖闪烁：
-       鸭子悬在轨道两端时 vx 每帧都在 0 附近跳，不设死区会左右抽搐。
-       ⚠️ 但**赋 d.img 必须每帧无条件做**（第七轮改）：鸭子现在有两套图（水面版 /
-          陆地版），若沿用"只在死区外赋值"，那么"匀速直行"的每一帧都不会换图 ——
-          而鸭子跨过岸线的那一刻往往正是直行（轨道切线方向），于是它会上了岸
-          还拖着水痕。死区只该管**朝向**，不该管**换装**。 */
-    const vx = nx - d.x;
-    if (Math.abs(vx) > 0.05) d.dir = vx < 0 ? -1 : 1;
-    const land = ny > WATER_S;
-    d.img = d.dir < 0 ? (land ? d.landL : d.imgL) : (land ? d.landR : d.imgR);
-    d.x = nx;
-    d.y = ny;
-    d.baseY = ny;
+    /* 【2026-11-04 第二轮】不再算"离人多远就退多远"，轨道点只躲水里的岛与塔。 */
+    const home = avoidPush(d.x0, d.y0);
+    const hy = home[1] + Math.round(Math.sin(waterT * 2.2 + d.ph) * 1.2);
+    /* --- 三态：orbit（照常游）/ chase（追着人咬）/ back（放弃后回轨道）---
+       用户 2026-11-04：「直接对着我追着咬就行，我跑远才走」。
+       进：距离 < DUCK_BITE；出：距离 > DUCK_GIVEUP。
+       ⚠️ 活动域仍然只有"湖面 ∪ 南岸石板路"，鸭子不追上岸（DUCK_AREA 夹取见下）；
+          卡在边界追不到人时用 stuckT 兜底，1.5 秒没挪窝就放弃，不会贴着岸抖。 */
+    const toPx = player.x - d.x, toPy = player.y - d.y;
+    const pd = Math.hypot(toPx, toPy) || 1;
+    if (d.mode === "chase") {
+      if (pd > DUCK_GIVEUP) { d.mode = "back"; d.stuckT = 0; }
+    } else if (pd < DUCK_BITE) {
+      d.mode = "chase"; d.stuckT = 0;
+    }
+    let nx, ny;
+    if (d.mode === "chase") {
+      /* 追到身边就停住啄，不再往人身上叠（否则鸭子和角色会完全重合）。 */
+      const stepLen = pd > 14 ? Math.min(DUCK_CHASE * dt, pd - 14) : 0;
+      nx = d.x + toPx / pd * stepLen;
+      ny = d.y + toPy / pd * stepLen;
+      d.dir = toPx < 0 ? -1 : 1;                    // 追人的时候一定面向人
+    } else if (d.mode === "back") {
+      const hx = home[0] - d.x, hdy = hy - d.y, hd = Math.hypot(hx, hdy);
+      if (hd < 2.5) { d.mode = "orbit"; nx = home[0]; ny = hy; }
+      else {
+        const s = Math.min(DUCK_RETURN * dt, hd);
+        nx = d.x + hx / hd * s; ny = d.y + hdy / hd * s;
+      }
+      const vx = nx - d.x;                          // 0.05 死区：防轨道两端左右抽搐
+      if (Math.abs(vx) > 0.05) d.dir = vx < 0 ? -1 : 1;
+    } else {
+      nx = home[0]; ny = hy;
+      const vx = nx - d.x;
+      if (Math.abs(vx) > 0.05) d.dir = vx < 0 ? -1 : 1;
+    }
+    /* 活动域夹取 + 躲岛塔。顺序：先夹进湖面/南岸，再推出障碍 —— 反过来会被夹回石头里。 */
+    const A = DUCK_AREA;
+    nx = Math.max(A.x + 4, Math.min(nx, A.x + A.w - 4));
+    ny = Math.max(A.y + 4, Math.min(ny, A.y + A.h - 4));
+    const pushed = avoidPush(nx, ny);
+    /* 卡住兜底：想追却一直在原地（被边界或石头挡住），1.5 秒就放弃。 */
+    if (d.mode === "chase") {
+      const moved = Math.hypot(pushed[0] - d.x, pushed[1] - d.y);
+      if (moved < 0.12) { d.stuckT = (d.stuckT || 0) + dt; if (d.stuckT > 1.5) d.mode = "back"; }
+      else d.stuckT = 0;
+    }
+    d.x = pushed[0];
+    d.y = pushed[1];
+    d.baseY = d.y;
+    /* --- 啄：只在追到身边（pd < DUCK_BITE）时张嘴，一伸一收地连续啄；
+           远处追击用平常帧，边游边把脖子拉长会像贴图错位。 --- */
+    let biting = false;
+    if (d.mode === "chase" && Math.hypot(player.x - d.x, player.y - d.y) < DUCK_BITE) {
+      d.peckT = (d.peckT || 0) + dt;
+      biting = (d.peckT % (DUCK_PECK + DUCK_PECK_GAP)) < DUCK_PECK;
+      /* 提示条：追击期间一直该有，所以 _duckToastT 到期就再喊一次（2.2 秒一句）。 */
+      if (_duckToastT <= 0) { guideToast("鸭子正在驱赶你"); _duckToastT = 2.2; }
+    } else d.peckT = 0;
+    /* ⚠️ 换图必须**每帧无条件做**（第七轮教训）：死区只该管朝向，不该管换装 ——
+       否则鸭子跨过岸线那一刻若正在直行，它会上了岸还拖着水痕。
+       咬人帧（biteR/biteL）与平常帧同尺寸同锚点，换帧不会错位。 */
+    const land = d.y > WATER_S;
+    d.img = biting
+      ? (d.dir < 0 ? (land ? d.biteLandL : d.biteL) : (land ? d.biteLandR : d.biteR))
+      : (d.dir < 0 ? (land ? d.landL : d.imgL) : (land ? d.landR : d.imgR));
   }
   for (const f of fishes) {
     const t = waterT * f.sp + f.ph;
     f.x0 = f.cx + Math.cos(t) * f.rx;
     f.y0 = f.cy + Math.sin(t * 1.3) * f.ry;
-    const p = panicStep(f, dt, player.x, player.y);
+    /* 鱼同样不再躲人，只躲岛与塔（返回数组顺序是 [x, y]）。 */
+    const p = avoidPush(f.x0, f.y0);
     if (Math.abs(p[0] - f.x) > 0.05) f.dir = p[0] < f.x ? -1 : 1;  // 尾巴挂在游动的反侧
     f.x = p[0];
     f.y = p[1];
@@ -4651,10 +4719,11 @@ const GAIT = [
   { m: 0, fl: 0, spread: 0, bob: 0, sw: 0 },   // 4 待机：呼气
   { m: 0, fl: 0, spread: 0, bob: 1, sw: 0 }    // 5 待机：吸气（上身抬 1px）
 ];
-/* 一个完整步态周期走过的世界像素。1× 档速度 200 px/s → 200/160 = 1.25 周期/秒
-   = 2.5 步/秒（真人 1.8~2.0，游戏里略快是合适的）。3× 档世界速度减半，步频跟着慢下来。
+/* 一个完整步态周期走过的屏幕像素。1× 档速度 200 px/s → 200/160 = 1.25 周期/秒
+   = 2.5 步/秒；近景放大时世界速度下降，但屏幕速度与步频保持一致。
    ⚠️ 两个数都必须在这里声明：主循环补丁 11 要用，而主循环段排在角色段之后。 */
 const WALK_STRIDE = 160;
+const PLAYER_WALK_STRIDE = 112;             // four clear foot poses per 112 screen pixels
 const IDLE_HZ = 0.4;                   // 待机呼吸约 2.5 秒一个来回
 
 const A2 = {
@@ -5227,7 +5296,7 @@ const CTR_W = 720, CTR_H = 450;
 const CTR_WALL = 14;
 const CTR_R = 7, CTR_H2 = 22;              // 玩家碰撞半宽 / 身体高（脚点往上算）
 const CTR_SPEED = 155;                     // 逻辑像素/秒
-const CTR_STRIDE = 40;                     // 走多少逻辑像素换一个步态相位
+const CTR_STRIDE = 30;                     // 室内约每 0.19 秒换一帧，能看清腿部交替
 
 /* --- 7.5.6 计算机中心 · 房内布局 --------------------------------------
    碰撞盒 [x, y, w, h]。⚠️ 一条都不许进 `solids`。 */
@@ -5427,7 +5496,7 @@ function ctrDraw() {
   const n = R.npc;
   const who = [
     { y: n.y,      f: () => ctrDrawChar(g, n.spr(n.dir, n.step), n.x, n.y) },
-    { y: CENTER.y, f: () => ctrDrawChar(g, window.MP && MP.connected ? MP.sprite(MP.look, CENTER.dir, CENTER.step) : charSprite(CENTER.dir, CENTER.step), CENTER.x, CENTER.y) }
+    { y: CENTER.y, f: () => ctrDrawChar(g, window.MP && (MP.connected || MP.offlineSolo) ? MP.sprite(MP.look, CENTER.dir, CENTER.step) : charSprite(CENTER.dir, CENTER.step), CENTER.x, CENTER.y) }
   ];
   if (window.MP) MP.appendIndoorPeers(who, g);
   who.sort((a, b) => a.y - b.y);
@@ -5463,6 +5532,7 @@ function ctrUpdate(dt) {
   if (moving) {
     const L = Math.hypot(dx, dy) || 1;
     dx /= L; dy /= L;
+    const oldX = CENTER.x, oldY = CENTER.y;
     const nx = CENTER.x + dx * CTR_SPEED * dt, ny = CENTER.y + dy * CTR_SPEED * dt;
     /* ⚠️ 两轴分开判：斜着撞墙时会顺着墙滑，而不是整个卡死（地图主循环同款做法）。
        ⚠️ 碰撞表是**当前房间**的 —— 引擎泛化后这里最容易出的错就是还读着计算机中心那张。 */
@@ -5470,8 +5540,11 @@ function ctrUpdate(dt) {
     if (roomFree(R, CENTER.x, ny)) CENTER.y = ny;
     if (Math.abs(dx) > Math.abs(dy)) CENTER.dir = dx < 0 ? "left" : "right";
     else                             CENTER.dir = dy < 0 ? "up" : "down";
-    CENTER.walk += CTR_SPEED * dt;
-    CENTER.step = Math.floor(CENTER.walk / CTR_STRIDE) % WALK_FRAMES;
+    const moved = Math.hypot(CENTER.x - oldX, CENTER.y - oldY);
+    if (moved > 0.01) {
+      CENTER.walk += moved;
+      CENTER.step = Math.floor(CENTER.walk / CTR_STRIDE) % WALK_FRAMES;
+    } else CENTER.step = IDLE_BASE;
   } else {
     /* 待机呼吸：与地图上的角色同一张相位表、同一个 IDLE_HZ，站姿节拍一致 */
     CENTER.step = IDLE_BASE + (Math.floor(CENTER.t * IDLE_HZ * 2) % IDLE_FRAMES);
@@ -5590,6 +5663,8 @@ function ctrOpenPlatform(R) {
 }
 function ctrClosePlatform() {
   if (ctrP) ctrP.hidden = true;
+  // 离开后卸载内嵌应用，避免代码编辑器和页面动画在地图背后继续占用内存与 CPU。
+  if (ctrF && ctrF.getAttribute("src") !== "about:blank") ctrF.setAttribute("src", "about:blank");
   CENTER.plat = false;
   CENTER.waiting = false;
   _ctrLast = performance.now();                        // 免得回来第一帧 dt 巨大
@@ -17100,6 +17175,14 @@ for (const e of CAMPUS) {
         （ax + 同一个偏移），不是建筑中轴；否则清空的是旧门前面那片地，
         新门前那棵树照样糊在门脸上 —— 而四套自动验收一个都看不出来。 */
   if (b.__dx) DX_DOORS.push({ x: ax + dxDoorShift(b.canvas.width, name), y: ay });
+  /* 【2026-11-04 楼宇主页】把这栋楼的"门面中轴 + 屋顶顶边"登记给 building/building.js，
+     它按这份表在楼顶画那颗上下漂浮的「i」图标。世界坐标同一个口径：
+     屋顶顶边 = 落地线 ay − 精灵锚高 b.ay（与 render() 里 `p.y - p.ay` 是同一笔）。
+     ⚠️ 只能在这里登记，**不能在 props 里找** —— 同 DX_DOORS 那条：addProp 按白名单
+        复制道具，挂在 b 上的记号会被丢掉；而 name 只在建楼这一圈里活着。
+     ⚠️ 登记**全部**楼名（不只上主页的六栋）：以后要加楼只改 building.js 的 SITES，
+        地图这边一个字节都不用动。重名的「宿舍」会互相覆盖，反正不上主页。 */
+  (window.BLD_ANCHORS || (window.BLD_ANCHORS = {}))[name] = { x: ax, top: ay - b.ay };
   addProp(Object.assign({}, b, { x: ax, y: ay,
     tag: name === "老体育馆" ? "gym" : undefined }));
   BLD_IMGS.add(b.canvas);                      // 第三十七轮：登记为「会挡人的楼」
@@ -17145,6 +17228,9 @@ for (const e of CAMPUS) {
      看原尺寸放大图 —— 而"画对了没有"是四套自动验收**唯一查不出**的东西。 */
   addProp(Object.assign({}, s, { x: LIB_CX, y: LIB_FY, tag: "lib" }));
   BLD_IMGS.add(s.canvas);                      // 第三十七轮：登记为「会挡人的楼」
+  /* 【2026-11-04 楼宇主页】图书馆不走 §6.2 那一圈（kind==="library" 被 continue 掉），
+     所以它的锚点得在这里单独登记一份，口径与那边逐字相同。 */
+  (window.BLD_ANCHORS || (window.BLD_ANCHORS = {}))["图书馆"] = { x: LIB_CX, top: LIB_FY - s.ay };
   /* 前庭横贯全宽 ⇒ 回到全校通用的一条 AABB。旧方案那两条 L 形
      （"缺的正是三角广场那一角"）已随三角广场一并废弃。 */
   addSolid(LIB_CX, LIB_FY, LIB.w - 14, 34);
@@ -19301,6 +19387,32 @@ const CATS = CAT_AGENTS.map(function (cfg) {
 const CAT_BY_ID = Object.create(null);
 for (const c of CATS) CAT_BY_ID[c.cfg.id] = c;
 
+/* 【2026-11-04 用户要求】猫不下水：明湖水面走不进去；人走进湖里，猫只在岸上看着。
+   水面判据直接用 45_water.js 的 `lakeDepth`（>0 = 落在水面矩形内），不另立一套坐标。
+   ⚠️ 芝麻的家（minghu_yingbi）就在湖南岸，半径 80 的领地圆有半圈压在湖上 ⇒
+      除了"走不进去"，领地巡游的落点也得先推回岸上（见 catRoute）。 */
+const CAT_SHORE = 10;                    // 猫停在离水边多远（世界 px）
+function catWet(x, y) {
+  /* 判定点外扩 CAT_SHORE：猫有四条腿，脚正好压在水线上看着就是半只脚泡在水里。
+     四个方向各探一次，只在移动的两轴判定里调用，够便宜。 */
+  const m = CAT_SHORE;
+  return lakeDepth(x, y) > 0 || lakeDepth(x - m, y) > 0 || lakeDepth(x + m, y) > 0
+      || lakeDepth(x, y - m) > 0 || lakeDepth(x, y + m) > 0;
+}
+/* 把落进水里的目标点推到最近的岸上（再外扩 CAT_SHORE）。
+   人站在湖里时猫的目标点就是这里 —— 它走到岸边站住，不跟着下水。 */
+function catDryPoint(x, y) {
+  if (!catWet(x, y)) return { x: x, y: y };
+  const R = WATER[0], m = CAT_SHORE;
+  const left = R.x - m, right = R.x + R.w + m, top = R.y - m, bottom = R.y + R.h + m;
+  const dl = x - left, dr = right - x, du = y - top, db = bottom - y;
+  const k = Math.min(dl, dr, du, db);
+  if (k === dl) return { x: left, y: y };
+  if (k === dr) return { x: right, y: y };
+  if (k === du) return { x: x, y: top };
+  return { x: x, y: bottom };
+}
+
 /* 巡游路点：**加载期**用确定性 RNG 生成一串（同 `makeRng` 的口径）。
    ⚠️ 运行期不再掷 —— §5.1 末句「没有随机数」管的是判定段，这里一次生成完就固定。 */
 (function catRoute() {
@@ -19309,7 +19421,10 @@ for (const c of CATS) CAT_BY_ID[c.cfg.id] = c;
     for (let i = 0; i < 12; i++) {
       const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R * 0.8;
       /* y 压 0.7：3/4 视角下纵向本来就被压扁，不压的话巡游范围看着比横向大一圈 */
-      out.push({ x: c.spot.x + Math.cos(a) * r, y: c.spot.y + Math.sin(a) * r * 0.7 });
+      /* ⚠️ 只把**算出来的落点**推回岸上，不重掷：rng 的抽取次数与旧版一致，
+         其余三只猫的路点逐位不变。 */
+      const wp = catDryPoint(c.spot.x + Math.cos(a) * r, c.spot.y + Math.sin(a) * r * 0.7);
+      out.push(wp);
     }
     c.wp = out;
   }
@@ -19332,8 +19447,11 @@ function catStep(c, tx, ty, dt, speed) {
   const ux = dx / d, uy = dy / d, s = speed * dt;
   const nx = c.x + ux * s, ny = c.y + uy * s;
   let moved = 0;
-  if (canWalk(nx, c.y) && !blocked(nx, c.y)) { moved += Math.abs(nx - c.x); c.x = nx; }
-  if (canWalk(c.x, ny) && !blocked(c.x, ny)) { moved += Math.abs(ny - c.y); c.y = ny; }
+  /* 逐轴判水：沿湖岸横着走要允许，整步一刀切会让猫贴着水边原地卡死。
+     只有**已经在水里的猫**才放行（万一初始落点异常，也别让它出不来）。 */
+  const dry = !catWet(c.x, c.y);
+  if (canWalk(nx, c.y) && !blocked(nx, c.y) && (!dry || !catWet(nx, c.y))) { moved += Math.abs(nx - c.x); c.x = nx; }
+  if (canWalk(c.x, ny) && !blocked(c.x, ny) && (!dry || !catWet(c.x, ny))) { moved += Math.abs(ny - c.y); c.y = ny; }
   /* 朝向取**移动方向**（同补丁 14 的判据：斜向取侧视）。
      用 ux/uy 而不是实际位移 —— 贴墙滑的时候实际位移会缩成单轴，用它猫会扭头盯墙。 */
   if (moved > 0.01) c.dir = (Math.abs(ux) >= Math.abs(uy)) ? (ux < 0 ? "left" : "right")
@@ -19596,7 +19714,8 @@ function catTick(dt) {
           而锁期间猫是钉住的，那样"走到位再蹭/吃"会退化成"原地抽搐"——本轮修的就是这个。 */
     if (c.comeTo) {
       const ct = c.comeTo;
-      const t = catLeash(c, ct.x, ct.y);
+      const leashPt = catLeash(c, ct.x, ct.y);
+      const t = catDryPoint(leashPt.x, leashPt.y);
       if (Math.hypot(t.x - c.x, t.y - c.y) > (ct.stop || 20)) {
         moved = catStep(c, t.x, t.y, dt, spd * CAT_SPEED.follow);
         c.act = "walk";
@@ -19649,13 +19768,17 @@ function catTick(dt) {
           ? (player.x < bx ? "left" : "right") : (player.y < by ? "up" : "down");
         c.act = "retreat";
       } else if (rule.act === "rub") {             // 亲近：绕到你脚边
-        const t = catLeash(c, player.x, player.y);
+        const leashPt = catLeash(c, player.x, player.y);
+        const t = catDryPoint(leashPt.x, leashPt.y);
         if (Math.hypot(t.x - c.x, t.y - c.y) > 22) moved = catStep(c, t.x, t.y, dt, spd * CAT_SPEED.rub);
-        c.act = "rub";
+        /* 人下了水：目标被推到岸上，猫在岸边站住看着他蹭空气也比下水强。 */
+        c.act = (t.x !== leashPt.x || t.y !== leashPt.y) && moved < 0.01 ? "look" : "rub";
       } else if (rule.act === "walk") {            // 很亲：跟着你走一段
-        const t = catLeash(c, player.x, player.y);
+        const leashPt = catLeash(c, player.x, player.y);
+        const t = catDryPoint(leashPt.x, leashPt.y);
         if (Math.hypot(t.x - c.x, t.y - c.y) > 30) moved = catStep(c, t.x, t.y, dt, spd * CAT_SPEED.follow);
-        c.act = "walk";
+        /* 人下了水：猫走到岸边就站住朝你看，不再原地踏步。 */
+        c.act = (t.x !== leashPt.x || t.y !== leashPt.y) && moved < 0.01 ? "look" : "walk";
       } else if (rule.act === "wait") {            // 最亲：在你常出现的地方等你
         const h = c.spot;
         if (Math.hypot(h.x - c.x, h.y - c.y) > 8) moved = catStep(c, h.x, h.y, dt, spd * CAT_SPEED.follow);
@@ -19758,6 +19881,9 @@ function catTick(dt) {
     /* 冷却**先判**：不然玩家会先蹲下、再被告知"今天吃过了"，白蹲一次。
        ⚠️ 判据与 `catFeed()` 里那条是同一个（`memo.lastDay === now.day`，按真实日期）。 */
     if (catFedToday(c)) { guideToast("它今天已经吃过了"); return; }
+    /* 每日猫粮（mp/lobby.js 的 MPTask）：先看今天还有没有粮。
+       ⚠️ 必须蹲下之前判 —— 不然玩家蹲了、伸了手，才被告知"今天没粮了"。 */
+    if (window.MPTask && MPTask.noFood()) { guideToast("今日猫粮不够了，去操场跑五圈还能再领一份"); return; }
     crouch("feed");
     /* 粮要**在手指伸出去之后**才落地（REACH_MS 后），否则画面是"人还没伸手，
        地上先冒出一堆粮"。⚠️ 这里用 setTimeout 而不是每帧钩子 —— 轮盘不需要
@@ -19766,6 +19892,8 @@ function catTick(dt) {
       const r = catFeed(c);
       if (r === "ok") guideToast("它低头吃了起来");
       else if (r === "cold") guideToast("它今天已经吃过了");
+      /* 蹲下这 400 毫秒里最后一份粮被别的页面用掉了（或者刚巧过零点），粮就落不下来了。 */
+      else if (r === "nofood") guideToast("今日猫粮不够了，去操场跑五圈还能再领一份");
       else guideToast("它没过来");            // c 已不活跃（作息切了时段）才会到这
     }, REACH_MS);
   }
@@ -19951,14 +20079,13 @@ function guardFace() {
   else GUARD.dir = dy < 0 ? "up" : "down";
 }
 
-/* 朝目标走一步。⚠️ 步态照抄 `guideWalkToward`（也是抄玩家主循环那两行）：
-   走按**实际位移**推进（顶墙位移 0 ⇒ 脚立刻停，不空踏）。
-   速度取 `player.speed` 的 **0.5 倍** —— 巡逻该明显慢于赶路的人（实测玩家约 230 px/s，
-   别问我为什么不是 Demo 里写的 94，探针量的是这个数）。 */
+/* 朝目标走一步。按实际位移推进步态；召唤时的速度不随地图缩放大幅变慢。 */
 function guardWalkToward(tx, ty, dt) {
   const dx = tx - GUARD.x, dy = ty - GUARD.y, d = Math.hypot(dx, dy);
   if (d < 0.6) return false;
-  const ux = dx / d, uy = dy / d, s = (player.speed || 150) * (GUARD.summoned ? 3 : 0.5) * dt;
+  const ux = dx / d, uy = dy / d;
+  const speed = GUARD.summoned ? Math.min(600, Math.max(420, (player.speed || 150) * 3)) : (player.speed || 150) * 0.5;
+  const s = Math.min(d, speed * dt);
   const nx = GUARD.x + ux * s, ny = GUARD.y + uy * s;
   let moved = 0;
   if (guardWalkable(nx, GUARD.y)) { moved += Math.abs(nx - GUARD.x); GUARD.x = nx; }
@@ -20336,15 +20463,14 @@ function auntTalk() {
 /* 反馈复用向导那张 `guideToast`（2.6 秒自动隐藏）—— 地图上已经有这一块，不另做。 */
 function auntToast(t) { if (typeof guideToast === "function") guideToast(t); }
 
-/* --- 7.10.6 退出：接她页面里那颗「← 返回校园」按钮 ---------------------
-   ⚠️ 她那边是 `window.parent.postMessage({type:"aunt-exit"}, location.origin)`
-      （见 `campus_game_cmr/aunt/static/app.js`）。同源 iframe 的 `message` 事件
+/* --- 7.10.6 退出：阿姨和算法哥页面内的「返回地图」按钮 -----------------
+   同源 iframe 的 `message` 事件
       父页收得到 —— 这正是「同源」换来的东西之一。
    ⚠️ 两道校验缺一不可：`origin` 对得上**且** `source` 就是本抽屉那个 frame。
       少一道的话，页面上任何别的 iframe / 弹窗都能凭一条消息关掉地图的抽屉。
    ⚠️ Esc 那条路仍然有效（71b 的 `ctrFrameBindEsc`），两者不冲突。 */
 window.addEventListener("message", function (e) {
-  if (!e || !e.data || e.data.type !== "aunt-exit") return;   // 只认她自己发的那一条
+  if (!e || !e.data || !["aunt-exit", "campus-platform-exit"].includes(e.data.type)) return;
   if (e.origin !== location.origin) return;
   if (!ctrF || e.source !== ctrF.contentWindow) return;
   if (typeof CENTER === "undefined" || !CENTER.plat) return;
@@ -20479,11 +20605,13 @@ function update(dt) {
     /* 步态按**实际位移**推进，不是按时间 ——
        ⚠️ 原版是 `player.walk += dt`：顶着墙走时它照常累加，人会原地踏步
           （贴墙滑行时尤其明显）。改成累加碰撞后的真实位移，顶墙 → 位移 0 → 脚立刻停。
-       一个完整步态周期 = WALK_STRIDE 世界像素（4 帧 = 左右各一步），
-       所以档位越高（世界速度越慢）步频越低，屏幕上的节奏始终对得上。 */
+        一个完整步态周期 = WALK_STRIDE 屏幕像素（4 帧 = 左右各一步），
+        放大后按屏幕位移计算，腿部换帧不会因为世界速度降低而停住。 */
     player.idle = 0;
-    player.walk += Math.hypot(player.x - _wx, player.y - _wy);
-    player.step = (Math.floor(player.walk / WALK_STRIDE * WALK_FRAMES)) & (WALK_FRAMES - 1);
+     // Zoom slows world movement to keep screen speed constant. Count screen
+     // distance here too, so 2x/3x views do not hold each leg pose for seconds.
+    player.walk += Math.hypot(player.x - _wx, player.y - _wy) * Math.max(1, zoom);
+    player.step = (Math.floor(player.walk / PLAYER_WALK_STRIDE * WALK_FRAMES)) & (WALK_FRAMES - 1);
   } else {
     player.walk = 0;
     player.idle = (player.idle || 0) + dt;              // 待机呼吸：慢速两帧
@@ -20568,7 +20696,7 @@ function render() {
   const chClip = Math.round(CH_H * lakeSubmerge(player.x, player.y));
   /* 蹲姿（第四十四轮）：`player.act` 非空时换成蹲姿精灵。 */
   const _pfr = (player.act && (player.actD - player.actT) < 0.35) ? 0 : 1;
-  drawList.push({ img: window.MP && MP.connected ? (player.act ? MP.crouch(MP.look, player.dir, player.act, _pfr) : MP.sprite(MP.look, player.dir, player.step)) : (player.act ? poseSprite(player.dir, player.act, _pfr) : charSprite(player.dir, player.step)), ax: CH_AX, ay: CH_AY, x: player.x, y: player.y, baseY: player.y, clip: chClip, ch: 1 });
+  drawList.push({ img: window.MP && (MP.connected || MP.offlineSolo) ? (player.act ? MP.crouch(MP.look, player.dir, player.act, _pfr) : MP.sprite(MP.look, player.dir, player.step)) : (player.act ? poseSprite(player.dir, player.act, _pfr) : charSprite(player.dir, player.step)), ax: CH_AX, ay: CH_AY, x: player.x, y: player.y, baseY: player.y, clip: chClip, ch: 1 });
   /* 向导「小北」：与补丁 9 同口径 —— FIT 档下 18px 的精灵只剩 1.6 背板像素，
      点采样会忽隐忽现，直接不画。 */
   if (Math.max(CH_W, CH_H) * zoom >= 1.5)
@@ -20636,7 +20764,23 @@ function loop(now) {
 requestAnimationFrame(loop);
 
 </script>
-<script src="mp/look.js"></script>
-<script src="mp/lobby.js"></script>
+<script src="mp/look.js?v=20261031-main3d"></script>
+<script src="pixel-3d/pixel-3d.js?v=20261031-main3d"></script>
+<script src="mp/lobby.js?v=20261105-reg"></script>
+<!-- 小应用日活埋点：盯 #ctrF 的 src，开了哪个应用就记一笔（后台按天去重） -->
+<script src="mp/app-track.js?v=20261104-admin"></script>
+<script src="mp/duo1-bridge.js?v=duobridge02"></script>
+<!-- 猫咪图鉴在地图与大厅脚本之后接入猫宠行为。 -->
+<script src="cat-dex/cat-3d.js?v=20261104-cat3d"></script>
+<script src="cat-dex/cat-dex.js?v=20261104-look"></script>
+<!-- 楼宇主页：读取上面登记好的 window.BLD_ANCHORS，在楼顶画「i」图标。 -->
+<script src="building/building.js?v=20261104-bldz"></script>
+<!-- 备案号：工信部要求网站底部公开展示，并链接回 beian.miit.gov.cn -->
+<style>
+#icpFooter{position:fixed;left:50%;bottom:4px;transform:translateX(-50%);z-index:60;font-size:11px;line-height:1.6;pointer-events:none}
+#icpFooter a{pointer-events:auto;display:inline-block;color:rgba(255,255,255,.6);text-decoration:none;background:rgba(12,18,26,.42);padding:2px 9px;border-radius:9px;letter-spacing:.02em}
+#icpFooter a:hover{color:#ffd76e}
+</style>
+<div id="icpFooter"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备2026073980号</a></div>
 </body>
 </html>
