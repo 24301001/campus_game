@@ -1,0 +1,22 @@
+{
+  "schema": "docvortex.middle",
+  "pages": [
+    {"page_idx": 60, "blocks": [
+      {"type": "header", "content": [{"type":"text","content":"2.4 无穷大的比较"}]},
+      {"type": "page_number", "content": [{"type":"text","content":"48"}]},
+      {"type": "text", "content": [{"type":"text","content":"这一页和上一批之间空了十几页，用来验证会插入页码不连续的注释。"}]}
+    ]},
+    {"page_idx": 61, "blocks": [
+      {"type": "page_number", "content": [{"type":"text","content":"49"}]},
+      {"type": "text", "content": [{"type":"text","content":"正常的连续页，印刷页码 49。"}]}
+    ]},
+    {"page_idx": 62, "blocks": [
+      {"type": "page_number", "content": [{"type":"text","content":"50"}]},
+      {"type": "text", "content": [{"type":"text","content":"正常的连续页，印刷页码 50。"}]}
+    ]},
+    {"page_idx": 63, "blocks": [
+      {"type": "page_number", "content": [{"type":"text","content":"999"}]},
+      {"type": "text", "content": [{"type":"text","content":"这一页的印刷页码被识别错了，应当由全局偏移纠正回来并计入 page_conflicts。"}]}
+    ]}
+  ]
+}

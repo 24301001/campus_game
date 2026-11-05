@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>像素校园 · 管理后台</title>
+<link rel="stylesheet" href="mp/admin.css?v=20261104-geo4">
+</head>
+<body>
+
+<!-- 没登录 / 不是管理员：只留这块 -->
+<div id="adGate" class="ad-panel" style="max-width:460px;margin:80px auto" hidden>
+  <div class="ad-panel-h"><h2>管理后台</h2></div>
+  <p style="color:var(--muted);margin:0 0 12px">
+    这个页面只给管理员用。请先回到校园大厅，用管理员账号登录，登录成功会自动跳到这里。
+  </p>
+  <div style="display:flex;gap:8px">
+    <a class="ad-btn" href="/" style="text-decoration:none">回校园大厅</a>
+    <button class="ad-btn" id="adGateRetry">我已登录，重试</button>
+  </div>
+  <div class="ad-err" id="adGateErr" style="margin-top:8px"></div>
+</div>
+
+<div id="adApp" hidden>
+  <header class="ad-top">
+    <div class="ad-brand">像素校园 · 管理后台</div>
+    <div class="ad-who">
+      <span>管理员 <b id="adWho">—</b></span>
+      <button class="ad-btn" id="adRefresh">刷新</button>
+      <a class="ad-btn" href="/" style="text-decoration:none">回大厅</a>
+      <button class="ad-btn danger" id="adLogout">退出登录</button>
+    </div>
+  </header>
+
+  <main>
+    <nav class="ad-tabs" id="adTabs">
+      <button class="ad-tab on" data-pane="paneMain">用户与日活</button>
+      <button class="ad-tab" data-pane="paneSec">网络安全</button>
+    </nav>
+
+    <div id="paneMain">
+    <section class="ad-cards" id="adCards"></section>
+
+    <section class="ad-panel">
+      <div class="ad-panel-h">
+        <h2>最近 7 天日活</h2>
+        <span class="ad-note">日活 = 当天登录过或联机玩过的人，同一个号一天只算一次</span>
+        <div class="ad-right">
+          <select class="ad-field" id="adDays">
+            <option value="7" selected>最近 7 天</option>
+            <option value="14">最近 14 天</option>
+            <option value="30">最近 30 天</option>
+          </select>
+        </div>
+      </div>
+      <div class="ad-legend">
+        <span><i class="sw1"></i>日活人数</span>
+        <span><i class="sw2 line"></i>当天结束过游玩的人数</span>
+      </div>
+      <div class="ad-chartwrap">
+        <canvas id="adChart"></canvas>
+        <div class="ad-tip" id="adTip" hidden></div>
+      </div>
+      <details class="ad-table">
+        <summary>看数字（图看不清时用这张表）</summary>
+        <table id="adNum"></table>
+      </details>
+    </section>
+
+    <section class="ad-panel">
+      <div class="ad-panel-h">
+        <h2>各小应用日活</h2>
+        <span class="ad-note">当天打开过该应用的人数（同一天开十次也只算一个）</span>
+      </div>
+      <div class="ad-apps" id="adApps"></div>
+    </section>
+
+    <section class="ad-panel">
+      <div class="ad-panel-h">
+        <h2>用户管理</h2>
+        <span class="ad-note" id="adUserNote">点任意一行看详细资料</span>
+        <div class="ad-right">
+          <input class="ad-field" id="adFilter" placeholder="搜昵称 / IP" style="width:170px">
+        </div>
+      </div>
+      <div class="ad-users" id="adUsers"></div>
+    </section>
+    </div><!-- /paneMain -->
+
+    <!-- ==================== 页签二：网络安全 ==================== -->
+    <div id="paneSec" hidden>
+
+      <section class="ad-cards" id="secCards"></section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>每小时请求量</h2>
+          <span class="ad-note">全站每小时收到的请求数（北京时间，只留最近 7 天）</span>
+          <div class="ad-right">
+            <label class="ad-check"><input type="checkbox" id="secAuto"> 每 30 秒自动刷新</label>
+            <button class="ad-btn small" id="secRefresh">刷新</button>
+          </div>
+        </div>
+        <div class="ad-chartwrap"><canvas id="secChart"></canvas><div class="ad-tip" id="secTip" hidden></div></div>
+        <details class="ad-table">
+          <summary>看数字（图看不清时用这张表）</summary>
+          <table id="secNum"></table>
+        </details>
+      </section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>服务器现在开放的端口</h2>
+          <span class="ad-note">只读，改不了</span>
+        </div>
+        <div class="ad-ports" id="secPorts"></div>
+        <p class="ad-hint">
+          为什么这里不给开关：这些端口是这台机器上别的程序开的（远程登录、网站外壳、数据库），
+          要关得用管理员权限改系统配置。更麻烦的是，关掉远程登录端口 22，这台服务器就再也连不上了，只能去云控制台重装。
+          我们自己的两个端口（3000 页面、8090 联机）能"关"，办法是下面的<b>维护模式</b>：对外一律回"正在维护"，管理员照进不误。
+        </p>
+      </section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h"><h2>两个开关</h2><span class="ad-note">改完立刻生效，重启也不会丢</span></div>
+        <div class="ad-switch">
+          <div class="ad-switch-row">
+            <div>
+              <b>维护模式</b>
+              <span>打开后，普通用户看到"校园正在维护"，管理员和后台不受影响。装东西、改数据之前先开它。</span>
+            </div>
+            <button class="ad-btn" id="secMaint">—</button>
+          </div>
+          <div class="ad-switch-row">
+            <div>
+              <b>自动封禁异常流量</b>
+              <span>某个 IP 一分钟内请求超过设定次数，自动封 1 小时。默认<b>关着</b>：学校网络常常很多人共用一个出口 IP，开早了会误伤一片。</span>
+            </div>
+            <div class="ad-switch-act">
+              <input class="ad-field" id="secThreshold" type="number" min="60" max="100000" step="10" style="width:96px">
+              <span class="ad-note">次 / 分钟</span>
+              <button class="ad-btn" id="secAutoban">—</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>谁在发请求</h2>
+          <span class="ad-note">最近 24 小时，按次数从多到少</span>
+        </div>
+        <div class="ad-users" id="secIps"></div>
+      </section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>封禁名单</h2>
+          <span class="ad-note">被挡的 IP 一个请求都进不来（管理员自己的请求除外）</span>
+          <div class="ad-right"><button class="ad-btn small danger" id="secBanNew">封一个 IP</button></div>
+        </div>
+        <div class="ad-users" id="secBans"></div>
+      </section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>WAF 自动拦截 <span class="ad-note" id="wafState"></span></h2>
+          <span class="ad-note">CrowdSec 在网络层认扫描器、漏洞探测、暴力破解，命中就封，不用等人管</span>
+          <div class="ad-right"><button class="ad-btn small" id="wafRefresh">刷新</button></div>
+        </div>
+        <div class="ad-users" id="secWaf"></div>
+      </section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>扫站探测</h2>
+          <span class="ad-note">有人在找 .env、wp-admin、phpmyadmin 这类"不该存在的文件"</span>
+        </div>
+        <div class="ad-users" id="secScans"></div>
+      </section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>登录失败</h2>
+          <span class="ad-note">密码输错就记一笔 —— 连续试很多次的，多半是在猜密码</span>
+        </div>
+        <div class="ad-users" id="secFails"></div>
+      </section>
+
+    </div><!-- /paneSec -->
+  </main>
+</div>
+
+<!-- 用户详情抽屉 -->
+<div class="ad-mask" id="adMask" hidden></div>
+<aside class="ad-detail" id="adDetail" hidden>
+  <div class="ad-detail-h">
+    <h2 id="adDetailTitle">用户资料</h2>
+    <button class="ad-x" id="adDetailClose" aria-label="关闭">×</button>
+  </div>
+  <div class="ad-detail-b" id="adDetailBody"></div>
+</aside>
+
+<!-- 封 IP 弹窗 -->
+<div class="ad-modal" id="secBanModal" hidden>
+  <div class="ad-modal-box">
+    <h3>封禁 IP</h3>
+    <input class="ad-field" id="secBanIp" placeholder="要封的 IP，例如 203.0.113.7">
+    <label><input type="radio" name="ipmode" value="forever" checked> 永久封禁（手动解封才恢复）</label>
+    <label><input type="radio" name="ipmode" value="until"> 封到某个时间为止</label>
+    <input class="ad-field" type="datetime-local" id="secBanUntil" disabled>
+    <input class="ad-field" id="secBanReason" placeholder="封禁原因（选填，最多 60 字）" maxlength="60">
+    <div class="ad-err" id="secBanErr"></div>
+    <div class="ad-actions">
+      <button class="ad-btn" id="secBanCancel">取消</button>
+      <button class="ad-btn danger" id="secBanOk">确认封禁</button>
+    </div>
+  </div>
+</div>
+
+<!-- 封号弹窗 -->
+<div class="ad-modal" id="adBan" hidden>
+  <div class="ad-modal-box">
+    <h3 id="adBanTitle">封禁账号</h3>
+    <label><input type="radio" name="banmode" value="forever" checked> 永久封号（手动解封才恢复）</label>
+    <label><input type="radio" name="banmode" value="until"> 限制登录到某个时间为止</label>
+    <input class="ad-field" type="datetime-local" id="adBanUntil" disabled>
+    <input class="ad-field" id="adBanReason" placeholder="封禁原因（选填，最多 60 字）" maxlength="60">
+    <div class="ad-err" id="adBanErr"></div>
+    <div class="ad-actions">
+      <button class="ad-btn" id="adBanCancel">取消</button>
+      <button class="ad-btn danger" id="adBanOk">确认封禁</button>
+    </div>
+  </div>
+</div>
+
+<script src="mp/look.js?v=20261104-sec2"></script>
+<script src="mp/admin.js?v=20261105-waf1"></script>
+</body>
+</html>

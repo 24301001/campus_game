@@ -1,0 +1,131 @@
+-- 04-fix-problem-tags.sql
+-- 题库这批种子数据（206~305）的标签是随机挂的：
+--   208 背包问题 → 挂了「链表,双指针」
+--   241 二叉树的最大深度 → 挂了「二分查找」
+--   251 查找重复的电子邮箱（SQL）→ 挂了「栈,树」
+--   296 设计一个URL短链接系统 → 挂了「动态规划」
+-- 这里按每道题的实际考点重新打一遍。
+--
+-- 难度也逐条对过：基本是准的（爬楼梯 EASY、背包 HARD、单词接龙 HARD、系统设计 HARD …），
+-- 所以难度不动，只修标签。
+
+-- 1) 先补上算法标签覆盖不到的几类：题库里有一半是 SQL / 计网 / 操作系统 / 设计模式 /
+--    Java 基础 / 并发 / 系统设计 / 面试题，老的 17 个标签（数组、动态规划…）根本挂不上
+INSERT INTO tag (name, description, sort_order) VALUES
+  ('SQL', '数据库查询与数据处理', 18),
+  ('计算机网络', 'HTTP、TCP/IP 等网络基础', 19),
+  ('操作系统', '进程、内存、调度与死锁', 20),
+  ('设计模式', '常用设计模式与应用场景', 21),
+  ('Java 基础', '语法、面向对象、集合与函数式', 22),
+  ('并发编程', '线程、锁、内存模型与并发工具', 23),
+  ('系统设计', '分布式、缓存与高可用架构', 24),
+  ('面试软技能', '求职与面试中的开放性问题', 25)
+ON DUPLICATE KEY UPDATE sort_order = VALUES(sort_order);
+
+-- 2) 清掉这批题原来的乱标签
+DELETE FROM problem_tag WHERE problem_id BETWEEN 206 AND 305;
+
+-- 3) 按考点重新挂（用标签名去 join，避免把 id 写死）
+INSERT INTO problem_tag (problem_id, tag_id)
+SELECT v.pid, t.id FROM (
+  SELECT 206 AS pid, '动态规划' AS tname UNION ALL SELECT 206, '数学' UNION ALL
+  SELECT 207, '动态规划' UNION ALL SELECT 207, '字符串' UNION ALL
+  SELECT 208, '动态规划' UNION ALL
+  SELECT 209, '动态规划' UNION ALL SELECT 209, '二分查找' UNION ALL
+  SELECT 210, '动态规划' UNION ALL SELECT 210, '数组' UNION ALL
+  SELECT 211, '二分查找' UNION ALL SELECT 211, '数组' UNION ALL
+  SELECT 212, '二分查找' UNION ALL SELECT 212, '数组' UNION ALL
+  SELECT 213, '二分查找' UNION ALL SELECT 213, '数组' UNION ALL
+  SELECT 214, '二分查找' UNION ALL SELECT 214, '数组' UNION ALL
+  SELECT 215, '数学' UNION ALL SELECT 215, '二分查找' UNION ALL
+  SELECT 216, '贪心' UNION ALL SELECT 216, '排序' UNION ALL SELECT 216, '数组' UNION ALL
+  SELECT 217, '贪心' UNION ALL SELECT 217, '数组' UNION ALL
+  SELECT 218, '贪心' UNION ALL SELECT 218, '数组' UNION ALL
+  SELECT 219, '贪心' UNION ALL SELECT 219, '动态规划' UNION ALL SELECT 219, '数组' UNION ALL
+  SELECT 220, '贪心' UNION ALL SELECT 220, '数组' UNION ALL
+  SELECT 221, '回溯' UNION ALL SELECT 221, '数组' UNION ALL
+  SELECT 222, '回溯' UNION ALL SELECT 222, '数组' UNION ALL
+  SELECT 223, '回溯' UNION ALL SELECT 223, '数组' UNION ALL
+  SELECT 224, '回溯' UNION ALL SELECT 224, '字符串' UNION ALL
+  SELECT 225, '回溯' UNION ALL SELECT 225, '数组' UNION ALL
+  SELECT 226, '排序' UNION ALL SELECT 226, '数组' UNION ALL
+  SELECT 227, '排序' UNION ALL SELECT 227, '数组' UNION ALL
+  SELECT 228, '排序' UNION ALL SELECT 228, '数组' UNION ALL
+  SELECT 229, '排序' UNION ALL SELECT 229, '数组' UNION ALL
+  SELECT 230, '排序' UNION ALL SELECT 230, '数组' UNION ALL
+  SELECT 231, '位运算' UNION ALL
+  SELECT 232, '位运算' UNION ALL
+  SELECT 233, '位运算' UNION ALL
+  SELECT 234, '位运算' UNION ALL SELECT 234, '哈希表' UNION ALL SELECT 234, '数组' UNION ALL
+  SELECT 235, '位运算' UNION ALL
+  SELECT 236, '动态规划' UNION ALL SELECT 236, '数学' UNION ALL
+  SELECT 237, '字符串' UNION ALL SELECT 237, '哈希表' UNION ALL SELECT 237, '数学' UNION ALL
+  SELECT 238, '数学' UNION ALL
+  SELECT 239, '数学' UNION ALL
+  SELECT 240, '字符串' UNION ALL SELECT 240, '数学' UNION ALL
+  SELECT 241, '树' UNION ALL
+  SELECT 242, '树' UNION ALL SELECT 242, '队列' UNION ALL
+  SELECT 243, '树' UNION ALL SELECT 243, '栈' UNION ALL
+  SELECT 244, '树' UNION ALL SELECT 244, '栈' UNION ALL
+  SELECT 245, '树' UNION ALL
+  SELECT 246, '图论' UNION ALL SELECT 246, '数组' UNION ALL
+  SELECT 247, '图论' UNION ALL
+  SELECT 248, '图论' UNION ALL SELECT 248, '哈希表' UNION ALL
+  SELECT 249, '图论' UNION ALL SELECT 249, '字符串' UNION ALL
+  SELECT 250, '图论' UNION ALL
+  SELECT 251, 'SQL' UNION ALL
+  SELECT 252, 'SQL' UNION ALL
+  SELECT 253, 'SQL' UNION ALL
+  SELECT 254, 'SQL' UNION ALL
+  SELECT 255, 'SQL' UNION ALL
+  SELECT 256, '计算机网络' UNION ALL
+  SELECT 257, '计算机网络' UNION ALL
+  SELECT 258, '计算机网络' UNION ALL
+  SELECT 259, '计算机网络' UNION ALL
+  SELECT 260, '计算机网络' UNION ALL
+  SELECT 261, '操作系统' UNION ALL
+  SELECT 262, '操作系统' UNION ALL
+  SELECT 263, '操作系统' UNION ALL
+  SELECT 264, '操作系统' UNION ALL
+  SELECT 265, '操作系统' UNION ALL
+  SELECT 266, '设计模式' UNION ALL
+  SELECT 267, '设计模式' UNION ALL
+  SELECT 268, '设计模式' UNION ALL
+  SELECT 269, '设计模式' UNION ALL
+  SELECT 270, '设计模式' UNION ALL
+  SELECT 271, 'Java 基础' UNION ALL
+  SELECT 272, 'Java 基础' UNION ALL
+  SELECT 273, 'Java 基础' UNION ALL
+  SELECT 274, 'Java 基础' UNION ALL
+  SELECT 275, 'Java 基础' UNION ALL
+  SELECT 276, 'Java 基础' UNION ALL
+  SELECT 277, 'Java 基础' UNION ALL
+  SELECT 278, 'Java 基础' UNION ALL
+  SELECT 279, 'Java 基础' UNION ALL
+  SELECT 280, 'Java 基础' UNION ALL
+  SELECT 281, '并发编程' UNION ALL
+  SELECT 282, '并发编程' UNION ALL
+  SELECT 283, '并发编程' UNION ALL
+  SELECT 284, '并发编程' UNION ALL
+  SELECT 285, '并发编程' UNION ALL
+  SELECT 286, '系统设计' UNION ALL
+  SELECT 287, '系统设计' UNION ALL
+  SELECT 288, '系统设计' UNION ALL
+  SELECT 289, '系统设计' UNION ALL
+  SELECT 290, '系统设计' UNION ALL
+  SELECT 291, '面试软技能' UNION ALL
+  SELECT 292, '面试软技能' UNION ALL
+  SELECT 293, '面试软技能' UNION ALL
+  SELECT 294, '面试软技能' UNION ALL
+  SELECT 295, '面试软技能' UNION ALL
+  SELECT 296, '系统设计' UNION ALL
+  SELECT 297, '系统设计' UNION ALL
+  SELECT 298, '系统设计' UNION ALL
+  SELECT 299, '系统设计' UNION ALL
+  SELECT 300, '系统设计' UNION ALL
+  SELECT 301, '数组' UNION ALL SELECT 301, '哈希表' UNION ALL
+  SELECT 302, '字符串' UNION ALL SELECT 302, '双指针' UNION ALL SELECT 302, '哈希表' UNION ALL
+  SELECT 303, '字符串' UNION ALL SELECT 303, '双指针' UNION ALL SELECT 303, '动态规划' UNION ALL
+  SELECT 304, '链表' UNION ALL SELECT 304, '双指针' UNION ALL
+  SELECT 305, '链表' UNION ALL SELECT 305, '双指针'
+) v JOIN tag t ON t.name = v.tname;

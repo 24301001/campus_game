@@ -1,0 +1,24 @@
+图 1-22　食堂口碑问答与两层档口地图类图
+============================================================
+【图形类型】类图（Class Diagram）
+【所在位置】1.2.3.1
+
+【图的内容】
+  给出食堂角色的类结构，重点展示三层数据、得分计算与像素地图渲染的分离。
+
+【主要组件】
+  CanteenAgent（角色入口）；CanteenRepo（档口骨架）；ReviewRepo（口碑，含采集底料与玩家贡献）；ScoreCalculator（加权聚合与衰减）；IntentClassifier（意图分类）；CanteenMapRenderer（底图 / 档口 / 标签三层渲染）；RatingColorMapper（分档色阶）；LabelLayout（标签三级降级）；AuntSprite（人物精灵与站位）。
+
+【组织方式】
+  CanteenAgent 持有 IntentClassifier、CanteenRepo、ReviewRepo、ScoreCalculator；ScoreCalculator 依赖 ReviewRepo；CanteenMapRenderer 依赖 CanteenRepo 与 ScoreCalculator；RatingColorMapper 与 LabelLayout 被渲染器使用；AuntSprite 的站位由档口平面数据推导。
+
+【如何绘制】
+1) 画 CanteenAgent，列出问答与渲染入口方法；
+2) 画 CanteenRepo 与 ReviewRepo，标注口碑来源区分（采集 / 玩家）；
+3) 画 ScoreCalculator，标注“星级 × 时间衰减 × 来源权重”；
+4) 画 CanteenMapRenderer，用组合关系画出底图层、档口层、标签层；
+5) 画 RatingColorMapper（分档色阶）与 LabelLayout（块内 → 引线 → 只留色块）；
+6) 画 AuntSprite，用依赖关系连到 CanteenRepo（按档口算站位）。
+
+【注意事项】
+  三层数据、得分计算、渲染三者要在类图上分区清楚；色阶类要体现“离散分档”且“无数据与评价差在视觉上分开”。

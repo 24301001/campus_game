@@ -1,0 +1,24 @@
+图 1-25　失物招领与证件核对类图
+============================================================
+【图形类型】类图（Class Diagram）
+【所在位置】1.2.3.2
+
+【图的内容】
+  给出安保角色的类结构，展示四维匹配、以图搜物、证件核对三条能力线与所依赖的数据。
+
+【主要组件】
+  GuardAgent（角色入口）；LostItemRepo（失物库）；PlaceTable（点位表）；FourDimMatcher（类别 / 地点 / 时间 / 描述四维加权）；VisionClient（云端图像编码）；OCRClient（证件关键字段识别）；Verifier（双字段交叉验证与置信门槛）；WorkOrderRepo（工单库）；CallService（呼叫与巡逻）。
+
+【组织方式】
+  GuardAgent 持有 FourDimMatcher、VisionClient、OCRClient、Verifier、WorkOrderRepo；FourDimMatcher 依赖 LostItemRepo 与 PlaceTable；VisionClient 依赖 LostItemRepo（比对向量）；Verifier 依赖 OCRClient；CallService 为到场服务提供调度。
+
+【如何绘制】
+1) 画 GuardAgent，列出失物查询、以图搜物、证件核对、报修等方法；
+2) 画 LostItemRepo 与 PlaceTable，分别标注失物字段与点位字段；
+3) 画 FourDimMatcher，标注四个维度与加权求和；
+4) 画 VisionClient（云端代理）与 OCRClient（关键字段定位），分别用依赖关系连到失物库；
+5) 画 Verifier，用依赖关系连到 OCRClient，标注“学号 + 姓名交叉验证”；
+6) 画 WorkOrderRepo 与 CallService。
+
+【注意事项】
+  类图要体现“两条路径”：证件走 Verifier 的确定性判定，普通物品走 FourDimMatcher 与 VisionClient 的排序；VisionClient 要标明为无状态代理，前端不直接持有凭据。

@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "note": "保安公共层·失物库。visibility=public，全体玩家可查（总体设计 §3.1 / §18）。vector 为 CLIP 图像向量（入库时由云端编码，独立期离线为 null，走文字四维匹配）。hoursAgo 仅是种子相对偏移，前端物化为绝对时间。",
+  "items": [
+    { "id": "L-1001", "category": "校园卡", "place": "图书馆", "placeId": "tushuguan", "x": 380, "y": 130, "desc": "蓝色卡套，挂着小熊挂绳", "name": "李某某", "studentId": "20231234", "hoursAgo": 26,  "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1002", "category": "校园卡", "place": "图书馆", "placeId": "tushuguan", "x": 380, "y": 130, "desc": "黑色卡套，卡面磨损", "name": "王某某", "studentId": "20221506", "hoursAgo": 70,  "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1003", "category": "水杯",   "place": "图书馆", "placeId": "tushuguan", "x": 380, "y": 130, "desc": "银色保温杯，杯身有贴纸", "hoursAgo": 9,   "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1004", "category": "水杯",   "place": "第二食堂", "placeId": "shitang2", "x": 200, "y": 72,  "desc": "白色带盖塑料杯，杯口有茶渍", "hoursAgo": 30,  "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1005", "category": "钥匙",   "place": "操场",   "placeId": "caochang",   "x": 470, "y": 250, "desc": "一串三把钥匙，黑色钥匙扣", "hoursAgo": 50,  "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1006", "category": "耳机",   "place": "图书馆", "placeId": "tushuguan", "x": 380, "y": 130, "desc": "白色蓝牙耳机，充电仓有卡通贴纸", "hoursAgo": 4,   "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1007", "category": "雨伞",   "place": "学生活动中心", "placeId": "xuehuo", "x": 200, "y": 60, "desc": "黑色长柄伞，弯钩伞柄", "hoursAgo": 100, "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1008", "category": "充电宝", "place": "第三教学楼", "placeId": "jx3",  "x": 330, "y": 215, "desc": "黑色充电宝，自带短线", "hoursAgo": 20,  "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1009", "category": "眼镜",   "place": "明湖",   "placeId": "minghu",     "x": 140, "y": 90,  "desc": "黑框近视眼镜，硬壳眼镜盒", "hoursAgo": 60,  "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1010", "category": "书",     "place": "第三教学楼", "placeId": "jx3",  "x": 330, "y": 215, "desc": "高等数学课本，扉页写有名字", "hoursAgo": 12,  "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1011", "category": "手机",   "place": "操场",   "placeId": "caochang",   "x": 470, "y": 250, "desc": "黑色手机，深色手机壳", "hoursAgo": 130, "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1012", "category": "钥匙",   "place": "南门",   "placeId": "nanmen",     "x": 290, "y": 320, "desc": "单把钥匙，黄色胶皮柄", "hoursAgo": 6,   "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" },
+    { "id": "L-1013", "category": "校园卡", "place": "第二食堂", "placeId": "shitang2", "x": 200, "y": 72,  "desc": "卡面贴有贴纸", "name": "刘某某", "studentId": "20212188", "hoursAgo": 3, "vector": null, "status": "in_storage", "reporter": "巡逻登记", "visibility": "public" }
+  ]
+}

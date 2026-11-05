@@ -1,0 +1,3513 @@
+{
+  "metadata": {
+    "file_suffix": "pdf",
+    "producer": {
+      "name": "mineru",
+      "version": "4.0.0"
+    },
+    "document": {
+      "page_count": 10,
+      "page_count_kind": "physical"
+    }
+  },
+  "extensions": {
+    "mineru": {
+      "tier": "basic",
+      "parse_mode": "ocr"
+    },
+    "docvortex_layout": {
+      "version": 1,
+      "pages": [
+        {
+          "page_idx": 0,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 1,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 2,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 3,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 4,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 5,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 6,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 7,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 8,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        },
+        {
+          "page_idx": 9,
+          "width_pt": 612.47998046875,
+          "height_pt": 842.4000244140625
+        }
+      ]
+    }
+  },
+  "pages": [
+    {
+      "page_idx": 0,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.119,
+            0.027,
+            0.535,
+            0.128
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "有一些题有上个学期内容。天家挑着做吧"
+            }
+          ]
+        },
+        {
+          "type": "header",
+          "index": 1,
+          "bbox": [
+            0.751,
+            0.003,
+            0.944,
+            0.089
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2、出"
+            }
+          ]
+        },
+        {
+          "type": "doc_title",
+          "index": 2,
+          "bbox": [
+            0.235,
+            0.201,
+            0.634,
+            0.236
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "北京交通大学"
+            }
+          ],
+          "level": 1
+        },
+        {
+          "type": "doc_title",
+          "index": 3,
+          "bbox": [
+            0.157,
+            0.238,
+            0.715,
+            0.268
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2011-2012学年第二学期《离散数学基础》期末考试试卷（A卷）"
+            }
+          ],
+          "level": 1
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.378,
+            0.283,
+            0.494,
+            0.305
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(参考答案)"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.149,
+            0.317,
+            0.718,
+            0.348
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "学院 专业 班级"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.149,
+            0.359,
+            0.711,
+            0.398
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "学号 姓名"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 7,
+          "bbox": [
+            0.153,
+            0.402,
+            0.73,
+            0.493
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 7,
+              "bbox": [
+                0.153,
+                0.402,
+                0.73,
+                0.493
+              ],
+              "content": "<table><tr><td>后号</td><td></td><td>二</td><td>三</td><td>四</td><td>五</td><td></td><td></td><td></td><td></td><td>总分</td></tr><tr><td>得分</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>阅卷人</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 8,
+          "bbox": [
+            0.135,
+            0.518,
+            0.515,
+            0.542
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "一、填空题（每空1分，本大题共15分）"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.147,
+            0.554,
+            0.721,
+            0.611
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": ". 命题公式-(P→Q)的主析取范式为 7.主合取范式的编码表示为"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.16,
+            0.616,
+            0.498,
+            0.642
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】1. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "P \\wedge \\neg Q, \\quad M_{00} \\wedge M_{01} \\wedge M_{11}"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.145,
+            0.655,
+            0.734,
+            0.732
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": ".设E为全集， ，称为A的绝对补，记作~A，且~(~A)= Φ="
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.165,
+            0.736,
+            0.57,
+            0.76
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】2.集A关于E的补集 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathbf{E} - \\mathbf{A} : \\mathbf{A} : \\Phi : \\mathbf{B}"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 13,
+          "bbox": [
+            0.158,
+            0.774,
+            0.441,
+            0.798
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "赵设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\boldsymbol{A} = \\{ a, b, c \\}"
+            },
+            {
+              "type": "text",
+              "content": " 考虑下列子集"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 14,
+          "bbox": [
+            0.196,
+            0.809,
+            0.571,
+            0.834
+          ],
+          "content": "S_{1} = \\left\\{ \\left\\{ a,b \\right\\},\\left\\{ b,c \\right\\} \\right\\}, \\quad S_{2} = \\left\\{ \\left\\{ a \\right\\},\\left\\{ a,b \\right\\},\\left\\{ a,c \\right\\} \\right\\};"
+        },
+        {
+          "type": "footer",
+          "index": 15,
+          "bbox": [
+            0.166,
+            0.865,
+            0.387,
+            0.881
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "《离散数学基础》期末考试题令题人:"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 16,
+          "bbox": [
+            0.476,
+            0.863,
+            0.538,
+            0.876
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2012.6.1"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 17,
+          "bbox": [
+            0.633,
+            0.859,
+            0.742,
+            0.874
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第1页共10页"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 18,
+          "bbox": [
+            0.46,
+            0.915,
+            0.482,
+            0.941
+          ],
+          "content": []
+        }
+      ]
+    },
+    {
+      "page_idx": 1,
+      "blocks": [
+        {
+          "type": "header",
+          "index": 0,
+          "bbox": [
+            0.017,
+            0.011,
+            0.112,
+            0.091
+          ],
+          "content": []
+        },
+        {
+          "type": "equation",
+          "index": 1,
+          "bbox": [
+            0.212,
+            0.181,
+            0.484,
+            0.213
+          ],
+          "content": "S_{3} = \\{ \\{ a \\} , \\{ b , c \\} \\} , S_{4} = \\{ \\{ a , b , c \\} \\}."
+        },
+        {
+          "type": "equation",
+          "index": 2,
+          "bbox": [
+            0.208,
+            0.215,
+            0.513,
+            0.249
+          ],
+          "content": "S_{5} = \\{ \\{ a \\} , \\{ b \\} , \\{ c \\} \\} , S_{6} = \\{ \\{ a \\} , \\{ a , c \\} \\}"
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.169,
+            0.244,
+            0.74,
+            0.298
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "则其中A的覆盖有有 ，A的划分"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.171,
+            0.3,
+            0.55,
+            0.339
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】4。 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "S_{1},S_{2},S_{3},S_{4},S_{5};S_{3},S_{4},S_{5}"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.033,
+            0.352,
+            0.139,
+            0.405
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "子集"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.16,
+            0.342,
+            0.733,
+            0.427
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "4. 设 S 是非空有限集，代数系统 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< \\mathrm{P}(\\mathrm{S}), \\cap, \\cup >"
+            },
+            {
+              "type": "text",
+              "content": " 中，P(S)对∩的幺元为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\leq"
+            },
+            {
+              "type": "text",
+              "content": " ，零元为。P(S)对U的幺元为 ，零元为 S"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.159,
+            0.423,
+            0.388,
+            0.451
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】4. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\dot { \\Phi } \\colon \\mathbf { \\mathit { S } } \\colon \\mathbf { \\mathit { S } } \\colon \\Phi ,"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.147,
+            0.463,
+            0.723,
+            0.539
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "5. 一颗树有两个2度结点，1个3度结点和3个4度结点，则1度结点数为 7【答案】8。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.138,
+            0.549,
+            0.714,
+            0.643
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "6. 若 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "G = < V,E >"
+            },
+            {
+              "type": "text",
+              "content": "为汉密尔顿图，则对于结点集V的每个非空子集S，均有"
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathbf { W } ( \\mathbf { G } - \\mathbf { S } )"
+            },
+            {
+              "type": "text",
+              "content": "成立，其中W(G-S)是"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.135,
+            0.645,
+            0.424,
+            0.679
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】6. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\leq : G - s"
+            },
+            {
+              "type": "text",
+              "content": " 的连通分支数。"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 11,
+          "bbox": [
+            0.125,
+            0.686,
+            0.542,
+            0.723
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "二、单项选择题（每小题1分，本大题共10分）刀ノ"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.106,
+            0.716,
+            0.695,
+            0.834
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "下面命题公式（ ）不是重言式。A、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "Q \\to (P \\lor Q)"
+            },
+            {
+              "type": "text",
+              "content": " B、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "(P \\land Q) \\to P"
+            },
+            {
+              "type": "text",
+              "content": " C、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\pi ( P \\land \\neg Q ) \\land ( \\neg P \\lor Q ) ="
+            },
+            {
+              "type": "text",
+              "content": " D. "
+            },
+            {
+              "type": "equation_inline",
+              "content": "( P \\rightarrow Q ) \\leftrightarrow ( - \\mu P \\vee Q )"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 13,
+          "bbox": [
+            0.115,
+            0.836,
+            0.333,
+            0.859
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "《离散数学基础》期末考试题今题人:"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 14,
+          "bbox": [
+            0.424,
+            0.852,
+            0.485,
+            0.866
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2012.6.1"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 15,
+          "bbox": [
+            0.583,
+            0.858,
+            0.69,
+            0.875
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第2页共10页"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 2,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.152,
+            0.205,
+            0.672,
+            0.33
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "X 命题“没有不犯错误的人”符号化为（ )。设M(x):x是人， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "P(x) : x"
+            },
+            {
+              "type": "text",
+              "content": " 犯错误。A、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\forall x ( M ( x ) \\land P ( x ) )"
+            },
+            {
+              "type": "text",
+              "content": " B、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\left( \\exists x ( M ( x ) \\rightarrow \\neg P ( x ) ) \\right)"
+            },
+            {
+              "type": "text",
+              "content": " C、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "- \\left( \\exists x \\left( M ( x ) \\land P ( x ) \\right) \\right)"
+            },
+            {
+              "type": "text",
+              "content": " D、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "- \\exists x ( M ( x ) \\land \\neg P ( x ) )"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.163,
+            0.347,
+            0.736,
+            0.443
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "3.. 设A={Φ}, "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathbf{B} = \\mathbf{P}(\\mathbf{A})"
+            },
+            {
+              "type": "text",
+              "content": " (P(A)代表A的幂集)，下列各式中哪个是错误的（ )。A、Φ⊆B; "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\left[ \\mathbf{B} \\cdot \\left\\{ \\Phi \\right\\} \\subseteq B \\right]"
+            },
+            {
+              "type": "text",
+              "content": " C、{{Φ}}∈B;D、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\{ \\Phi , \\{ \\Phi \\} \\} \\subseteq \\mathbb { P } ( \\mathsf { A } ) ."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.166,
+            0.449,
+            0.736,
+            0.583
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "4. 对自然数集合N，哪种运算不是可结合的，运算定义为任 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a , b \\in N"
+            },
+            {
+              "type": "text",
+              "content": " ( ). A、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a + b = \\min(a, b)"
+            },
+            {
+              "type": "text",
+              "content": " B、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a * b = a + 2b"
+            },
+            {
+              "type": "text",
+              "content": " C、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a * b = a + b + 3"
+            },
+            {
+              "type": "text",
+              "content": " D、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a * b = a_{0}b(\\bmod 3)"
+            },
+            {
+              "type": "text",
+              "content": ".7.."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.169,
+            0.587,
+            0.741,
+            0.676
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "5. 设Z为整数集，下面哪个序偶不够成偏序集（ ). A、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< Z , < >"
+            },
+            {
+              "type": "text",
+              "content": " (<:小于关系): "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\dot{\\mathbf{B}}_{2} < \\mathbf{Z}_{2} \\leq >"
+            },
+            {
+              "type": "text",
+              "content": " (≤:小于等于关系)；"
+            },
+            {
+              "type": "equation_inline",
+              "content": "C. < Z_{2} = >"
+            },
+            {
+              "type": "text",
+              "content": " (=:等于关系)；D、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< \\dot{z}, \\mid > ( \\dot{\\bar{z}}"
+            },
+            {
+              "type": "text",
+              "content": " 整除关系)."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.172,
+            0.692,
+            0.659,
+            0.765
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "6. 任意具有多个等幂元的半群，它（ )。A、不能构成群； B、不一定能构成群:C、不能构成交换群； D、能构成交换群。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.174,
+            0.778,
+            0.726,
+            0.837
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "7. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< 1 . 5"
+            },
+            {
+              "type": "text",
+              "content": " 是一个有界格，它也是有补格，只要满足（ ). A、每个元素都有一个补元； B、每个元素都至少有一个补元；"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 6,
+          "bbox": [
+            0.181,
+            0.868,
+            0.397,
+            0.884
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "《离数教学基础》期末考试题今题人:"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 7,
+          "bbox": [
+            0.491,
+            0.866,
+            0.548,
+            0.879
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2012.6.1"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 8,
+          "bbox": [
+            0.648,
+            0.862,
+            0.753,
+            0.876
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第3页共10页"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 9,
+          "bbox": [
+            0.433,
+            0.929,
+            0.456,
+            0.947
+          ],
+          "content": []
+        }
+      ]
+    },
+    {
+      "page_idx": 3,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.222,
+            0.205,
+            0.687,
+            0.234
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "C、每个元素都无补元；D、每个元素都有多个补元。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.184,
+            0.241,
+            0.75,
+            0.304
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "8. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "G = < V,E >"
+            },
+            {
+              "type": "text",
+              "content": " 为无向图， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "| Y | = 7"
+            },
+            {
+              "type": "text",
+              "content": " "
+            },
+            {
+              "type": "equation_inline",
+              "content": "| E | = 2 3"
+            },
+            {
+              "type": "text",
+              "content": " ，则G一定是（ )。A、完全图；B、树； C、简单图: D、多重图。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.18,
+            0.312,
+            0.748,
+            0.363
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "9. 给定无向图 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "G = < V,E >"
+            },
+            {
+              "type": "text",
+              "content": " ，如下图所示，下面哪个边集不是其边割集(. (. )。 )。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.186,
+            0.344,
+            0.421,
+            0.503
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "A、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\{ < v_{1},v_{4} > , < v_{3},v_{4} > \\}"
+            },
+            {
+              "type": "text",
+              "content": " B、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\{< v_{1},v_{5}>_{;}<v_{4},v_{6}>\\}"
+            },
+            {
+              "type": "text",
+              "content": " C、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\{< v_{4},v_{7}>,< v_{4},v_{8}>\\}"
+            },
+            {
+              "type": "text",
+              "content": " D、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\{ < v_{1},v_{2} > , < v_{2},v_{3} > \\}"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 4,
+          "bbox": [
+            0.495,
+            0.4,
+            0.716,
+            0.474
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 4,
+              "bbox": [
+                0.495,
+                0.4,
+                0.716,
+                0.474
+              ],
+              "content": ""
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.165,
+            0.521,
+            0.736,
+            0.628
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "10. 有 n 个结点(n≥3)， m条边的连通简单图是平面图的必要条件( )。A、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "n \\geq 3m - 6"
+            },
+            {
+              "type": "text",
+              "content": " B、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "n \\leq 3m - 6"
+            },
+            {
+              "type": "text",
+              "content": " C、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "m \\geq 3n - 6"
+            },
+            {
+              "type": "text",
+              "content": " D、 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "m \\leq 3n - 6"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.165,
+            0.628,
+            0.239,
+            0.647
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "index": 7,
+          "bbox": [
+            0.149,
+            0.649,
+            0.734,
+            0.718
+          ],
+          "content": [
+            {
+              "type": "table_body",
+              "index": 7,
+              "bbox": [
+                0.149,
+                0.649,
+                0.734,
+                0.718
+              ],
+              "content": "<table><tr><td></td><td colspan=10></td></tr><tr><td>题号</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td></tr><tr><td>答案</td><td>C</td><td>D</td><td>D</td><td>B</td><td>A</td><td>A</td><td>B</td><td>D</td><td>B</td><td rowspan=2>D</td></tr><tr><td colspan=8></td><td></td><td></td></tr></table>"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 8,
+          "bbox": [
+            0.148,
+            0.742,
+            0.524,
+            0.771
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "三、判断题（每小题1分，本大题共10分）"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.145,
+            0.78,
+            0.702,
+            0.815
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "1. 公式 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\nabla x ( P ( x ) \\rightarrow Q ( x ) ) \\land R ( y ) ."
+            },
+            {
+              "type": "text",
+              "content": " 中∀x的辖域为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "P ( x )"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.141,
+            0.825,
+            0.662,
+            0.859
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2. 公式 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\nabla x P ( x ) \\to \\exists y Q ( x , y )"
+            },
+            {
+              "type": "text",
+              "content": " 的前束范式为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\forall x \\forall y ( P ( x ) \\rightarrow Q ( x , y ) )"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 11,
+          "bbox": [
+            0.144,
+            0.864,
+            0.361,
+            0.883
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "《离教数学基础》期末考试题命题人:"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 12,
+          "bbox": [
+            0.454,
+            0.874,
+            0.509,
+            0.888
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2012.6.1"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 13,
+          "bbox": [
+            0.611,
+            0.879,
+            0.717,
+            0.893
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第4页共10页"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 4,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.163,
+            0.205,
+            0.717,
+            0.229
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "3. 设A，B为任意集合，不能A⊂B且 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "A \\in B"
+            },
+            {
+              "type": "text",
+              "content": " C"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.163,
+            0.249,
+            0.713,
+            0.273
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "4. 设R是集合A上的关系，若 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "R_{1} , R_{2}"
+            },
+            {
+              "type": "text",
+              "content": " 是对称的，则 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "R_{1} \\circ R_{2}"
+            },
+            {
+              "type": "text",
+              "content": " 也是对称的。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.165,
+            0.314,
+            0.718,
+            0.338
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "5. 群中可以有零元（对阶数大于1的群）。 C"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.165,
+            0.348,
+            0.719,
+            0.374
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "6. 循环群一定是 Abel 群。 )"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.165,
+            0.383,
+            0.722,
+            0.408
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "7、代数系统中一个元素的左逆元并一定等于该元素的右逆元。（ )"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.16,
+            0.418,
+            0.722,
+            0.443
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "8.每一个链都是分配格。…"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.165,
+            0.452,
+            0.723,
+            0.478
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "9. 不可能有偶数个结点，奇数条边的欧拉图。 C )"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.166,
+            0.487,
+            0.723,
+            0.512
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "10. 图G中的每条边都是割边，则G必是树。 C )"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 8,
+          "bbox": [
+            0.172,
+            0.518,
+            0.241,
+            0.537
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.167,
+            0.546,
+            0.442,
+            0.567
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "1. × ∀x的辖域为P(x) →Q(x)。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.166,
+            0.578,
+            0.683,
+            0.602
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2. × "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\forall xP(x) \\to \\exists yQ(x,y)"
+            },
+            {
+              "type": "text",
+              "content": " 的前束范式为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\exists x \\exists y(P(x) \\rightarrow Q(u, y))"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.166,
+            0.614,
+            0.645,
+            0.636
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "3. × 可能A⊂B且 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "A \\in \\mathcal{B}"
+            },
+            {
+              "type": "text",
+              "content": " ,如A={a}，B={1,{1},2}."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.167,
+            0.649,
+            0.583,
+            0.672
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "4. × "
+            },
+            {
+              "type": "equation_inline",
+              "content": "R_{1} , R_{2}"
+            },
+            {
+              "type": "text",
+              "content": " 是对称的，则 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "R_{1} \\circ R_{2}"
+            },
+            {
+              "type": "text",
+              "content": " 不一定是对称的。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 13,
+          "bbox": [
+            0.168,
+            0.681,
+            0.463,
+            0.702
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "5. × 阶数大于1的群不可能有零元。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 14,
+          "bbox": [
+            0.17,
+            0.709,
+            0.23,
+            0.727
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "6. √."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 15,
+          "bbox": [
+            0.17,
+            0.735,
+            0.238,
+            0.754
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "7. √."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 16,
+          "bbox": [
+            0.17,
+            0.761,
+            0.239,
+            0.78
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "8. √."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 17,
+          "bbox": [
+            0.168,
+            0.785,
+            0.577,
+            0.806
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "9. × 可以有偶数个结点、奇数条边的欧拉图。如图"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 18,
+          "bbox": [
+            0.633,
+            0.701,
+            0.753,
+            0.791
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 18,
+              "bbox": [
+                0.633,
+                0.701,
+                0.753,
+                0.791
+              ],
+              "content": ""
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 19,
+          "bbox": [
+            0.169,
+            0.812,
+            0.56,
+            0.833
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "10. × 连通图，若每条边都是割边，则G必是树。"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 20,
+          "bbox": [
+            0.172,
+            0.866,
+            0.391,
+            0.881
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "《离数数学基础》期末考试题宁题人:"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 21,
+          "bbox": [
+            0.481,
+            0.866,
+            0.541,
+            0.879
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2012. 6.1"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 22,
+          "bbox": [
+            0.641,
+            0.862,
+            0.745,
+            0.877
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第5页共10页"
+            }
+          ]
+        },
+        {
+          "type": "page_number",
+          "index": 23,
+          "bbox": [
+            0.444,
+            0.923,
+            0.47,
+            0.953
+          ],
+          "content": []
+        }
+      ]
+    },
+    {
+      "page_idx": 5,
+      "blocks": [
+        {
+          "type": "paragraph_title",
+          "index": 0,
+          "bbox": [
+            0.169,
+            0.242,
+            0.538,
+            0.264
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "四、简答题（每小题5分，本大题共25分）"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.167,
+            0.282,
+            0.689,
+            0.304
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "1. 用等值演算法求公式(P√Q)→R的主析取范式，并求其成真赋值。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.172,
+            0.313,
+            0.333,
+            0.331
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】1. 解:原式"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 3,
+          "bbox": [
+            0.191,
+            0.341,
+            0.711,
+            0.362
+          ],
+          "content": "- ( P \\lor Q ) \\lor R \\Leftrightarrow ( \\lnot P \\land \\lnot Q ) \\lor R \\Leftrightarrow ( \\lnot P \\land \\lnot Q \\land R ) \\lor ( \\lnot P \\land \\lnot Q \\land \\lnot R ) \\lor"
+        },
+        {
+          "type": "equation",
+          "index": 4,
+          "bbox": [
+            0.189,
+            0.361,
+            0.63,
+            0.382
+          ],
+          "content": "( P \\land Q \\land R ) \\lor ( P \\land \\lnot Q \\land R ) \\lor ( \\lnot P \\land \\lnot Q \\land R ) \\lor ( \\lnot P \\land Q \\land R )"
+        },
+        {
+          "type": "equation",
+          "index": 5,
+          "bbox": [
+            0.166,
+            0.382,
+            0.462,
+            0.402
+          ],
+          "content": "\\Leftrightarrow m_{001} \\lor m_{000} \\lor m_{111} \\lor m_{101} \\lor m_{001} \\lor m_{011}"
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.164,
+            0.409,
+            0.318,
+            0.427
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "∴使其成真赋值为:"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 7,
+          "bbox": [
+            0.181,
+            0.434,
+            0.679,
+            0.499
+          ],
+          "content": "\\begin{cases}P & 0 \\\\Q & 0 \\\\R & 1\\end{cases}, \\quad\\begin{cases}P & 0 \\\\Q & 0 \\\\R & 0\\end{cases}, \\quad\\begin{cases}P & 1 \\\\Q & 1 \\\\R & 1\\end{cases}, \\quad\\begin{cases}P & 1 \\\\Q & 0 \\\\R & 1\\end{cases}, \\quad\\begin{cases}P & 0 \\\\Q & 0 \\\\R & 1\\end{cases}, \\quad\\begin{cases}P & 0 \\\\Q & 1 \\\\R & 1\\end{cases}"
+        },
+        {
+          "type": "equation",
+          "index": 8,
+          "bbox": [
+            0.159,
+            0.551,
+            0.694,
+            0.574
+          ],
+          "content": "R = \\{<1,1>,<1,3>,<2,2>,<3,3>,<3,1>,<3,4>,<4,3>,<4,4>\\}"
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.156,
+            0.585,
+            0.508,
+            0.607
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "出关系矩阵 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "M_{R}"
+            },
+            {
+              "type": "text",
+              "content": " ，画出关系图并讨论R的性质。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.16,
+            0.616,
+            0.278,
+            0.634
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】2.解:"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 11,
+          "bbox": [
+            0.184,
+            0.641,
+            0.357,
+            0.722
+          ],
+          "content": "\\begin{pmatrix}M_{R} = \\begin{pmatrix}1 & 0 & 1 & 0 \\\\0 & 1 & 0 & 0 \\\\1 & 0 & 1 & 1 \\\\0 & 0 & 1 & 1 \\\\\\end{pmatrix}\\end{pmatrix}"
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.361,
+            0.674,
+            0.467,
+            0.692
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "R的关系图为"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 13,
+          "bbox": [
+            0.518,
+            0.642,
+            0.702,
+            0.73
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 13,
+              "bbox": [
+                0.518,
+                0.642,
+                0.702,
+                0.73
+              ],
+              "content": ""
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 14,
+          "bbox": [
+            0.182,
+            0.73,
+            0.331,
+            0.748
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "R是自反、对称的。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 15,
+          "bbox": [
+            0.146,
+            0.768,
+            0.722,
+            0.817
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "3. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< S_{2} * >"
+            },
+            {
+              "type": "text",
+              "content": " 是半群， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "O_{L}"
+            },
+            {
+              "type": "text",
+              "content": " 是左零元，对任 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "x \\in S, x \\neq O_{2}"
+            },
+            {
+              "type": "text",
+              "content": " 是否是左零元？为什么？"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 16,
+          "bbox": [
+            0.15,
+            0.829,
+            0.72,
+            0.857
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】3.解: "
+            },
+            {
+              "type": "equation_inline",
+              "content": "x + O_{2}"
+            },
+            {
+              "type": "text",
+              "content": " 仍是左零元。因为 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "y \\in S"
+            },
+            {
+              "type": "text",
+              "content": " ，由于 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "O_{ 此 }"
+            },
+            {
+              "type": "text",
+              "content": " 是左零元，所以，"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 6,
+      "blocks": [
+        {
+          "type": "header",
+          "index": 0,
+          "bbox": [
+            0.004,
+            0.002,
+            0.319,
+            0.02
+          ],
+          "content": []
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.162,
+            0.21,
+            0.293,
+            0.231
+          ],
+          "content": [
+            {
+              "type": "equation_inline",
+              "content": "O_{L} * y = O_{L}"
+            },
+            {
+              "type": "text",
+              "content": " ，又"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.177,
+            0.243,
+            0.408,
+            0.264
+          ],
+          "content": [
+            {
+              "type": "equation_inline",
+              "content": "< S_{2} * >"
+            },
+            {
+              "type": "text",
+              "content": " 为半群，所以*可结合。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.173,
+            0.276,
+            0.706,
+            0.301
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "所以， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "(x * O_{L}) * y = x * (O_{L} * y) = x * O_{L}"
+            },
+            {
+              "type": "text",
+              "content": " ，所以， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "x + O_{L}"
+            },
+            {
+              "type": "text",
+              "content": " 仍是左零元。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.157,
+            0.316,
+            0.724,
+            0.366
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "4. 某次会议有20人参加，其中每人至少有10个朋友，这20人拟围一桌入席，用图论知识说明是否可能每人邻做的都是朋友？"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.157,
+            0.368,
+            0.727,
+            0.419
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】3.解:可能。将人用结点表示，当两人是朋友时相应结点间连一条边，则得一个无向图"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 6,
+          "bbox": [
+            0.197,
+            0.423,
+            0.73,
+            0.447
+          ],
+          "content": [
+            {
+              "type": "equation_inline",
+              "content": "G = < V ; E > ; 20"
+            },
+            {
+              "type": "text",
+              "content": " 人围一桌，使每人邻做都是朋友，即要找一个过每个"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.192,
+            0.454,
+            0.722,
+            0.479
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "点一次且仅一次得回路。由题已知，"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 8,
+          "bbox": [
+            0.192,
+            0.483,
+            0.725,
+            0.509
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "∀u,ν∈V, de(u)≥10, deg(ν)≥10, ∴deg(u)+deg(ν)≥20,"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.192,
+            0.516,
+            0.646,
+            0.54
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "由判定定理，G中存在一条汉密尔顿回路。即所谈情况可能。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.157,
+            0.575,
+            0.689,
+            0.6
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "5. 一棵树T中，有3个2度结点，一个3度结点，其余结点都是树叶。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.196,
+            0.605,
+            0.37,
+            0.625
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(1)T中有几个结点:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 12,
+          "bbox": [
+            0.202,
+            0.63,
+            0.554,
+            0.651
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(2)画出具有上述度数的所有非同构的无向图。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 13,
+          "bbox": [
+            0.165,
+            0.654,
+            0.734,
+            0.704
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】5.解:（1）设该树树叶数为t，则树T的结点数为3+1+t，又边数=结点数 一1，"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 14,
+          "bbox": [
+            0.251,
+            0.71,
+            0.439,
+            0.736
+          ],
+          "content": [
+            {
+              "type": "equation_inline",
+              "content": "\\sum \\deg(v_{i})"
+            },
+            {
+              "type": "text",
+              "content": " 边数2倍，"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 15,
+          "bbox": [
+            0.163,
+            0.748,
+            0.451,
+            0.768
+          ],
+          "content": "3 \\times 2 + 1 \\times 3 + t \\times 1 = 2(3 + t + 1 - 1)"
+        },
+        {
+          "type": "text",
+          "index": 16,
+          "bbox": [
+            0.161,
+            0.775,
+            0.526,
+            0.799
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "即 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "t + t = 6 + 2t , \\quad \\because t = 3 , \\therefore  T"
+            },
+            {
+              "type": "text",
+              "content": " 中7个结点。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 17,
+          "bbox": [
+            0.161,
+            0.802,
+            0.737,
+            0.856
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(2）具有3 个两度结点，一个3 度结点，3 片树叶的树（非同构的）共有以下三种:"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 18,
+          "bbox": [
+            0.168,
+            0.863,
+            0.739,
+            0.947
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 18,
+              "bbox": [
+                0.168,
+                0.863,
+                0.739,
+                0.947
+              ],
+              "content": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 7,
+      "blocks": [
+        {
+          "type": "paragraph_title",
+          "index": 0,
+          "bbox": [
+            0.165,
+            0.221,
+            0.532,
+            0.249
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "五、证明题（每小题8分，本大题共40分）"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.162,
+            0.256,
+            0.352,
+            0.277
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "1. 用推理规则证明下式:"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.182,
+            0.282,
+            0.233,
+            0.301
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "前提:"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 3,
+          "bbox": [
+            0.18,
+            0.311,
+            0.706,
+            0.346
+          ],
+          "content": "( ( \\exists x ) ( F ( x ) \\land S ( x ) ) \\to ( \\forall y ) ( M ( y ) \\to W ( y ) ) , \\quad ( \\exists y ) ( M ( y ) \\land \\neg W ( y ) ) ."
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.177,
+            0.346,
+            0.407,
+            0.372
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "结论: "
+            },
+            {
+              "type": "equation_inline",
+              "content": "( \\nabla x ) ( F ( { \\dot { x } } ) \\to - S ( x ) ) ^ { \\prime }"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 5,
+          "bbox": [
+            0.223,
+            0.383,
+            0.421,
+            0.409
+          ],
+          "content": "\\exists y(M(y) \\land \\neg W(y))"
+        },
+        {
+          "type": "equation",
+          "index": 6,
+          "bbox": [
+            0.199,
+            0.417,
+            0.344,
+            0.441
+          ],
+          "content": "M(e) \\land \\neg W(e)"
+        },
+        {
+          "type": "equation",
+          "index": 7,
+          "bbox": [
+            0.196,
+            0.451,
+            0.365,
+            0.476
+          ],
+          "content": "(3) - ( \\dot{M}(e) \\rightarrow W(e) )"
+        },
+        {
+          "type": "equation",
+          "index": 8,
+          "bbox": [
+            0.217,
+            0.486,
+            0.381,
+            0.511
+          ],
+          "content": "\\exists y \\in (M(y) \\rightarrow W(y))"
+        },
+        {
+          "type": "equation",
+          "index": 9,
+          "bbox": [
+            0.192,
+            0.521,
+            0.395,
+            0.546
+          ],
+          "content": "(5) -(\\nabla y)(M(y) \\to W(y))"
+        },
+        {
+          "type": "equation",
+          "index": 10,
+          "bbox": [
+            0.208,
+            0.557,
+            0.565,
+            0.584
+          ],
+          "content": "( \\exists x ) ( F ( x ) \\land S ( x ) ) \\to ( \\forall y ) ( M ( y ) \\to W ( y ) )"
+        },
+        {
+          "type": "equation",
+          "index": 11,
+          "bbox": [
+            0.186,
+            0.59,
+            0.354,
+            0.614
+          ],
+          "content": "(7) \\neg \\exists x (F(x) \\land S(x))"
+        },
+        {
+          "type": "equation",
+          "index": 12,
+          "bbox": [
+            0.183,
+            0.624,
+            0.367,
+            0.655
+          ],
+          "content": "(8) (\\forall x) \\cdots (F(x) \\land S(x))"
+        },
+        {
+          "type": "equation",
+          "index": 13,
+          "bbox": [
+            0.18,
+            0.659,
+            0.33,
+            0.683
+          ],
+          "content": "(9) \\neg (F(a) \\land S(a))"
+        },
+        {
+          "type": "equation",
+          "index": 14,
+          "bbox": [
+            0.175,
+            0.693,
+            0.326,
+            0.718
+          ],
+          "content": "( a ) - 2 F ( a ) v - 2 S ( a )"
+        },
+        {
+          "type": "equation",
+          "index": 15,
+          "bbox": [
+            0.172,
+            0.729,
+            0.32,
+            0.752
+          ],
+          "content": "\\mathrm{OD}F(a) \\rightarrow -\\mathrm{S}(a)"
+        },
+        {
+          "type": "equation",
+          "index": 16,
+          "bbox": [
+            0.194,
+            0.765,
+            0.364,
+            0.789
+          ],
+          "content": "( \\forall x ) ( F ( { \\dot { x } } ) \\to - { \\dot { x } } S ( x ) )"
+        },
+        {
+          "type": "text",
+          "index": 17,
+          "bbox": [
+            0.112,
+            0.805,
+            0.684,
+            0.841
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2..试证明若 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< G_{2} * >"
+            },
+            {
+              "type": "text",
+              "content": " 是群， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\mathcal { H } \\subseteq \\mathcal { G }"
+            },
+            {
+              "type": "text",
+              "content": " ，且任意的 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\alpha \\in H"
+            },
+            {
+              "type": "text",
+              "content": " ，对每一个 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "x \\in G"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 8,
+      "blocks": [
+        {
+          "type": "footer",
+          "index": 0,
+          "bbox": [
+            0.624,
+            0.862,
+            0.733,
+            0.878
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第9页共10页"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.148,
+            0.204,
+            0.517,
+            0.226
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a \\ast x = x \\ast a"
+            },
+            {
+              "type": "text",
+              "content": " ，则 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< H , * >  是  < G , * >"
+            },
+            {
+              "type": "text",
+              "content": " 的子群。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.152,
+            0.237,
+            0.717,
+            0.263
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】3.证明:（1）设群 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< G_{2} * >"
+            },
+            {
+              "type": "text",
+              "content": " 的幺元为e，则 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\forall x \\in G"
+            },
+            {
+              "type": "text",
+              "content": " 有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "x * e = e^{\\frac{\\cdot}{\\cdot}}x"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.151,
+            0.273,
+            0.307,
+            0.294
+          ],
+          "content": [
+            {
+              "type": "equation_inline",
+              "content": "\\therefore e \\in H"
+            },
+            {
+              "type": "text",
+              "content": " 即H非空。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.223,
+            0.299,
+            0.693,
+            0.323
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "(2) "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\forall a,b \\in H"
+            },
+            {
+              "type": "text",
+              "content": " ，则 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\forall x \\in G"
+            },
+            {
+              "type": "text",
+              "content": " 有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a * x = x * a , b * x = x * b"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.251,
+            0.334,
+            0.296,
+            0.355
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "从而"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 6,
+          "bbox": [
+            0.245,
+            0.355,
+            0.539,
+            0.457
+          ],
+          "content": "\\begin{aligned}&= (a * b^{-1}) * x = (a * b^{-1}) * x * (b * b^{-1}) * x \\\\&= a * (b^{-1} * b) * x * b^{-1} = (a * x) * b^{-1} \\\\&= x * (a * b^{-1}) , \\quad \\therefore a * b^{-1} \\in H \\\\&\\because \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots \\cdots  \\end{aligned}"
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.149,
+            0.471,
+            0.724,
+            0.535
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "3. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "< G_{s} * >"
+            },
+            {
+              "type": "text",
+              "content": " 是一个群， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\alpha \\in G"
+            },
+            {
+              "type": "text",
+              "content": " ，如果f是从G到G的映射，使得对每一个"
+            },
+            {
+              "type": "equation_inline",
+              "content": "x \\in G"
+            },
+            {
+              "type": "text",
+              "content": " ，都有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "f(x) = a + x + a^{-1}"
+            },
+            {
+              "type": "text",
+              "content": " ，试证明f是一个从G到G上的自同构。"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_title",
+          "index": 8,
+          "bbox": [
+            0.159,
+            0.543,
+            0.227,
+            0.564
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "type": "text",
+          "index": 9,
+          "bbox": [
+            0.165,
+            0.569,
+            0.545,
+            0.612
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "证明 对于任意的，y∈，若 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\dot{ 接中梦 }"
+            },
+            {
+              "type": "text",
+              "content": " 與"
+            },
+            {
+              "type": "equation_inline",
+              "content": "f ( x ) = a \\cos x ^ { - 1 } + a \\cos x ^ { - 1 } = f ( x )"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 10,
+          "bbox": [
+            0.163,
+            0.616,
+            0.723,
+            0.693
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "所以，是G到G的入射。对于任意的 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "y \\in G _ { 2 }"
+            },
+            {
+              "type": "text",
+              "content": " 由封闭性得 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "a ^ { - 2 } + 2 a + 2 = 0"
+            },
+            {
+              "type": "text",
+              "content": " 不妨设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\frac { 1 } { 1 0 } x ^ { - 2 } + \\frac { 1 } { 1 0 } x + \\frac { 1 } { 1 0 }"
+            },
+            {
+              "type": "text",
+              "content": " "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\left( \\Rightarrow \\hat{\\boldsymbol{w}}_{\\hat{\\boldsymbol{p}}} \\right)"
+            },
+            {
+              "type": "text",
+              "content": " 这就说明，对于任意的y∈G必存在 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\dot{\\infty} \\in \\dot{\\mathbb{C}}_{p}"
+            },
+            {
+              "type": "text",
+              "content": " 使得 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\dot { \\omega } = a ^ { - 2 } \\dot { x } + \\dot { y } + \\dot { z } _ { 0 }"
+            },
+            {
+              "type": "text",
+              "content": "所以 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\because y = a + \\sin 4 a ^ { - 1 } = f ( x ) ,"
+            },
+            {
+              "type": "text",
+              "content": " 可见，f是G到G的谓射。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 11,
+          "bbox": [
+            0.207,
+            0.69,
+            0.469,
+            0.712
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "另外.对于任意的 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "$\\omega _ { p }$  混合变 ,"
+            },
+            {
+              "type": "text",
+              "content": " 有"
+            }
+          ]
+        },
+        {
+          "type": "equation",
+          "index": 12,
+          "bbox": [
+            0.194,
+            0.708,
+            0.693,
+            0.732
+          ],
+          "content": "f(\\cos y)=\\cos(\\cos y)=\\mathrm{e}^{-1}=(\\cos x+\\mathrm{e}^{-1})\\cdot f(\\cos y+\\mathrm{e}^{-1})=f(x)\\cdot f(y)."
+        },
+        {
+          "type": "text",
+          "index": 13,
+          "bbox": [
+            0.17,
+            0.731,
+            0.479,
+            0.755
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "因此，于是从到G的一个自同构。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 14,
+          "bbox": [
+            0.155,
+            0.765,
+            0.676,
+            0.791
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "4. 当且仅当G的一条边e不包含在G的闭迹中时，e才是G的割边。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 15,
+          "bbox": [
+            0.156,
+            0.79,
+            0.735,
+            0.846
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】4.证明:必要性:设e为割边，若e包含在G的一个闭迹中，则从G中删去e仍连通，此与e是割边矛盾。"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 16,
+          "bbox": [
+            0.161,
+            0.867,
+            0.38,
+            0.885
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "《高教效学基础》期末考试题9题人:"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 17,
+          "bbox": [
+            0.469,
+            0.865,
+            0.529,
+            0.881
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2012.6.1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_idx": 9,
+      "blocks": [
+        {
+          "type": "text",
+          "index": 0,
+          "bbox": [
+            0.179,
+            0.191,
+            0.744,
+            0.282
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "充分性:设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\boldsymbol{e} = (u, v)"
+            },
+            {
+              "type": "text",
+              "content": " ，不包含G的任一闭迹中。假设e不为割边，则 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "G - e"
+            },
+            {
+              "type": "text",
+              "content": " 仍连通， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "u , v"
+            },
+            {
+              "type": "text",
+              "content": " 间存在一条基本回路C，于是 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "C + e"
+            },
+            {
+              "type": "text",
+              "content": " 则为一条闭迹与已知矛盾， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\because e"
+            },
+            {
+              "type": "text",
+              "content": "为割边。"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 1,
+          "bbox": [
+            0.172,
+            0.293,
+            0.74,
+            0.381
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "5. 设 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "G = < V, E >"
+            },
+            {
+              "type": "text",
+              "content": " (IV|=v，E=e) 是每个面至少由k "
+            },
+            {
+              "type": "equation_inline",
+              "content": "( E \\geq 3 )"
+            },
+            {
+              "type": "text",
+              "content": " 条边围成的连通平面图，试证明 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "e \\leq \\frac{k(v - 2)}{k - 2}"
+            },
+            {
+              "type": "text",
+              "content": "，其中ν为结点数，e为边数，由此证明彼得森图(Peterson)图是非平面图。（11分）"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 2,
+          "bbox": [
+            0.175,
+            0.383,
+            0.734,
+            0.416
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "【答案】5.解:①设连通平面图G有t个面: "
+            },
+            {
+              "type": "equation_inline",
+              "content": "r _ { 1 } , r _ { 2 } , \\cdots , r _ { i }"
+            },
+            {
+              "type": "text",
+              "content": " 则有 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "v - e + r = 2"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 3,
+          "bbox": [
+            0.166,
+            0.424,
+            0.697,
+            0.467
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "又有题意， "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\deg(r_{i}) \\geq k"
+            },
+            {
+              "type": "text",
+              "content": " "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\sum_{l = 1}^{t} \\deg(r_l) \\geq kt"
+            },
+            {
+              "type": "text",
+              "content": " 又 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\sum_{t = 1}^{T} \\deg(r_t) = 2e"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 4,
+          "bbox": [
+            0.172,
+            0.466,
+            0.69,
+            0.508
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "∴2e≥kt, "
+            },
+            {
+              "type": "equation_inline",
+              "content": "\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{\\cdot \\cdot }}{2}}}}} } } } } } } } } } } { \\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{\\cdot }{\\cdot }{2}}}} } } } } } } } } } }"
+            },
+            {
+              "type": "text",
+              "content": " 。从而 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "v - e + \\frac{2}{k}e \\geq 2, \\quad \\therefore e \\leq \\frac{k}{k - 2}(v - 2)"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 5,
+          "bbox": [
+            0.161,
+            0.504,
+            0.622,
+            0.542
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "②彼得森图为k "
+            },
+            {
+              "type": "equation_inline",
+              "content": "5_{\\circ}e = 15_{\\circ}v = 10"
+            },
+            {
+              "type": "text",
+              "content": " ，这样 "
+            },
+            {
+              "type": "equation_inline",
+              "content": "e \\leq \\frac{k(v - 2)}{k - 2}"
+            },
+            {
+              "type": "text",
+              "content": " 不成立，"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "index": 6,
+          "bbox": [
+            0.233,
+            0.559,
+            0.368,
+            0.672
+          ],
+          "content": [
+            {
+              "type": "image_body",
+              "index": 6,
+              "bbox": [
+                0.233,
+                0.559,
+                0.368,
+                0.672
+              ],
+              "content": ""
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "index": 7,
+          "bbox": [
+            0.147,
+            0.69,
+            0.388,
+            0.716
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "所以彼得森图非平面图。（3分）"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 8,
+          "bbox": [
+            0.135,
+            0.846,
+            0.356,
+            0.87
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "《离散数子盖础》期末考试廷中题人:"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 9,
+          "bbox": [
+            0.445,
+            0.858,
+            0.508,
+            0.873
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "2012.6.1"
+            }
+          ]
+        },
+        {
+          "type": "footer",
+          "index": 10,
+          "bbox": [
+            0.608,
+            0.86,
+            0.72,
+            0.879
+          ],
+          "content": [
+            {
+              "type": "text",
+              "content": "第10页共10页"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "is_full_document": true,
+  "schema": "docvortex.middle",
+  "schema_version": "2.0"
+}

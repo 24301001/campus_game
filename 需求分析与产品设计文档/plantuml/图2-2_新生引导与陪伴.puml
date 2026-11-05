@@ -1,0 +1,47 @@
+@startuml 图2-2 新生引导与陪伴
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 25
+skinparam ranksep 70
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 13
+skinparam actorStyle stickman
+skinparam Usecase {
+  BackgroundColor #F7F9FC
+  BorderColor #2F5D8C
+  FontSize 12
+}
+
+actor "新生" as A1
+actor "全校师生" as A2
+actor "向导 · 小北" as G1 #E8F3E8
+actor "猫宠" as G2 #E8F3E8
+
+rectangle "新生引导与陪伴" {
+  usecase "问路与带路" as U1
+  usecase "定位与辨认" as U2
+  usecase "按需求找地方" as U3
+  usecase "校园导览" as U4
+  usecase "逗猫与喂猫" as U5
+  usecase "点亮猫图鉴" as U6
+}
+
+A1 -- U1
+A1 -- U2
+A1 -- U3
+A1 -- U4
+A2 -- U5
+A2 -- U6
+
+U1 -- G1
+U2 -- G1
+U3 -- G1
+U4 -- G1
+U5 -- G2
+U6 -- G2
+
+U1 ..> U2 : <<include>>
+U4 ..> U1 : <<extend>>
+
+@enduml

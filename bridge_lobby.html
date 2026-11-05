@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>躲猫猫 · 公告栏</title>
+<style>
+  /* 做成"逸夫楼大厅那块公告栏"的样子：木桌 + 木框软木板 + 钉上去的白纸卡片。
+     整块 max-width 居中，左右各留一大片空 —— 地图的 #mpRoot（猫图鉴、个人精灵、
+     附近的人）层级比抽屉高，duo1-bridge.js 会把它压下去，这里再留一层保险。 */
+  :root{
+    --wood:#5a4d3e; --wood-d:#3b3229; --cork:#b98a56; --cork-d:#a8794a;
+    --paper:#efe7d6; --paper-d:#e0d5bd; --ink:#2b2118; --ink-d:#6b5a44;
+    --gold:#8a5a22; --ok:#2f7d3a; --warn:#9a6414; --bad:#a33228;
+  }
+  *{box-sizing:border-box}
+  html,body{min-height:100%}
+  html,body{height:100%}
+  body{margin:0;color:var(--ink);
+       font:14px/1.7 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.4px;
+       background:
+         repeating-linear-gradient(0deg,#1d1712 0 2px,#221b15 2px 4px),
+         repeating-linear-gradient(90deg,#241d16 0 46px,#1e1812 46px 92px)}
+
+  /* 板子**始终顶到屏幕最下面**，房间数变多时在板子里面滚，而不是把板子越撑越长 */
+  .board{max-width:960px;margin:18px auto;padding:0 16px;height:calc(100vh - 36px)}
+  .frame{position:relative;border:10px solid var(--wood);border-radius:4px;
+         height:100%;display:flex;flex-direction:column;
+         background:
+           repeating-radial-gradient(circle at 22% 30%,rgba(0,0,0,.05) 0 2px,transparent 2px 5px),
+           repeating-radial-gradient(circle at 78% 66%,rgba(255,255,255,.05) 0 2px,transparent 2px 6px),
+           var(--cork);
+         box-shadow:0 10px 26px rgba(0,0,0,.55),inset 0 0 0 2px var(--wood-d)}
+  /* 四颗图钉：把公告栏"钉"在屏幕上 */
+  .pin{position:absolute;width:12px;height:12px;border-radius:50%;
+       background:radial-gradient(circle at 35% 32%,#fff2b0,#ffd76e 45%,#8a6a1a);
+       box-shadow:0 2px 3px rgba(0,0,0,.5)}
+  .pin.a{left:6px;top:6px}.pin.b{right:6px;top:6px}.pin.c{left:6px;bottom:6px}.pin.d{right:6px;bottom:6px}
+
+  .head{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;padding:16px 18px 12px}
+  .head h1{margin:0;font-size:22px;letter-spacing:4px;color:#fff8e6;
+           text-shadow:2px 2px 0 var(--wood-d),-1px -1px 0 rgba(0,0,0,.35)}
+  .head .who{font-size:12px;color:#3a2d1f;background:var(--paper);padding:2px 9px;
+             border:1px solid #b9a887;box-shadow:0 2px 0 rgba(0,0,0,.25);transform:rotate(-1.2deg)}
+  .head .back{margin-left:auto;font-size:12px;color:#3a2d1f;background:var(--paper-d);
+              padding:2px 9px;border:1px dashed #8a7551;transform:rotate(1.1deg)}
+  .head .back kbd{border:1px solid #8a7551;border-radius:2px;padding:0 4px;background:#fff8e6}
+  .rule{height:0;border-top:2px dashed rgba(59,50,41,.45);margin:0 14px}
+
+  main{flex:1;min-height:0;display:flex;gap:16px;padding:16px 14px 18px;flex-wrap:wrap;justify-content:center}
+  /* 白纸卡片 */
+  .col{flex:1 1 330px;min-width:300px;max-width:440px;min-height:0;max-height:100%;
+       display:flex;flex-direction:column;background:var(--paper);
+       border:1px solid #c2b191;border-radius:2px;padding:14px 16px 16px;
+       box-shadow:0 4px 12px rgba(0,0,0,.35);position:relative}
+  .col:nth-child(1){transform:rotate(-.35deg)}
+  .col:nth-child(2){transform:rotate(.4deg)}
+  /* ⚠ 上面 .col 写了 display:flex，会把 hidden 属性带来的 display:none 顶掉
+     ⇒ 没进房时右卡也会露出来。这条必须留着，且顺序在 .col 之后。 */
+  .col[hidden]{display:none}
+  .col::before{content:"";position:absolute;left:50%;top:-7px;transform:translateX(-50%);
+       width:10px;height:10px;border-radius:50%;
+       background:radial-gradient(circle at 35% 32%,#ffd9d9,#c0392b 55%,#6d1a12);
+       box-shadow:0 2px 3px rgba(0,0,0,.45)}
+  h2{margin:0 0 10px;font-size:13px;letter-spacing:3px;color:var(--gold);font-weight:bold}
+  .tip{font-size:12px;color:var(--ink-d);margin:0 0 10px;line-height:1.6}
+
+  button{font:inherit;letter-spacing:1px;background:#fff8e6;color:var(--ink);
+         border:1px solid #a8916a;border-radius:2px;padding:4px 11px;cursor:pointer;
+         box-shadow:0 2px 0 #b9a582;transition:none}
+  button:hover:not(:disabled){border-color:var(--gold);background:#fff3cf}
+  button:active:not(:disabled){transform:translateY(2px);box-shadow:none}
+  button:disabled{opacity:.45;cursor:default;box-shadow:none}
+  button.primary{background:#f3d9a4;border-color:var(--gold);color:#5b3a10;font-weight:bold}
+  input{font:inherit;background:#fffdf6;color:var(--ink);border:1px solid #a8916a;
+        border-radius:2px;padding:4px 8px}
+  .rowpw{width:78px;padding:2px 5px;font-size:12px}
+
+  ul{list-style:none;margin:0;padding:0 4px 0 0;flex:1;min-height:0;overflow:auto;
+     scrollbar-width:thin;scrollbar-color:#b98a56 rgba(0,0,0,.08)}
+  li.room{display:flex;align-items:center;gap:8px;padding:7px 6px;margin:0 0 5px;
+          background:#fffdf6;border:1px solid #d6c8a8;box-shadow:0 1px 0 #cbb994}
+  li.room:last-child{margin-bottom:0}
+  .rname{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:bold}
+  .rmeta{color:var(--ink-d);font-size:12px;white-space:nowrap}
+  .tag{font-size:12px;padding:0 6px;border-radius:2px;white-space:nowrap;border:1px solid}
+  .tag.wait{border-color:#7fae84;color:var(--ok);background:#eef7ee}
+  .tag.play{border-color:#c9a469;color:var(--warn);background:#fbf2e2}
+  .tag.full{border-color:#c98d87;color:var(--bad);background:#fbeceb}
+  .empty{color:var(--ink-d);padding:12px 4px;font-size:13px}
+
+  .seat{border:1px dashed #b9a582;border-radius:2px;padding:7px 10px;margin:5px 0;background:#fffdf6}
+  .seat.on{border-style:solid}
+  .mrow{display:flex;align-items:center;gap:8px}
+  .mrow .nm{flex:1;font-weight:bold}
+  .hint{color:var(--ink-d);font-size:12px;margin-top:10px;min-height:19px;line-height:1.6}
+  .hint.err{color:var(--bad);font-weight:bold}
+  code.room{background:#f3d9a4;border:1px solid var(--gold);color:#5b3a10;padding:0 5px;font-weight:bold}
+
+  /* 窄屏两列会堆起来：这时让整页自己滚，别把卡片切掉 */
+  @media (max-width:760px){
+    .board{height:auto}
+    .frame{height:auto}
+    .col{max-height:none}
+    ul{overflow:visible}
+  }
+</style>
+</head>
+<body>
+<div class="board">
+  <div class="frame">
+    <span class="pin a"></span><span class="pin b"></span><span class="pin c"></span><span class="pin d"></span>
+    <div class="head">
+      <h1>躲猫猫 · 公告栏</h1>
+      <span class="who" id="me">读取账号中…</span>
+      <span class="back">按 <kbd>Esc</kbd> 回逸夫楼</span>
+    </div>
+    <div class="rule"></div>
+
+    <main>
+      <section class="col" id="listCol">
+        <h2>今日开房</h2>
+        <p class="tip">一间房两位：一位当抓捕者、一位当躲藏者，下一局互换。<br>房主建房，另一位进房点「准备」，房主才能开始。</p>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <input id="nameIn" placeholder="房间名（默认用你的昵称）" maxlength="24" style="flex:1 1 170px">
+          <input id="passIn" type="password" placeholder="好友房密码，留空=公开" maxlength="16" style="flex:1 1 150px">
+          <button class="primary" id="createBtn">开一间</button>
+        </div>
+        <ul id="rooms"><li class="empty">正在载入…</li></ul>
+        <div class="hint" id="listHint"></div>
+        <!-- 一个人也想看看地图长什么样：不开房、不占位，直接进 3D 逛。
+             进去以后只走地图，不进对局、不算分；房间那边完全不知道有这回事。 -->
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
+          <button id="previewBtn" type="button" style="border-style:dashed">一个人先逛地图</button>
+          <span class="hint" style="margin:0">只逛地图，不进对局、不占房间</span>
+        </div>
+      </section>
+
+      <section class="col" id="roomCol" hidden>
+        <h2 id="roomTitle">房间</h2>
+        <div id="seats"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button id="readyBtn">准备</button>
+          <button class="primary" id="startBtn" disabled>开始游戏</button>
+          <button id="leaveBtn">离开房间</button>
+        </div>
+        <div class="hint" id="roomHint"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+/* 这个页面由 /opt/campus_bridge/bridge.py 提供，开在像素校园地图的全屏抽屉里。
+   同源 ⇒ 直接读大厅登录时写的 localStorage.mpToken；房码到手后不自己跳转，
+   而是 postMessage 让父页（mp/duo1-bridge.js）决定用抽屉内嵌还是新标签进 3D。
+   ⚠ 上面那套皮只改样式和结构外层，id/class 与 renderList/renderRoom 的钩子一一对应，
+     test_bridge.py 和 shot.py 都是按这些名字取的，改名要同步改那两个文件。 */
+(function () {
+  var BASE = "/game/duo1";
+  var token = "";
+  var me = null;
+  var myRoom = null;          // 我当前在这间房里
+  var entered = false;        // 房码只用来进一次，免得轮询反复打断
+  var $ = function (id) { return document.getElementById(id); };
+
+  try { token = localStorage.getItem("mpToken") || ""; } catch (e) {}
+
+  function head() {
+    return { "Content-Type": "application/json", "Authorization": "Bearer " + token };
+  }
+
+  function ask(path, body) {
+    var opt = { headers: head() };
+    if (body) { opt.method = "POST"; opt.body = JSON.stringify(body); }
+    return fetch(BASE + path, opt).then(function (r) {
+      return r.json().then(function (d) {
+        if (!r.ok) throw new Error(d.error || ("HTTP " + r.status));
+        return d;
+      });
+    });
+  }
+
+  function say(el, text, isErr) {
+    el.textContent = text || "";
+    el.className = "hint" + (isErr ? " err" : "");
+  }
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function renderList(rooms) {
+    var ul = $("rooms");
+    if (!rooms.length) { ul.innerHTML = '<li class="empty">还没有人开房。你开一间，或站到公告栏前按 F 再来。</li>'; return; }
+    /* 列表每 1.5 秒重画一次：先把已经敲进去的密码和光标保住，
+       否则好友房密码根本打不完（敲两个字被刷掉一次）。 */
+    var kept = {}, focusId = null, caret = 0;
+    Array.prototype.forEach.call(ul.querySelectorAll("input.rowpw"), function (i) { kept[i.id] = i.value; });
+    if (document.activeElement && document.activeElement.classList
+        && document.activeElement.classList.contains("rowpw")) {
+      focusId = document.activeElement.id;
+      try { caret = document.activeElement.selectionStart; } catch (e) {}
+    }
+    ul.innerHTML = rooms.map(function (r) {
+      var st = r.status === "playing" ? '<span class="tag play">游戏中</span>'
+             : r.full ? '<span class="tag full">满</span>'
+             : '<span class="tag wait">等人</span>';
+      var isIn = myRoom && myRoom.id === r.id;
+      /* 能不能进，不看"满不满"，看"我是不是已经在里面"：
+         房主自己那间 2/2 的房打完一局要能回去，上一版按 full 一律判"进不去"是错的。 */
+      var iAmIn = r.members.some(function (m) { return m.id === me.id; });
+      var needPw = !!r.locked && !iAmIn;
+      if (needPw) st = '<span class="tag play">锁</span>' + st;
+      var btn = (isIn || iAmIn) ? '<button data-join="' + esc(r.id) + '">' + (isIn ? "你在里面" : "回到房间") + "</button>"
+              : (r.full || r.status === "playing") ? '<button disabled>进不去</button>'
+              : '<button data-join="' + esc(r.id) + '">' + (needPw ? "输密码进" : "进入") + "</button>";
+      var pwBox = needPw ? '<input class="rowpw" id="pw-' + esc(r.id) + '" type="password" maxlength="16" placeholder="密码">' : "";
+      return '<li class="room"><span class="rname">' + esc(r.name) + "</span>" +
+             '<span class="rmeta">房主 ' + esc(r.owner.nickname) + " · " + r.members.length + "/" + r.capacity + "</span>" +
+             st + pwBox + btn + "</li>";
+    }).join("");
+    Array.prototype.forEach.call(ul.querySelectorAll("input.rowpw"), function (i) {
+      if (kept[i.id] !== undefined) i.value = kept[i.id];
+    });
+    if (focusId) {
+      var keep = document.getElementById(focusId);
+      if (keep) { keep.focus(); try { keep.setSelectionRange(caret, caret); } catch (e) {} }
+    }
+    Array.prototype.forEach.call(ul.querySelectorAll("[data-join]"), function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute("data-join");
+        var p = document.getElementById("pw-" + id);
+        join(id, p ? p.value : "");
+      };
+    });
+    /* 客户端只是把按钮按住，真正的闸在 bridge.create() 里（服务端判，不信前端） */
+    var iHave = rooms.some(function (r) {
+      return r.members.some(function (m) { return m.id === me.id; });
+    });
+    $("createBtn").disabled = iHave;
+    $("createBtn").title = iHave ? "你已经有房间了：先进自己那间，或点「离开房间」再开" : "";
+  }
+
+  function renderRoom(room) {
+    $("roomTitle").textContent = "房间 · " + room.name + "（" + room.id + "）";
+    var seats = room.members.map(function (m) {
+      var badge = m.isOwner ? "房主" : "玩家";
+      var state = m.ready ? '<span style="color:#2f7d3a">已准备</span>' : '<span style="color:#6b5a44">没准备</span>';
+      return '<div class="seat on"><div class="mrow"><span class="nm">' + esc(m.nickname) +
+             "</span><span class=\"rmeta\">" + badge + "</span>" + state + "</div></div>";
+    });
+    if (room.members.length < room.capacity) {
+      seats.push('<div class="seat"><span style="color:#6b5a44">空位 · 等人进来</span></div>');
+    }
+    $("seats").innerHTML = seats.join("");
+
+    var iAmOwner = me && room.owner.id === me.id;
+    var mine = null;
+    for (var i = 0; i < room.members.length; i++) if (room.members[i].id === me.id) mine = room.members[i];
+
+    $("readyBtn").hidden = iAmOwner;
+    $("readyBtn").textContent = mine && mine.ready ? "取消准备" : "准备";
+    $("readyBtn").disabled = !mine;
+    $("startBtn").disabled = !room.canStart || !room.guestReady;
+
+    if (room.status === "playing") {
+      say($("roomHint"), "房主已开局 · 房码 " + (room.code || "") + " 3 秒后进 3D 逸夫楼…");
+      $("roomHint").innerHTML = '房主已开局 · 房码 <code class="room">' + esc(room.code || "") + "</code> 3 秒后进 3D 逸夫楼…";
+    } else if (iAmOwner) {
+      var lockTip = room.locked ? "（好友房，密码只有你自己知道，念给队友）" : "";
+      say($("roomHint"), (room.members.length < 2 ? "还差一个人。让别人进这间房。"
+          : (room.guestReady ? "对方已准备，可以开始。" : "等另一位点「准备」，你这边开始按钮才会亮。")) + lockTip);
+    } else {
+      say($("roomHint"), mine && mine.ready ? "已准备，等房主开始。" : "点「准备」，房主就能开始这一局。");
+    }
+  }
+
+  function enter3D(room) {
+    if (entered || !room.code || !room.members.some(function (m) { return m.id === me.id; })) return;
+    entered = true;
+    var url = "/duo1/?room=" + encodeURIComponent(room.code) +
+              "&nick=" + encodeURIComponent(me.nickname) + "&v=" + Date.now();
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ px: "duo1-enter", url: url, room: room.code }, location.origin);
+        return;
+      }
+    } catch (e) {}
+    location.href = url;              // 单独打开这个页面时自己跳
+  }
+
+  function poll() {
+    ask("/rooms").then(function (d) {
+      me = d.me;
+      $("me").textContent = "我：" + me.nickname;
+      renderList(d.rooms);
+      if (myRoom) {
+        var still = null;
+        for (var i = 0; i < d.rooms.length; i++) if (d.rooms[i].id === myRoom.id) still = d.rooms[i];
+        if (!still) { dropRoom("房主已经离开，房间关闭了。"); return; }
+        myRoom = still;
+        renderRoom(still);
+        if (still.status === "playing") setTimeout(function () { enter3D(still); }, 2500);
+      }
+      say($("listHint"), "每 1.5 秒刷新 · 共 " + d.rooms.length + " 间房");
+    }).catch(function (e) {
+      $("me").textContent = "没登录";
+      say($("listHint"), e.message, true);
+    });
+  }
+
+  function dropRoom(msg) {
+    myRoom = null; entered = false;
+    $("roomCol").hidden = true;
+    say($("listHint"), msg, true);
+  }
+
+  function openRoom(d) {
+    me = d.me; myRoom = d.room; entered = false;
+    $("roomCol").hidden = false;
+    renderRoom(d.room);
+  }
+
+  function act(path, body, btn) {
+    if (btn) btn.disabled = true;
+    ask(path, body).then(function (d) {
+      if (d.dissolved) { dropRoom("房间已关闭（房主走了）。"); return; }
+      if (d.left) { dropRoom("已离开房间。"); return; }
+      openRoom(d);
+      poll();
+    }).catch(function (e) {
+      say($("roomHint"), e.message, true);
+      /* 房间面板这会儿可能正是隐藏的（离开后、建房失败时），只写 roomHint 等于没提示，
+         用户看到的就是"点了没反应"。列表可见时把错误同时写到列表下面。 */
+      if ($("roomCol").hidden) say($("listHint"), e.message, true);
+    }).then(function () {
+      if (btn) btn.disabled = false;
+    });
+  }
+
+  function join(id, pass) { act("/join", { id: id, pass: pass || "" }); }
+
+  $("createBtn").onclick = function () {
+    act("/create", { name: $("nameIn").value.trim(), pass: $("passIn").value.trim() }, $("createBtn"));
+  };
+  $("readyBtn").onclick = function () {
+    if (!myRoom) return;
+    act(myRoom.members.some(function (m) { return m.id === me.id && m.ready; }) ? "/unready" : "/ready",
+        { id: myRoom.id }, $("readyBtn"));
+  };
+  $("startBtn").onclick = function () { if (myRoom) act("/start", { id: myRoom.id }, $("startBtn")); };
+  $("leaveBtn").onclick = function () { if (myRoom) act("/leave", { id: myRoom.id }, $("leaveBtn")); };
+
+  /* 一个人先逛地图：跟进房间是两条完全独立的路 —— 不碰 /create /join，
+     所以房间列表里不会多出一间空房，别人也看不到你。
+     房码用 PV+随机串：万一两个人都点了预览，也各走各的，不会在半路撞见。 */
+  $("previewBtn").onclick = function () {
+    var code = "PV" + Math.random().toString(36).slice(2, 8).toUpperCase();
+    var url = "/duo1/?room=" + encodeURIComponent(code) + "&preview=1&v=" + Date.now();
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ px: "duo1-enter", url: url, room: code }, location.origin);
+        return;
+      }
+    } catch (e) {}
+    location.href = url;               // 单独打开这个页面时自己跳
+  };
+
+  if (!token) {
+    $("me").textContent = "没登录";
+    say($("listHint"), "没拿到大厅登录凭证：请先在像素校园地图里登录，再到公告栏前按 F。", true);
+  } else {
+    poll();
+    setInterval(poll, 1500);
+  }
+})();
+</script>
+</body>
+</html>

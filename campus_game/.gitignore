@@ -1,0 +1,40 @@
+# 前端
+frontend/node_modules/
+frontend/dist/
+
+# ⚠️ 第四十轮：启动器每次运行都会把地图项目根那份 `像素校园_全校地图.html`
+#    单向复制到这里、改名 campus.html（改名是为了绕开中文文件名的 URL 编码）。
+#    它是**生成物**，权威源永远在 `像素校园地图项目\像素校园_全校地图.html`。
+frontend/public/campus.html
+
+# 后端
+backend/target/
+*.class
+*.jar
+
+# 通用
+.DS_Store
+*.log
+node_modules/
+target/
+
+# 本机工具链（MinGW-w64 等，解压后几百 MB，不该进仓库）
+tools/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# 临时文件
+*.tmp
+*.temp
+
+# 判题临时目录（运行期产物，里面是编译输出和用户代码，不该进仓库）
+backend/tmp/
+
+# maven wrapper 的 jar 必须提交，别被上面的 *.jar 挡掉
+!backend/.mvn/wrapper/maven-wrapper.jar
+
+# 上传文件目录
+uploads/

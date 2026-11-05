@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Test Page</h1>
+    <button onclick="testAPI()">Test Profile API</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testAPI() {
+            const result = document.getElementById('result');
+            result.textContent = 'Testing...';
+            
+            try {
+                // Test 1: Direct API call
+                console.log('Testing: /api/profile/1');
+                const response = await fetch('/api/profile/1');
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                result.textContent = `Status: ${response.status}\n\nData:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.status === 404) {
+                    result.textContent += '\n\n❌ ERROR: Got 404! This means the API path is wrong.';
+                } else if (response.status === 200) {
+                    result.textContent += '\n\n✅ SUCCESS: API is working!';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                result.textContent = `Error: ${error.message}\n\n${error.stack}`;
+            }
+        }
+        
+        // Auto test on load
+        window.onload = () => {
+            setTimeout(testAPI, 1000);
+        };
+    </script>
+</body>
+</html>

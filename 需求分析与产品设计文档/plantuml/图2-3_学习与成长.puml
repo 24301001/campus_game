@@ -1,0 +1,56 @@
+@startuml 图2-3 学习与成长
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 25
+skinparam ranksep 70
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 13
+skinparam actorStyle stickman
+skinparam Usecase {
+  BackgroundColor #F7F9FC
+  BorderColor #2F5D8C
+  FontSize 12
+}
+
+actor "在校生" as A1
+actor "求职 / 升学人群" as A2
+actor "学霸哥" as G1 #E8F3E8
+actor "算法哥" as G2 #E8F3E8
+
+rectangle "学习与成长" {
+  usecase "课本问答" as U1
+  usecase "解题辅导" as U2
+  usecase "往年资料查询" as U3
+  usecase "复习规划" as U4
+  usecase "在线判题" as U5
+  usecase "分级提示" as U6
+  usecase "学情分析与归因" as U7
+  usecase "动态题单推荐" as U8
+  usecase "查看排名榜单" as U9
+}
+
+A1 -- U1
+A1 -- U2
+A1 -- U3
+A1 -- U4
+A2 -- U5
+A2 -- U6
+A2 -- U7
+A2 -- U8
+A2 -- U9
+
+U1 -- G1
+U2 -- G1
+U3 -- G1
+U4 -- G1
+U5 -- G2
+U6 -- G2
+U7 -- G2
+U8 -- G2
+U9 -- G2
+
+U5 ..> U7 : <<include>>
+U6 ..> U5 : <<extend>>
+
+@enduml

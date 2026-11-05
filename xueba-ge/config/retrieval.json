@@ -1,0 +1,54 @@
+{
+  "_说明": "检索层配置。改这里不需要动代码；per_book / top_k / min_cos 都是可直接调的旋钮。",
+  "top_k": 5,
+  "per_book": 3,
+  "deep": 80,
+  "rrf_k": 60,
+  "weights": {
+    "bm25": 1.0,
+    "vector": 0.25
+  },
+  "_weights实测": "2026-09-27 换成真语义向量（qwen3.7-text-embedding-flash，512 维）之后重扫了 43 条用例（30 正例 / 13 应拒答，top=3）：w_vec=0.12 时 recall@3 93%、MRR 0.781；**0.25 时 97%、MRR 0.831（最高）**；0.5 时 93%、0.823；1.0 时 90%、0.808。min_cos 在 0.25 这档从 0.2 抬到 0.45 不掉分，且能把噪声片挡在外面 —— 真向量下「查询↔全库最相关片」余弦中位 0.67、「查询↔期望片」中位 0.58、纯噪声约 0.001，0.2 是 hash 时代定的阈值，太松。取 0.25 / 0.45。⚠️ 每组只跑一次，而**一次抽样的噪声就是 ±1 条 = ±3% recall**（provider=api 的向量本身不可复现，见 embedding._实测）：0.25 那档连跑 4 次是 93%/93%/93%/97%。所以 0.25 和 0.5 谁高别当结论，0.25 胜出的真正依据是 MRR 和换词题那一档。⚠️ headline 比 hash 时代的 100% / 0.844 **低**，这是诚实的结果：那 43 条里「期望片段」往往就是问题原话的出处，本来就偏字面，hash 那条腿在里面占便宜。另跑 `eval/run_para_eval.py`（10 条刻意换词、不留课本原词的问法，判据=前三里有一片的章/节/小标题/正文含指定字样）：A hash 0.12 = 7，B 拆掉向量腿（纯 BM25）= 7，C 真语义(api) 0.25 = 8、E 端上 int8 = 8（`--onnx` 那一档，和 api 打平）。也就是说**旧那条 hash 腿在这批题上等于没有**（7=7），真语义腿多捞回「方程组有没有解看那两个数比一比」这类。只有 10 条，是方向性证据，不是质量指标，别写进答辩的准确率一栏。仍然红的正例：prob-bayes（语义路把公式页顶到了《贝叶斯公式的应用》那节前面），写进 README §10。",
+  "source_prior": {
+    "_说明": "讲原理的问题给提纲/往年卷降权：它们原样抄着题目本身，字面匹配度天然高于讲答案的正文。问复习规划时调用方会显式传 source_type，不受这里影响。",
+    "textbook": 1.0,
+    "outline": 0.72,
+    "past_paper": 0.68,
+    "campus_info": 0.8
+  },
+  "bm25": {
+    "_说明": "k1/b 是 BM25 的两个饱和/长度归一旋钮。b 从 0.75 降到 0.5 是实测改的：全库切片平均只有 123 字，长度差主要是「一段完整答案」vs「一句引子」，b=0.75 会把长的、真正讲清楚的那片压到第 4-6 名（TCP 三次握手、单调有界收敛准则两条用例就是这么掉出前三的）。b=0.5 时两片回到第 1 名，b 再低到 0.2 没有进一步收益。",
+    "k1": 1.4,
+    "b": 0.5
+  },
+  "min_norm": 0.3,
+  "min_coverage": 0.2,
+  "min_cos": 0.45,
+  "rerank_candidates": 12,
+  "embedding": {
+    "provider": "api",
+    "model": "qwen3.7-text-embedding-flash",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "key_env": "XBG_LLM_KEY",
+    "dim": 512,
+    "batch": 10,
+    "concurrency": 8,
+    "retries": 3,
+    "timeout": 30,
+    "_说明": "第二条腿现在是**真语义向量**（组长 2026-09-27 口径）。走 OpenAI 兼容口，和生成层同一把 Key（密钥三处来源见 settings.resolve_key：环境变量 -> config 里的 key -> data/.llm_key）。以前这里是 hash（近似字面），README §10 第 3/13 条讲的就是那件事。",
+    "_实测": "2026-09-27 实测。批量：**一批最多 10 条**（64 条服务商直接 400），一批 10 条 238 ms；全库 23 519 片串行 10.1 分钟、并发 8 路 195 s；总消耗约 260 万 token（一块多钱）。dim 显式传 512：不传就是 1024 维，float32 落盘从 46 MB 变 92 MB，评测上看不出差别。⚠️ **单条查询延迟不是定值**：同一天中午量到 174 ms，傍晚重测 12 次是 405–763 ms（中位 460 ms），`run_eval` 平均 404–427 ms/条。任何文档里都别把它写成「约 200 ms」。⚠️ **更要紧的一条：服务商这个接口不保证逐位可复现** —— 同一条查询连调 4 次，3 次逐位相同、1 次 cos=0.9990 / 最大逐元素差 6.1e-3。43 条用例里有 2 条的期望正好卡在 3/4 名之间，于是 provider=api 的 recall@3 会在 93%~97% 之间跳（MRR 0.803~0.831）。本地 onnx 那条没有这个问题（连跑 3 次都是 93% / 0.846 / 同样两条红）。",
+    "_换回 hash": "provider 改 hash、重跑 python -m kb.build。换 provider/dim 之后必须重扫 weights.vector 和 min_cos —— 那两个旋钮是按向量空间定的。",
+    "_换回_hash_以外的坑": "provider=onnx 时配置里的 `model` 字段是**服务商那个名字**（这一段和生成层共用旋钮），但实际建向量用的是 models/bge-small-zh-v1.5。所以 meta 里的来源由 `embed.describe()` 算，不许 kb.build 直接抄配置 —— 抄了就等于索引自报了一个没参与建向量的模型，换 int8/fp32 权重时对账看不出来。回归在 tests/test_retrieval.py。"
+  },
+  "rerank": {
+    "provider": "none",
+    "url": "https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank",
+    "shape": "dashscope",
+    "model": "qwen3.7-text-rerank",
+    "key_env": "XBG_LLM_KEY",
+    "timeout": 15,
+    "max_chars": 800,
+    "_说明": "交叉编码器精排。接口**已按实测接通**：百炼不认 OpenAI 那种 POST {base}/v1/rerank（404），只有 /api/v1/services/rerank/text-rerank/text-rerank 这个原生口能用（请求体分 input/parameters 两层，结果在 output.results[]）。开关就是 provider：none 透传，api 走下面这套地址模型。以前这里写『CPU 上 12 个候选要 2-6 秒所以关着』，那是**本地推理**的账；换成外部接口之后账变了，开不开改成用评测数字决定 —— 见 _实测。",
+    "_实测": "2026-09-27 两边都量过再决定（同一批旋钮，只切 rerank.provider）：① `python eval/run_eval.py --top 3 --rerank`：recall@3 97%→**93%**、MRR 0.831→**0.771**，32 次调用 0 失败，精排平均 461.5 ms/问（12 候选、max_chars 800），整条检索从 399.8 ms 涨到 734.3 ms（两条腿的绝对延迟都会飘，看**增量** +461 ms/问更可靠）。它把『洛必达法则的使用条件』的正主挤出了前三 —— 交叉编码器更信『讲条件的段落』，而那 43 条期望钉的正是『原样抄着题目那句』。② `python eval/run_para_eval.py --rerank`（换说法的 10 条，专门测对精排有利的那一面）：8→8 持平，个别名次有升有降。结论：**默认关**。接口留着，语料或评测集换了要重测这两条命令。"
+  }
+}

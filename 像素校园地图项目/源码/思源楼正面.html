@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>思源楼 · 正面像素图</title>
+<style>
+  html,body{margin:0;height:100%;background:#1a1d24;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  canvas{ image-rendering:pixelated; image-rendering:-moz-crisp-edges; image-rendering:crisp-edges;
+    box-shadow:0 0 0 2px #3a3f4a, 0 18px 50px rgba(0,0,0,.6); }
+  #hud{ position:fixed;left:14px;top:12px;color:#e9e5d8;
+    font:12px/1.7 ui-monospace,Consolas,"Courier New",monospace;
+    text-shadow:0 1px 0 #000,0 0 8px rgba(0,0,0,.8);letter-spacing:.5px; }
+  #hud b{color:#ffd76e;}
+</style>
+</head>
+<body>
+<div id="hud"><b>思源楼</b> · 正面像素图<br>对照实拍绘制</div>
+<canvas id="cv" width="420" height="300"></canvas>
+<script>
+"use strict";
+const cv = document.getElementById("cv");
+const g = cv.getContext("2d");
+g.imageSmoothingEnabled = false;
+
+function px(x,y,w,h,col){ g.fillStyle=col; g.fillRect(x|0,y|0,w|0,h|0); }
+
+function rgb(hex){ const n=parseInt(hex.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+function shade(hex,k){
+  const c=rgb(hex); let r,gg,b;
+  if(k>=0){ r=c[0]+(255-c[0])*k; gg=c[1]+(255-c[1])*(k*0.93); b=c[2]+(255-c[2])*(k*0.80); }
+  else { const t=-k; r=c[0]*(1-t*1.08); gg=c[1]*(1-t*1.00); b=c[2]*(1-t*0.86); }
+  return "rgb("+(r|0)+","+(gg|0)+","+(b|0)+")";
+}
+
+/* ============================================================
+   配色（对照实拍）
+   ============================================================ */
+const WALL    = "#e0ddd6";      // 墙体主色（浅灰白）
+const WALL_D  = "#c5c2ba";      // 墙体暗部
+const WALL_L  = "#f0ede6";      // 墙体亮部
+const GLASS   = "#2e5a7e";      // 中央玻璃幕墙深蓝
+const GLASS_HI = "#5a8aac";      // 玻璃高光
+const GLASS_D = "#1e3e5c";      // 玻璃暗部
+const WIN_D   = "#1c2530";      // 窗户深色
+const WIN_L   = "#3a4a5e";      // 窗户反光
+const TOWER   = "#a8aeb6";      // 尖塔金属灰
+const RED_TXT = "#c8281e";      // 顶部红色大字
+const RED_L   = "#e84838";      // 红色字高光
+const SKY_T   = "#7fb0d8";
+const SKY_B   = "#b8d4ec";
+const GRASS   = "#5a8a3a";
+const GRASS_D = "#3e6226";
+const GROUND  = "#6a6458";
+const FLAG_R  = "#c8201a";
+const STATUE  = "#d8d4cc";
+
+/* ============================================================
+   建筑坐标
+   ============================================================ */
+const BL = 60, BR = 360;          // 建筑左右边界
+const BW = BR - BL;                // 300
+const ROOF_Y = 84;                 // 楼顶（红色字位置）
+const WIN_TOP = 100;               // 窗户区顶
+const WIN_BOT = 232;               // 窗户区底
+const GROUND_Y = 262;              // 地平线
+const GLASS_L = 196, GLASS_R = 222; // 中央玻璃幕墙左右
+const GW = GLASS_R - GLASS_L;      // 26
+
+/* ============================================================
+   天空
+   ============================================================ */
+for(let y=0;y<GROUND_Y;y++){
+  const t=y/GROUND_Y;
+  const r=Math.round(127+(184-127)*t), gg=Math.round(176+(212-176)*t), b=Math.round(216+(236-216)*t);
+  px(0,y,420,1,"rgb("+r+","+gg+","+b+")");
+}
+
+/* ============================================================
+   建筑主体（浅灰白）
+   ============================================================ */
+px(BL, ROOF_Y, BW, GROUND_Y-ROOF_Y, WALL);
+// 顶部水平装饰带
+px(BL, ROOF_Y, BW, 3, shade(WALL,-0.12));
+px(BL, ROOF_Y+3, BW, 1, WALL_L);
+// 墙面横向瓷砖缝（每层楼板位置）
+for(let y=ROOF_Y+16; y<WIN_BOT; y+=17){
+  px(BL, y, BW, 1, shade(WALL,-0.10));
+}
+// 墙面竖向瓷砖缝（关于玻璃幕墙中心 GC 对称分布）
+const GC_tile = (GLASS_L + GLASS_R) / 2;
+for(let d=15; d < BW/2; d+=30){
+  px(GC_tile - d, ROOF_Y+6, 1, WIN_BOT-ROOF_Y-6, shade(WALL,-0.08));
+  px(GC_tile + d, ROOF_Y+6, 1, WIN_BOT-ROOF_Y-6, shade(WALL,-0.08));
+}
+
+/* ============================================================
+   顶部两侧小塔楼（关于 GC 对称：左侧为右侧的镜像）
+   ============================================================ */
+const GC_tower = (GLASS_L + GLASS_R) / 2;
+// 右小塔（以右为准）
+const R_TL = BR - 26;            // 右小塔左边缘
+px(R_TL, ROOF_Y-20, 22, 20, WALL);
+px(R_TL, ROOF_Y-20, 22, 2, WALL_L);
+px(R_TL, ROOF_Y-20, 1, 20, WALL_L);        // 左缘受光
+px(R_TL+21, ROOF_Y-20, 1, 20, WALL_D);     // 右缘背光
+px(R_TL+5, ROOF_Y-15, 12, 4, WIN_D);
+px(R_TL+5, ROOF_Y-9, 12, 3, WIN_D);
+// 左小塔：右小塔的镜像
+const L_TL = 2*GC_tower - (R_TL + 22);     // 左小塔左边缘 = 镜像
+px(L_TL, ROOF_Y-20, 22, 20, WALL);
+px(L_TL, ROOF_Y-20, 22, 2, WALL_L);
+px(L_TL, ROOF_Y-20, 1, 20, WALL_D);         // 左缘背光（镜像）
+px(L_TL+21, ROOF_Y-20, 1, 20, WALL_L);      // 右缘受光（镜像）
+px(L_TL+5, ROOF_Y-15, 12, 4, WIN_D);
+px(L_TL+5, ROOF_Y-9, 12, 3, WIN_D);
+
+/* ============================================================
+   中央凸起门楼（承载"北京交通大学"题字，使字有墙面依托）
+   ============================================================ */
+const MH_L = (BL+BR)/2 - 13, MH_R = (BL+BR)/2 + 13;   // 宽 26，与蓝色玻璃幕墙同宽
+const MH_T = ROOF_Y - 43;                 // 门楼顶 y=41（与白塔底座衔接）
+px(MH_L, MH_T, MH_R-MH_L, ROOF_Y-MH_T, WALL);
+// 顶部压顶
+px(MH_L, MH_T, MH_R-MH_L, 2, WALL_L);
+px(MH_L, MH_T+2, MH_R-MH_L, 1, shade(WALL,-0.12));
+// 左右边缘（对称）
+px(MH_L, MH_T, 1, ROOF_Y-MH_T, WALL_D);
+px(MH_R-1, MH_T, 1, ROOF_Y-MH_T, WALL_D);
+px(MH_L+1, MH_T, 1, ROOF_Y-MH_T, shade(WALL,-0.06));
+px(MH_R-2, MH_T, 1, ROOF_Y-MH_T, shade(WALL,-0.06));
+
+/* ============================================================
+   中央白塔 + 天线（白色塔身，在字的上方）
+   ============================================================ */
+const TX = (BL+BR)/2;
+const W_TOWER = "#eceae4";      // 白塔色（比墙体稍白）
+// 天线（最顶部）
+px(TX-1, ROOF_Y-62, 2, 3, "#555");
+px(TX, ROOF_Y-64, 1, 2, "#c84030");
+// 白塔顶（锥形，白色，由 22px 收到 2px）
+for(let i=0;i<5;i++){
+  const hw = [11,8,6,3,1][i];
+  px(TX-hw, ROOF_Y-59+i, hw*2, 1, shade(W_TOWER, 0.12-i*0.04));
+}
+// 白塔塔身（宽 22）
+px(TX-11, ROOF_Y-54, 22, 7, W_TOWER);
+px(TX-11, ROOF_Y-54, 1, 7, "#fff");
+px(TX+10, ROOF_Y-54, 1, 7, shade(W_TOWER,-0.12));
+// 白塔塔身横缝
+px(TX-11, ROOF_Y-51, 22, 1, shade(W_TOWER,-0.1));
+// 白塔底座（宽 26，与玻璃幕墙同宽）
+px(TX-13, ROOF_Y-47, 26, 4, W_TOWER);
+px(TX-13, ROOF_Y-47, 26, 1, "#fff");
+px(TX-13, ROOF_Y-44, 26, 1, shade(W_TOWER,-0.1));
+
+/* ============================================================
+   顶部红色大字 "北京交通大学"（6字）—— 在白塔下方、楼顶上方
+   ============================================================ */
+(function drawTitle(){
+  const txt = "北京交通大学";
+  const FS = 24;                       // 字号：决定点阵精细度
+  const FONT = "bold " + FS + "px 'Microsoft YaHei','SimHei','PingFang SC',sans-serif";
+  // 1) 离屏用系统字体渲染出真实字形
+  const t = document.createElement("canvas");
+  let tc = t.getContext("2d");
+  tc.font = FONT;
+  t.width  = Math.ceil(tc.measureText(txt).width) + 8;
+  t.height = FS + 10;
+  tc = t.getContext("2d");
+  tc.font = FONT;
+  tc.textBaseline = "top";
+  tc.fillStyle = "#000";
+  tc.fillText(txt, 4, 4);
+  // 2) 二值化：采集所有笔画像素，并求出包围盒
+  const img = tc.getImageData(0, 0, t.width, t.height).data;
+  const pts = [];
+  let minX = t.width, maxX = -1, minY = t.height, maxY = -1;
+  for (let y = 0; y < t.height; y++) {
+    for (let x = 0; x < t.width; x++) {
+      if (img[(y * t.width + x) * 4 + 3] > 100) {
+        pts.push(x, y);
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) return;
+  // 3) 以白塔为中轴水平居中，绘制在楼顶上方
+  const w = maxX - minX + 1;
+  const ox = Math.round(TX - w / 2) - minX;
+  const oy = ROOF_Y - 32 - minY;       // 下移，给白塔留出完整可见空间
+  g.fillStyle = RED_TXT;
+  for (let i = 0; i < pts.length; i += 2) {
+    g.fillRect(ox + pts[i], oy + pts[i + 1], 1, 1);
+  }
+})();
+
+/* ============================================================
+   中央玻璃幕墙（垂直贯穿，蓝色反光）
+   ============================================================ */
+px(GLASS_L, WIN_TOP-6, GW, GROUND_Y-WIN_TOP+6, GLASS);
+// 玻璃高光带（左上到右下斜向反光）
+for(let i=0;i<GW;i++){
+  px(GLASS_L+i, WIN_TOP-6+i%3, 1, GROUND_Y-WIN_TOP+6, i<GW/2 ? GLASS_HI : shade(GLASS_HI, -0.1));
+}
+// 玻璃水平分格线
+for(let y=WIN_TOP-6;y<GROUND_Y;y+=14){
+  px(GLASS_L, y, GW, 1, GLASS_D);
+}
+// 玻璃竖分格线
+px(GLASS_L+GW/2, WIN_TOP-6, 1, GROUND_Y-WIN_TOP+6, GLASS_D);
+// 玻璃顶部收口
+px(GLASS_L, WIN_TOP-8, GW, 2, shade(WALL,-0.1));
+
+/* ============================================================
+   窗户网格（玻璃幕墙左右各5列）
+   ============================================================ */
+(function drawWindows(){
+  const cols = 4;          // 每侧4列（列间留白色瓷砖带）
+  const rows = 10;
+  const wW = 14, wH = 11, gX = 12, gY = 6;
+  const GC = (GLASS_L + GLASS_R) / 2;   // 对称轴：玻璃幕墙中心
+  const step = wW + gX;                 // 26
+  // 右窗户区（以右为准，c=0 最靠近玻璃幕墙）
+  const rightStart = GLASS_R + 10;      // 232
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const wx = rightStart + c*step;
+      const wy = WIN_TOP + r*(wH+gY);
+      if(wx + wW > BR - 10) continue;
+      drawWin(wx, wy, wW, wH);
+    }
+  }
+  // 左窗户区：右侧的镜像（c=0 最靠近玻璃幕墙）
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      // 右 c 列左边缘 = rightStart + c*step，其镜像左边缘 = 2*GC - (rightStart + c*step + wW)
+      const wx = 2*GC - (rightStart + c*step + wW);
+      const wy = WIN_TOP + r*(wH+gY);
+      if(wx < BL + 10) continue;
+      drawWin(wx, wy, wW, wH);
+    }
+  }
+})();
+
+function drawWin(x,y,w,h){
+  // 窗洞
+  px(x, y, w, h, WIN_D);
+  // 左上反光
+  px(x+1, y+1, Math.floor(w/2), 2, WIN_L);
+  px(x+1, y+1, 2, Math.floor(h/2), shade(WIN_L,-0.1));
+  // 窗格
+  px(x+Math.floor(w/2), y, 1, h, "#0e141c");
+}
+
+/* ============================================================
+   建筑底部入口层
+   ============================================================ */
+// 底层深色带
+px(BL, WIN_BOT, BW, GROUND_Y-WIN_BOT, shade(WALL,-0.15));
+// 中央入口（三角顶棚）
+const EX = TX, EY = WIN_BOT;
+// 入口门洞
+px(EX-18, EY+6, 36, GROUND_Y-EY-6, WIN_D);
+// 三角顶棚
+g.fillStyle = shade(WALL,-0.05);
+g.beginPath();
+g.moveTo(EX-26, EY+6);
+g.lineTo(EX, EY-8);
+g.lineTo(EX+26, EY+6);
+g.closePath();
+g.fill();
+// 顶棚高光（左斜边受光）
+g.fillStyle = WALL_L;
+g.beginPath();
+g.moveTo(EX-26, EY+6);
+g.lineTo(EX, EY-8);
+g.lineTo(EX-2, EY+6);
+g.closePath();
+g.fill();
+// 顶棚暗边（右斜边背光）
+g.fillStyle = WALL_D;
+g.beginPath();
+g.moveTo(EX, EY-8);
+g.lineTo(EX+26, EY+6);
+g.lineTo(EX+2, EY+6);
+g.closePath();
+g.fill();
+// 入口玻璃门反光
+px(EX-16, EY+8, 32, 2, GLASS_HI);
+px(EX-1, EY+8, 1, GROUND_Y-EY-8, "#0e141c");
+
+/* ============================================================
+   墙体左右边缘（对称处理：两侧边缘一致）
+   ============================================================ */
+px(BL, ROOF_Y, 1, GROUND_Y-ROOF_Y, WALL_D);
+px(BR-1, ROOF_Y, 1, GROUND_Y-ROOF_Y, WALL_D);
+px(BL+1, ROOF_Y, 1, GROUND_Y-ROOF_Y, shade(WALL,-0.06));
+px(BR-2, ROOF_Y, 1, GROUND_Y-ROOF_Y, shade(WALL,-0.06));
+
+/* ============================================================
+   地面 + 草坪
+   ============================================================ */
+px(0, GROUND_Y, 420, 300-GROUND_Y, GRASS);
+// 草坪深浅变化
+for(let y=GROUND_Y;y<300;y++){
+  const t=(y-GROUND_Y)/(300-GROUND_Y);
+  const r=Math.round(90*(1-t*0.3)), gg=Math.round(138*(1-t*0.2)), b=Math.round(58*(1-t*0.3));
+  px(0,y,420,1,"rgb("+r+","+gg+","+b+")");
+}
+// 建筑前人行道
+px(BL-20, GROUND_Y-2, BW+40, 4, GROUND);
+px(BL-20, GROUND_Y+2, BW+40, 2, shade(GROUND,-0.15));
+
+/* ============================================================
+   入口前白色雕塑（对照实拍的白色现代雕塑）
+   ============================================================ */
+(function statue(){
+  const sx = TX - 8;
+  // 底座
+  px(sx-2, GROUND_Y-10, 20, 6, shade(STATUE,-0.1));
+  px(sx-2, GROUND_Y-10, 20, 1, STATUE);
+  // 雕塑主体（抽象造型）
+  px(sx, GROUND_Y-22, 6, 12, STATUE);
+  px(sx+8, GROUND_Y-18, 6, 8, STATUE);
+  px(sx+3, GROUND_Y-20, 8, 4, shade(STATUE,0.1));
+  // 高光
+  px(sx, GROUND_Y-22, 1, 12, "#fff");
+  px(sx+8, GROUND_Y-18, 1, 8, "#fff");
+  // 阴影
+  px(sx+5, GROUND_Y-22, 1, 12, shade(STATUE,-0.15));
+  px(sx+13, GROUND_Y-18, 1, 8, shade(STATUE,-0.15));
+})();
+
+/* ============================================================
+   树木（左右对称：阔叶树）
+   ============================================================ */
+const GC_tree = (GLASS_L + GLASS_R) / 2;
+
+// 阔叶树（大）
+function leafTree(x, baseY){
+  px(x+3, baseY-14, 3, 14, "#6a4a2a");
+  px(x-4, baseY-26, 18, 14, "#4a8030");
+  px(x-2, baseY-30, 14, 4, "#5a9a3a");
+  px(x+8, baseY-24, 6, 8, "#3a6a24");
+  px(x, baseY-22, 4, 4, "#6aaa44");
+}
+// 阔叶树（小）
+function leafTree2(x, baseY){
+  px(x+2, baseY-10, 2, 10, "#6a4a2a");
+  px(x-3, baseY-20, 12, 10, "#4a8030");
+  px(x-1, baseY-23, 8, 3, "#5a9a3a");
+}
+// 远处小树
+function smallTree(x, baseY){
+  px(x+1, baseY-8, 2, 8, "#5a3a22");
+  px(x-2, baseY-14, 8, 6, "#4a7a2e");
+  px(x, baseY-16, 4, 2, "#5a9a3a");
+}
+
+// 右侧（以右为准）
+leafTree(370, GROUND_Y);
+leafTree2(395, GROUND_Y);
+smallTree(EX+36, GROUND_Y);
+// 左侧镜像
+leafTree(2*GC_tree - 370, GROUND_Y);
+leafTree2(2*GC_tree - 395, GROUND_Y);
+smallTree(2*GC_tree - (EX+36), GROUND_Y);
+
+/* ============================================================
+   飞鸟
+   ============================================================ */
+px(90, 40, 3, 1, "#444"); px(88, 41, 1, 1, "#444"); px(92, 41, 1, 1, "#444");
+px(310, 55, 3, 1, "#444"); px(308, 56, 1, 1, "#444"); px(312, 56, 1, 1, "#444");
+px(200, 30, 2, 1, "#555"); px(199, 31, 1, 1, "#555"); px(201, 31, 1, 1, "#555");
+
+/* ============================================================
+   建筑投影（地面上）
+   ============================================================ */
+g.fillStyle = "rgba(0,0,0,0.12)";
+g.beginPath();
+g.moveTo(BL, GROUND_Y);
+g.lineTo(BR, GROUND_Y);
+g.lineTo(BR+8, GROUND_Y+10);
+g.lineTo(BL+8, GROUND_Y+10);
+g.closePath();
+g.fill();
+
+/* ============================================================
+   放大显示
+   ============================================================ */
+(function zoom(){
+  const s = Math.max(1, Math.floor(Math.min(window.innerWidth/420, window.innerHeight/300)));
+  cv.style.width = (420*s)+"px";
+  cv.style.height = (300*s)+"px";
+})();
+window.addEventListener("resize", function(){
+  const s = Math.max(1, Math.floor(Math.min(window.innerWidth/420, window.innerHeight/300)));
+  cv.style.width = (420*s)+"px";
+  cv.style.height = (300*s)+"px";
+});
+</script>
+</body>
+</html>

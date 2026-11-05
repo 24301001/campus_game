@@ -1,0 +1,349 @@
+#mpRoot{--mp-bg:#1d2129;--mp-deep:#11151b;--mp-line:#475261;--mp-ink:#f3efe3;--mp-muted:#b9c9d5;--mp-gold:#ffd76e;--mp-teal:#7fd6c8;position:fixed;inset:0;z-index:50;pointer-events:none;color:var(--mp-ink);font:13px/1.55 system-ui,"Microsoft YaHei",sans-serif}
+#mpRoot *{box-sizing:border-box}
+#mpRoot [hidden]{display:none!important}
+#mpRoot button,#mpRoot input,#mpRoot textarea,#mpRoot select{font:inherit}
+#mpRoot button{cursor:pointer}
+#mpRoot button:focus-visible,#mpRoot input:focus-visible,#mpRoot textarea:focus-visible,#mpRoot select:focus-visible{outline:2px solid var(--mp-gold);outline-offset:2px}
+#mpRoot .mp-panel{background:var(--mp-bg);border:1px solid var(--mp-line);box-shadow:0 5px 0 rgba(0,0,0,.3);pointer-events:auto}
+#mpRoot .mp-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid var(--mp-line)}
+#mpRoot .mp-title{font-weight:700;letter-spacing:.04em;color:var(--mp-gold)}
+#mpRoot .mp-icon{background:transparent;border:0;color:var(--mp-muted);font-size:18px;line-height:1;padding:3px 6px}
+#mpRoot .mp-icon:hover{color:#fff}
+#mpRoot .mp-primary{border:1px solid #c89d36;background:var(--mp-gold);color:#1b2028;border-radius:4px;padding:7px 12px;font-weight:700}
+#mpRoot .mp-primary:hover{background:#ffe397}
+#mpRoot .mp-primary:disabled{opacity:.55;cursor:default}
+#mpRoot .mp-secondary{border:1px solid var(--mp-line);background:#2a303b;color:var(--mp-ink);border-radius:4px;padding:7px 12px}
+#mpRoot .mp-secondary:hover{background:#354052}
+#mpRoot .mp-field{width:100%;min-width:0;border:1px solid var(--mp-line);background:var(--mp-deep);color:var(--mp-ink);border-radius:4px;padding:8px 10px}
+#mpRoot .mp-field::placeholder{color:#afbdc8}
+/* 下拉框自己画箭头：浏览器默认那个小三角在深色底上基本看不见，
+   学院/年级看着就像能打字输入框（用户反馈"学院还是手填的样子"）。 */
+#mpRoot select.mp-field{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:pointer;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23ffd76e' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+#mpRoot select.mp-field:hover{border-color:var(--mp-gold)}
+#mpRoot select.mp-field option{background:var(--mp-bg);color:var(--mp-ink)}
+#mpRoot .mp-error{color:#ffaaa5;min-height:1.4em}
+#mpRoot .mp-muted{color:var(--mp-muted)}
+#mpRoot .mp-avatar{width:48px;height:48px;outline:1px solid #607080;background:#12171e;image-rendering:pixelated;flex:none;cursor:pointer}
+#mpRoot .mp-avatar:hover{outline-color:var(--mp-gold)}
+#mpRoot .mp-avatar-static{cursor:default}
+#mpRoot .mp-avatar-static:hover{outline-color:#607080}
+#mpRoot .mp-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#72d798;margin-right:5px}
+#mpRoot .mp-dot.off{background:#87929b}
+#mpRoot #mpStatus{position:absolute;z-index:4;top:clamp(50px,22vh,200px);left:50%;transform:translateX(-50%);max-width:min(560px,calc(100vw - 24px));padding:10px 20px;background:rgba(24,33,43,.96);border:1px solid #d7bb73;border-radius:8px;box-shadow:0 5px 18px rgba(0,0,0,.4);pointer-events:none;text-align:center;font-size:16px;font-weight:700;line-height:1.5;opacity:1;transition:opacity .42s}
+#mpRoot #mpStatus.mp-fade{opacity:0}
+#mpRoot #mpSelf{position:absolute;left:14px;top:76px;display:flex;align-items:center;gap:7px;padding:5px 8px;border:1px solid var(--mp-line);border-radius:4px;background:var(--mp-bg);color:var(--mp-ink);pointer-events:auto}
+#mpRoot #mpSelf:hover{border-color:var(--mp-gold)}
+/* 个人主页那一块带 48px 头像，实测整高 60px ⇒ 下沿在 136。
+   玩家精灵按钮原来 top:133，两块的边框只差 3px，看着就是一个按钮压着另一个。
+   下面三档 top 一律按"上一块的下沿 + 10px"排。 */
+#mpRoot #mpSprite{position:absolute;left:14px;top:146px;padding:7px 11px;border:1px solid var(--mp-line);border-radius:4px;background:var(--mp-bg);color:var(--mp-ink);pointer-events:auto}
+#mpRoot #mpSprite:hover{border-color:var(--mp-gold)}
+/* 呼叫老丁从「玩家精灵」弹层里搬到了屏幕左列，紧贴猫咪图鉴按钮（图鉴按钮 top:196、高约 34 ⇒ 236 正好接住）。 */
+#mpRoot #mpSummonGuard{position:absolute;left:14px;top:236px;padding:7px 11px;border:1px solid var(--mp-line);border-radius:4px;background:var(--mp-bg);color:var(--mp-gold);pointer-events:auto}
+#mpRoot #mpSummonGuard:hover{border-color:var(--mp-gold);color:#ffe397}
+/* 每日任务接在「呼叫老丁」下面（老丁 top:236、高约 34 ⇒ 276 正好接住，跟上面同一套排法）。 */
+#mpRoot #mpTaskToggle{position:absolute;left:14px;top:276px;padding:7px 11px;border:1px solid var(--mp-line);border-radius:4px;background:var(--mp-bg);color:var(--mp-gold);pointer-events:auto}
+#mpRoot #mpTaskToggle:hover{border-color:var(--mp-gold);color:#ffe397}
+/* 单机那两个按钮挪到左下角：它们和"个人主页/玩家精灵"是同一时刻可见的
+   （单机访客也是登录态），原来三条 top 全挤在左上同一列里互相压着。 */
+#mpRoot #mpSoloCanteen{position:absolute;left:14px;bottom:60px;padding:7px 11px;border:1px solid var(--mp-line);border-radius:4px;background:var(--mp-bg);color:var(--mp-gold);pointer-events:auto}
+#mpRoot #mpSoloExit{position:absolute;left:14px;bottom:16px;padding:7px 11px;border:1px solid var(--mp-line);border-radius:4px;background:var(--mp-bg);color:var(--mp-ink);pointer-events:auto}
+body:has(#ctrP:not([hidden])) #mpRoot #mpSoloCanteen{display:none}
+/* 右上角两颗：📢 公告（企划组只发更新通知）｜📌 留言板（全校谁都能发，原「公告栏」）。
+   两颗一起放进 #mpTopBtns 这个横向 flex 里，位置由容器管；按钮本身不再各自定位。 */
+#mpRoot #mpTopBtns{position:absolute;right:16px;top:16px;display:flex;gap:8px;pointer-events:none}
+#mpRoot #mpTopBtns button{padding:7px 11px;border:1px solid var(--mp-line);border-radius:4px;background:var(--mp-bg);color:var(--mp-gold);font-weight:700;pointer-events:auto}
+#mpRoot #mpTopBtns button:hover{border-color:var(--mp-gold)}
+#mpRoot #mpUnread{display:inline-block;min-width:17px;margin-left:4px;padding:0 4px;border-radius:9px;background:#c6534d;color:white;font-size:11px}
+/* 在线人数：跟未读数同一个形状，换成绿的（红＝有东西没看，绿＝有人在场） */
+#mpRoot #mpOnlineNum{display:inline-block;min-width:17px;margin-left:4px;padding:0 4px;border-radius:9px;background:#2f6b52;color:#dcf6e8;font-size:11px;font-variant-numeric:tabular-nums}
+/* 公告那点红：只有企划组出新通知、而且我没看过时才亮 */
+#mpRoot #mpNoticeDot{display:inline-block;margin-left:2px;color:#c6534d;font-size:10px;vertical-align:top}
+/* 四块面板同一个坑位（right/top 一致）：closeTopPanels() 保证同一时刻只开一块 */
+#mpRoot #mpBoard,
+#mpRoot #mpNotice,
+#mpRoot #mpTask,
+#mpRoot #mpOnline{position:absolute;right:16px;top:53px;width:330px;max-height:min(520px,calc(100vh - 70px));display:flex;flex-direction:column}
+/* 大厅的面板与按钮统一抬到 46：地图上那几颗楼宇「i」在 45（building.css），
+   这样点开公告/留言板/私聊/每日任务/当前在线时能把「i」盖住。
+   仍然低于猫图的 52 —— 猫猫图鉴原来的层序不动。 */
+#mpRoot #mpBoard,#mpRoot #mpNotice,#mpRoot #mpTask,#mpRoot #mpOnline,#mpRoot #mpChat,#mpRoot #mpGuard,
+#mpRoot #mpNearby,#mpRoot #mpAuthShade,#mpRoot #mpProfileShade,#mpRoot #mpLookShade,
+#mpRoot #mpTopBtns,#mpRoot #mpSelf,#mpRoot #mpSprite,#mpRoot #mpSummonGuard,#mpRoot #mpTaskToggle,
+#mpRoot #mpSoloCanteen,#mpRoot #mpSoloExit,#mpRoot #mpStatus,#mpRoot #mpMenu{z-index:46}
+/* [QODER-FIX #20] 抽屉里的 NPC 应用自身顶部也有“退出/返回”按钮，原来的公告按钮正好压在上面。
+   嵌入状态（#ctrP 可见）把右上角那排按钮连同面板整体下移一行，避开 NPC 自己的标题栏。 */
+body:has(#ctrP:not([hidden])) #mpRoot #mpTopBtns{top:64px}
+body:has(#ctrP:not([hidden])) #mpRoot #mpBoard,
+body:has(#ctrP:not([hidden])) #mpRoot #mpNotice,
+body:has(#ctrP:not([hidden])) #mpRoot #mpTask,
+body:has(#ctrP:not([hidden])) #mpRoot #mpOnline{top:101px}
+#mpRoot #mpBoardList{overflow:auto;min-height:100px;max-height:370px}
+/* ---- 📢 公告：企划组的更新通知（写死在 lobby.js 的 NOTICES 里，不占数据库） ---- */
+#mpRoot #mpNoticeList{overflow:auto;min-height:100px;max-height:370px}
+#mpRoot .mp-notice{padding:11px 12px;border-bottom:1px solid #343c48}
+#mpRoot .mp-notice:last-child{border-bottom:0}
+#mpRoot .mp-notice-head{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+#mpRoot .mp-notice-tag{flex:none;padding:1px 6px;border-radius:3px;background:#2b3542;border:1px solid var(--mp-line);color:var(--mp-teal);font-size:10px;letter-spacing:.1em}
+#mpRoot .mp-notice-head b{font-size:12px;color:var(--mp-ink)}
+#mpRoot .mp-notice-head time{margin-left:auto;flex:none;font-size:11px;color:var(--mp-muted)}
+#mpRoot .mp-notice-body{margin:0;font-size:12px;line-height:1.7;color:var(--mp-muted);white-space:pre-wrap;overflow-wrap:anywhere}
+#mpRoot .mp-notice-foot{padding:8px 12px;border-top:1px solid var(--mp-line);text-align:center;font-size:11px;color:var(--mp-muted)}
+/* ---- 📋 每日任务 ---- */
+#mpRoot #mpTaskBody{padding:6px 12px 4px;display:flex;flex-direction:column;gap:2px;overflow:auto;min-height:60px;max-height:370px}
+#mpRoot .mp-task-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #343c48}
+#mpRoot .mp-task-row:last-of-type{border-bottom:0}
+#mpRoot .mp-task-tick{flex:none;width:20px;height:20px;border-radius:50%;border:1px solid var(--mp-line);color:var(--mp-muted);font-size:12px;line-height:18px;text-align:center}
+#mpRoot .mp-task-row.done .mp-task-tick{border-color:#4d7f63;background:#213b2d;color:#8fe0b0}
+#mpRoot .mp-task-text{flex:1;min-width:0}
+#mpRoot .mp-task-text b{display:block;font-size:12.5px;color:var(--mp-ink)}
+#mpRoot .mp-task-text span{display:block;font-size:11px;color:var(--mp-muted)}
+#mpRoot .mp-task-reward{flex:none;font-size:11px;color:var(--mp-teal);white-space:nowrap}
+#mpRoot .mp-task-row.done .mp-task-reward{color:#6d8b79}
+#mpRoot .mp-task-food{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:10px;padding:9px 11px;border:1px solid var(--mp-line);border-radius:5px;background:var(--mp-deep)}
+#mpRoot .mp-task-food span{font-size:12px;color:var(--mp-muted)}
+#mpRoot .mp-task-food b{font-size:16px;color:var(--mp-gold);font-variant-numeric:tabular-nums}
+#mpRoot .mp-task-tip{margin:10px 0 4px;font-size:11px;line-height:1.7;color:var(--mp-muted)}
+#mpRoot .mp-task-foot{padding:8px 12px;border-top:1px solid var(--mp-line);text-align:center;font-size:11px;color:var(--mp-muted)}
+/* ---- 👥 当前在线：只要头像 + 昵称，没有任何可以点的东西 ---- */
+#mpRoot #mpOnlineList{overflow:auto;min-height:90px;max-height:370px;padding:10px 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px 6px}
+#mpRoot .mp-online-cell{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+#mpRoot .mp-online-cell .mp-avatar{width:36px;height:36px}
+#mpRoot .mp-online-name{max-width:100%;font-size:11px;color:var(--mp-muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ---- 🏃 乐跑进度条：只在自己站上跑道时出现 ---- */
+#mpRoot #mpRunHud{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;max-width:min(460px,calc(100vw - 24px));padding:7px 14px;border:1px solid #6b5a2a;border-radius:20px;background:rgba(24,33,43,.94);color:var(--mp-ink);font-size:12px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+#mpRoot #mpRunHud b{flex:none;color:var(--mp-gold);font-size:12px}
+#mpRoot #mpRunText{font-variant-numeric:tabular-nums}
+#mpRoot .mp-post{display:flex;gap:9px;padding:10px 12px;border-bottom:1px solid #343c48}
+#mpRoot .mp-post-body{min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}
+#mpRoot .mp-post-meta{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--mp-muted);margin-bottom:2px}
+#mpRoot .mp-compose{display:flex;gap:6px;padding:10px;border-top:1px solid var(--mp-line)}
+#mpRoot .mp-compose .mp-field{flex:1}
+#mpRoot #mpChat{position:absolute;right:16px;top:56px;bottom:55px;width:350px;display:flex;flex-direction:column;max-height:680px}
+#mpRoot #mpChat .mp-head{justify-content:flex-start}
+#mpRoot #mpChatTitle{flex:1;min-width:0}
+#mpRoot #mpChatLog{flex:1;overflow:auto;padding:10px 12px}
+#mpRoot .mp-message{display:flex;gap:8px;margin:0 0 13px}
+#mpRoot .mp-message.mine{flex-direction:row-reverse}
+#mpRoot .mp-message .mp-avatar{width:24px;height:24px}
+#mpRoot .mp-bubble{max-width:255px;min-width:0;padding:6px 9px;background:#2e3743;border-radius:5px;white-space:pre-wrap;overflow-wrap:anywhere}
+#mpRoot .mp-message.mine .mp-bubble{background:#315651}
+#mpRoot .mp-message small{display:block;color:var(--mp-muted);font-size:10px}
+#mpRoot #mpChatForm{display:flex;gap:6px;padding:10px;border-top:1px solid var(--mp-line)}
+#mpRoot #mpChatInput{flex:1;resize:none;min-height:38px;max-height:95px}
+#mpRoot #mpAuthShade,#mpRoot #mpProfileShade,#mpRoot #mpLookShade{position:absolute;inset:0;background:rgba(8,12,18,.72);pointer-events:auto;display:flex;align-items:center;justify-content:center;padding:16px}
+#mpRoot #mpAuth{width:min(370px,100%);padding:18px;max-height:100%;overflow:auto}
+#mpRoot #mpAuth h2{font-size:18px;color:var(--mp-gold);margin:0 0 5px}
+#mpRoot #mpAuth p{color:var(--mp-muted);margin:0 0 15px}
+#mpRoot #mpAuth .mp-tabs{display:flex;gap:6px;margin-bottom:12px}
+#mpRoot #mpAuth .mp-tabs button{flex:1}
+#mpRoot #mpAuthForm{display:grid;gap:9px}
+/* 注册密码强度条：4 格，颜色跟着分数走；下面一行小字说哪里不够。 */
+#mpRoot .mp-pass{display:flex;flex-direction:column;gap:5px;margin-top:-3px}
+#mpRoot .mp-pass-bars{display:flex;gap:4px}
+#mpRoot .mp-pass-bars i{flex:1;height:4px;background:#3a4452;border-radius:2px;transition:background .18s}
+#mpRoot .mp-pass-bars i.on.s1{background:#e06c62}
+#mpRoot .mp-pass-bars i.on.s2{background:#e0a94f}
+#mpRoot .mp-pass-bars i.on.s3{background:#8fcf7a}
+#mpRoot .mp-pass-bars i.on.s4{background:#5fc9a8}
+#mpRoot .mp-pass-hint{font-size:12px;line-height:1.4;color:var(--mp-muted);min-height:1.4em}
+#mpRoot .mp-pass-hint.bad{color:#ffaaa5}
+#mpRoot .mp-pass-hint.good{color:#9adf8f}
+
+/* 注册验证：拖动拼图。图片宽度跟着面板走，拼图块的左侧位置用百分比算，缩放不跑偏。 */
+#mpRoot .mp-name-hint{font-size:12px;line-height:1.4;min-height:1.4em;margin-top:-2px;color:var(--mp-muted)}
+#mpRoot .mp-name-hint.bad{color:#ffaaa5}
+#mpRoot .mp-name-hint.good{color:#9adf8f}
+#mpRoot .mp-cap{display:flex;flex-direction:column;gap:8px;margin:2px 0 4px}
+#mpRoot .mp-cap-stage{position:relative;width:100%;border-radius:8px;overflow:hidden;background:#1a2230;line-height:0;user-select:none;-webkit-user-select:none;touch-action:none}
+#mpRoot .mp-cap-stage img{display:block;width:100%;height:auto;pointer-events:none;user-select:none}
+#mpRoot .mp-cap-stage #mpCapBg{aspect-ratio:360/212;object-fit:cover;transition:opacity .2s}
+#mpRoot .mp-cap-piece{position:absolute;left:0;top:0;width:18%;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55))}
+#mpRoot .mp-cap-loading{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;line-height:1.6;color:#cfd8e3}
+#mpRoot .mp-cap-track{position:relative;height:40px;border-radius:20px;background:#232b39;border:1px solid #3b4658;overflow:hidden;touch-action:none;cursor:pointer}
+#mpRoot .mp-cap-track.ok{border-color:#4fb783;background:#1e3529}
+#mpRoot .mp-cap-track.bad{border-color:#c2605a;background:#3a2224}
+#mpRoot .mp-cap-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#3f6f9a,#4f97c4);opacity:.55}
+#mpRoot .mp-cap-track.ok .mp-cap-fill{background:linear-gradient(90deg,#3d8a63,#57b98a)}
+#mpRoot .mp-cap-knob{position:absolute;left:0;top:50%;transform:translateY(-50%);width:38px;height:38px;margin:1px;border-radius:50%;background:#f3f6fb;color:#243043;display:grid;place-items:center;font-size:16px;font-weight:700;cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.4);touch-action:none}
+#mpRoot .mp-cap-knob:active{cursor:grabbing}
+#mpRoot .mp-cap-knob.ok{background:#57b98a;color:#0d2a1d}
+#mpRoot .mp-cap-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--mp-muted)}
+#mpRoot .mp-cap-state{line-height:1.4}
+#mpRoot .mp-cap-state.good{color:#9adf8f}
+#mpRoot .mp-cap-state.bad{color:#ffaaa5}
+#mpRoot .mp-cap-refresh{border:1px solid var(--mp-line);border-radius:12px;background:transparent;color:var(--mp-muted);font-size:12px;padding:3px 10px;flex:none}
+#mpRoot .mp-cap-refresh:hover{color:var(--mp-gold);border-color:var(--mp-gold)}
+#mpRoot .mp-chat-more{display:block;margin:6px auto;font-size:12px}
+#mpRoot #mpAuthPhotoLine{display:grid;gap:5px;color:var(--mp-gold);font-weight:600}
+#mpRoot #mpAuthLookPreview{display:flex;align-items:center;gap:10px;padding:7px 9px;border:1px solid var(--mp-line);background:var(--mp-deep)}
+#mpRoot #mpAuthLookPreview canvas{width:96px;height:96px;image-rendering:pixelated;flex:none}
+#mpRoot #mpProfile{width:min(460px,100%);max-height:calc(100vh - 32px);overflow:auto}
+#mpRoot #mpLook{width:min(460px,100%);max-height:calc(100vh - 32px);overflow:auto;padding-bottom:12px}
+#mpRoot #mpLook #mpLookBody{padding:12px}
+#mpRoot #mpProfile.mp-other-profile{width:min(390px,100%)}
+#mpRoot #mpProfile.mp-other-profile #mpProfileBody{padding:18px;text-align:left}
+#mpRoot #mpProfile.mp-other-profile .mp-profile-top{gap:13px}
+#mpRoot #mpProfile.mp-other-profile p{margin:7px 0;color:var(--mp-muted)}
+#mpRoot #mpProfile.mp-other-profile .mp-primary{width:100%;margin-top:8px}
+#mpRoot .mp-public-info{display:grid;gap:0;margin:10px 0 16px;border-top:1px solid var(--mp-line)}
+#mpRoot .mp-public-info>div{display:grid;grid-template-columns:78px 1fr;gap:10px;padding:9px 0;border-bottom:1px solid #343c48}
+#mpRoot .mp-public-info dt{color:var(--mp-muted)}
+#mpRoot .mp-public-info dd{margin:0;overflow-wrap:anywhere}
+#mpRoot .mp-tag-list{display:flex;flex-wrap:wrap;gap:5px;min-height:24px;margin:4px 0}
+/* 没打标签时这排空胶囊也要把 24+8 的高度让出去，否则说明文字和输入框之间白空一截。 */
+#mpRoot .mp-tag-list:empty{min-height:0;margin:0}
+#mpRoot .mp-tag{display:inline-block;margin:0 4px 4px 0;padding:2px 7px;border:1px solid #637c80;border-radius:12px;background:#29474c;color:#d9f4ee;font-size:11px}
+#mpRoot .mp-tag-list button:hover,#mpRoot .mp-tag-list .mp-tag[role=button]:hover{border-color:var(--mp-gold);cursor:pointer}
+#mpRoot .mp-tag-list .mp-tag:focus-visible{outline:2px solid var(--mp-gold);outline-offset:1px}
+#mpRoot .mp-history{margin-top:17px;padding:9px 10px;border:1px solid var(--mp-line);border-radius:4px}
+#mpRoot .mp-history summary{cursor:pointer;color:var(--mp-gold)}
+#mpRoot .mp-history h4{margin:12px 0 5px}
+#mpRoot .mp-history p{padding:5px 0;margin:0;border-bottom:1px solid #343c48;white-space:pre-wrap;overflow-wrap:anywhere}
+#mpRoot .mp-history details{padding:6px 0}
+/* 聊天记录模块：公告 / 私聊两个页签 + 每条记录的时间列 */
+#mpRoot .mp-history-body{min-height:22px}
+#mpRoot .mp-history-tabs{display:flex;gap:6px;margin:10px 0 8px}
+#mpRoot .mp-history-tab{flex:1;padding:5px 8px;font-size:12px}
+#mpRoot .mp-history-tab.on{background:var(--mp-gold);border-color:#c89d36;color:#1b2028;font-weight:700}
+#mpRoot .mp-his-time{display:inline-block;min-width:76px;margin-right:7px;color:var(--mp-muted);font-size:11px}
+#mpRoot .mp-his-who{display:block;color:var(--mp-muted);font-size:11px}
+#mpRoot .mp-his-list{padding-left:6px}
+#mpRoot .mp-his-more{margin:6px 0;padding:4px 9px;font-size:12px}
+#mpRoot #mpProfileBody{padding:14px}
+#mpRoot #mpNearby{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);width:248px;padding:8px;z-index:2}
+#mpRoot #mpNearbyWho{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:7px}
+#mpRoot #mpNearbyWho .mp-avatar{width:30px;height:30px}
+/* 老丁面板：以前只有 360 宽 + 一句话的输入行，装上四个快捷键和「图」之后必须整体放大，
+   否则老丁回的那段"比对结果 / 领取时间"被挤成十几行，等于没法读。 */
+#mpRoot #mpGuard{position:absolute;right:16px;bottom:55px;width:min(480px,calc(100vw - 32px));display:flex;flex-direction:column;max-height:min(620px,calc(100vh - 90px))}
+#mpRoot #mpGuardLog{flex:1;min-height:220px;overflow:auto;padding:10px 12px}
+#mpRoot .mp-guard-line{padding:6px 9px;margin:0 0 7px;border-radius:5px;background:#2e3743;white-space:pre-wrap;overflow-wrap:anywhere}
+#mpRoot .mp-guard-line.self{margin-left:25px;background:#315651}
+#mpRoot .mp-guard-line.sys{margin:0 25px 7px;background:transparent;border:1px dashed var(--mp-line);color:var(--mp-muted);font-size:12px}
+/* 老丁递到面板里的处理界面：比对卡片 +「认领这条」，以及当面认一眼那排选项。
+   这两个框体以前只在隐藏 iframe 里画，玩家在地图面板看得见结果却按不着按钮。 */
+#mpRoot .mp-guard-cards{display:grid;gap:7px;margin:0 0 8px}
+#mpRoot .mp-gcard{padding:8px 9px;border:1px solid var(--mp-line);border-radius:5px;background:#2b333e;font-size:12px}
+#mpRoot .mp-gcard.best{border-color:var(--mp-gold)}
+#mpRoot .mp-gcard-hd{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-weight:700}
+#mpRoot .mp-gbest{padding:1px 6px;border-radius:9px;background:var(--mp-gold);color:#1b1a12;font-size:11px;font-weight:400}
+#mpRoot .mp-gscore{margin-left:auto;color:var(--mp-gold);font-weight:400;font-size:11px}
+#mpRoot .mp-gmeta{margin-top:3px;color:var(--mp-muted);font-size:11px}
+#mpRoot .mp-gdesc{margin-top:4px;overflow-wrap:anywhere}
+#mpRoot .mp-guard-opts{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+#mpRoot .mp-gclaim,#mpRoot .mp-gopt{margin-top:7px;padding:5px 12px;border:1px solid var(--mp-gold);border-radius:4px;background:#3a3222;color:var(--mp-gold);cursor:pointer}
+#mpRoot .mp-guard-opts .mp-gopt{margin-top:0}
+#mpRoot .mp-gopt.ghost{border-color:var(--mp-line);background:#2a303b;color:var(--mp-ink)}
+#mpRoot .mp-gclaim:hover,#mpRoot .mp-gopt:hover{border-color:var(--mp-gold);filter:brightness(1.2)}
+#mpRoot .mp-gclaim:disabled,#mpRoot .mp-gopt:disabled{opacity:.4;cursor:default;filter:none}
+#mpRoot #mpGuardQuick{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-top:1px solid var(--mp-line)}
+#mpRoot #mpGuardQuick button{border:1px solid var(--mp-line);background:#2a303b;color:var(--mp-ink);border-radius:4px;padding:5px 11px}
+#mpRoot #mpGuardQuick button:hover{border-color:var(--mp-gold);color:var(--mp-gold)}
+#mpRoot #mpGuardForm{display:flex;gap:6px;padding:10px;border-top:1px solid var(--mp-line)}
+#mpRoot #mpGuardPhoto{flex:none;width:38px;border:1px solid var(--mp-line);background:#2a303b;color:var(--mp-gold);border-radius:4px;font-weight:700}
+#mpRoot #mpGuardPhoto:hover{border-color:var(--mp-gold)}
+#mpRoot .mp-call-guard{width:100%;margin:0 0 12px}
+#mpRoot .mp-near-actions{display:flex;gap:6px}
+#mpRoot .mp-near-actions button{flex:1;padding:5px 6px;font-size:11px}
+#mpRoot .mp-profile-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+#mpRoot .mp-profile-top .mp-avatar{width:72px;height:72px;cursor:default}
+/* [QODER-FIX #17] 个人主页的玩家精灵 + 呼叫老丁按钮 */
+#mpRoot .mp-profile-player{display:flex;flex-direction:column;align-items:center;gap:7px;margin:0 0 12px;padding:10px;border:1px solid var(--mp-line);border-radius:5px;background:#141a22}
+#mpRoot .mp-profile-sprite canvas{width:96px;height:120px;image-rendering:pixelated}
+#mpRoot .mp-profile-player .mp-call-guard{width:100%;margin:0}
+#mpRoot .mp-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#mpRoot .mp-form-grid label{font-size:12px;color:var(--mp-muted)}
+#mpRoot .mp-form-grid label.wide{grid-column:1/-1}
+#mpRoot .mp-form-grid .mp-field{margin-top:4px}
+#mpRoot .mp-privacy{display:flex;flex-wrap:wrap;gap:7px 14px;margin:11px 0 0;padding:8px 10px;border:1px solid var(--mp-line);border-radius:4px;color:var(--mp-muted)}
+#mpRoot .mp-privacy legend{padding:0 4px;color:var(--mp-gold);font-size:12px}
+#mpRoot .mp-privacy label{white-space:nowrap;font-size:12px}
+#mpRoot .mp-privacy input{accent-color:#d9ac4a;vertical-align:middle}
+/* [QODER-FIX #16] 公开/隐藏设置的说明文字 */
+#mpRoot .mp-privacy-hint{margin:4px 0 0;font-size:11px;line-height:1.45}
+#mpRoot .mp-look-preview{display:flex;align-items:end;justify-content:space-around;margin:11px 0;padding:9px;background:#141a22;border:1px solid #384451}
+#mpRoot .mp-look-preview canvas{width:72px;height:120px;image-rendering:pixelated}
+#mpRoot .mp-look-controls{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+#mpRoot .mp-look-controls label{font-size:12px;color:var(--mp-muted)}
+#mpRoot .mp-look-controls .mp-field{margin-top:4px}
+/* Chrome 把 type=color 的色块画在内容区里：.mp-field 的 8px 内边距把它压成一条 1px 的线。
+   给固定高度 + 小内边距，色块才是一条看得见的色带（形象面板全靠它调色）。 */
+#mpRoot input[type=color].mp-field{height:38px;padding:3px 4px;cursor:pointer}
+#mpRoot .mp-profile-actions{display:flex;justify-content:space-between;flex-wrap:wrap;gap:7px;margin-top:14px}
+#mpRoot #mpMenu{position:fixed;width:145px;padding:4px;display:grid;gap:2px;z-index:3}
+#mpRoot #mpMenu button{width:100%;border:0;background:transparent;color:var(--mp-ink);padding:7px 9px;text-align:left}
+#mpRoot #mpMenu button:hover{background:#354052}
+#mpRoot .mp-empty{padding:20px 14px;color:var(--mp-muted);text-align:center}
+#huduser{display:none}
+@media(max-width:650px){#mpRoot #mpBoard,#mpRoot #mpNotice,#mpRoot #mpTask,#mpRoot #mpOnline,#mpRoot #mpChat{right:8px;width:min(350px,calc(100vw - 16px))}#mpRoot #mpSelf{top:12px;left:8px}#mpRoot #mpSprite{top:82px;left:8px}#mpRoot #mpSummonGuard{top:172px;left:8px}#mpRoot #mpTaskToggle{top:212px;left:8px}#mpRoot #mpTopBtns{right:8px;top:12px}#mpRoot #mpSoloCanteen{bottom:58px;left:8px}#mpRoot #mpSoloExit{bottom:14px;left:8px}#mpRoot #mpGuard{right:8px;bottom:8px;max-height:calc(100vh - 24px)}#mpRoot #mpGuardLog{min-height:150px}
+  /* 窄屏右上角要挤下三颗按钮，而左边个人中心那块也占着 12px 那一行：
+     按钮只留图标（字在面板标题里、鼠标悬停也有提示），不然三颗一定压到左列上去。 */
+  #mpRoot #mpTopBtns .mp-btn-txt{display:none}
+  #mpRoot #mpTopBtns button{padding:7px 9px}
+  #mpRoot #mpOnlineList{grid-template-columns:repeat(3,1fr)}}
+@media(prefers-reduced-motion:reduce){#mpRoot *,#mpRoot *::before,#mpRoot *::after{animation:none!important;transition:none!important}}
+
+/* 私聊：保留校园的像素头像，用清爽的白色会话界面呈现消息。 */
+#mpRoot #mpChat{width:min(420px,calc(100vw - 32px));background:#fff;color:#202832;border:0;border-radius:12px;overflow:hidden;box-shadow:0 12px 36px rgba(9,18,27,.26)}
+#mpRoot #mpChat .mp-head{min-height:65px;padding:10px 14px;background:#fff;border-bottom:1px solid #e8edf0;gap:10px}
+#mpRoot #mpChatTitle{line-height:1.35}
+#mpRoot #mpChatTitle b{font-size:15px;color:#1f2a32}
+#mpRoot #mpChatTitle .mp-muted{font-size:11px;color:#52636e}
+#mpRoot #mpChat .mp-icon{color:#64747d}
+#mpRoot #mpChat .mp-icon:hover{color:#1c2b34}
+#mpRoot #mpChat .mp-avatar{width:34px;height:34px;background:#e8f1ed;outline:0;border-radius:7px}
+#mpRoot #mpChat .mp-avatar:hover{outline:2px solid #58a985}
+#mpRoot #mpChat #mpChatAvatar .mp-avatar{width:39px;height:39px}
+#mpRoot .mp-chat-history{flex:none;background:transparent;border:0;color:#326f5a;font-size:12px;font-weight:700;padding:6px 4px}
+#mpRoot .mp-chat-history:hover{text-decoration:underline}
+#mpRoot #mpChatLog{background:#fff;padding:16px 15px;scrollbar-color:#cad6d1 transparent}
+#mpRoot #mpChatLog .mp-empty{color:#63756d;padding:36px 12px}
+#mpRoot .mp-chat-separator{text-align:center;color:#6d7d78;font-size:11px;margin:11px 0 19px;font-variant-numeric:tabular-nums}
+#mpRoot .mp-message{align-items:flex-start;gap:9px;margin:0 0 16px}
+#mpRoot .mp-message-content{max-width:min(76%,290px);min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+#mpRoot .mp-message.mine .mp-message-content{align-items:flex-end}
+#mpRoot .mp-bubble{max-width:100%;padding:9px 12px;border:1px solid #e1e8e5;border-radius:3px 12px 12px 12px;background:#fff;color:#26333b;line-height:1.55;font-size:13px;box-shadow:0 1px 2px rgba(20,45,35,.05)}
+#mpRoot .mp-message.mine .mp-bubble{border-color:#b6e0c6;background:#d9f4df;border-radius:12px 3px 12px 12px;color:#213d2c}
+#mpRoot .mp-message small{color:#63736d;font-size:10px;margin-top:4px;font-variant-numeric:tabular-nums}
+#mpRoot #mpChatForm{padding:11px 12px;background:#fff;border-top:1px solid #e8edf0;align-items:flex-end}
+#mpRoot #mpChatInput{background:#f5f7f6;border:1px solid #dce5df;color:#25312b;min-height:40px;border-radius:8px}
+#mpRoot #mpChatInput::placeholder{color:#65776e}
+#mpRoot #mpChatForm .mp-primary{min-height:40px;border:0;border-radius:8px;background:#248254;color:#fff;padding:8px 16px}
+#mpRoot #mpChatForm .mp-primary:hover{background:#176a43}
+#mpRoot #mpChatError{background:#fff;color:#a42c36}
+
+/* 动态 3D 肖像使用透明画布，手势直接控制视角。 */
+#mpRoot .mp-look-preview{display:block;width:100%;padding:0;background:transparent;border:0}
+#mpRoot .mp-avatar-viewer{position:relative;width:100%;overflow:hidden;background:transparent;touch-action:none;cursor:grab;user-select:none;outline-offset:3px}
+#mpRoot .mp-avatar-viewer.dragging{cursor:grabbing}
+#mpRoot .mp-avatar-stage{width:100%;height:360px;position:relative;overflow:hidden}
+#mpRoot .mp-avatar-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none}
+#mpRoot .mp-look-preview .mp-avatar-stage{height:420px}
+#mpRoot .mp-look-preview .mp-avatar-canvas{width:100%;height:100%;image-rendering:auto}
+#mpRoot .mp-avatar-floor{position:absolute;left:50%;bottom:17px;width:116px;height:19px;transform:translateX(-50%);border-radius:50%;background:rgba(15,32,30,.24);filter:blur(9px);pointer-events:none}
+#mpRoot .mp-avatar-loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--mp-muted);font-size:12px}
+#mpRoot .mp-avatar-viewer-controls{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--mp-muted);font-size:11px;text-align:center}
+#mpRoot .mp-avatar-viewer-controls button{border:1px solid var(--mp-line);border-radius:50%;width:29px;height:29px;flex:none;background:transparent;color:var(--mp-ink);font-size:18px;line-height:1}
+#mpRoot .mp-avatar-viewer-controls button:hover{border-color:var(--mp-gold);color:var(--mp-gold)}
+#mpRoot .mp-his-jump{display:block;margin:8px 0 10px 6px;font-size:12px}
+
+#mpRoot #mpProfileShade:has(#mpProfile.mp-other-profile){background:rgba(8,15,17,.38)}
+#mpRoot #mpProfile.mp-other-profile{width:min(440px,100%);background:rgba(14,27,29,.34);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);color:#f5faf8;border:1px solid rgba(226,255,246,.3);border-radius:15px;box-shadow:0 20px 48px rgba(4,13,15,.3)}
+#mpRoot #mpProfile.mp-other-profile .mp-head{border-color:rgba(232,255,245,.25)}
+#mpRoot #mpProfile.mp-other-profile .mp-title{color:#e8fff2}
+#mpRoot #mpProfile.mp-other-profile .mp-icon,#mpRoot #mpProfile.mp-other-profile .mp-muted,#mpRoot #mpProfile.mp-other-profile p,#mpRoot #mpProfile.mp-other-profile .mp-public-info dt{color:#e0eee9}
+#mpRoot #mpProfile.mp-other-profile .mp-public-info{border-color:rgba(232,255,245,.28)}
+#mpRoot #mpProfile.mp-other-profile .mp-public-info>div{border-color:rgba(232,255,245,.2)}
+#mpRoot #mpProfile.mp-other-profile .mp-avatar-viewer-controls{color:#f1faf5}
+#mpRoot #mpProfile.mp-other-profile .mp-avatar-viewer-controls button{color:#f1faf5;border-color:rgba(232,255,245,.7);background:rgba(7,22,20,.25)}
+#mpRoot #mpProfile.mp-other-profile .mp-tag{background:rgba(208,245,221,.18);border-color:rgba(208,245,221,.45);color:#f2fff6}
+#mpRoot #mpProfile.mp-other-profile .mp-primary{background:#237d59;border:0;color:#fff}
+@media(max-width:650px){#mpRoot #mpChat{right:8px;top:70px;bottom:8px;width:calc(100vw - 16px);max-height:none}#mpRoot #mpChat .mp-head{gap:7px}#mpRoot .mp-chat-history{font-size:11px}#mpRoot #mpProfile.mp-other-profile{max-height:calc(100vh - 20px)}}
+
+/* Pixel3D 全身查看器在本人及他人主页使用相同的控制。 */
+#mpRoot .mp-pixel3d-host{width:100%;min-width:0;--p3d-h:360px}
+/* 形象设置面板比整页短，预览压到 320 高，按钮行不用滚动就能看见。 */
+#mpRoot #mpLook .mp-pixel3d-host{--p3d-h:320px}
+#mpRoot #mpProfile.mp-other-profile .mp-pixel3d-host{--p3d-h:300px}
+#mpRoot .mp-pixel3d-host .p3d-cv{height:var(--p3d-h)!important}

@@ -1,0 +1,525 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>cmp</title>
+<style>html,body{margin:0;background:#1b1f27;color:#c9d4e2;font:12px Consolas,monospace}
+h2{font-size:12px;color:#8fb6d9;font-weight:normal;margin:10px 0 4px 12px}
+.row{display:flex;gap:6px;padding-left:12px}.cell{text-align:center}
+canvas{display:block;image-rendering:pixelated;background:#3d752d}
+.lab{opacity:.65;margin-top:2px}</style></head><body>
+<div class="row" id="r"></div>
+<script>const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const wrapi = (i, m) => ((i % m) + m) % m;
+
+function mkCanvas(w, h) {
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  return c;
+}
+function px(g, x, y, w, h, col) {
+  g.fillStyle = col;
+  g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+}
+function makeRng(seed) {                     // 确定性随机，保证每次刷新一致
+  let s = seed >>> 0;
+  return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+}
+function circlePx(g, cx, cy, r, col) {
+  g.fillStyle = col;
+  for (let y = -r; y <= r; y++) {
+    const t = r * r - y * y;
+    if (t < 0) continue;
+    const dx = Math.floor(Math.sqrt(t));
+    g.fillRect(Math.round(cx - dx), Math.round(cy + y), dx * 2 + 1, 1);
+  }
+}
+function ellipsePx(g, cx, cy, rx, ry, col) {
+  g.fillStyle = col;
+  for (let y = -ry; y <= ry; y++) {
+    const t = 1 - (y * y) / (ry * ry);
+    if (t <= 0) continue;
+    const dx = Math.floor(rx * Math.sqrt(t));
+    g.fillRect(Math.round(cx - dx), Math.round(cy + y), dx * 2 + 1, 1);
+  }
+}
+function poly(g, pts, col) {
+  g.fillStyle = col;
+  g.beginPath();
+  g.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
+  g.closePath();
+  g.fill();
+}
+function flipH(src) {                        // 水平镜像（右侧角色 = 左侧镜像）
+  const c = mkCanvas(src.width, src.height);
+  const g = c.getContext("2d");
+  g.translate(src.width, 0);
+  g.scale(-1, 1);
+  g.drawImage(src, 0, 0);
+  return c;
+}
+function speckle(g, x, y, w, h, col, count, rng) {   // 颗粒 / 磨损 / 灰尘
+  g.fillStyle = col;
+  for (let i = 0; i < count; i++) g.fillRect(x + ((rng() * w) | 0), y + ((rng() * h) | 0), 1, 1);
+}
+
+/* ---------------------------------------------------------
+   1.1 颜色运算 —— 真实感的核心
+   统一光源要求：受光面偏暖、背光面偏冷，
+   而不是简单叠一层半透明黑。
+   --------------------------------------------------------- */
+const _hc = Object.create(null);
+function rgb(hex) {
+  let v = _hc[hex];
+  if (v === undefined) {
+    v = [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+    _hc[hex] = v;
+  }
+  return v;
+}
+function rgba(hex, a) {
+  const c = rgb(hex);
+  return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")";
+}
+/* k > 0 提亮（偏暖）；k < 0 压暗（偏冷） */
+function shade(hex, k) {
+  const c = rgb(hex);
+  let r, g, b;
+  if (k >= 0) {
+    r = c[0] + (255 - c[0]) * k;
+    g = c[1] + (255 - c[1]) * (k * 0.93);
+    b = c[2] + (255 - c[2]) * (k * 0.80);
+  } else {
+    const t = -k;
+    r = c[0] * (1 - t * 1.08);
+    g = c[1] * (1 - t * 1.00);
+    b = c[2] * (1 - t * 0.86);
+  }
+  return "rgb(" + (r | 0) + "," + (g | 0) + "," + (b | 0) + ")";
+}
+function mix(hexA, hexB, t) {
+  const A = rgb(hexA), B = rgb(hexB);
+  return "rgb(" + ((A[0] + (B[0] - A[0]) * t) | 0) + ","
+                 + ((A[1] + (B[1] - A[1]) * t) | 0) + ","
+                 + ((A[2] + (B[2] - A[2]) * t) | 0) + ")";
+}
+
+/* ---------------------------------------------------------
+   1.2 值噪声 —— 让地面出现"成片的深浅"而不是纯随机噪点
+   --------------------------------------------------------- */
+function makeNoise(seed, gw, gh) {
+  const r = makeRng(seed), v = new Float32Array(gw * gh);
+  for (let i = 0; i < v.length; i++) v[i] = r();
+  return { gw, gh, v };
+}
+function noiseAt(n, x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  let tx = x - xi, ty = y - yi;
+  tx = tx * tx * (3 - 2 * tx);
+  ty = ty * ty * (3 - 2 * ty);
+  const at = (a, b) => n.v[wrapi(b, n.gh) * n.gw + wrapi(a, n.gw)];
+  const v00 = at(xi, yi), v10 = at(xi + 1, yi), v01 = at(xi, yi + 1), v11 = at(xi + 1, yi + 1);
+  return (v00 * (1 - tx) + v10 * tx) * (1 - ty) + (v01 * (1 - tx) + v11 * tx) * ty;
+}
+function fbm2(nA, nB, x, y) {               // 双倍频，返回 0..1
+  return noiseAt(nA, x, y) * 0.62 + noiseAt(nB, x, y) * 0.38;
+}
+
+/* ---------------------------------------------------------
+   1.3 阴影系统
+   --------------------------------------------------------- */
+/* 软阴影：多层同心椭圆，做出像素风的柔和边缘 */
+function shadowBlob(g, cx, cy, rx, ry, alpha, layers) {
+  const L = layers || 4, step = alpha / L;
+  for (let i = L; i >= 1; i--) {
+    const t = i / L;
+    ellipsePx(g, cx, cy, Math.max(1, Math.round(rx * t)), Math.max(1, Math.round(ry * t)),
+      "rgba(14,18,28," + step.toFixed(3) + ")");
+  }
+}
+/* 方向性投影：矩形 footprint 朝背离光源方向拉伸出的凸包。
+   多层不同拉伸量叠加 → 靠物体处最深，向外渐淡。 */
+function shadowQuad(g, x0, y0, x1, y1, dx, dy, alpha, layers) {
+  const L = layers || 4, step = alpha / L;
+  for (let i = L; i >= 1; i--) {
+    const t = i / L, ox = dx * t, oy = dy * t;
+    poly(g, [[x0, y0], [x1, y0], [x1 + ox, y0 + oy], [x1 + ox, y1 + oy], [x0 + ox, y1 + oy], [x0, y1]],
+      "rgba(14,18,28," + step.toFixed(3) + ")");
+  }
+}
+/* 接触阴影：物体与地面交接处那条最深的窄带 */
+function contactBand(g, x0, x1, y, h, alpha) {
+  const w = x1 - x0, e = w * 0.16;
+  px(g, x0, y, w, h, "rgba(14,18,28," + alpha + ")");
+  px(g, x0, y, e, h, "rgba(14,18,28," + (alpha * 0.45) + ")");
+  px(g, x1 - e, y, e, h, "rgba(14,18,28," + (alpha * 0.45) + ")");
+}
+/* =========================================================
+   5. 角色：四向 × 两帧
+   ---------------------------------------------------------
+   光同样从左上来：脸的左侧受光、右侧压暗；
+   黄色书包只在背向与侧向视角可见。
+   ========================================================= */
+const CH_W = 18, CH_H = 30, CH_AX = 9, CH_AY = 27;
+const SKIN = "#e3b187", SKIN_D = "#c99068", HAIR = "#2b2320",
+      COAT = "#3f6ea8", PANT = "#3a3f4a", SHOE = "#232529", PACK = "#b4552f";
+
+function makeChar(dir, step) {
+  const c = mkCanvas(CH_W, CH_H), g = c.getContext("2d");
+  const cx = CH_AX, gy = CH_AY;
+  const bob = step ? 1 : 0;                 // 走动时上身轻微起伏
+
+  if (dir === "down" || dir === "up") {
+    const hy = 2 + bob;
+    /* 头 */
+    px(g, cx - 4, hy, 8, 8, dir === "up" ? HAIR : SKIN);
+    if (dir === "down") {
+      px(g, cx - 4, hy + 6, 8, 1, SKIN_D);                     // 下颌阴影
+      px(g, cx - 3, hy + 4, 1, 1, "#241f1c");                  // 双眼
+      px(g, cx + 2, hy + 4, 1, 1, "#241f1c");
+      px(g, cx - 2, hy + 6, 4, 1, shade(SKIN, -0.22));         // 嘴
+      px(g, cx - 4, hy + 4, 1, 2, shade(SKIN, 0.18));          // 左颊受光
+    }
+    px(g, cx - 4, hy, 8, 3, HAIR);                             // 头发
+    px(g, cx - 4, hy, 8, 1, shade(HAIR, 0.30));                // 头顶受光
+    px(g, cx - 4, hy + 3, 1, 5, HAIR);                         // 两侧鬓角
+    px(g, cx + 3, hy + 3, 1, 5, shade(HAIR, -0.30));
+    px(g, cx - 4, hy + 8, 8, 1, "rgba(14,18,28,0.22)");        // 头在肩上的投影
+
+    /* 躯干 */
+    const ty = 10 + bob;
+    px(g, cx - 5, ty, 10, 8, COAT);
+    px(g, cx - 5, ty, 2, 8, shade(COAT, 0.18));                // 左侧受光
+    px(g, cx + 3, ty, 2, 8, shade(COAT, -0.32));               // 右侧背光
+    px(g, cx - 5, ty, 10, 1, shade(COAT, 0.28));               // 肩线
+    px(g, cx - 5, ty + 7, 10, 1, shade(COAT, -0.40));          // 下摆
+    if (dir === "down") {
+      px(g, cx, ty + 1, 1, 6, shade(COAT, -0.46));             // 前襟拉链
+      px(g, cx - 5, ty + 5, 10, 1, "rgba(0,0,0,0.16)");
+    } else {
+      px(g, cx - 4, ty + 1, 8, 6, PACK);                       // 书包
+      px(g, cx - 4, ty + 1, 8, 1, shade(PACK, 0.26));
+      px(g, cx + 2, ty + 1, 2, 6, shade(PACK, -0.34));
+      px(g, cx - 2, ty, 4, 1, "rgba(0,0,0,0.30)");             // 背带
+    }
+
+    /* 手臂：走动时前后摆 */
+    const a1 = ty + 1 + (step ? 1 : 0), a2 = ty + 1 + (step ? 0 : 1);
+    px(g, cx - 7, a1, 2, 7, shade(COAT, -0.06));
+    px(g, cx - 7, a1, 1, 7, shade(COAT, 0.24));
+    px(g, cx - 7, a1 + 7, 2, 2, SKIN);
+    px(g, cx + 5, a2, 2, 7, shade(COAT, -0.24));
+    px(g, cx + 5, a2 + 7, 2, 2, SKIN_D);
+
+    /* 腿脚：抬起的一侧离地 1px */
+    const legY = 19 + bob;
+    const lift = step ? 1 : 0;
+    px(g, cx - 4, legY, 3, 7 - lift, PANT);
+    px(g, cx + 1, legY, 3, 7, PANT);
+    px(g, cx - 4, legY, 1, 7 - lift, shade(PANT, 0.24));
+    px(g, cx + 3, legY, 1, 7, shade(PANT, -0.28));
+    px(g, cx - 5, gy - 2 - lift, 4, 2, SHOE);
+    px(g, cx + 1, gy - 2, 4, 2, SHOE);
+    px(g, cx + 1, gy - 2, 4, 1, shade(SHOE, 0.30));
+  } else {
+    /* 侧向：面向 -x 绘制，向右时整体镜像 */
+    const hy = 2 + bob;
+    px(g, cx - 4, hy, 8, 8, SKIN);
+    px(g, cx - 4, hy, 8, 3, HAIR);
+    px(g, cx - 4, hy, 8, 1, shade(HAIR, 0.30));
+    px(g, cx + 1, hy + 3, 3, 5, HAIR);                         // 后脑
+    px(g, cx + 3, hy + 3, 1, 5, shade(HAIR, -0.34));
+    px(g, cx - 2, hy + 4, 1, 1, "#241f1c");                    // 眼
+    px(g, cx - 4, hy + 4, 1, 2, shade(SKIN, 0.18));            // 面部受光
+    px(g, cx - 4, hy + 6, 3, 1, shade(SKIN, -0.20));           // 下颌
+    px(g, cx - 4, hy + 8, 8, 1, "rgba(14,18,28,0.22)");
+
+    const ty = 10 + bob;
+    px(g, cx + 3, ty + 1, 4, 7, PACK);                         // 背后的书包
+    px(g, cx + 6, ty + 1, 1, 7, shade(PACK, -0.36));
+    px(g, cx + 3, ty + 1, 4, 1, shade(PACK, 0.24));
+    px(g, cx - 3, ty, 7, 8, COAT);
+    px(g, cx - 3, ty, 2, 8, shade(COAT, 0.20));
+    px(g, cx + 2, ty, 2, 8, shade(COAT, -0.24));
+    px(g, cx - 3, ty, 7, 1, shade(COAT, 0.28));
+    px(g, cx - 3, ty + 7, 7, 1, shade(COAT, -0.40));
+    const aY = ty + 1 + (step ? 1 : 0);                        // 前臂摆动
+    px(g, cx - 4, aY, 2, 7, shade(COAT, 0.02));
+    px(g, cx - 4, aY, 1, 7, shade(COAT, 0.26));
+    px(g, cx - 4, aY + 7, 2, 2, SKIN);
+
+    const legY = 19 + bob, s = step ? 1 : 0;
+    px(g, cx - 4 + s * 2, legY, 3, 7, PANT);                   // 前腿
+    px(g, cx - 4 + s * 2, legY, 1, 7, shade(PANT, 0.26));
+    px(g, cx + 1 - s * 2, legY, 3, 7, PANT);                   // 后腿
+    px(g, cx + 3 - s * 2, legY, 1, 7, shade(PANT, -0.30));
+    px(g, cx - 5 + s * 2, gy - 2, 4, 2, SHOE);
+    px(g, cx + s % 2, gy - 2, 4, 2, shade(SHOE, -0.10));
+    px(g, cx - 5 + s * 2, gy - 2, 4, 1, shade(SHOE, 0.26));
+  }
+
+  /* 脚下接触阴影：让角色"贴在地上" */
+  ellipsePx(g, cx + 1, gy + 1, 7, 2, "rgba(14,18,28,0.30)");
+  ellipsePx(g, cx + 1, gy + 1, 4, 1, "rgba(14,18,28,0.30)");
+
+  return dir === "right" ? flipH(c) : c;
+}
+
+const _chars = Object.create(null);
+function charSprite(dir, step) {
+  const k = dir + step;
+  if (!_chars[k]) _chars[k] = makeChar(dir, step);
+  return _chars[k];
+}
+/* =========================================================
+   人物重画候选（18×30，尺寸与锚点与现版逐字相同：CH_W/H/AX/AY）
+   ---------------------------------------------------------
+   现版（demo 1051-1167）对着代码数出来的四个问题：
+     1) 头身比 3.4（头 8px / 全身 27px）—— Q 版娃娃。
+     2) 结构是"一摞方块"：躯干 = 一个 10×8 矩形，手臂/腿都是直条 ——
+        没有肩斜、肘、膝、腰。
+     3) 全画面只有它没有 1px 深色收边（楼有棱线、树有暗底叶簇、灌木有背光球）
+        → 剪影在草地/路面上发虚。
+     4) 明暗只有左右二分（左亮右暗），没有顶光、没有遮蔽（下巴/腋下/胯下）。
+     ＋ 骨架有一处 1px 空洞：躯干下摆画到 y17、裤腿从 y19 起笔，**第 18 行是透明的**
+       —— 腰上有一道看得见背景的缝（sprite.py 的 hole 探针会实测出来）。
+
+   ⚠️ 关于"头身比"的取舍：真人 7.5 头身，但 30px 的画布里头一缩小，脸就没了。
+      540 个像素撑不起写实，只能撑起"可读的真人剪影 + 真实的重心与节拍"。
+      所以这里给两档，用眼睛选：
+        A 档 头 6px（4.3 头身）—— 成年人骨架，但脸只剩 4 行（眼/嘴/下颌）
+        B 档 头 8px（3.4 头身）—— 与现版同比例，脸有 6 行（眼/鼻/嘴/下颌都在）
+      两档共用同一套工艺：分关节 / 自动描边 / 顶光+遮蔽 / 骨盆起伏。
+   ========================================================= */
+const A2 = {
+  skin:  "#e9bb92", skinD: "#c4906a", skinL: "#f7d3ae",
+  hair:  "#241d1a", hairL: "#3d3029", hairD: "#150f10",
+  coat:  "#3f6ea8", coatD: "#2b4d76", coatL: "#5d8cc4",
+  pant:  "#454c5a", pantD: "#2b303a", pantL: "#5c6474",   // 比现版提亮：描边(k=0.45)才读得出来
+  shoe:  "#26282e", shoeL: "#454a54",
+  pack:  "#b4552f", packD: "#8a3f22", packL: "#d1704a"
+};
+
+/* --- 自动描边：给精灵四周的透明像素补 1px 收边 ---------------------------
+   ⚠️ 不用"纯黑描边"（像素画里太硬、显脏），而是**取相邻实心像素的颜色压暗**
+   —— 这叫彩色描边：头发的边 = 更黑的头发、袖子的边 = 更深的蓝。剪影立刻清楚。
+   一次调用可给任何精灵加收边；给树/灌木加是同一行代码。
+   ⚠️ 必须画在接地影**之前**，否则影子会被描一圈边。
+   ⚠️⚠️ 必须先把变换复位成单位阵 —— demo 的 flipH() 用 translate+scale 画完后
+   **不 restore**，返回的画布 context 上永久留着 translate(W,0) scale(-1,1)。
+   往这种画布上 fillRect(x,y,1,1) 会落到 W-1-x：描边跑到另一侧、原侧留空 1px，
+   镜像方向的精灵会多出"空格 + 外挂 1px"的鬼影。下面这行是必须的，不是防御性代码。 */
+function outlineSprite(c, k) {
+  const g = c.getContext("2d"), W = c.width, H = c.height;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  const d = g.getImageData(0, 0, W, H).data;
+  const src = (x, y) => (x >= 0 && y >= 0 && x < W && y < H && d[(y * W + x) * 4 + 3] > 40)
+    ? (y * W + x) * 4 : -1;
+  const NB = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const edge = [];
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (d[(y * W + x) * 4 + 3] > 40) continue;
+      for (let n = 0; n < 4; n++) {                 // 四邻即可：八邻会让四角鼓 1px
+        const j = src(x + NB[n][0], y + NB[n][1]);
+        if (j >= 0) { edge.push(x, y, j); break; }
+      }
+    }
+  }
+  for (let i = 0; i < edge.length; i += 3) {
+    const j = edge[i + 2];
+    g.fillStyle = "rgb(" + ((d[j] * k) | 0) + "," + ((d[j + 1] * k) | 0) + "," + ((d[j + 2] * k) | 0) + ")";
+    g.fillRect(edge[i], edge[i + 1], 1, 1);
+  }
+}
+
+/* =========================================================
+   参数化构建：HH = 头高（含发）。整个骨架由它推出来，改一处不散架。
+   ---------------------------------------------------------
+   纵向预算（画布 18×30，脚底线 gy = CH_AY = 27）：
+     y1 .. y1+HH-1   头
+     y1+HH           颈（1 行）
+     y1+HH+1         肩/躯干起
+     躯干 + 腿 平分剩下的行数（真人的肩-胯 ≈ 胯-脚底），鞋固定占 y25-26
+   bob 只抬"腰以上"：走路的真实构造是**骨盆起伏、脚不离地**。
+   现版是两帧整体平移（bob 直接加在全体），所以看着像"整块画在跳"。
+   ========================================================= */
+function buildChar(HH) {
+  const TOP = 1, SHOE_TOP = 25, cx = CH_AX, gy = CH_AY;
+  const NECK = TOP + HH, TOR = NECK + 1;
+  const bodyRows = SHOE_TOP - TOR;
+  const TORSO = Math.max(6, Math.round(bodyRows / 2));
+  const LEGT = TOR + TORSO, LEGR = SHOE_TOP - LEGT;          // 腿的行数（不含鞋）
+  const KNEE = LEGT + Math.max(2, Math.round(LEGR * 0.55));
+  const HW = HH >= 7 ? 8 : 7;                                // 头宽
+  const H2 = (HW - 1) >> 1;                                  // 头左右各伸出的像素数
+  const ARMR = Math.max(4, TORSO - 3);
+  const FACE = HH - 2;                                       // 脸的行数
+  const EYE = TOP + 2 + (FACE >= 5 ? 2 : 1);                 // 眼睛所在行
+
+  return function (dir, step) {
+    const c = mkCanvas(CH_W, CH_H), g = c.getContext("2d");
+    const P = (x, y, w, h, col) => { if (w > 0 && h > 0) px(g, x, y, w, h, col); };
+    const b = step ? 1 : 0;                                  // 骨盆起伏 1px
+    const HY = TOP + b;                                      // 头顶（腰以上整体上移）
+    const ty = TOR + b, ly = LEGT + b;                       // 躯干起 / 髋
+
+    /* ---------- 头 ---------- */
+    function head(face) {
+      P(cx - H2 + 1, HY, HW - 2, 1, A2.hairL);               // 发顶受光（顶光层）
+      P(cx - H2, HY + 1, HW, 1, A2.hair);
+      if (!face) {                                           // 背向：后脑 + 左棱受光
+        P(cx - H2, HY + 2, HW, HH - 2, A2.hair);
+        P(cx - H2, HY + 1, 1, HH - 1, A2.hairL);
+        P(cx + H2, HY + 1, 1, HH - 1, A2.hairD);
+        P(cx - 1, HY + 2, 2, 1, shade(A2.hair, 0.20));       // 发旋小高光（不是横贯亮带）
+        return;
+      }
+      P(cx - H2, HY + 2, HW, FACE, A2.skin);                 // 脸
+      P(cx - H2, HY + 2, 1, FACE, A2.skinL);                 // 左颊受光（光自左上）
+      P(cx + H2, HY + 2, 1, FACE, A2.skinD);                 // 右颊背光
+      P(cx - 2, EYE, 1, 1, A2.hairD);                        // 左眼
+      P(cx + 1, EYE, 1, 1, A2.hairD);                        // 右眼（间距 2px）
+      if (FACE >= 5) P(cx, EYE + 1, 1, 1, A2.skinD);         // 鼻影（脸够高才放得下）
+      P(cx - 1, TOP + HH - 2, 3, 1, shade(A2.skinD, -0.28)); // 嘴
+      P(cx - H2 + 1, TOP + HH - 1, HW - 2, 1, A2.skinD);     // 下颌收边
+    }
+    /* ---------- 躯干（胸宽 9 → 腰宽 7 → 衣摆） ---------- */
+    function torso(back) {
+      P(cx - 4, ty, 9, 1, A2.coatL);                         // 肩顶受光
+      const chest = Math.max(2, TORSO - 3);
+      P(cx - 4, ty + 1, 9, chest, A2.coat);                  // 胸
+      P(cx - 3, ty + 1 + chest, 7, TORSO - 1 - chest, A2.coat);   // 腰（左右各收 1px）
+      P(cx - 4, ty + 1, 2, TORSO - 1, A2.coatL);             // 左侧受光面
+      P(cx + 3, ty + 1, 1, TORSO - 1, A2.coatD);             // 右侧背光面
+      P(cx - 4, ty + chest, 9, 1, "rgba(0,0,0,0.13)");       // 胸腰分界
+      P(cx - 3, ty + TORSO - 1, 7, 1, A2.coatD);             // 衣摆（压实腰线，与裤头对齐）
+      if (back) {
+        P(cx - 3, ty + 1, 7, TORSO - 4, A2.pack);            // 书包
+        P(cx - 3, ty + 1, 7, 1, A2.packL);
+        P(cx + 2, ty + 1, 1, TORSO - 4, A2.packD);
+        P(cx - 2, ty - 1, 5, 1, "rgba(0,0,0,0.26)");         // 背带压肩
+      } else {
+        P(cx, ty + 1, 1, TORSO - 2, A2.coatD);               // 前襟
+        P(cx - 2, ty + chest + 2, 4, 1, A2.coatD);           // 口袋线
+      }
+    }
+    /* ---------- 手臂（2px，肘内收 1px），左右反相摆动 ---------- */
+    function arms(sw, back) {
+      const aL = ty + 1 + sw, aR = ty + 1 + (sw ? 0 : 1);
+      P(cx - 6, aL, 2, ARMR, back ? A2.coat : A2.coatL);     // 左臂（受光侧）
+      P(cx - 6, aL + ((ARMR / 2) | 0), 1, 1, A2.coatD);      // 肘
+      P(cx - 6, aL + ARMR, 2, 2, A2.skin);                   // 左手
+      P(cx + 5, aR, 2, ARMR, A2.coatD);                      // 右臂（背光侧）
+      P(cx + 6, aR + ((ARMR / 2) | 0), 1, 1, A2.hairD);      // 肘
+      P(cx + 5, aR + ARMR, 2, 2, A2.skinD);                  // 右手
+    }
+    /* ---------- 腿（大腿 → 膝 → 小腿 → 鞋）。抬脚帧只抬脚、不抬人 ---------- */
+    function legs(scissor) {
+      const up = scissor ? 1 : 0;
+      const thL = KNEE - ly - up, shL = SHOE_TOP - KNEE;
+      P(cx - 3, ly, 3, thL, A2.pant);                        // 左大腿（抬起：短 1px）
+      P(cx - 3, ly, 1, thL, A2.pantL);
+      P(cx - 3, ly, 3, 1, "rgba(0,0,0,0.18)");               // 胯下遮蔽
+      P(cx - 3, KNEE, 3, shL, A2.pant);                      // 左小腿
+      P(cx - 2, KNEE, 1, 1, A2.pantD);                       // 膝
+      P(cx - 4, SHOE_TOP - up, 4, 2, A2.shoe);               // 鞋（比腿宽 1px：脚是横的）
+      P(cx - 4, SHOE_TOP - up, 4, 1, A2.shoeL);
+      const thR = KNEE - ly;                                 // 右腿（踩实：长 1px）
+      P(cx + 1, ly, 3, thR, A2.pant);
+      P(cx + 3, ly, 1, thR, A2.pantD);
+      P(cx + 1, ly, 3, 1, "rgba(0,0,0,0.18)");
+      P(cx + 1, KNEE + 1, 3, SHOE_TOP - KNEE - 1, A2.pant);
+      P(cx + 1, SHOE_TOP, 4, 2, A2.shoe);
+      P(cx + 1, SHOE_TOP, 4, 1, A2.shoeL);
+    }
+    /* ---------- 侧视：额头-鼻-下巴的台阶 + 迈步的前后腿交叉 ---------- */
+    function side() {
+      const up = step ? 1 : 0;
+      P(cx - H2 + 1, HY, HW - 2, 1, A2.hairL);
+      P(cx - H2, HY + 1, HW, 1, A2.hair);
+      P(cx - H2, HY + 2, HW, HH - 2, A2.skin);
+      P(cx + 1, HY + 2, 3, HH - 2, A2.hair);                 // 后脑
+      P(cx + H2, HY + 2, 1, HH - 2, A2.hairD);
+      P(cx - H2, HY + 2, H2 + 1, 1, A2.hair);                // 刘海压额（额头有台阶）
+      P(cx - 2, EYE, 1, 1, A2.hairD);                        // 眼
+      P(cx - H2, EYE - 1, 1, 1, A2.skinL);                   // 额头受光
+      P(cx - H2, EYE + 1, 1, 1, A2.skinL);                   // 鼻尖受光（侧脸第二个台阶）
+      P(cx - H2, TOP + HH - 2, 2, 1, A2.skinD);              // 下巴
+      P(cx - 3, ty, 6, 1, A2.coatL);                         // 肩顶
+      P(cx - 3, ty + 1, 6, TORSO - 1, A2.coat);              // 侧视厚度 6px（正/背面 9px）
+      P(cx - 3, ty + 1, 1, TORSO - 1, A2.coatL);             // 胸前受光
+      P(cx + 2, ty + 1, 1, TORSO - 1, A2.coatD);             // 后背背光
+      P(cx - 3, ty + TORSO - 1, 6, 1, A2.coatD);             // 衣摆
+      P(cx + 1, ty + 1, 3, TORSO - 3, A2.pack);              // 书包（侧视露在背后）
+      P(cx + 3, ty + 1, 1, TORSO - 3, A2.packD);
+      P(cx + 1, ty + 1, 3, 1, A2.packL);
+      P(cx - 4, ty + 2 + up, 2, ARMR, A2.coatL);             // 前臂摆到身前
+      P(cx - 4, ty + 2 + up + ARMR, 2, 2, A2.skin);          // 手
+      const s = up ? 2 : 0, th = KNEE - ly;
+      P(cx - 3 + s, ly, 3, th, A2.pant);                     // 前腿（迈向前）
+      P(cx - 3 + s, ly, 1, th, A2.pantL);
+      P(cx + 1 - s, ly, 3, th + 1, A2.pant);                 // 后腿（蹬地，长 1px）
+      P(cx + 3 - s, ly, 1, th + 1, A2.pantD);
+      P(cx - 3 + s, KNEE, 3, SHOE_TOP - KNEE, A2.pant);
+      P(cx + 1 - s, KNEE + 1, 3, SHOE_TOP - KNEE - 1, A2.pant);
+      P(cx - 4 + s, SHOE_TOP, 4, 2, A2.shoe);                // 前脚
+      P(cx - 4 + s, SHOE_TOP, 4, 1, A2.shoeL);
+      P(cx + s, SHOE_TOP, 4, 2, A2.shoe);                    // 后脚
+      P(cx + s, SHOE_TOP, 4, 1, A2.shoeL);
+    }
+
+    if (dir === "up")        { head(false); torso(true);  arms(step ? 1 : 0, true);  legs(step); }
+    else if (dir === "down") { head(true);  torso(false); arms(step ? 1 : 0, false); legs(step); }
+    else                     { side(); }
+
+    /* --- 后处理：镜像 → 描边 → 接地影（唯一一条出口）---
+       ⚠️ 镜像后必须复位变换（flipH 的 translate+scale 留在 context 上）：
+       否则描边和接地影都会被**再镜像一次** —— 影子的偏移方向会反，
+       本来朝右下的接地影会跑到左下（demo 现版的朝右精灵就有这个 2px 反向）。 */
+    let out = c;
+    if (dir === "right") { out = flipH(c); out.getContext("2d").setTransform(1, 0, 0, 1, 0, 0); }
+    outlineSprite(out, 0.45);
+    /* 接地影：朝右下（与树/楼同向）。⚠️ 必须在描边之后画 —— 否则影子会被描一圈边。
+       现版是一条 7×2 的硬边椭圆；换成 shadowBlob 三层衰减，边缘才有"渗进地面"的过渡。 */
+    shadowBlob(out.getContext("2d"), cx + 3, gy + 2, 8, 2, 0.34, 3);
+    return out;
+  };
+}
+const makeCharA = buildChar(6);      // A 档：头 6px（4.3 头身）
+const makeCharB = buildChar(8);      // B 档：头 8px（3.4 头身，与现版同比例）
+</script>
+<script>
+var IMG={},WANT=['na_ninja.png'],load=0;
+function go(){
+  var S=5,W=116,H=104;
+  function scene(img,fh,fw,label){
+    var cv=document.createElement('canvas');cv.width=W*S;cv.height=H*S;
+    var g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+    function R(x,y,w,h,c){g.fillStyle=c;g.fillRect(x*S,y*S,w*S,h*S);}
+    R(0,0,W,H,'#d2c9b4');
+    for(var f=1;f<4;f++) R(0,f*34,W,1,'#b3ab97');
+    R(0,0,W,2,'#e2dac6');
+    [[8,20],[80,20]].forEach(function(w){
+      R(w[0]-1,w[1]-1,28,26,'#c0b9a6');R(w[0],w[1],26,24,'#2c3746');
+      R(w[0]+2,w[1]+2,22,4,'#a8c8e0');R(w[0]+2,w[1]+14,22,9,'#7e9fbe');
+      R(w[0],w[1]+24,26,2,'#e2dac6');});
+    R(56,48,38,3,'#b3ab97');R(42,50,36,46,'#5a3f2a');R(42,50,36,2,'#7a5a3f');
+    if(img) g.drawImage(img,(58-fw/2)*S,(96-fh)*S,fw*S,fh*S);
+    var b=document.createElement('div');b.className='cell';b.appendChild(cv);
+    var L=document.createElement('div');L.className='lab';L.innerHTML=label;
+    b.appendChild(L);return b;
+  }
+  var r=document.getElementById('r');
+  var A=makeCharA('down',0);
+  r.appendChild(scene(A,30,18,'<b>A 档</b><br>27px = 门 65%'));
+  var src=IMG.na_ninja, x0=0,y0=16*3;                 /* 第 4 行 = 朝下行走 */
+  var nat=mkCanvas(16,16),ng=nat.getContext('2d');
+  ng.imageSmoothingEnabled=false;ng.drawImage(src,x0,y0,16,16,0,0,16,16);
+  r.appendChild(scene(nat,16,16,'ninja 原大<br><b>16px = 门 36%</b>'));
+  var up=mkCanvas(18,27),ug=up.getContext('2d');
+  ug.imageSmoothingEnabled=false;ug.drawImage(src,x0,y0,16,16,0,0,18,27);
+  r.appendChild(scene(up,27,18,'ninja 拉到 27px<br><b>1.69× 非整数</b>'));
+  document.documentElement.setAttribute('data-x','nat='+src.naturalWidth+'x'+src.naturalHeight
+    +' | A高27 vs ninja16 比值=门高65%→'+(16/44*100).toFixed(0)+'%');
+}
+WANT.forEach(function(n,i){var im=new Image();im.onload=function(){IMG[n.replace('.png','')]=im;if(++load===WANT.length)go();};
+ im.onerror=function(){document.documentElement.setAttribute('data-x','IMG FAIL '+n);};im.src=n;});
+</script></body></html>

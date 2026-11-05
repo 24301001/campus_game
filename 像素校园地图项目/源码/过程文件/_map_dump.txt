@@ -1,0 +1,163 @@
+RENDER 2400x1350
+PPX=180.00000000045 PPY=180
+=== SHAPE MAJORITY COLOR ===
+#0 sp xml=scheme:bg1 maj=gray(34) x=5.7583 y=5.0021 w=1.1514 h=0.7792  第九教学楼
+#1 sp xml=#00B050 maj=green(36) x=4.6063 y=5.0021 w=0.4007 h=0.7785  
+#2 sp xml=#FF0000 maj=red(35) x=8.8965 y=2.6035 w=0.6604 h=1.0618  篮球场
+#3 sp xml=scheme:accent1 maj=blue(36) x=7.0104 y=2.6035 w=0.6972 h=1.0618  
+#4 sp xml=#00B050 maj=green(36) x=4.6056 y=4.0208 w=1.1528 h=0.7799  
+#5 sp xml=scheme:bg1 maj=gray(33) x=4.6056 y=3.0889 w=1.1521 h=0.5764  思源楼
+#6 sp xml=scheme:bg1 maj=gray(33) x=5.8833 y=3.2215 w=0.9486 h=0.4437  思源东楼
+#7 sp xml=scheme:bg1 maj=gray(34) x=5.8833 y=2.6035 w=0.9486 h=0.4854  科学会堂
+#8 sp xml=#00B050 maj=green(36) x=4.6056 y=2.5688 w=1.1528 h=0.4431  
+#9 sp xml=scheme:bg1 maj=gray(31) x=7.8861 y=2.6035 w=0.8931 h=1.0618  图书馆
+#10 sp xml=scheme:bg1 maj=gray(33) x=5.8833 y=4.0208 w=0.6618 h=0.4437  第七教学楼
+#11 sp xml=scheme:bg1 maj=gray(35) x=6.6097 y=4.0208 w=0.5486 h=0.7806  第五教学楼
+#12 sp xml=#00B050 maj=green(36) x=5.8833 y=4.4993 w=0.6618 h=0.3014  
+#13 sp xml=#00B050 maj=green(36) x=7.4597 y=4.0208 w=1.3188 h=0.4437  
+#14 sp xml=scheme:bg1 maj=gray(32) x=7.459 y=4.5486 w=1.3403 h=0.2903  宿舍
+#15 sp xml=scheme:bg1 maj=gray(32) x=7.4597 y=4.9229 w=1.3403 h=0.2604  红果园餐厅
+#16 sp xml=scheme:bg1 maj=gray(35) x=7.4597 y=5.2674 w=1.3403 h=0.2653  宿舍
+#17 sp xml=scheme:bg1 maj=gray(34) x=7.459 y=5.7222 w=0.6611 h=0.4257  宿舍
+#18 sp xml=scheme:bg1 maj=gray(34) x=9.025 y=4.0208 w=1.6951 h=0.6118  逸夫楼
+#19 sp xml=scheme:bg1 maj=gray(30) x=9.025 y=4.8007 w=0.9708 h=0.3007  电气工程楼
+#20 sp xml=scheme:bg1 maj=gray(27) x=9.025 y=5.2319 w=0.9708 h=0.3007  机械实验馆
+#21 sp xml=scheme:bg1 maj=gray(34) x=10.0347 y=4.8014 w=0.6854 h=0.7312  机械楼
+#22 sp xml=scheme:bg1 maj=gray(33) x=10.9667 y=4.0208 w=1.0764 h=0.6118  工程训练楼
+#23 sp xml=scheme:bg1 maj=gray(31) x=10.9667 y=4.8007 w=1.1514 h=0.7319  光波楼
+#24 sp xml=scheme:bg1 maj=gray(32) x=7.8861 y=1.7146 w=0.8931 h=0.5757  18宿舍楼
+#25 sp xml=scheme:bg1 maj=gray(34) x=7.8854 y=0.9646 w=0.8931 h=0.5757  学生1食堂
+#26 sp xml=scheme:bg1 maj=gray(32) x=7.8854 y=0.3319 w=0.8931 h=0.4583  16宿舍楼
+#27 sp xml=scheme:bg1 maj=gray(33) x=6.3681 y=0.3326 w=1.3181 h=1.2076  运输实验馆
+#28 sp xml=scheme:bg1 maj=gray(30) x=6.8139 y=1.8049 w=0.8938 h=0.4854  第八教学楼
+#29 sp xml=scheme:bg1 maj=gray(28) x=5.8833 y=1.8118 w=0.8319 h=0.4854  第一教学楼
+#30 sp xml=scheme:bg1 maj=gray(35) x=4.6056 y=1.8049 w=1.1792 h=0.4854  第二教学楼
+#31 sp xml=scheme:bg1 maj=gray(34) x=2.891 y=0.3326 w=1.4007 h=1.2354  新体育馆
+#32 sp xml=#FF0000 maj=red(34) x=2.891 y=1.7146 w=1.4014 h=0.5764  网球场
+#33 sp xml=#FF0000 maj=red(36) x=2.2306 y=0.3889 w=0.5479 h=1.909  篮球场
+#34 sp xml=#FF0000 maj=red(36) x=9.6743 y=2.6035 w=1.5056 h=0.9993  操场
+#35 sp xml=#FF0000 maj=red(36) x=1.084 y=0.3889 w=1.034 h=1.909  操场
+#36 sp xml=scheme:bg1 maj=gray(33) x=0.1271 y=1.1389 w=0.8444 h=1.1528  老体育馆
+#37 sp xml=scheme:bg1 maj=gray(35) x=3.1125 y=2.5688 w=1.1792 h=0.4854  计算机中心
+#38 sp xml=scheme:bg1 maj=gray(34) x=3.1125 y=3.2076 w=1.1792 h=0.4854  思源西楼
+#39 sp xml=scheme:bg1 maj=gray(35) x=3.1125 y=4.0139 w=1.1792 h=0.2653  校史馆
+#40 sp xml=scheme:bg1 maj=gray(35) x=3.1125 y=4.7465 w=1.1792 h=0.4854  天佑会堂
+#41 sp xml=scheme:bg1 maj=gray(25) x=3.1125 y=4.3507 w=1.1792 h=0.2653  积秀园
+#42 sp xml=scheme:bg1 maj=gray(34) x=3.1125 y=5.3708 w=1.1792 h=0.4104  宿舍
+#43 sp xml=scheme:bg1 maj=gray(34) x=1.5986 y=5.9 w=1.1792 h=0.4104  宿舍
+#44 sp xml=scheme:bg1 maj=gray(34) x=1.5986 y=5.3118 w=1.1792 h=0.4104  宿舍
+#45 sp xml=scheme:bg1 maj=gray(34) x=1.5986 y=4.7465 w=1.1792 h=0.4104  宿舍
+#46 sp xml=scheme:bg1 maj=gray(34) x=1.5986 y=4.1382 w=1.1792 h=0.4104  宿舍
+#47 sp xml=scheme:bg1 maj=gray(35) x=1.5986 y=3.6028 w=1.1792 h=0.4104  宿舍
+#48 sp xml=scheme:bg1 maj=gray(34) x=1.5986 y=3.0542 w=1.1792 h=0.4104  宿舍
+#49 sp xml=scheme:bg1 maj=gray(34) x=1.5986 y=2.5688 w=1.1792 h=0.4104  宿舍
+#50 sp xml=scheme:bg1 maj=gray(31) x=0.4535 y=2.5132 w=0.9493 h=1.6799  学生服务中心
+#51 sp xml=scheme:bg1 maj=gray(34) x=0.6542 y=4.3507 w=0.6972 h=0.7514  宿舍
+=== CLASS MAP ===
+    0                   1                   2                   3                   4                   5                   6                   7                   8                   9                   0                   1                   2                   3                   4                   5                   6                   7                   8                  
+  0                                                                                                                                                                                               
+  1                                                                                                                                                                                               
+  2                                                                                                                                                                                               
+  3                ###############################################+                          ######################################                                                               
+  4               ##                         BBBBBBBBBBBBBBBBBBBB#                           #wBBBBBBBBBBBBBBBBBBw  BBBBBBBB#######                                                               
+  5             b#+RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB#B                                                               
+  6            +#+ RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB#B                                                               
+  7           ##   RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB#B                                                               
+  8          ##    RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB#B                                                               
+  9        b#+     RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB#B                                                               
+ 10       +#+      RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB#B                                                               
+ 11      ##        RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  WWWWWWWWWWWWW##                                                               
+ 12     ##         RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW               ##                                                               
+ 13   +#+          RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB##                                                               
+ 14  +#+           RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB##                                                               
+ 15 ##             RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB##                                                               
+ 16  #WWWWWWWWWWWW RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB##                                                               
+ 17  #BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB##                                                               
+ 18  #BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB##                                                               
+ 19  #BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB##                                                               
+ 20  #BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBB##                                                               
+ 21  #BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR WBBBBBBBBBBBBBBBBBBB#                           #WWWWWWWWWWWWWWWWWWWW  WWWWWWWWWWWWW##                                                               
+ 22  #BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR WWWWWWWWWWWWWWWWWWWWw  #######################B #                                   ##                                                               
+ 23 b#BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR                                     B############+                                  ##                                                               
+ 24 B#BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR RRRRRRRRRRRRRRRRRRRRW                                                  WWWWWWWWBBWWW##                                                               
+ 25 ##BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR RRRRRRRRRRRRRRRRRRRRW   wWWWWBWWWWWBWWWWWWWWWWWWWWWWWWW WWWWWWWWWWWWW  WBBBBBBBBBBBB##                                                               
+ 26 ##BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR RRRRRRRRRRRRRRRRRRRRW   BBBBBBBBBBBBBBBBBWWBBBBBBBBBBBB WBBBBBBBBBBBW  WBBBBBBBBBBBB##                                                               
+ 27 ##BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR RRRRRRRRRRRRRRRRRRRRW   BBBBBBBBBBBBBBBBBWWBBBBBBBBBBBB WBBBBBBBBBBBW  WBBBBBBBBBBBB##                                                               
+ 28 ##BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR RRRRRRRRRRRRRRRRRRRRW   BBBBBBBBBBBBBBBBBWWBBBBBBBBBBBB WBBBBBBBBBBBW  WBBBBBBBBBBBB##                                                               
+ 29 ##BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR RRRRRRRRRRRRRRRRRRRRW   BBBBBBBBBBBBBBBBBWWBBBBBBBBBBBB WBBBBBBBBBBBW  WBBBBBBBBBBBB##                                                               
+ 30 ##BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR RRRRRRRRRRRRRRRRRRRRW   BBBBBBBBBBBBBBBBBWWBBBBBBBBBBBB WBBBBBBBBBBBW  WBBBBBBBBBBBB##                                                               
+ 31 ##BBBBBBBBBBBW RRRRRRRRRRRRRRRWWRRRRRRRR RRRRRRRRRRRRRRRRRRRRW   BBBBBBBBBBBBBBBBBWWBBBBBBBBBBBB WBBBBBBBBBBBW  WBBBBBBBBBBBB##                                                               
+ 32  WWWWWWWWWWWWW RRRRRRRRRRRRRRRWWRRRRRRRR RRRRRRRRRRRRRRRRRRRRw   bBBBBBBBBBBBBBBBBwWWWWWWWwWWWWW BBBBBBBBBBBBB  wBBBBBBBBBBBB##                                                               
+ 33                                                                                                                                                                                               
+ 34                                                                                                                                                                                               
+ 35  #    WWWWWWWWWWWWWW                                                                                                         BB####################################                           
+ 36  #    WBBBBBBBBBBBBB  WWWWWWWWWWWWWWWWWW    WWWWWWWWWBWWWBWWWW   GGGGGGGGGGGGGGGGGWwWWWwWWWWWWWWWw wWWWWWWWWWW  WWWWWWWWWWWWW##############WWWWWWWWWWWWWWWWWWWWw  #                           
+ 37  #    WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBBBBBB WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR  #+                          
+ 38  #+   WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBBBBBB WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR   #                          
+ 39  +#   WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBBBBBB WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR   #+                         
+ 40   #   WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBBBBBB WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR    #                         
+ 41   #   WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBBBBBB WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR    #+                        
+ 42   #   WBBBBBBBBBBBBB  wWWWWWWWWWWWWWWWWW    BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBBBBBB WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR    b#                        
+ 43   #+  WBBBBBBBBBBBBB  WWWWWWWWWWBBWWWWWW    WWWWBBWW  w   WWWw   bBBBBBBBBBBBBBBBB WBBBBBBBBBBBBBB WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR     #b                       
+ 44   +#  WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW                         BBBBBBBBBBBBBBBBB                 WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR     +#                       
+ 45    #  WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   BBBBBBBBBBBBBBBBB WWWWWWWWWBBWWWw WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR      #                       
+ 46    #  WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   BBBBBBBBBBBBBBBBB WBBBBBBBBBBBBBB WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR      +#                      
+ 47    #  WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   BBBBBBBBBBBBBBBBB WBBBBBBBBBBBBBB WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR       #                      
+ 48    #+ WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   BBBBBBBBBBBBBBBBB WBBBBBBBBBBBBBB WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR       +#                     
+ 49    +# WBBBBBBBBBBBBB                        BBBBBBBBBBBBBBBBBW   BBBBBBBBBBBBBBBBB WBBBBBBBBBBBBBB WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR        #                     
+ 50     # WBBBBBBBBBBBBB                        BBBBBBBBBBBBBBBBBW   BBBBBBBBBBBBBBBBB WBBBBBBBBBBBBBb WWWWWWWWWWW  WBBBBBBBBBBBBWRRRRRRRRRRWWRRRRRRRRRRRRRRRRRRRRRR        ##                    
+ 51     # WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   BWWWWWWWWWWWWWWWW WWWWWWWWWWWWWWw WWWWWWWWWWW  WWWWWWWWWWWWWWRRRRRRRRRRW                                B                    
+ 52     # WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    WWWWWWWWWWWWWWWWWw                                                                                                                                
+ 53     ##WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW                                                                                                                                                      
+ 54     +#WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW                                                                                                                                                      
+ 55      #WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW                                                                                                                                     #                
+ 56      #WBBBBBBBBBBBBB  WBBBBBBBBBBBBBBBBW    WWWWWWWBWWWWWWWWWw   wWWWWWWWWWWWWWWWWwwWWW W WWWwWWWWWWWW    WWWWWWWWWWWWWWWWWWWw  wWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWW WWWwWWW #                
+ 57      #WBBBBBBBBBBBBB                        BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBWWBBBBBBB    GGGGGGGGGGGGGGGGGGGW  BBBBBBBBBBBBBBBBBBBBBBBBW   WBBBBBBBBBBBBBBB #                
+ 58      #WBBBBBBBBBBBBB  WWWWWWWWWWBBWWWWWW    BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBWWBBBBBBB    GGGGGGGGGGGGGGGGGGGW  BBBBBBBBBBBBBBBBBBBBBBBBW   WBBBBBBBBBBBBBBB #                
+ 59      +#WWWWWWWWWWWWW  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBWWBBBBBBB    GGGGGGGGGGGGGGGGGGGW  BBBBBBBBBBBBBBBBBBBBBBBBW   WBBBBBBBBBBBBBBB #                
+ 60       #               WBBBBBBBBBBBBBBBBW    WWWWWWWWWWWWWWWWWW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBWWBBBBBBB    GGGGGGGGGGGGGGGGGGGW  BBBBBBBBBBBBBBBBBBBBBBBBW   WBBBBBBBBBBBBBBB #                
+ 61       #  WWWWBBBWWWW  WBBBBBBBBBBBBBBBBW    WWWWWWWWWWWWWWWWWW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBWWBBBBBBB    GGGGGGGGGGGGGGGGGGGW  BBBBBBBBBBBBBBBBBBBBBBBBW   WBBBBBBBBBBBBBBB #                
+ 62       #  BBBBBBBBBBW  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWBBBBBBBBBWWBBBBBBB    GGGGGGGGGGGGGGGGGGGW  BBBBBBBBBBBBBBBBBBBBBBBBW   WBBBBBBBBBBBBBBBb#                
+ 63       #+ BBBBBBBBBBW  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWGGGGGGGGGWWBBBBBBB    WWWWWWW  wWWWWWWWWWw  BBBBBBBBBBBBBBBBBBBBBBBBW   WBBBBBBBBBBBBBBBB#                
+ 64       b# BBBBBBBBBBW  wBBBBBBBBBBBBBBBBw    BBBBBBBBBBBBBBBBBW   GGGGGGGGGGGGGGGGGWWGGGGGGGGGGWBBBBBBB    BBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBBBBBBBBBBBBBW   WBBBBBBBBBBBBBBBB#                
+ 65        # BBBBBBBBBBW                        WWWWWWWWWWWWWWWWWw   GGGGGGGGGGGGGGGGGWWGGGGGGGGGGWBBBBBBB    BBBBBBBBBBBBBBBBBBBW  wWBBBBWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWB#                
+ 66        # BBBBBBBBBBW                                             GGGGGGGGGGGGGGGGGWWGGGGGGGGGGWBBBBBBB    BBBBBBBBBBBBBBBBBBBW                                              B#                
+ 67        # BBBBBBBBBBW  WWWWWWWWWWBBWWWWWW    WWWWWWWWWWWWWWWWWW   GGGGGGGGGGGGGGGGGWWGGGGGGGGGGWWBBBBWW    BBBBBBBBBBBBBBBBBBBW  wWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWW#                
+ 68        ##BBBBBBBBBBW  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW                                            WWWWBBBWWBBBBWWBWWWW  BBBBBBBBBBBBBBWBBBBBBBBBW   WBBBBBBBBBBBBBBBB#                
+ 69        b#BBBBBBBBBBW  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW                                            WWWWWWWWWWWWWWWWWWWW  BBBBBBBBBBBBBBWBBBBBBBBBW   WBBBBBBBBBBBBBBBB#                
+ 70         #BBBBBBBBBBW  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   gGGGGGg          BBBbBBBBBBbbBBBBw       BBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBBBWBBBBBBBBBW   WBBBBBBBBBBBBBBB##                
+ 71         #BBBBBBBBBBW  WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGG          WBBBBBBBBBBBBBBBW       BBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBBBWBBBBBBBBBW   WBBBBBBBBBBBBBBB##                
+ 72         #WWWWWWWWWWw  WWWWWWWWWWWWWWWWWW    BBBBBBBBBBBBBBBBBW   GGGGGGG          WBBBBBBBBBBBBBBBW       BBBBBBBBBBBBBBBBBBBW  wWwWWWWBWWWWWWwBBBBBBBBBW   WBBBBBBBBBBBBBBB##                
+ 73         ##                                  BBBBBBBBBBBBBBBBBW   GGGGGGG          WBBBBBBBBBBBBBBBW       WWWWWWBBBwWWwWWWWWWW                 BBBBBBBBBW   WBBBBBBBBBBBBBBB##                
+ 74         +#                                                       GGGGGGG          WBBBBBBBBBBBBBBBW       WWWWWWBWWWWWWWWWWWWW  BBBBBBBBBBBBBBWBBBBBBBBBW   WBBBBBBBBBBBBBBB##                
+ 75          #            WWWWWWWWWBBBBWWWWW    WWWWWWWWWWWWWWWWWw   GGGGGGG          WBBBBBBBBBBBBBBBW       BBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBBBWBBBBBBBBBW   WBBBBBBBBBBBBBBB##                
+ 76          #            WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGG          WBBBBBBBBBBBBBBBW       BBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBBBWBBBBBBBBBW   WBBBBBBBBBBBBBBB##                
+ 77          #            WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGG          WBBBBBBBBBBBBBBBW       BBBBBBBBBBBBBBBBBBBW  BBBBBBBBBBBBBBWBBBBBBBBBW   WBBBBBBBBBBBBBBB##                
+ 78          ##           WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGG          WBBBBBBBBBBBBBBBW       WWWWWWWWWWWWWWWWWWWW  wWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWW##                
+ 79           #           WBBBBBBBBBBBBBBBBW    BBBBBBBBBBBBBBBBBW   GGGGGGG          WBBBBBBBBBBBBBBBW                  #########################################################                
+ 80           #           WWWWWWWWWWWWWWWWWW    BBBBBBBBBBBBBBBBBW   GGGGGGG          WBBBBBBBBBBBBBBBW       WWWWWWWWWW #                                                                        
+ 81           #                                 WWWWWWWWWWWWWWWWWW   GGGGGGG          WWWWWWWWWWWWWWWWW       BBBBBBBBBW #                                                                        
+ 82           #                                                                                               BBBBBBBBBW #                                                                        
+ 83           ##          WWWWWWBBBBBBBWWWWW                                                                  BBBBBBBBBW #                                                                        
+ 84           b#          WBBBBBBBBBBBBBBBBW                                                                  BBBBBBBBBW #                                                                        
+ 85            #          WBBBBBBBBBBBBBBBBW                                                                  BBBBBBBBBW #                                                                        
+ 86            #          WBBBBBBBBBBBBBBBBW                                                                  WWWWWWWWWW #                                                                        
+ 87            #          WBBBBBBBBBBBBBBBBW                                                                             #                                                                        
+ 88            ##         WBBBBBBBBBBBBBBBBW                                                                             #                                                                        
+ 89             #         wWWWWWWWWWWWWWWWWW                                                               BB#############                                                                        
+ 90             ##########################################################      ##########################################                                                                        
+ 91                                                                                                                                                                                               
+ 92                                                                                                                                                                                               
+ 93                                                                                                                                                                                               
+ 94                                                                                                                                                                                               
+ 95                                                                                                                                                                                               
+ 96                                                                                                                                                                                               
+ 97                                                                                                                                                                                               
+ 98                                                                                                                                                                                               
+ 99                                                                                                                                                                                               
+100                                                                                                                                                                                               
+101                                                                                                                                                                                               
+102                                                                                                                                                                                               
+103                                                                                                                                                                                               
+104                                                                                                                                                                                               
+105                                                                                                                                                                                               

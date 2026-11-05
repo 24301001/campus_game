@@ -1,0 +1,25 @@
+图 1-7　空间问答与路径带路类图
+============================================================
+【图形类型】类图（Class Diagram）
+【所在位置】1.2.1.2
+
+【图的内容】
+  给出本功能点涉及的类及其关系，重点是图谱、意图路由、路径求解与转述四者如何分工。
+
+【主要组件】
+  GuideAgent（角色入口，编排全流程）；IntentRouter（意图分类）；AliasResolver（别称解析，最长匹配）；CampusGraph（地点、关系、属性）；PathFinder（求路、空间搜索）；PlaceRepository（点位查询与属性检索）；Narrator（路径转述）；MapAPI（镜头飞行、路径高亮、取点、列点）；LLMClient（意图理解与转述）。
+
+【组织方式】
+  以 GuideAgent 为中心：它持有 IntentRouter、PathFinder、PlaceRepository、Narrator；PathFinder 与 PlaceRepository 依赖 CampusGraph；AliasResolver 供 IntentRouter 与 PlaceRepository 使用；Narrator 与 IntentRouter 依赖 LLMClient；表现通过 MapAPI 发出。
+
+【如何绘制】
+1) 画 GuideAgent 类，列出关键方法（如 handle、ask、guide）；
+2) 画 CampusGraph（地点 + 关系 + 属性），作为数据核心；
+3) 画 PathFinder、PlaceRepository，用依赖关系连到 CampusGraph；
+4) 画 AliasResolver、IntentRouter，标注“最长匹配、词典优先”；
+5) 画 Narrator，标注输入为“关键节点序列”；
+6) 画 LLMClient，用依赖关系连到 IntentRouter 与 Narrator；
+7) 画 MapAPI，用依赖关系连到 GuideAgent。
+
+【注意事项】
+  类图上要能看出“LLMClient 只被意图理解与转述两处使用”，不出现在取数路径上；CampusGraph 的属性位应体现为可扩展的键值，而不是固定字段。

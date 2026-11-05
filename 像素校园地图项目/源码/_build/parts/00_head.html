@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>像素校园 · 全校地图</title>
+<style>
+  html,body{margin:0;height:100%;background:#101216;overflow:hidden;}
+  #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+  canvas{
+    display:block;
+    image-rendering:pixelated;
+    image-rendering:-moz-crisp-edges;
+    image-rendering:crisp-edges;
+    box-shadow:0 0 0 2px #2b2f3a,0 18px 40px rgba(0,0,0,.55);
+  }
+  #hud{
+    position:fixed;left:14px;top:12px;pointer-events:none;
+    color:#e9e5d8;font:12px/1.75 ui-monospace,Consolas,"Courier New",monospace;
+    text-shadow:0 1px 0 #000,0 0 8px rgba(0,0,0,.8);letter-spacing:.6px;
+  }
+  #hud b{color:#ffd76e;}
+  #hud span{color:#9fb4d0;}
+  /* 缩放控件单独一格：#hud 是 pointer-events:none，按钮/滑条放进去点不动 */
+  #zoom{
+    position:fixed;right:14px;bottom:12px;display:flex;align-items:center;gap:8px;
+    font:12px/1 ui-monospace,Consolas,"Courier New",monospace;color:#e9e5d8;
+    text-shadow:0 1px 0 #000,0 0 8px rgba(0,0,0,.8);
+  }
+  #zoom button{
+    pointer-events:auto;cursor:pointer;width:26px;height:24px;padding:0;
+    background:#1d2129;color:#e9e5d8;border:1px solid #39404d;border-radius:4px;
+    font:14px/1 ui-monospace,Consolas,monospace;
+  }
+  #zoom button:hover{background:#272d38;border-color:#5a6474;}
+  #zoom b{min-width:52px;text-align:center;color:#ffd76e;font-weight:600;}
+  /* 滑条：档位是离散的（step=1），拖动时吸附到档位 */
+  #zoom input[type=range]{
+    pointer-events:auto;cursor:pointer;margin:0;width:170px;height:20px;
+    background:transparent;-webkit-appearance:none;appearance:none;
+  }
+  #zoom input[type=range]:focus{outline:none;}
+  #zoom input[type=range]:focus-visible{outline:1px solid #ffd76e;outline-offset:2px;}
+  #zoom input[type=range]::-webkit-slider-runnable-track{
+    height:4px;border-radius:2px;background:#39404d;
+  }
+  #zoom input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:14px;height:14px;margin-top:-5px;
+    border-radius:50%;background:#ffd76e;border:1px solid #7a6320;
+  }
+  #zoom input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:#39404d;}
+  #zoom input[type=range]::-moz-range-thumb{
+    width:14px;height:14px;border-radius:50%;background:#ffd76e;border:1px solid #7a6320;
+  }
+  /* ---------- 向导「小北」：气泡 / 对话框 / 横幅 ----------
+     ⚠️ 三块都必须自己声明 `pointer-events`：#hud 那条 `pointer-events:none` 的
+        教训（见上面第 23 行）在这里反过来 —— 气泡要**穿透**（不然挡住鼠标），
+        面板要**接住**（不然点不动输入框和按钮）。 */
+  /* 保安 · 老丁（第七十九分片）头顶那颗「按 C 说话」气泡走 #ctip —— 与 #tip 同**一条规则**
+     （他要独立一个元素：向导那颗是「E 说话」，一辈子只可能出现在小北头顶，
+       两颗共存时会互相抢 transform；合并成一条选择器，样式永远同步）。
+     食堂阿姨（第八十分片）那颗「按 C 进食堂」同理走 #atip，第三条元素挂同一条规则。 */
+  #tip,#ctip,#atip{
+    position:fixed;left:0;top:0;pointer-events:none;transform:translate(-50%,-100%);
+    padding:2px 6px;background:#1d2129;color:#e9e5d8;border:1px solid #39404d;border-radius:4px;
+    font:12px/1.4 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
+    box-shadow:0 2px 8px rgba(0,0,0,.45);white-space:nowrap;
+  }
+  #tip b,#ctip b,#atip b{color:#ffd76e;}
+  #dlg{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:64px;   /* 让开右下角的 #zoom */
+    width:min(560px,calc(100vw - 28px));
+    background:#1d2129;border:1px solid #39404d;border-radius:6px;
+    box-shadow:0 18px 40px rgba(0,0,0,.55);
+    color:#e9e5d8;font:12px/1.75 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
+  }
+  #tip[hidden],#ctip[hidden],#atip[hidden],#dlg[hidden],#toast[hidden]{display:none;}
+  #dlgT{padding:6px 10px;border-bottom:1px solid #2b2f3a;color:#ffd76e;font-weight:600;}
+  #dlgLog{padding:8px 10px;max-height:132px;overflow:auto;}
+  #dlgQuick{display:flex;flex-wrap:wrap;gap:6px;padding:0 10px 8px;}
+  #dlgQuick button{
+    cursor:pointer;padding:3px 8px;background:#272d38;color:#e9e5d8;
+    border:1px solid #39404d;border-radius:4px;font:12px/1.4 ui-monospace,Consolas,monospace;
+  }
+  #dlgQuick button:hover{background:#313847;border-color:#5a6474;}
+  #dlgRow{display:flex;gap:6px;padding:8px 10px;border-top:1px solid #2b2f3a;}
+  #dlgIn{
+    flex:1;min-width:0;padding:5px 8px;background:#161a21;color:#e9e5d8;
+    border:1px solid #39404d;border-radius:4px;font:12px/1.4 ui-monospace,Consolas,monospace;
+  }
+  #dlgIn:focus{outline:1px solid #ffd76e;outline-offset:1px;}
+  #dlgGo{
+    cursor:pointer;padding:5px 12px;background:#ffd76e;color:#1d2129;
+    border:1px solid #7a6320;border-radius:4px;font:12px/1.4 ui-monospace,Consolas,monospace;font-weight:600;
+  }
+  #toast{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:18px;pointer-events:none;
+    padding:6px 14px;background:rgba(29,33,41,.94);color:#ffd76e;
+    border:1px solid #39404d;border-radius:4px;
+    font:13px/1.5 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
+  }
+  /* ---------- 计算机中心：室内教室 + 刷题平台 + 登录门（第四十轮）----------
+     ⚠️ 这四块和上面「向导」那三块是同一条规矩：必须摆在**脚本标签之前** ——
+        71b_center.js 段在加载期就 getElementById 取它们，摆后面会全部拿到 null
+        （静默失效，不报错）。同样不能往 #hud 里塞：那是 pointer-events:none。
+     ⚠️ 层序（数字小的在下）：地图 HUD/缩放 无 → 室内教室 10 → 平台 20 → 登录门 30。
+     ⚠️ 室内打开时用 `body.ctr-on` 把地图那两块收起来 —— 它们各自 position:fixed，
+        不收会压在教室画面上。 */
+  #ctrCv{
+    position:fixed;inset:0;width:100%;height:100%;z-index:10;background:#11141a;
+    image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:crisp-edges;
+  }
+  #ctrHud{
+    position:fixed;left:14px;top:12px;z-index:11;pointer-events:none;
+    color:#e9e5d8;font:12px/1.75 ui-monospace,Consolas,"Courier New",monospace;
+    text-shadow:0 1px 0 #000,0 0 8px rgba(0,0,0,.8);letter-spacing:.6px;
+  }
+  #ctrHud b{color:#7fd6c8;}
+  #ctrHud span{color:#9fb4d0;}
+  #ctrTip{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:64px;z-index:11;
+    pointer-events:none;padding:6px 14px;background:rgba(29,33,41,.94);color:#ffd76e;
+    border:1px solid #39404d;border-radius:4px;
+    font:13px/1.5 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
+  }
+  #ctrP{position:fixed;inset:0;z-index:20;background:#0d0f13;}
+  #ctrF{display:block;width:100%;height:100%;border:0;background:#0d0f13;}
+  #ctrP[hidden],#ctrCv[hidden],#ctrHud[hidden],#ctrTip[hidden],#login[hidden]{display:none;}
+  /* ⚠️ 向导那三块（气泡 / 对话框 / 横幅）**也**必须一起收 —— 它们是 position:fixed 的
+     独立层，`ctr-on` 只顾着 #hud / #zoom 的话，小北要是恰好站在计算机中心附近，
+     她头上那个「E 说话」气泡会直接浮在教室画面上（`_centerprobe` 的 C6 里看得见
+     它的 textContent 一直是「E 说话」）。收掉只是**看不见**，她照旧在跑，
+     出门回地图一解除就原样回来。
+     ⚠️ 第八十分片加的 #atip（食堂阿姨那颗）**同样必须挂进来** —— 不加的话，
+        阿姨要是恰好站在计算机中心 / 逸夫楼附近，她的气泡会直接浮在室内画面上。 */
+  body.ctr-on #hud,body.ctr-on #zoom,body.ctr-on #tip,body.ctr-on #ctip,
+  body.ctr-on #atip,body.ctr-on #dlg,body.ctr-on #toast,body.ctr-on #wheel{display:none;}
+  /* HUD 里新加的两行。⚠️ :empty 时收起来 —— 否则地图上永远挂着一行空白 */
+  #hudctr{display:block;color:#7fd6c8;}
+  #huduser{display:block;color:#9fb4d0;}
+  #hudctr:empty,#huduser:empty{display:none;}
+  /* ---------- 登录门（进地图前的那一次）---------- */
+  #login{
+    position:fixed;inset:0;z-index:30;background:rgba(9,11,15,.93);
+    display:flex;align-items:center;justify-content:center;
+  }
+  #lgBox{
+    width:min(380px,calc(100vw - 32px));
+    background:#1d2129;border:1px solid #39404d;border-radius:6px;
+    box-shadow:0 18px 40px rgba(0,0,0,.55);color:#e9e5d8;
+    font:12px/1.75 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
+  }
+  #lgT{padding:9px 12px;border-bottom:1px solid #2b2f3a;color:#ffd76e;font-weight:600;font-size:13px;}
+  #lgHint{padding:8px 12px 4px;color:#9fb4d0;}
+  #lgQuick{display:flex;gap:6px;padding:8px 12px 2px;}
+  #lgQuick button{
+    flex:1;cursor:pointer;padding:6px 4px;background:#272d38;color:#e9e5d8;
+    border:1px solid #39404d;border-radius:4px;font:12px/1.4 ui-monospace,Consolas,monospace;
+  }
+  #lgQuick button:hover{background:#313847;border-color:#5a6474;}
+  #lgQuick button.on{background:#39404d;border-color:#ffd76e;color:#ffd76e;}
+  #lgRow{display:flex;flex-direction:column;gap:6px;padding:8px 12px 0;}
+  #lgRow input{
+    padding:6px 9px;background:#161a21;color:#e9e5d8;border:1px solid #39404d;border-radius:4px;
+    font:12px/1.4 ui-monospace,Consolas,"Courier New",monospace;
+  }
+  #lgRow input:focus{outline:1px solid #ffd76e;outline-offset:1px;}
+  #lgMsg{padding:6px 12px 0;min-height:18px;color:#e07a6a;}
+  #lgRow2{padding:4px 12px 12px;}
+  #lgGo{
+    width:100%;cursor:pointer;padding:8px;background:#ffd76e;color:#1d2129;
+    border:1px solid #7a6320;border-radius:4px;
+    font:13px/1 ui-monospace,Consolas,monospace;font-weight:600;
+  }
+  #lgGo:disabled{opacity:.6;cursor:default;}
+  /* 「退出登录」。⚠️ 必须**自成一块**（fixed + pointer-events:auto）——
+     不能挂在 #hud 里：那是 pointer-events:none，按钮点不动（第 23 行那条老账）。 */
+  #lgOut{
+    position:fixed;right:14px;top:12px;z-index:12;cursor:pointer;
+    padding:3px 9px;background:#1d2129;color:#9fb4d0;border:1px solid #39404d;border-radius:4px;
+    font:12px/1.4 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
+    text-shadow:0 1px 0 #000;
+  }
+  #lgOut:hover{background:#272d38;border-color:#5a6474;color:#e9e5d8;}
+  #lgOut[hidden]{display:none;}
+  body.ctr-on #lgOut{display:none;}
+  /* ---------- 猫宠：就地动作轮盘（第四十四轮）----------
+     ⚠️ 必须摆在脚本标签**之前**（78_wheel.js 加载期就 getElementById 取它）——
+        同「向导」「室内」那两组，摆后面会静默拿到 null，不报错。
+     ⚠️ 必须**自成一块**：不能塞进 #hud（pointer-events:none ⇒ 扇区点不动）。
+     ⚠️ 收起/展开**不能靠 `[hidden]` 去覆盖 `display:flex`** —— UA 表里那条
+        `[hidden]{display:none}` 的优先级打不过 `#wheel{...display:flex}`，
+        结果就是"永远展开、关不掉"。所以基础规则用 display:none，展开交给
+        `:not([hidden])` —— 组合选择器的优先级高，才压得住。
+     ⚠️ 层序：室内教室 10 / 平台 20 / 登录门 30 ⇒ 轮盘取 25（在门之下、教室之上）。
+        室内按 G 本来就不响应（78_wheel.js 里那条 ctr-on 早退），这条只是防
+        "轮盘开着时恰好被推进房间"。 */
+  #wheel{
+    position:fixed;inset:0;z-index:25;display:none;
+    align-items:center;justify-content:center;background:rgba(9,11,15,.42);
+  }
+  #wheel:not([hidden]){display:flex;}
+  #wheel svg{filter:drop-shadow(0 10px 28px rgba(0,0,0,.62));}
+  #wheel .ws{
+    fill:rgba(29,33,41,.96);stroke:#39404d;stroke-width:1.5;cursor:pointer;
+  }
+  #wheel .ws:hover{fill:rgba(49,56,71,.98);stroke:#ffd76e;}
+  /* ⚠️ 中心圆与两行字都要 `pointer-events:none`：点中心应当**落到遮罩上**（＝收起），
+     而不是被这个圆接住变成"点了没反应"。 */
+  #wheel .wc{fill:rgba(13,16,21,.96);stroke:#39404d;stroke-width:1.5;pointer-events:none;}
+  #wheel .wt{
+    fill:#e9e5d8;font:600 17px ui-monospace,Consolas,"Courier New",monospace;
+    letter-spacing:1px;pointer-events:none;
+  }
+  #wheel .wh{
+    fill:#9fb4d0;font:11px ui-monospace,Consolas,"Courier New",monospace;pointer-events:none;
+  }
+  #wheel .wn{
+    fill:#ffd76e;font:600 13px ui-monospace,Consolas,"Courier New",monospace;pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv"></canvas></div>
+<div id="hud">
+  <b>像素校园</b> · 全校地图<br>
+  <span>← → / A D 左右移动　↑ ↓ / W S 前后移动</span><br>
+  <span>滚轮 / + − 缩放　0 看全图　1 回原尺寸　（也可拖右下角滑条）</span><br>
+  <span id="hudpos"></span>
+  <span id="hudctr"></span>
+  <span id="huduser"></span>
+</div>
+<div id="zoom">
+  <button data-z="-1" title="缩小一档">−</button>
+  <input id="zrng" type="range" min="0" max="8" step="1" value="6" aria-label="缩放档位">
+  <button data-z="1" title="放大一档">+</button>
+  <b id="zoomlv">1×</b>
+</div>
+<!-- 向导「小北」。⚠️ 三块都必须摆在脚本标签**之前** —— 72_guide.js 段在加载期
+     就 getElementById 取它们；摆在脚本之后会全部拿到 null（静默失效，不报错）。
+     ⚠️ 也不能往 #hud 里塞：那是 pointer-events:none，按钮和输入框放进去点不动。
+     ⚠️ 这条注释里**不能写出脚本标签的字面量**（带尖括号那种）—— build.py 用
+         正则「脚本开标签 + 非贪婪 + 脚本闭标签」切 JS 段，一旦这里出现开标签，
+         匹配就提前从这里起算，把注释当 JS 喂给 node --check。栽过两次（SYNTAX_FAIL）。 -->
+<div id="tip" hidden><b>E</b> 说话</div>
+<div id="ctip" hidden><b>C</b> 和老丁说话</div>
+<div id="atip" hidden><b>C</b> 进食堂</div>
+<div id="dlg" hidden>
+  <div id="dlgT">向导 · 小北</div>
+  <div id="dlgLog"></div>
+  <div id="dlgQuick"></div>
+  <div id="dlgRow">
+    <input id="dlgIn" type="text" maxlength="24" autocomplete="off" spellcheck="false"
+           placeholder="想去哪儿？例：五教 / 图书馆 / 一食堂">
+    <button id="dlgGo" type="button">带我去</button>
+  </div>
+</div>
+<div id="toast" hidden></div>
+<!-- 室内场景（第四十轮建计算机中心，第四十一轮加逸夫楼）。⚠️ 同「向导」那三块：必须摆在脚本标签
+     **之前**，71b_center.js 段加载期就 getElementById 取它们；也**不能**塞进 #hud（那是
+     pointer-events:none，按钮点不动、也接不住 iframe）。⚠️ 本注释里不许出现带尖括号的脚本标签
+     字面量 —— 理由同上面那段。
+     ⚠️ #ctrHud 这三行**不再写死在 HTML 里**：两间房共用这一块，正文由 71b 的 roomEnter()
+     按当前房间对象填（写死的话，进了逸夫楼提示还写着"计算机中心"）。 -->
+<canvas id="ctrCv" hidden></canvas>
+<div id="ctrHud" hidden>
+  <b id="ctrHudName"></b> <span id="ctrHudSub"></span><br>
+  <span id="ctrHudHint"></span>
+</div>
+<div id="ctrTip" hidden></div>
+<div id="ctrP" hidden><iframe id="ctrF" title="刷题平台" referrerpolicy="no-referrer"></iframe></div>
+<button id="lgOut" type="button" hidden>退出登录</button>
+<div id="login" hidden>
+  <div id="lgBox">
+    <div id="lgT">像素校园 · 登录</div>
+    <div id="lgHint">选一个预设账号。登录这一次，刷题平台和学霸姐都不用再登了。</div>
+    <div id="lgQuick">
+      <button type="button" data-u="admin" data-p="admin123">管理员 admin</button>
+      <button type="button" data-u="user"  data-p="user123">普通用户 user</button>
+    </div>
+    <div id="lgRow">
+      <input id="lgU" type="text" autocomplete="off" spellcheck="false" placeholder="用户名">
+      <input id="lgP" type="password" autocomplete="off" placeholder="密码">
+    </div>
+    <div id="lgMsg"></div>
+    <div id="lgRow2"><button id="lgGo" type="button">进入像素校园</button></div>
+  </div>
+</div>
+<!-- 猫宠「对猫的动作」轮盘（第四十四轮）。⚠️ 摆在脚本标签**之前**、**#hud 之外** ——
+     78_wheel.js 加载期就取它；塞进 #hud 会因为 pointer-events:none 而点不动。
+     ⚠️ 四个扇区只放**动作**，一个字的好感数字都不许出现（交互.md §六）。
+     ⚠️ 扇区几何：圆心 (100,100)、半径 92，四段各 90°。四个端点都落在
+        100 ± 92/√2 ≈ 100 ± 65.05 上（√2 的一半），所以是 34.95 / 165.05 这四个数。
+     ⚠️ 本注释里不许出现带尖括号的脚本标签字面量 —— 理由同上面那两段注释
+        （build.py 用正则切 JS 段，出现开标签会把注释当 JS 喂给 node --check）。 -->
+<div id="wheel" hidden>
+  <svg viewBox="0 0 200 200" width="320" height="320" role="group" aria-label="对猫的动作">
+    <path class="ws" data-act="pet"   d="M100,100 L34.95,34.95 A92,92 0 0 1 165.05,34.95 Z"/>
+    <path class="ws" data-act="feed"  d="M100,100 L165.05,34.95 A92,92 0 0 1 165.05,165.05 Z"/>
+    <path class="ws" data-act="call"  d="M100,100 L165.05,165.05 A92,92 0 0 1 34.95,165.05 Z"/>
+    <path class="ws" data-act="tease" d="M100,100 L34.95,165.05 A92,92 0 0 1 34.95,34.95 Z"/>
+    <circle class="wc" cx="100" cy="100" r="34"/>
+    <text class="wt" x="100" y="38"  text-anchor="middle">摸</text>
+    <text class="wt" x="163" y="105" text-anchor="middle">喂</text>
+    <text class="wt" x="100" y="172" text-anchor="middle">叫它</text>
+    <text class="wt" x="37"  y="105" text-anchor="middle">逗它</text>
+    <text class="wn" id="wheelName" x="100" y="96"  text-anchor="middle">猫</text>
+    <text class="wh" x="100" y="112" text-anchor="middle">按 G 收起</text>
+  </svg>
+</div>
+<script>
+"use strict";

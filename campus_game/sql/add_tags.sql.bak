@@ -1,0 +1,121 @@
+-- =============================================
+-- 新增标签相关表
+-- =============================================
+
+USE coding_platform;
+
+-- 1. 标签表
+DROP TABLE IF EXISTS `tag`;
+CREATE TABLE `tag` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '标签ID',
+    `name` VARCHAR(50) NOT NULL COMMENT '标签名称',
+    `description` VARCHAR(255) DEFAULT NULL COMMENT '标签描述',
+    `sort_order` INT NOT NULL DEFAULT 0 COMMENT '排序',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='标签表';
+
+-- 2. 题目-标签关联表
+DROP TABLE IF EXISTS `problem_tag`;
+CREATE TABLE `problem_tag` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT 'ID',
+    `problem_id` BIGINT NOT NULL COMMENT '题目ID',
+    `tag_id` BIGINT NOT NULL COMMENT '标签ID',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_problem_tag` (`problem_id`, `tag_id`),
+    KEY `idx_problem_id` (`problem_id`),
+    KEY `idx_tag_id` (`tag_id`),
+    CONSTRAINT `fk_pt_problem` FOREIGN KEY (`problem_id`) REFERENCES `problem` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_pt_tag` FOREIGN KEY (`tag_id`) REFERENCES `tag` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='题目-标签关联表';
+
+-- =============================================
+-- 初始化标签数据（类似LeetCode）
+-- =============================================
+
+INSERT INTO `tag` (`name`, `description`, `sort_order`) VALUES
+('数组', '数组相关题目', 1),
+('字符串', '字符串相关题目', 2),
+('哈希表', '哈希表相关题目', 3),
+('链表', '链表相关题目', 4),
+('双指针', '双指针相关题目', 5),
+('栈', '栈相关题目', 6),
+('队列', '队列相关题目', 7),
+('树', '树相关题目', 8),
+('图', '图相关题目', 9),
+('动态规划', '动态规划相关题目', 10),
+('贪心', '贪心算法相关题目', 11),
+('回溯', '回溯算法相关题目', 12),
+('分治', '分治算法相关题目', 13),
+('二分查找', '二分查找相关题目', 14),
+('排序', '排序相关题目', 15),
+('位运算', '位运算相关题目', 16),
+('数学', '数学相关题目', 17),
+('模拟', '模拟相关题目', 18);
+
+-- =============================================
+-- 添加更多题目例子
+-- =============================================
+
+INSERT INTO `problem` (`title`, `description`, `input_description`, `output_description`, `sample_input`, `sample_output`, `difficulty`, `category_id`, `template_code`, `answer_code`, `solution`) VALUES
+-- 题目4：最长公共前缀
+('最长公共前缀', '编写一个函数来查找字符串数组中的最长公共前缀。如果不存在公共前缀，返回空字符串 ""。', '第一行输入字符串数组的长度n，接下来n行每行输入一个字符串。', '输出最长公共前缀。', '3\nflower\nflow\nflight', 'fl', 'EASY', 2,
+'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int n = scanner.nextInt();\n        String[] strs = new String[n];\n        for (int i = 0; i < n; i++) {\n            strs[i] = scanner.next();\n        }\n        \n        // 在这里编写你的代码\n        \n        scanner.close();\n    }\n}',
+'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int n = scanner.nextInt();\n        String[] strs = new String[n];\n        for (int i = 0; i < n; i++) {\n            strs[i] = scanner.next();\n        }\n        \n        if (n == 0) {\n            System.out.println();\n            return;\n        }\n        \n        String prefix = strs[0];\n        for (int i = 1; i < n; i++) {\n            while (!strs[i].startsWith(prefix)) {\n                prefix = prefix.substring(0, prefix.length() - 1);\n                if (prefix.isEmpty()) {\n                    break;\n                }\n            }\n        }\n        System.out.println(prefix);\n        scanner.close();\n    }\n}',
+'以第一个字符串为基准，依次与后面的字符串比较，不断缩短公共前缀。'),
+
+-- 题目5：有效括号
+('有效括号', '给定一个只包括 "(", ")", "{", "}", "[", "]" 的字符串，判断字符串是否有效。', '输入一个字符串。', '输出true或false。', '()[]{}', 'true', 'EASY', 2,
+'import java.util.Scanner;\nimport java.util.Stack;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        String s = scanner.next();\n        \n        // 在这里编写你的代码\n        \n        scanner.close();\n    }\n}',
+'import java.util.Scanner;\nimport java.util.Stack;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        String s = scanner.next();\n        \n        Stack<Character> stack = new Stack<>();\n        for (char c : s.toCharArray()) {\n            if (c == ''('') stack.push('')'');\n            else if (c == ''{ '') stack.push(''}'' ); else if (c == ''['') stack.push('']''); else if (stack.isEmpty() || stack.pop() != c) { System.out.println(false); return; } } System.out.println(stack.isEmpty()); scanner.close(); } }', '使用栈来处理括号匹配问题。'),
+
+-- 题目6：买卖股票的最佳时机
+('买卖股票的最佳时机', '给定一个数组 prices ，它的第 i 个元素 prices[i] 表示一支给定股票第 i 天的价格。你只能选择某一天买入这只股票，并选择在未来的某一个不同的日子卖出该股票。设计一个算法来计算你所能获取的最大利润。', '第一行输入数组长度n，第二行输入n个整数。', '输出最大利润。', '6\n7 1 5 3 6 4', '5', 'EASY', 1,
+'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int n = scanner.nextInt();\n        int[] prices = new int[n];\n        for (int i = 0; i < n; i++) {\n            prices[i] = scanner.nextInt();\n        }\n        \n        // 在这里编写你的代码\n        \n        scanner.close();\n    }\n}',
+'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int n = scanner.nextInt();\n        int[] prices = new int[n];\n        for (int i = 0; i < n; i++) {\n            prices[i] = scanner.nextInt();\n        }\n        \n        int minPrice = Integer.MAX_VALUE;\n        int maxProfit = 0;\n        for (int price : prices) {\n            if (price < minPrice) {\n                minPrice = price;\n            } else if (price - minPrice > maxProfit) {\n                maxProfit = price - minPrice;\n            }\n        }\n        System.out.println(maxProfit);\n        scanner.close();\n    }\n}',
+'遍历数组，记录最小价格，同时计算当前价格与最小价格的差值作为利润。'),
+
+-- 题目7：最大子数组和
+('最大子数组和', '给你一个整数数组 nums ，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。', '第一行输入数组长度n，第二行输入n个整数。', '输出最大子数组和。', '9\n-2 1 -3 4 -1 2 1 -5 4', '6', 'MEDIUM', 1,
+'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int n = scanner.nextInt();\n        int[] nums = new int[n];\n        for (int i = 0; i < n; i++) {\n            nums[i] = scanner.nextInt();\n        }\n        \n        // 在这里编写你的代码\n        \n        scanner.close();\n    }\n}',
+'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int n = scanner.nextInt();\n        int[] nums = new int[n];\n        for (int i = 0; i < n; i++) {\n            nums[i] = scanner.nextInt();\n        }\n        \n        int maxSum = nums[0];\n        int currentSum = nums[0];\n        for (int i = 1; i < n; i++) {\n            currentSum = Math.max(nums[i], currentSum + nums[i]);\n            maxSum = Math.max(maxSum, currentSum);\n        }\n        System.out.println(maxSum);\n        scanner.close();\n    }\n}',
+'使用Kadane算法，维护当前最大和和全局最大和。'),
+
+-- 题目8：爬楼梯
+('爬楼梯', '假设你正在爬楼梯。需要 n 阶你才能到达楼顶。每次你可以爬 1 或 2 个台阶。你有多少种不同的方法可以爬到楼顶呢？', '输入一个整数n。', '输出方法数。', '3', '3', 'EASY', 1,
+'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int n = scanner.nextInt();\n        \n        // 在这里编写你的代码\n        \n        scanner.close();\n    }\n}',
+'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int n = scanner.nextInt();\n        \n        if (n <= 1) {\n            System.out.println(1);\n            return;\n        }\n        int a = 1, b = 1;\n        for (int i = 2; i <= n; i++) {\n            int temp = b;\n            b = a + b;\n            a = temp;\n        }\n        System.out.println(b);\n        scanner.close();\n    }\n}',
+'经典动态规划问题，fib(n) = fib(n-1) + fib(n-2)。'),
+
+-- 题目9：三数之和
+('三数之和', '给你一个整数数组 nums ，判断是否存在三元组 [nums[i], nums[j], nums[k]] 满足 i != j、i != k 且 j != k ，同时还满足 nums[i] + nums[j] + nums[k] == 0 。请你返回所有和为 0 且不重复的三元组的个数。', '第一行输入数组长度n，第二行输入n个整数。', '输出符合条件的三元组个数。', '6\n-1 0 1 2 -1 -4', '2', 'MEDIUM', 1,
+'import java.util.Scanner;\nimport java.util.Arrays;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int n = scanner.nextInt();\n        int[] nums = new int[n];\n        for (int i = 0; i < n; i++) {\n            nums[i] = scanner.nextInt();\n        }\n        \n        // 在这里编写你的代码\n        \n        scanner.close();\n    }\n}',
+'import java.util.Scanner;\nimport java.util.Arrays;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int n = scanner.nextInt();\n        int[] nums = new int[n];\n        for (int i = 0; i < n; i++) {\n            nums[i] = scanner.nextInt();\n        }\n        \n        Arrays.sort(nums);\n        int count = 0;\n        for (int i = 0; i < n - 2; i++) {\n            if (i > 0 && nums[i] == nums[i - 1]) continue;\n            int left = i + 1, right = n - 1;\n            while (left < right) {\n                int sum = nums[i] + nums[left] + nums[right];\n                if (sum == 0) {\n                    count++;\n                    while (left < right && nums[left] == nums[left + 1]) left++;\n                    while (left < right && nums[right] == nums[right - 1]) right--;\n                    left++;\n                    right--;\n                } else if (sum < 0) {\n                    left++;\n                } else {\n                    right--;\n                }\n            }\n        }\n        System.out.println(count);\n        scanner.close();\n    }\n}',
+'排序后使用双指针法寻找和为0的三元组。'),
+
+-- 题目10：单词搜索
+('单词搜索', '给定一个 m x n 二维字符网格 board 和一个字符串单词 word 。如果 word 存在于网格中，返回 true ；否则，返回 false 。', '第一行输入m和n，接下来m行每行输入n个字符，最后一行输入单词。', '输出true或false。', '3 4\nA B C E\nS F C S\nA D E E\nABCCED', 'true', 'MEDIUM', 2,
+'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int m = scanner.nextInt();\n        int n = scanner.nextInt();\n        char[][] board = new char[m][n];\n        for (int i = 0; i < m; i++) {\n            for (int j = 0; j < n; j++) {\n                board[i][j] = scanner.next().charAt(0);\n            }\n        }\n        String word = scanner.next();\n        \n        // 在这里编写你的代码\n        \n        scanner.close();\n    }\n}',
+'import java.util.Scanner;\n\npublic class Main {\n    private static int[][] dirs = {{0,1}, {0,-1}, {1,0}, {-1,0}};\n    \n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int m = scanner.nextInt();\n        int n = scanner.nextInt();\n        char[][] board = new char[m][n];\n        for (int i = 0; i < m; i++) {\n            for (int j = 0; j < n; j++) {\n                board[i][j] = scanner.next().charAt(0);\n            }\n        }\n        String word = scanner.next();\n        \n        boolean[][] visited = new boolean[m][n];\n        for (int i = 0; i < m; i++) {\n            for (int j = 0; j < n; j++) {\n                if (dfs(board, word, visited, i, j, 0)) {\n                    System.out.println(true);\n                    return;\n                }\n            }\n        }\n        System.out.println(false);\n        scanner.close();\n    }\n    \n    private static boolean dfs(char[][] board, String word, boolean[][] visited, int i, int j, int idx) {\n        if (idx == word.length()) return true;\n        if (i < 0 || i >= board.length || j < 0 || j >= board[0].length || visited[i][j] || board[i][j] != word.charAt(idx)) {\n            return false;\n        }\n        visited[i][j] = true;\n        for (int[] dir : dirs) {\n            if (dfs(board, word, visited, i + dir[0], j + dir[1], idx + 1)) {\n                return true;\n            }\n        }\n        visited[i][j] = false;\n        return false;\n    }\n}',
+'使用回溯法在网格中搜索单词。');
+
+-- =============================================
+-- 给题目添加标签
+-- =============================================
+
+-- 现有题目
+INSERT INTO `problem_tag` (`problem_id`, `tag_id`) VALUES
+(1, 1), (1, 3), -- 两数之和：数组、哈希表
+(2, 10), (2, 17), -- 斐波那契数列：动态规划、数学
+(3, 4), (3, 5), -- 反转链表：链表、双指针
+-- 新题目
+(4, 2), -- 最长公共前缀：字符串
+(5, 6), -- 有效括号：栈
+(6, 1), (6, 11), -- 买卖股票的最佳时机：数组、贪心
+(7, 1), (7, 10), -- 最大子数组和：数组、动态规划
+(8, 10), (8, 17), -- 爬楼梯：动态规划、数学
+(9, 1), (9, 5), (9, 15), -- 三数之和：数组、双指针、排序
+(10, 2), (10, 8), (10, 12); -- 单词搜索：字符串、树、回溯

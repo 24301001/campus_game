@@ -1,0 +1,146 @@
+/* building.css — 楼宇主页（配套 building.js，别处不用引第二份）
+   色板与 cat-dex / mp/theme.css 同一套：本模块也要能在没有大厅的纯静态地图页上长一个样。
+   层序（2026-11-04 用户反馈后重排）：
+     ① #bldRoot 只放地图上那几颗「i」，z-index 45 —— 压在公告/留言板/私聊/每日任务下面；
+     ② #bldLayer 放楼的小页面和提示，z-index 80 —— 打开时盖住一切大厅面板。 */
+#bldRoot,#bldLayer{--b-bg:#1d2129;--b-deep:#11151b;--b-line:#475261;--b-ink:#f3efe3;--b-muted:#b9c9d5;
+  --b-gold:#ffd76e;--b-teal:#7fd6c8;--b-warn:#ffce8a;
+  position:fixed;inset:0;pointer-events:none;
+  color:var(--b-ink);font:13px/1.55 system-ui,"Microsoft YaHei",sans-serif}
+#bldRoot{z-index:45}
+#bldLayer{z-index:80}
+:is(#bldRoot,#bldLayer) *{box-sizing:border-box}
+:is(#bldRoot,#bldLayer) [hidden]{display:none!important}
+:is(#bldRoot,#bldLayer) button{font:inherit;cursor:pointer}
+/* ⚠️ 必须写 box-shadow:none —— 地图第 13 行有一条全局 `canvas{box-shadow:0 0 0 2px #2b2f3a,…}`，
+   它给**页面上每一张画布**都套了一圈 2px 深色方框。那颗 17×17 的「i」圆形图标被套上之后，
+   就成了"圆外面还围着一个黑方块"（用户 2026-11-04 报的就是这个）。头像也一样要摘掉。 */
+:is(#bldRoot,#bldLayer) canvas{display:block;image-rendering:pixelated;box-shadow:none}
+
+/* ---------------- 楼顶那颗「i」 ---------------- */
+:is(#bldRoot,#bldLayer) .bld-pins{position:absolute;inset:0;pointer-events:none}
+:is(#bldRoot,#bldLayer) .bld-pin{position:absolute;width:34px;height:34px;padding:0;border:0;background:none;
+  line-height:0;pointer-events:auto;transform:translate(-50%,-50%);will-change:transform,left,top;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.35))}
+:is(#bldRoot,#bldLayer) .bld-pin:hover{filter:drop-shadow(0 0 7px rgba(255,215,110,.9)) drop-shadow(0 2px 0 rgba(0,0,0,.35))}
+:is(#bldRoot,#bldLayer) .bld-pin:focus-visible{outline:2px solid var(--b-teal);outline-offset:2px;border-radius:50%}
+:is(#bldRoot,#bldLayer) .bld-pin > canvas{width:100%;height:100%}
+/* 楼名只在鼠标移上去时露出来：六颗字一直挂着，整张地图就成标签墙了 */
+:is(#bldRoot,#bldLayer) .bld-pin > b{position:absolute;left:50%;top:100%;transform:translateX(-50%);
+  margin-top:1px;white-space:nowrap;font-size:11px;font-weight:700;color:#fff;opacity:0;
+  transition:opacity .12s;pointer-events:none;
+  text-shadow:0 1px 0 #12161c,0 -1px 0 #12161c,1px 0 0 #12161c,-1px 0 0 #12161c}
+:is(#bldRoot,#bldLayer) .bld-pin:hover > b{opacity:1}
+
+/* ---------------- 楼的小页面 ---------------- */
+:is(#bldRoot,#bldLayer) .bld-shade{position:absolute;inset:0;background:rgba(8,10,14,.58);
+  display:flex;align-items:center;justify-content:center;padding:16px;pointer-events:auto}
+:is(#bldRoot,#bldLayer) .bld-panel{width:min(520px,100%);max-height:100%;overflow:auto;display:flex;flex-direction:column;
+  background:var(--b-bg);border:1px solid var(--b-line);border-radius:8px;
+  box-shadow:0 8px 0 rgba(0,0,0,.34)}
+:is(#bldRoot,#bldLayer) .bld-head{display:flex;align-items:center;gap:10px;padding:10px 12px;position:sticky;top:0;
+  background:var(--b-bg);border-bottom:1px solid var(--b-line);z-index:2}
+:is(#bldRoot,#bldLayer) .bld-title{font-weight:700;font-size:15px;letter-spacing:.04em;color:var(--b-gold)}
+:is(#bldRoot,#bldLayer) .bld-stat{margin-left:auto;color:var(--b-muted);font-size:12px}
+:is(#bldRoot,#bldLayer) .bld-x{background:transparent;border:0;color:var(--b-muted);font-size:18px;line-height:1;padding:3px 6px}
+:is(#bldRoot,#bldLayer) .bld-x:hover{color:#fff}
+:is(#bldRoot,#bldLayer) .bld-body{padding:12px;display:flex;flex-direction:column;gap:12px}
+:is(#bldRoot,#bldLayer) .bld-sub{margin:0;color:var(--b-teal);font-size:11px;letter-spacing:.18em;font-weight:700}
+:is(#bldRoot,#bldLayer) .bld-tags{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 0}
+:is(#bldRoot,#bldLayer) .bld-tag{background:#2a303b;border:1px solid var(--b-line);border-radius:3px;
+  padding:1px 6px;font-size:11px;color:var(--b-muted)}
+:is(#bldRoot,#bldLayer) .bld-p{margin:6px 0 0;color:var(--b-muted);line-height:1.7}
+:is(#bldRoot,#bldLayer) .bld-p:first-of-type{color:var(--b-ink)}
+
+:is(#bldRoot,#bldLayer) .bld-sec-h{display:flex;align-items:baseline;gap:8px;border-top:1px solid var(--b-line);padding-top:10px}
+:is(#bldRoot,#bldLayer) .bld-sec-h b{color:var(--b-gold);font-size:13px}
+:is(#bldRoot,#bldLayer) .bld-count{margin-left:auto;color:var(--b-muted);font-size:11px}
+
+:is(#bldRoot,#bldLayer) .bld-wall{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+:is(#bldRoot,#bldLayer) .bld-ph{position:relative;display:block;padding:0;border:1px solid var(--b-line);
+  border-radius:5px;overflow:hidden;background:var(--b-deep);line-height:0}
+:is(#bldRoot,#bldLayer) .bld-ph:hover{border-color:var(--b-gold)}
+:is(#bldRoot,#bldLayer) .bld-ph img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+:is(#bldRoot,#bldLayer) .bld-ph-by{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:4px;
+  padding:3px 4px;background:linear-gradient(transparent,rgba(9,12,16,.92));line-height:1.2}
+:is(#bldRoot,#bldLayer) .bld-ph-by i{font-style:normal;color:#e8eef3;font-size:10px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+:is(#bldRoot,#bldLayer) .bld-empty{grid-column:1/-1;padding:14px;text-align:center;color:var(--b-muted);
+  border:1px dashed var(--b-line);border-radius:6px;font-size:12px}
+
+:is(#bldRoot,#bldLayer) .bld-up{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+:is(#bldRoot,#bldLayer) .bld-hint{color:var(--b-muted);font-size:11px;flex:1;min-width:120px}
+:is(#bldRoot,#bldLayer) .bld-btn{border:1px solid var(--b-line);background:var(--b-deep);color:var(--b-ink);
+  border-radius:4px;padding:5px 10px}
+:is(#bldRoot,#bldLayer) .bld-btn:hover{border-color:var(--b-gold);color:var(--b-gold)}
+:is(#bldRoot,#bldLayer) .bld-btn.bld-primary{background:#2b3542;border-color:var(--b-teal);color:var(--b-teal)}
+:is(#bldRoot,#bldLayer) .bld-btn.bld-primary:hover{background:#33414f;border-color:var(--b-gold);color:var(--b-gold)}
+:is(#bldRoot,#bldLayer) .bld-btn[disabled]{opacity:.55;cursor:default;border-color:var(--b-line);color:var(--b-muted)}
+
+/* 选完图 → 写寄语的这一步 */
+:is(#bldRoot,#bldLayer) .bld-compose{display:flex;flex-direction:column;gap:7px;padding:9px;border-radius:6px;
+  background:var(--b-deep);border:1px solid var(--b-teal)}
+:is(#bldRoot,#bldLayer) .bld-cmp-img{max-height:150px;width:auto;max-width:100%;border-radius:4px;align-self:center}
+:is(#bldRoot,#bldLayer) .bld-cmp{width:100%;min-height:52px;resize:vertical;padding:7px 8px;border-radius:4px;
+  border:1px solid var(--b-line);background:#0c1015;color:var(--b-ink);font:inherit}
+:is(#bldRoot,#bldLayer) .bld-cmp:focus{outline:none;border-color:var(--b-gold)}
+:is(#bldRoot,#bldLayer) .bld-cmp-row{display:flex;align-items:center;gap:8px}
+:is(#bldRoot,#bldLayer) .bld-cmp-row span{margin-left:auto;color:var(--b-muted);font-size:11px}
+
+/* ---------------- 留言 ---------------- */
+:is(#bldRoot,#bldLayer) .bld-cmts{display:flex;flex-direction:column;gap:8px}
+:is(#bldRoot,#bldLayer) .bld-cmt{display:flex;gap:8px;align-items:flex-start}
+:is(#bldRoot,#bldLayer) .bld-cmt-main{flex:1;min-width:0}
+:is(#bldRoot,#bldLayer) .bld-cmt-h{display:flex;align-items:baseline;gap:7px}
+:is(#bldRoot,#bldLayer) .bld-cmt-h b{font-size:12px;color:var(--b-ink)}
+:is(#bldRoot,#bldLayer) .bld-cmt-h span{color:var(--b-muted);font-size:11px}
+:is(#bldRoot,#bldLayer) .bld-cmt-t{margin:1px 0 0;color:var(--b-muted);word-break:break-word}
+:is(#bldRoot,#bldLayer) .bld-cfmt{display:flex;gap:7px;align-items:flex-start;border-top:1px solid var(--b-line);padding-top:10px}
+:is(#bldRoot,#bldLayer) .bld-cfmt input{flex:1;min-width:0;padding:7px 8px;border-radius:4px;border:1px solid var(--b-line);
+  background:#0c1015;color:var(--b-ink);font:inherit}
+:is(#bldRoot,#bldLayer) .bld-cfmt input:focus{outline:none;border-color:var(--b-gold)}
+
+/* 头像：MPLook.avatar() 出的 24×24 画布 */
+:is(#bldRoot,#bldLayer) .bld-av{flex:none;border-radius:3px;overflow:hidden;background:#2a303b;
+  border:1px solid var(--b-line);line-height:0}
+:is(#bldRoot,#bldLayer) .bld-av canvas{width:100%;height:100%}
+
+/* ---------------- 明信片 ---------------- */
+:is(#bldRoot,#bldLayer) .bld-postshade{position:absolute;inset:0;background:rgba(6,8,11,.74);
+  display:flex;align-items:center;justify-content:center;padding:16px;pointer-events:auto}
+:is(#bldRoot,#bldLayer) .bld-card{width:min(440px,100%);max-height:100%;display:flex;flex-direction:column;
+  background:#f7f0dd;border-radius:4px;overflow:hidden;position:relative;
+  box-shadow:0 10px 0 rgba(0,0,0,.4),0 0 0 1px #cbbd99;color:#2a2418;
+  font-family:"Kaiti SC","STKaiti","KaiTi",Georgia,serif}
+:is(#bldRoot,#bldLayer) .bld-card-top{position:relative;background:#e7ddc4;padding:9px 9px 7px;flex:none}
+:is(#bldRoot,#bldLayer) .bld-card-img{display:block;width:100%;max-height:52vh;object-fit:contain;background:#dcd2ba;
+  border:1px solid #c2b492}
+:is(#bldRoot,#bldLayer) .bld-stamp{position:absolute;right:2px;top:32px;width:44px;height:52px;transform:rotate(4deg);
+  border:2px dashed #b8503c;color:#b8503c;background:rgba(255,255,255,.5);
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:15px;font-weight:700;line-height:1.15;letter-spacing:.05em;padding:2px;
+  font-family:"Kaiti SC","STKaiti","KaiTi",serif}
+:is(#bldRoot,#bldLayer) .bld-card-body{padding:9px 12px 12px;overflow:auto;display:flex;flex-direction:column;gap:6px}
+:is(#bldRoot,#bldLayer) .bld-card-meta{display:flex;align-items:center;gap:7px}
+:is(#bldRoot,#bldLayer) .bld-card-meta .bld-av{border-color:#c2b492}
+:is(#bldRoot,#bldLayer) .bld-card-meta b{font-size:13px}
+:is(#bldRoot,#bldLayer) .bld-card-meta time{margin-left:auto;font-size:11px;color:#7a6d52;font-family:system-ui,sans-serif}
+:is(#bldRoot,#bldLayer) .bld-card-note{margin:2px 0 0;font-size:16px;line-height:1.75;white-space:pre-wrap;
+  word-break:break-word;border-top:1px dashed #c2b492;padding-top:7px}
+:is(#bldRoot,#bldLayer) .bld-card-note.bld-blank{color:#8b7f66;font-size:14px;font-style:italic}
+:is(#bldRoot,#bldLayer) .bld-card-foot{display:flex;align-items:center;gap:6px;margin-top:auto;padding-top:6px;
+  font-size:10px;letter-spacing:.14em;color:#8b7f66;font-family:system-ui,sans-serif}
+:is(#bldRoot,#bldLayer) .bld-card-foot span{margin-left:auto}
+:is(#bldRoot,#bldLayer) .bld-card-x{position:absolute;right:6px;top:2px;z-index:3;border:0;background:rgba(20,16,10,.55);
+  color:#fff;width:24px;height:24px;border-radius:50%;font-size:15px;line-height:1;padding:0}
+
+/* ---------------- 提示条 ---------------- */
+:is(#bldRoot,#bldLayer) .bld-toast{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);
+  background:rgba(17,21,27,.95);border:1px solid var(--b-line);color:var(--b-ink);
+  padding:7px 12px;border-radius:4px;font-size:12px;max-width:80vw;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+
+@media (max-width:420px){
+  :is(#bldRoot,#bldLayer) .bld-wall{grid-template-columns:repeat(2,1fr)}
+  :is(#bldRoot,#bldLayer) .bld-panel{width:100%}
+}

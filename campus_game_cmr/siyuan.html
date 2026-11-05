@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>思源楼场景 · 像素校园</title>
+<style>
+  html,body{margin:0;height:100%;background:#0d0f13;overflow:hidden}
+  #f{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:#101216}
+  #bar{
+    position:fixed;left:14px;bottom:14px;z-index:9999;
+    display:flex;gap:10px;align-items:center;
+    padding:7px 13px;border-radius:6px;
+    background:rgba(29,33,41,.92);border:1px solid #39404d;color:#9fb4d0;
+    font:12.5px/1.5 ui-monospace,Consolas,"Courier New",monospace;letter-spacing:.6px;
+    box-shadow:0 6px 20px rgba(0,0,0,.5);backdrop-filter:blur(3px);
+  }
+  #bar a{color:#ffd76e;text-decoration:none;font-weight:600}
+  #bar a:hover{text-decoration:underline}
+  #bar b{color:#7fd6c8;font-weight:600}
+  @media (max-width:560px){#bar span{display:none}}
+</style>
+</head>
+<body>
+
+<!-- 同 play.html：先把 token 放好，再建 iframe，地图才不会弹登录门 -->
+<script>
+try { if (!localStorage.getItem('token')) localStorage.setItem('token', 'campus-demo'); } catch (e) {}
+</script>
+
+<iframe id="f" src="像素校园_全校地图.html" title="像素校园 思源楼场景" allow="fullscreen"></iframe>
+
+<div id="bar">
+  <a href="index.html">← 返回</a>
+  <span><b>点一下画面</b>，再用 <b>←→↑↓</b> / <b>WASD</b> 在思源楼前来回走 · 按 <b>0</b> 可看全图</span>
+</div>
+
+<script>
+/* 把地图载进 iframe 之后，站在外面把它"摆"到思源楼前。
+   ⚠️ 不能写 `f.contentWindow.player.x = …`：地图里的 player / cam 是顶层
+      `const`/`let`，它们待在**词法环境**里、并不挂在 window 上，取不到。
+      ⇒ 往 iframe 里塞一个 <script>，让它在**那个 realm 里**跑，就能直接读写了。 */
+(function () {
+  var f = document.getElementById('f');
+  f.addEventListener('load', function () {
+    try {
+      var d = f.contentDocument, w = f.contentWindow;
+      var s = d.createElement('script');
+      s.textContent = [
+        "try { if (typeof loginEl !== 'undefined' && loginEl) loginEl.hidden = true; } catch (e) {}",
+        /* 50% 档 = 一屏刚好装下整栋思源楼（即首页动图那个机位） */
+        "if (typeof setZoom === 'function') setZoom(5);",
+        /* 楼前那条马路（实测 x1830~2030 / y1450~1630 全是可走的沥青路面） */
+        "player.x = 1920; player.y = 1505; player.dir = 'down';",
+        "cam.x = player.x - viewW / 2; cam.y = 1431.6 - viewH * 0.80;",
+        "try { hudTick(); } catch (e) {}"
+      ].join('\n');
+      d.body.appendChild(s);
+      w.focus();
+    } catch (e) {
+      console.warn('[siyuan] 摆位失败：', e);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

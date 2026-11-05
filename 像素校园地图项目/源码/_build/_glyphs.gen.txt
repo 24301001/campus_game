@@ -1,0 +1,29 @@
+/* ==== 由 _build/_glyphs.py 生成，勿手改（源：建筑物照片/字体.png + 南门.jpg）==== */
+const SG_EMN = 38;
+const SG_GOLD = "#c4b57e", SG_EMBLUE = "#273a72", SG_RED = "#5c302d";
+const SG_MASK_BEI = "AeAAAeAAAeAAA8MAB48ADx4AHDwAOHgAYPwAwfwBg/gDB+AED4AIfhAQPD8gcD9A4B7BgD2GAHcB4Z4D4Hw/wdgPBwAY3ABh8ACD4AADgAAA";
+const SG_MASK_JING = "AwAB+AB/AA+AB8ADwAOMAx8APwB+B/gD8eAD8AfgH/Af8A/8B/4D3wHugOzwP3gfnh/PH+P+8D54DhwA";
+const SG_MASK_JIAO = "AeAAB4AAHCAA/8AH/gD/4AZAAAAAAAwACPAA/cAP3gH8AA8AAFiAAOYAA3gAD8AAPAADwAAeAAHcABxgAcPAHB8DwPwwA/wAD/A=";
+const SG_MASK_TONG = "AAGAAcAH4AfgD+APYA+4D5wAGAAHgA/ABkAOYB8wD9gH6AP0A/IA2wNtiYfHQmH4AB+AA+AAf8APwAOA";
+const SG_MASK_DA = "AAAwAAA4AAA4AAA4AABwAADwAADwAADgAEHeAHP+AD/4AB/gAA8AAA8AAB4AAB4AAD4AAH8AAPOAAeHAA8DwB4D/DwB/PAA4cAAAAAAAAAAAAAAA";
+const SG_MASK_XUE = "ADAADgADgADjEH/GPHDfGDNMDdoB94B7wA+gBtvBH/Ae+Jz4LEAuOA58AwP4AP4B7gPsAGMAAMAAMAMMAH8A";
+const SG_MASK_EM = "AAf/gAAAfh+AAAeYN4AAeCDHgAPAwwcAHIHoBgDjP/DcAwvA9jgYHADgYPjB+ODD9j/hzxlx/8N2Z4f/B5mOD/wYPDA/uDDwx//Aw8M///sPCP//5Dwh/+GQ8IH/hkPDB/wZD2wT8G29sE/BtPdDf4K7fYn+Dum6b/wz5uz/8N2N2AAG7B+wADOwbnADvYDQ/P3sA4B/z3AHPAA7gAZ/+FwADn/xwAAeDp4AAB//4AAAD/wAAA==";
+/* 四个金字：[点阵, φ(度), 宽, 高] —— 宽高逐字不同是**故意的**（见文件头 3），
+   压成方字会把毛笔字横向压扁到认不出。φ 以拱心为原点、y 朝上，拱顶 90°。 */
+const SG_CHARS = [
+  [SG_MASK_JIAO, 137.0, 21, 28],
+  [SG_MASK_TONG, 117.0, 17, 28],
+  [SG_MASK_DA, 63.0, 24, 28],
+  [SG_MASK_XUE, 43.0, 18, 28]
+];
+/* 南门校名石（§5.4）的六字一行：[点阵, 宽, 高]，**不旋转**。
+   与上面四个金字同源同高（28px），所以「交 通 大 学」四点阵与拱上是同一串字节。 */
+const SG_ROW6 = [
+  [SG_MASK_BEI, 23, 28],
+  [SG_MASK_JING, 17, 28],
+  [SG_MASK_JIAO, 21, 28],
+  [SG_MASK_TONG, 17, 28],
+  [SG_MASK_DA, 24, 28],
+  [SG_MASK_XUE, 18, 28]
+];
+/* ==== 生成块结束 ==== */

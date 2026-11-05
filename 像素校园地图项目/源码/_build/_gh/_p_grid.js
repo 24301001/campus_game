@@ -1,0 +1,1 @@
+var out = []; for (var yy = 1450; yy <= 1640; yy += 15) { var row = ''; for (var xx = 1830; xx <= 2030; xx += 20) row += (canWalk(xx, yy) && !ptBlocked(xx, yy)) ? '1' : '.'; out.push(yy + ':' + row); } window.__diag.push('x1830..2030/20 ' + out.join(' | '));

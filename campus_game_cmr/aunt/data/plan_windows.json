@@ -1,0 +1,2823 @@
+{
+  "sources": {
+    "P1": {
+      "title": "学活二楼食堂平面图.png（大概平面图；同补充 PPT 第 2 页）",
+      "url": "/static/plan-sources/xuehuo-2f.png"
+    },
+    "P2": {
+      "title": "明湖一楼食堂平面导览图.png（根据视频画面绘制，仅为大概示意；同补充 PPT 第 4 页）",
+      "url": "/static/plan-sources/minghu-1f.png"
+    },
+    "P3": {
+      "title": "明湖二楼.png（根据现场照片整理，仅供示意；同补充 PPT 第 5 页）",
+      "url": "/static/plan-sources/minghu-2f.png"
+    },
+    "P4": {
+      "title": "明湖三楼自助餐厅平面导览图.png（实景大概平面图，根据现场照片整理，仅供示意；同补充 PPT 第 6 页）",
+      "url": "/static/plan-sources/minghu-3f.png"
+    }
+  },
+  "floors": [
+    {
+      "canteenId": "xuehuo",
+      "floorLabel": "2F",
+      "status": "approximate",
+      "sourceId": "P1",
+      "entrance": [
+        5,
+        18
+      ],
+      "north": "up",
+      "fixtures": [
+        {
+          "id": "xh2-cutlery_station-1",
+          "kind": "cutlery_station",
+          "rect": [
+            1,
+            12,
+            3,
+            3
+          ],
+          "label": "放置碗筷处",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "facing": "east"
+        },
+        {
+          "id": "xh2-cutlery_station-2",
+          "kind": "cutlery_station",
+          "rect": [
+            28,
+            14,
+            3,
+            3
+          ],
+          "label": "放置碗筷处",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "facing": "west"
+        },
+        {
+          "id": "xh2-opinion_desk-1",
+          "kind": "opinion_desk",
+          "rect": [
+            21,
+            12,
+            2,
+            2
+          ],
+          "label": "意见台",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "facing": "south"
+        },
+        {
+          "id": "xh2-green_divider-1",
+          "kind": "green_divider",
+          "rect": [
+            8,
+            16,
+            15,
+            1
+          ],
+          "label": "绿植／书架隔断",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "shape": "long"
+        },
+        {
+          "id": "xh2-column-1",
+          "kind": "column",
+          "rect": [
+            9,
+            5,
+            1,
+            2
+          ],
+          "label": "柱子",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-column-2",
+          "kind": "column",
+          "rect": [
+            19,
+            5,
+            1,
+            2
+          ],
+          "label": "柱子",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-column-3",
+          "kind": "column",
+          "rect": [
+            9,
+            12,
+            1,
+            2
+          ],
+          "label": "柱子",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-column-4",
+          "kind": "column",
+          "rect": [
+            19,
+            12,
+            1,
+            2
+          ],
+          "label": "柱子",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-round_planter-1",
+          "kind": "round_planter",
+          "rect": [
+            10,
+            8,
+            2,
+            2
+          ],
+          "label": "圆形绿植花池",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "shape": "round"
+        },
+        {
+          "id": "xh2-round_planter-2",
+          "kind": "round_planter",
+          "rect": [
+            17,
+            8,
+            2,
+            2
+          ],
+          "label": "圆形绿植花池",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "shape": "round"
+        },
+        {
+          "id": "xh2-round_planter-3",
+          "kind": "round_planter",
+          "rect": [
+            13,
+            13,
+            2,
+            2
+          ],
+          "label": "圆形绿植花池",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "shape": "round"
+        },
+        {
+          "id": "xh2-round_table-1",
+          "kind": "round_table",
+          "rect": [
+            8,
+            9,
+            2,
+            2
+          ],
+          "label": "圆桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "shape": "round"
+        },
+        {
+          "id": "xh2-round_table-2",
+          "kind": "round_table",
+          "rect": [
+            14,
+            11,
+            2,
+            2
+          ],
+          "label": "圆桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "shape": "round"
+        },
+        {
+          "id": "xh2-table-1",
+          "kind": "table",
+          "rect": [
+            6,
+            5,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-2",
+          "kind": "table",
+          "rect": [
+            11,
+            5,
+            3,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-3",
+          "kind": "table",
+          "rect": [
+            15,
+            5,
+            3,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-4",
+          "kind": "table",
+          "rect": [
+            21,
+            5,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-5",
+          "kind": "table",
+          "rect": [
+            27,
+            5,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-6",
+          "kind": "table",
+          "rect": [
+            6,
+            8,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-7",
+          "kind": "table",
+          "rect": [
+            13,
+            8,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-8",
+          "kind": "table",
+          "rect": [
+            22,
+            8,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-9",
+          "kind": "table",
+          "rect": [
+            26,
+            8,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-10",
+          "kind": "table",
+          "rect": [
+            6,
+            12,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-11",
+          "kind": "table",
+          "rect": [
+            11,
+            12,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-12",
+          "kind": "table",
+          "rect": [
+            16,
+            12,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-13",
+          "kind": "table",
+          "rect": [
+            24,
+            12,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-table-14",
+          "kind": "table",
+          "rect": [
+            27,
+            11,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-bar_table-1",
+          "kind": "bar_table",
+          "rect": [
+            15,
+            17,
+            2,
+            1
+          ],
+          "label": "隔断旁座位",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "shape": "narrow"
+        },
+        {
+          "id": "xh2-bar_table-2",
+          "kind": "bar_table",
+          "rect": [
+            18,
+            17,
+            2,
+            1
+          ],
+          "label": "隔断旁座位",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "shape": "narrow"
+        },
+        {
+          "id": "xh2-bar_table-3",
+          "kind": "bar_table",
+          "rect": [
+            21,
+            17,
+            2,
+            1
+          ],
+          "label": "隔断旁座位",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ],
+          "shape": "narrow"
+        },
+        {
+          "id": "xh2-plant-1",
+          "kind": "plant",
+          "rect": [
+            4,
+            4,
+            1,
+            1
+          ],
+          "label": "盆栽",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-plant-2",
+          "kind": "plant",
+          "rect": [
+            4,
+            10,
+            1,
+            1
+          ],
+          "label": "盆栽",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-plant-3",
+          "kind": "plant",
+          "rect": [
+            1,
+            16,
+            1,
+            1
+          ],
+          "label": "盆栽",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-plant-4",
+          "kind": "plant",
+          "rect": [
+            25,
+            16,
+            1,
+            1
+          ],
+          "label": "盆栽",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        },
+        {
+          "id": "xh2-plant-5",
+          "kind": "plant",
+          "rect": [
+            30,
+            10,
+            1,
+            1
+          ],
+          "label": "盆栽",
+          "solid": true,
+          "evidence": [
+            "P1"
+          ]
+        }
+      ],
+      "windows": [
+        {
+          "id": "xh-2-beijing-west",
+          "name": "北京味道",
+          "kind": "window",
+          "rect": [
+            1,
+            2,
+            3,
+            3
+          ],
+          "front": "east",
+          "summary": "新版图上左侧上方斜列标“北京味道”；位置和面积是示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P1"
+          ],
+          "sourceLabel": "北京味道"
+        },
+        {
+          "id": "xh-2-jiage-west",
+          "name": "佳哥钢盆",
+          "kind": "window",
+          "rect": [
+            1,
+            6,
+            3,
+            4
+          ],
+          "front": "east",
+          "summary": "新版图上左侧中段标“佳哥钢盆”；位置和面积是示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P1"
+          ],
+          "sourceLabel": "佳哥钢盆"
+        },
+        {
+          "id": "xh-2-guangshi-north",
+          "name": "广式味道",
+          "kind": "window",
+          "rect": [
+            5,
+            1,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "新版学活二楼近似平面图标名；位置和面积是示意，当前经营状态待核。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P1"
+          ],
+          "sourceLabel": "广式味道"
+        },
+        {
+          "id": "xh-2-chongqing-north",
+          "name": "重庆味道",
+          "kind": "window",
+          "rect": [
+            9,
+            1,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "新版学活二楼近似平面图标名；位置和面积是示意，当前经营状态待核。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P1"
+          ],
+          "sourceLabel": "重庆味道"
+        },
+        {
+          "id": "xh-2-sichuan",
+          "name": "四川味道",
+          "kind": "window",
+          "rect": [
+            13,
+            1,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "新版学活二楼近似平面图标名；位置和面积是示意，当前经营状态待核。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P1"
+          ],
+          "sourceLabel": "四川味道"
+        },
+        {
+          "id": "xh-2-nanbei-north",
+          "name": "南北味道",
+          "kind": "window",
+          "rect": [
+            17,
+            1,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "新版学活二楼近似平面图标名；位置和面积是示意，当前经营状态待核。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P1"
+          ],
+          "sourceLabel": "南北味道"
+        },
+        {
+          "id": "xh-2-turkish-north",
+          "name": "土耳其烤肉",
+          "kind": "window",
+          "rect": [
+            21,
+            1,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "新版学活二楼近似平面图标名；位置和面积是示意，当前经营状态待核。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P1"
+          ],
+          "sourceLabel": "土耳其烤肉"
+        },
+        {
+          "id": "xh-2-baked-rice-northeast",
+          "name": "烤盘饭",
+          "kind": "window",
+          "rect": [
+            25,
+            1,
+            2,
+            3
+          ],
+          "front": "south",
+          "summary": "独立图右上斜排招牌写“烤盘饭”；格网仅近似其相对位置，面积和当前经营状态待核。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P1"
+          ],
+          "sourceLabel": "烤盘饭"
+        },
+        {
+          "id": "xh-2-drinks-northeast",
+          "name": "饮料",
+          "kind": "window",
+          "rect": [
+            27,
+            1,
+            2,
+            3
+          ],
+          "front": "south",
+          "summary": "独立图右上斜排招牌写“饮料”；格网仅近似其相对位置，面积和当前经营状态待核。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P1"
+          ],
+          "sourceLabel": "饮料"
+        },
+        {
+          "id": "xh-2-malatang-northeast",
+          "name": "麻辣烫",
+          "kind": "window",
+          "rect": [
+            29,
+            1,
+            2,
+            3
+          ],
+          "front": "south",
+          "summary": "独立图右上斜排招牌写“麻辣烫”；格网仅近似其相对位置，面积和当前经营状态待核。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P1"
+          ],
+          "sourceLabel": "麻辣烫"
+        }
+      ]
+    },
+    {
+      "canteenId": "minghu",
+      "floorLabel": "1F",
+      "status": "approximate",
+      "sourceId": "P2",
+      "entrance": [
+        16,
+        18
+      ],
+      "north": null,
+      "fixtures": [
+        {
+          "id": "mh1-queue_area-1",
+          "kind": "queue_area",
+          "rect": [
+            5,
+            5,
+            19,
+            1
+          ],
+          "label": "排队区",
+          "solid": false,
+          "evidence": [
+            "P2"
+          ],
+          "shape": "rail"
+        },
+        {
+          "id": "mh1-booth_area-1",
+          "kind": "booth_area",
+          "rect": [
+            1,
+            6,
+            4,
+            10
+          ],
+          "label": "隔断／卡座区",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-window_wall-1",
+          "kind": "window_wall",
+          "rect": [
+            3,
+            1,
+            25,
+            1
+          ],
+          "label": "大窗（靠外侧）",
+          "solid": false,
+          "evidence": [
+            "P2"
+          ],
+          "shape": "long"
+        },
+        {
+          "id": "mh1-side_door-1",
+          "kind": "side_door",
+          "rect": [
+            27,
+            2,
+            2,
+            3
+          ],
+          "label": "右上侧门（图示）",
+          "solid": false,
+          "evidence": [
+            "P2"
+          ],
+          "facing": "south"
+        },
+        {
+          "id": "mh1-screen-1",
+          "kind": "screen",
+          "rect": [
+            6,
+            10,
+            1,
+            1
+          ],
+          "label": "电视屏幕",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-screen-2",
+          "kind": "screen",
+          "rect": [
+            21,
+            10,
+            1,
+            1
+          ],
+          "label": "电视屏幕",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-column-1",
+          "kind": "column",
+          "rect": [
+            8,
+            7,
+            1,
+            2
+          ],
+          "label": "柱子",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-column-2",
+          "kind": "column",
+          "rect": [
+            20,
+            7,
+            1,
+            2
+          ],
+          "label": "柱子",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-column-3",
+          "kind": "column",
+          "rect": [
+            8,
+            14,
+            1,
+            2
+          ],
+          "label": "柱子",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-column-4",
+          "kind": "column",
+          "rect": [
+            20,
+            14,
+            1,
+            2
+          ],
+          "label": "柱子",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-1",
+          "kind": "table",
+          "rect": [
+            6,
+            7,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-2",
+          "kind": "table",
+          "rect": [
+            11,
+            7,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-3",
+          "kind": "table",
+          "rect": [
+            15,
+            7,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-4",
+          "kind": "table",
+          "rect": [
+            27,
+            6,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-5",
+          "kind": "table",
+          "rect": [
+            10,
+            9,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-6",
+          "kind": "table",
+          "rect": [
+            16,
+            9,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-7",
+          "kind": "table",
+          "rect": [
+            23,
+            9,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-8",
+          "kind": "table",
+          "rect": [
+            27,
+            9,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-9",
+          "kind": "table",
+          "rect": [
+            6,
+            11,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-10",
+          "kind": "table",
+          "rect": [
+            11,
+            11,
+            3,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-11",
+          "kind": "table",
+          "rect": [
+            16,
+            11,
+            3,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-12",
+          "kind": "table",
+          "rect": [
+            23,
+            12,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-13",
+          "kind": "table",
+          "rect": [
+            27,
+            12,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-14",
+          "kind": "table",
+          "rect": [
+            6,
+            15,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-15",
+          "kind": "table",
+          "rect": [
+            11,
+            15,
+            3,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-16",
+          "kind": "table",
+          "rect": [
+            16,
+            15,
+            3,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-17",
+          "kind": "table",
+          "rect": [
+            23,
+            15,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-table-18",
+          "kind": "table",
+          "rect": [
+            27,
+            15,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-plant-1",
+          "kind": "plant",
+          "rect": [
+            5,
+            4,
+            1,
+            1
+          ],
+          "label": "盆栽／入口绿植",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-plant-2",
+          "kind": "plant",
+          "rect": [
+            28,
+            5,
+            1,
+            1
+          ],
+          "label": "盆栽／入口绿植",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-plant-3",
+          "kind": "plant",
+          "rect": [
+            5,
+            16,
+            1,
+            1
+          ],
+          "label": "盆栽／入口绿植",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-plant-4",
+          "kind": "plant",
+          "rect": [
+            29,
+            10,
+            1,
+            1
+          ],
+          "label": "盆栽／入口绿植",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-plant-5",
+          "kind": "plant",
+          "rect": [
+            29,
+            14,
+            1,
+            1
+          ],
+          "label": "盆栽／入口绿植",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-plant-6",
+          "kind": "plant",
+          "rect": [
+            12,
+            17,
+            2,
+            1
+          ],
+          "label": "盆栽／入口绿植",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        },
+        {
+          "id": "mh1-plant-7",
+          "kind": "plant",
+          "rect": [
+            20,
+            17,
+            2,
+            1
+          ],
+          "label": "盆栽／入口绿植",
+          "solid": true,
+          "evidence": [
+            "P2"
+          ]
+        }
+      ],
+      "windows": [
+        {
+          "id": "mh-1-counter-1",
+          "name": "打饭窗口示意 1",
+          "kind": "placeholder",
+          "rect": [
+            6,
+            2,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "独立图仅给上侧一排柜台总标题“打饭窗口／档口区”；此序号只区分图中柜台位置，非真实窗口编号。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P2"
+          ],
+          "sourceLabel": "打饭窗口／档口区"
+        },
+        {
+          "id": "mh-1-counter-2",
+          "name": "打饭窗口示意 2",
+          "kind": "placeholder",
+          "rect": [
+            9,
+            2,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "独立图仅给上侧一排柜台总标题“打饭窗口／档口区”；此序号只区分图中柜台位置，非真实窗口编号。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P2"
+          ],
+          "sourceLabel": "打饭窗口／档口区"
+        },
+        {
+          "id": "mh-1-counter-3",
+          "name": "打饭窗口示意 3",
+          "kind": "placeholder",
+          "rect": [
+            12,
+            2,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "独立图仅给上侧一排柜台总标题“打饭窗口／档口区”；此序号只区分图中柜台位置，非真实窗口编号。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P2"
+          ],
+          "sourceLabel": "打饭窗口／档口区"
+        },
+        {
+          "id": "mh-1-counter-4",
+          "name": "打饭窗口示意 4",
+          "kind": "placeholder",
+          "rect": [
+            15,
+            2,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "独立图仅给上侧一排柜台总标题“打饭窗口／档口区”；此序号只区分图中柜台位置，非真实窗口编号。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P2"
+          ],
+          "sourceLabel": "打饭窗口／档口区"
+        },
+        {
+          "id": "mh-1-counter-5",
+          "name": "打饭窗口示意 5",
+          "kind": "placeholder",
+          "rect": [
+            19,
+            2,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "独立图仅给上侧一排柜台总标题“打饭窗口／档口区”；此序号只区分图中柜台位置，非真实窗口编号。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P2"
+          ],
+          "sourceLabel": "打饭窗口／档口区"
+        },
+        {
+          "id": "mh-1-counter-6",
+          "name": "打饭窗口示意 6",
+          "kind": "placeholder",
+          "rect": [
+            22,
+            2,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "独立图仅给上侧一排柜台总标题“打饭窗口／档口区”；此序号只区分图中柜台位置，非真实窗口编号。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P2"
+          ],
+          "sourceLabel": "打饭窗口／档口区"
+        },
+        {
+          "id": "mh-1-self-service",
+          "name": "自选菜台",
+          "kind": "window",
+          "rect": [
+            23,
+            6,
+            4,
+            2
+          ],
+          "front": "south",
+          "summary": "新版图右上侧明确标“自选菜台”；格坐标和占地比例为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P2"
+          ],
+          "sourceLabel": "自选菜台"
+        }
+      ]
+    },
+    {
+      "canteenId": "minghu",
+      "floorLabel": "2F",
+      "status": "approximate",
+      "sourceId": "P3",
+      "entrance": [
+        16,
+        18
+      ],
+      "north": "up",
+      "fixtures": [
+        {
+          "id": "mh2-cutlery_station-1",
+          "kind": "cutlery_station",
+          "rect": [
+            1,
+            7,
+            3,
+            7
+          ],
+          "label": "放置碗筷处",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ],
+          "facing": "east"
+        },
+        {
+          "id": "mh2-column-1",
+          "kind": "column",
+          "rect": [
+            9,
+            7,
+            1,
+            3
+          ],
+          "label": "绿色柱子",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-column-2",
+          "kind": "column",
+          "rect": [
+            20,
+            7,
+            1,
+            3
+          ],
+          "label": "绿色柱子",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-column-3",
+          "kind": "column",
+          "rect": [
+            9,
+            13,
+            1,
+            3
+          ],
+          "label": "绿色柱子",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-column-4",
+          "kind": "column",
+          "rect": [
+            20,
+            13,
+            1,
+            3
+          ],
+          "label": "绿色柱子",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-1",
+          "kind": "table",
+          "rect": [
+            5,
+            6,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-2",
+          "kind": "table",
+          "rect": [
+            11,
+            6,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-3",
+          "kind": "table",
+          "rect": [
+            15,
+            6,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-4",
+          "kind": "table",
+          "rect": [
+            18,
+            6,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-5",
+          "kind": "table",
+          "rect": [
+            23,
+            6,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-6",
+          "kind": "table",
+          "rect": [
+            26,
+            6,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-7",
+          "kind": "table",
+          "rect": [
+            5,
+            10,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-8",
+          "kind": "table",
+          "rect": [
+            11,
+            10,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-9",
+          "kind": "table",
+          "rect": [
+            15,
+            10,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-10",
+          "kind": "table",
+          "rect": [
+            18,
+            10,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-11",
+          "kind": "table",
+          "rect": [
+            23,
+            10,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-12",
+          "kind": "table",
+          "rect": [
+            26,
+            10,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-13",
+          "kind": "table",
+          "rect": [
+            5,
+            14,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-14",
+          "kind": "table",
+          "rect": [
+            11,
+            14,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-15",
+          "kind": "table",
+          "rect": [
+            15,
+            14,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-16",
+          "kind": "table",
+          "rect": [
+            18,
+            14,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-17",
+          "kind": "table",
+          "rect": [
+            23,
+            14,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-table-18",
+          "kind": "table",
+          "rect": [
+            26,
+            14,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-plant-1",
+          "kind": "plant",
+          "rect": [
+            10,
+            8,
+            1,
+            1
+          ],
+          "label": "柱旁／墙边盆栽",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-plant-2",
+          "kind": "plant",
+          "rect": [
+            21,
+            8,
+            1,
+            1
+          ],
+          "label": "柱旁／墙边盆栽",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-plant-3",
+          "kind": "plant",
+          "rect": [
+            10,
+            14,
+            1,
+            1
+          ],
+          "label": "柱旁／墙边盆栽",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-plant-4",
+          "kind": "plant",
+          "rect": [
+            21,
+            14,
+            1,
+            1
+          ],
+          "label": "柱旁／墙边盆栽",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-plant-5",
+          "kind": "plant",
+          "rect": [
+            3,
+            16,
+            1,
+            1
+          ],
+          "label": "柱旁／墙边盆栽",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-plant-6",
+          "kind": "plant",
+          "rect": [
+            27,
+            16,
+            1,
+            1
+          ],
+          "label": "柱旁／墙边盆栽",
+          "solid": true,
+          "evidence": [
+            "P3"
+          ]
+        },
+        {
+          "id": "mh2-window_wall-1",
+          "kind": "window_wall",
+          "rect": [
+            1,
+            17,
+            12,
+            1
+          ],
+          "label": "入口两侧玻璃围栏",
+          "solid": false,
+          "evidence": [
+            "P3"
+          ],
+          "shape": "long"
+        },
+        {
+          "id": "mh2-window_wall-2",
+          "kind": "window_wall",
+          "rect": [
+            20,
+            17,
+            11,
+            1
+          ],
+          "label": "入口两侧玻璃围栏",
+          "solid": false,
+          "evidence": [
+            "P3"
+          ],
+          "shape": "long"
+        }
+      ],
+      "windows": [
+        {
+          "id": "mh-2-northwest-flavor",
+          "name": "西北风味·拉面刀削面",
+          "kind": "window",
+          "rect": [
+            3,
+            1,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上方首块招牌分两行；不据招牌文字生成当前菜单。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P3"
+          ],
+          "sourceLabel": "西北风味\n拉面刀削面"
+        },
+        {
+          "id": "mh-2-fenmi-chicken",
+          "name": "分米鸡",
+          "kind": "window",
+          "rect": [
+            7,
+            1,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧第二个柜台；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P3"
+          ],
+          "sourceLabel": "分米鸡"
+        },
+        {
+          "id": "mh-2-egg-rice",
+          "name": "滑蛋饭",
+          "kind": "window",
+          "rect": [
+            10,
+            1,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧第三个柜台；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P3"
+          ],
+          "sourceLabel": "滑蛋饭"
+        },
+        {
+          "id": "mh-2-yunnan-mushroom",
+          "name": "云南菌菇炒饭·烤鱼",
+          "kind": "window",
+          "rect": [
+            13,
+            1,
+            5,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧中段招牌；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P3"
+          ],
+          "sourceLabel": "云南菌菇炒饭·烤鱼"
+        },
+        {
+          "id": "mh-2-luoshi-rice-noodle",
+          "name": "小螺蛳米线",
+          "kind": "window",
+          "rect": [
+            18,
+            1,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧柜台；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P3"
+          ],
+          "sourceLabel": "小螺蛳米线"
+        },
+        {
+          "id": "mh-2-stew-stonepot",
+          "name": "铁锅炖菜·石锅拌菜",
+          "kind": "window",
+          "rect": [
+            21,
+            1,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧柜台的两行招牌；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P3"
+          ],
+          "sourceLabel": "铁锅炖菜\n石锅拌菜"
+        },
+        {
+          "id": "mh-2-roast-duck",
+          "name": "烤鸭·米粉·烧腊",
+          "kind": "window",
+          "rect": [
+            25,
+            1,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧最右招牌；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P3"
+          ],
+          "sourceLabel": "烤鸭·米粉·烧腊"
+        },
+        {
+          "id": "mh-2-self-service",
+          "name": "自选菜",
+          "kind": "window",
+          "rect": [
+            28,
+            9,
+            3,
+            6
+          ],
+          "front": "west",
+          "summary": "图上右侧独立自选菜台；具体菜品和价格未标。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P3"
+          ],
+          "sourceLabel": "自选菜"
+        }
+      ]
+    },
+    {
+      "canteenId": "minghu",
+      "floorLabel": "3F",
+      "status": "approximate",
+      "sourceId": "P4",
+      "entrance": [
+        16,
+        18
+      ],
+      "north": null,
+      "fixtures": [
+        {
+          "id": "mh3-column-1",
+          "kind": "column",
+          "rect": [
+            9,
+            6,
+            1,
+            3
+          ],
+          "label": "灰色柱子",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-column-2",
+          "kind": "column",
+          "rect": [
+            22,
+            6,
+            1,
+            3
+          ],
+          "label": "灰色柱子",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-column-3",
+          "kind": "column",
+          "rect": [
+            9,
+            12,
+            1,
+            3
+          ],
+          "label": "灰色柱子",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-column-4",
+          "kind": "column",
+          "rect": [
+            22,
+            12,
+            1,
+            3
+          ],
+          "label": "灰色柱子",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-1",
+          "kind": "table",
+          "rect": [
+            5,
+            5,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-2",
+          "kind": "table",
+          "rect": [
+            11,
+            5,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-3",
+          "kind": "table",
+          "rect": [
+            15,
+            5,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-4",
+          "kind": "table",
+          "rect": [
+            19,
+            5,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-5",
+          "kind": "table",
+          "rect": [
+            24,
+            5,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-6",
+          "kind": "table",
+          "rect": [
+            5,
+            9,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-7",
+          "kind": "table",
+          "rect": [
+            11,
+            9,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-8",
+          "kind": "table",
+          "rect": [
+            15,
+            9,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-9",
+          "kind": "table",
+          "rect": [
+            19,
+            9,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-10",
+          "kind": "table",
+          "rect": [
+            24,
+            9,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-11",
+          "kind": "table",
+          "rect": [
+            5,
+            13,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-12",
+          "kind": "table",
+          "rect": [
+            11,
+            13,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-13",
+          "kind": "table",
+          "rect": [
+            15,
+            13,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-14",
+          "kind": "table",
+          "rect": [
+            19,
+            13,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-15",
+          "kind": "table",
+          "rect": [
+            24,
+            13,
+            2,
+            2
+          ],
+          "label": "餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-16",
+          "kind": "table",
+          "rect": [
+            5,
+            16,
+            2,
+            2
+          ],
+          "label": "近入口餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-17",
+          "kind": "table",
+          "rect": [
+            11,
+            16,
+            2,
+            2
+          ],
+          "label": "近入口餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-18",
+          "kind": "table",
+          "rect": [
+            19,
+            16,
+            2,
+            2
+          ],
+          "label": "近入口餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-table-19",
+          "kind": "table",
+          "rect": [
+            24,
+            16,
+            2,
+            2
+          ],
+          "label": "近入口餐桌",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-plant-1",
+          "kind": "plant",
+          "rect": [
+            4,
+            6,
+            1,
+            1
+          ],
+          "label": "墙边／入口盆栽",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-plant-2",
+          "kind": "plant",
+          "rect": [
+            27,
+            5,
+            1,
+            1
+          ],
+          "label": "墙边／入口盆栽",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-plant-3",
+          "kind": "plant",
+          "rect": [
+            4,
+            16,
+            1,
+            1
+          ],
+          "label": "墙边／入口盆栽",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-plant-4",
+          "kind": "plant",
+          "rect": [
+            27,
+            16,
+            1,
+            1
+          ],
+          "label": "墙边／入口盆栽",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-plant-5",
+          "kind": "plant",
+          "rect": [
+            13,
+            17,
+            1,
+            1
+          ],
+          "label": "墙边／入口盆栽",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-plant-6",
+          "kind": "plant",
+          "rect": [
+            21,
+            17,
+            1,
+            1
+          ],
+          "label": "墙边／入口盆栽",
+          "solid": true,
+          "evidence": [
+            "P4"
+          ]
+        },
+        {
+          "id": "mh3-window_wall-1",
+          "kind": "window_wall",
+          "rect": [
+            1,
+            18,
+            11,
+            1
+          ],
+          "label": "入口两侧玻璃围栏",
+          "solid": false,
+          "evidence": [
+            "P4"
+          ],
+          "shape": "long"
+        },
+        {
+          "id": "mh3-window_wall-2",
+          "kind": "window_wall",
+          "rect": [
+            20,
+            18,
+            11,
+            1
+          ],
+          "label": "入口两侧玻璃围栏",
+          "solid": false,
+          "evidence": [
+            "P4"
+          ],
+          "shape": "long"
+        }
+      ],
+      "windows": [
+        {
+          "id": "mh-3-northeast-malatang",
+          "name": "东北麻辣烫",
+          "kind": "window",
+          "rect": [
+            2,
+            1,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧最左招牌；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "东北麻辣烫"
+        },
+        {
+          "id": "mh-3-youkelai",
+          "name": "友客来",
+          "kind": "window",
+          "rect": [
+            6,
+            1,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧第二个招牌；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "友客来"
+        },
+        {
+          "id": "mh-3-dumpling",
+          "name": "手工鲜水饺",
+          "kind": "window",
+          "rect": [
+            9,
+            1,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧第三个招牌；与已有来源记录同名，现时菜单待核。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "手工鲜水饺"
+        },
+        {
+          "id": "mh-3-hainan-rice",
+          "name": "海南鸡饭",
+          "kind": "window",
+          "rect": [
+            12,
+            1,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧第四个招牌；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "海南鸡饭"
+        },
+        {
+          "id": "mh-3-jiangxin-bun",
+          "name": "匠心包",
+          "kind": "window",
+          "rect": [
+            15,
+            1,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧第五个招牌；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "匠心包"
+        },
+        {
+          "id": "mh-3-chongqing-noodle",
+          "name": "重庆面庄",
+          "kind": "window",
+          "rect": [
+            18,
+            1,
+            3,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧第六个招牌；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "重庆面庄"
+        },
+        {
+          "id": "mh-3-small-pot",
+          "name": "小锅焖面·小锅焖饭",
+          "kind": "window",
+          "rect": [
+            21,
+            1,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧第七块招牌分两行；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "小锅焖面\n小锅焖饭"
+        },
+        {
+          "id": "mh-3-cantonese",
+          "name": "广式",
+          "kind": "window",
+          "rect": [
+            25,
+            1,
+            2,
+            3
+          ],
+          "front": "south",
+          "summary": "图上该格仅写“广式”，不补全为特定店名。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "广式"
+        },
+        {
+          "id": "mh-3-nongxiang-rice",
+          "name": "农香板烧饭",
+          "kind": "window",
+          "rect": [
+            27,
+            1,
+            4,
+            3
+          ],
+          "front": "south",
+          "summary": "图上上侧最右招牌；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "农香板烧饭"
+        },
+        {
+          "id": "mh-3-left-self-select",
+          "name": "自由选",
+          "kind": "window",
+          "rect": [
+            1,
+            5,
+            3,
+            3
+          ],
+          "front": "east",
+          "summary": "图上左侧上段标“自由选”；菜单未给。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "自由选"
+        },
+        {
+          "id": "mh-3-left-malatang",
+          "name": "麻辣烫",
+          "kind": "window",
+          "rect": [
+            1,
+            9,
+            3,
+            3
+          ],
+          "front": "east",
+          "summary": "图上左侧中段标“麻辣烫”；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "麻辣烫"
+        },
+        {
+          "id": "mh-3-left-skewers",
+          "name": "冷锅串串钵钵鸡",
+          "kind": "window",
+          "rect": [
+            1,
+            13,
+            3,
+            3
+          ],
+          "front": "east",
+          "summary": "图上左侧下段招牌；位置和面积仅为示意。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "冷锅串串钵钵鸡"
+        },
+        {
+          "id": "mh-3-right-green-unknown",
+          "name": "右侧绿色柜台 · 名称待核",
+          "kind": "placeholder",
+          "rect": [
+            28,
+            7,
+            3,
+            4
+          ],
+          "front": "west",
+          "summary": "独立图右侧绿色招牌文字难以可靠辨认；保留该柜台位置，真实名称和经营状态待核。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": null
+        },
+        {
+          "id": "mh-3-right-other",
+          "name": "其他档口",
+          "kind": "placeholder",
+          "rect": [
+            28,
+            14,
+            3,
+            3
+          ],
+          "front": "west",
+          "summary": "独立图右下招牌仅写“其他档口”，未给出具体经营名称。",
+          "hours": [],
+          "dishes": [],
+          "evidence": [
+            "P4"
+          ],
+          "sourceLabel": "其他档口"
+        }
+      ]
+    }
+  ]
+}
