@@ -569,27 +569,6 @@ def _capi_count():
         return CAPI_CACHE["count"]
 
 
-def _waf_visits(ips) -> dict:
-    """这批被封的 IP 在我们自己网站日志里留下过什么。
-
-    ⚠️ 别指望从 CrowdSec 那边拿细节：`/v1/decisions` 只回「谁、因为哪个场景、封多久」，
-    不带 events；`/v1/alerts` 用同一个 bouncer 密钥读会返回 401（权限不够）。
-    所以「具体干了什么」只能拿自家请求日志补：24 小时访问次数 + 最近一次请求的路径和时间。
-    打 SSH 的那批人根本没访问过网站，查不到就是空 —— 这本身就是一条有用的结论。"""
-    out = {}
-    since = time.time() - 86400
-    for ip in set(x for x in ips if x):
-        got = row("SELECT COUNT(*) AS n FROM mp_http_log WHERE ip=? AND at>=?", (ip, since))
-        if not got or not got["n"]:
-            continue
-        last = row("SELECT path, at FROM mp_http_log WHERE ip=? AND at>=? ORDER BY at DESC LIMIT 1",
-                   (ip, since))
-        out[ip] = {"n": got["n"],
-                   "path": ((last["path"] if last else "") or "")[:48],
-                   "at": stamp_text(last["at"]) if last else ""}
-    return out
-
-
 def waf_payload():
     """后台"网络安全"页要的 WAF 数据。没装/没配 key 时返回 installed=False，前端照常显示。
 
@@ -627,10 +606,8 @@ def waf_payload():
             })
         # 归属地走本地离线库，一次批量查完；库里没有的国家/运营商就空着
         regions = geo_regions([x["ip"] for x in items])
-        visits = _waf_visits([x["ip"] for x in items])
         for x in items:
             x["region"] = regions.get(x["ip"], "")
-            x["visits"] = visits.get(x["ip"]) or {}
         # 快过期的排前面，后台一眼看到马上要解封的
         items.sort(key=lambda x: (x["left"] is None, x["left"] if x["left"] is not None else 0))
         out.update(running=True, decisions=items, count=len(items))

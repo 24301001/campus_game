@@ -685,14 +685,8 @@
       return;
     }
     var table = el("table", "ad-ut");
-    /* 「本站记录」只在真有人碰过网站时才占一列：被 WAF 挡下来的绝大多数是打 SSH 的，
-       从没访问过网站，整列全是空话，白占一块地方。 */
-    var showVisit = d.decisions.some(function (x) { return x.visits && x.visits.n; });
-    var heads = ["IP / 归属地", "干了什么"];
-    if (showVisit) heads.push("本站记录");
-    heads.push("还剩多久", "来源");
     var thead = el("thead"), htr = el("tr");
-    heads.forEach(function (h) { htr.append(el("th", "", h)); });
+    ["IP / 归属地", "干了什么", "还剩多久", "来源"].forEach(function (h) { htr.append(el("th", "", h)); });
     thead.append(htr);
     var tbody = el("tbody");
     d.decisions.forEach(function (x) {
@@ -700,17 +694,6 @@
       /* IP 那格复用安全页的写法：上面 IP，下面小字「省市区 · 运营商」 */
       tr.append(ipTd(x));
       tr.append(el("td", "muted", WAF_REASON[x.reason] || x.reason || "—"));
-      if (showVisit) {
-        var v = x.visits || {};
-        var tdVisit = el("td", "muted");
-        if (v.n) {
-          tdVisit.append(el("span", "", "24 小时 " + v.n + " 次"));
-          var dt = el("span", "ad-detail", (v.path || "") + (v.at ? " · " + v.at : ""));
-          dt.title = dt.textContent;
-          tdVisit.append(dt);
-        }
-        tr.append(tdVisit);
-      }
       tr.append(el("td", "", wafLeft(x.left)));
       var tdSrc = el("td", "muted");
       tdSrc.append(el("span", "", WAF_ORIGIN[x.origin] || x.origin || "—"));
