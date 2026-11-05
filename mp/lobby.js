@@ -90,7 +90,9 @@
   let statusTimer=0;
   /* keep=false 的那条到点先淡出再收起；keep=true 是"连接中断，正在重连…"这类要一直挂着的状态。
      ⚠️ 淡出用 class 不用 hidden：hidden 是瞬时消失，用户报的就是"老丁已到达"那条硬挂在地图顶上。 */
-  function status(text,keep=false){const e=$('mpStatus');clearTimeout(statusTimer);e.classList.remove('mp-fade');e.textContent=text;e.hidden=!text;if(text&&!keep)statusTimer=setTimeout(()=>{e.classList.add('mp-fade');statusTimer=setTimeout(()=>{e.hidden=true;e.classList.remove('mp-fade')},420)},4200)}
+  /* keep=true 表示一直挂着不撤（网络中断这类要人看见的状态）；
+     要它自己消失就传 keep=false 并用 ms 指定停留时长。 */
+  function status(text,keep=false,ms=4200){const e=$('mpStatus');clearTimeout(statusTimer);e.classList.remove('mp-fade');e.textContent=text;e.hidden=!text;if(text&&!keep)statusTimer=setTimeout(()=>{e.classList.add('mp-fade');statusTimer=setTimeout(()=>{e.hidden=true;e.classList.remove('mp-fade')},420)},ms)}
   /* A silent half-open socket needs its own timeout; a close event is not guaranteed.
      Both failure paths keep the current player in the map and retry in the background. */
   const RX_STALL_MS=32000;
@@ -558,10 +560,10 @@
   function portalGo(s){
     if(typeof CAMPUS==='undefined'||typeof zoneRect!=='function'
        ||typeof player==='undefined'||typeof blocked!=='function'){
-      status('地图还没准备好，等画面出来再点',true);return;
+      status('地图还没准备好，等画面出来再点',false,10000);return;
     }
     const entry=CAMPUS.find(e=>e[0]===s.bld);
-    if(!entry){status('地图上找不到「'+s.bld+'」',true);return;}
+    if(!entry){status('地图上找不到「'+s.bld+'」',false,10000);return;}
     const r=zoneRect(entry),cx=r.x+r.w/2;
     let spot=null;
     for(const dy of [24,40,56,74,96]){
@@ -571,7 +573,7 @@
       }
       if(spot)break;
     }
-    if(!spot){status('没能站到「'+s.bld+'」门口，换个地方再试',true);return;}
+    if(!spot){status('没能站到「'+s.bld+'」门口，换个地方再试',false,10000);return;}
     if(typeof CENTER!=='undefined'){
       if(CENTER.active&&typeof roomLeave==='function')roomLeave();
       else if(CENTER.plat&&typeof ctrClosePlatform==='function')ctrClosePlatform();
@@ -580,7 +582,7 @@
     if(typeof keys==='object'&&keys)for(const k in keys)keys[k]=0;
     if(window.MP&&MP.changeScene)MP.changeScene('out',spot.x,spot.y);
     closeTopPanels();
-    status(s.tip,true);
+    status(s.tip,false,10000);
   }
 
   /* 跑道的几何：整个操场是 CAMPUS 里那格（1.0840,0.3889,1.0340,1.9090），
