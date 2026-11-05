@@ -79,7 +79,7 @@
             <el-icon><Monitor /></el-icon>&nbsp;在聊天里写代码
           </el-button>
           <el-button size="small" text @click="$router.push('/problems')">题库</el-button>
-          <el-button size="small" text @click="$router.push('/home')">返回地图</el-button>
+          <el-button size="small" text @click="returnToCampus">返回地图</el-button>
         </div>
       </header>
 
@@ -354,7 +354,6 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import * as monaco from 'monaco-editor'
 import { useUserStore } from '@/stores/user'
 import { getProblemDetail, getProblemList } from '@/api/problem'
 import { compileAndJudge } from '@/api/judge'
@@ -370,6 +369,7 @@ import {
 } from '@/api/agent'
 import { handleMarkdownClick, renderMarkdown } from '@/utils/markdown'
 import { setupPixelTheme } from '@/utils/monacoTheme'
+import { returnToCampus } from '@/utils/returnToCampus'
 import { parseAction, findProblem } from '@/utils/agentActions'
 
 const route = useRoute()
@@ -751,6 +751,7 @@ const setupEditor = async (problem) => {
   }
   await nextTick()
   if (!editor && editorRef.value) {
+    const monaco = await import('monaco-editor')
     editor = monaco.editor.create(editorRef.value, {
       value: detail.templateCode || '',
       language: 'java',

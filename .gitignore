@@ -34,6 +34,7 @@ uploads/
 *.sqlite3-wal
 *.db-shm
 *.db-wal
+/laoding/server/users.db
 mp/原地图*.png
 mp/mysql-dev/
 mp/mysql-pass

@@ -18,6 +18,14 @@ const S = { token: "", user: null, session: "", course: "", refs: [], streaming:
 // NL：SSE 分帧的空行、正文换行都用它拼。写转义符迟早被工具链吃掉一次（本项目已经踩过四次）。
 const NL = String.fromCharCode(10), NL2 = NL + NL;
 
+function returnToCampus() {
+  if (window.parent !== window) {
+    window.parent.postMessage({type: "campus-platform-exit"}, location.origin);
+  } else {
+    window.location.assign("/");
+  }
+}
+
 /* ---------------- 网络 ---------------- */
 async function api(path, opts = {}) {
   const headers = Object.assign({"Content-Type": "application/json"}, opts.headers || {});
@@ -891,6 +899,8 @@ document.addEventListener("paste", (e) => {
   if (f) loadShot(f);
 }));
 $("btnNew").onclick = () => newChat();
+$("btnCampus").onclick = returnToCampus;
+$("gateCampus").onclick = (e) => { e.preventDefault(); returnToCampus(); };
 $("btnReload").onclick = () => loadSessions();
 $("btnMem").onclick = async () => {
   $("btnMem").disabled = true; $("mode").textContent = "正在重新归纳记忆…";

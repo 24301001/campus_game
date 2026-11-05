@@ -295,6 +295,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { returnToCampus } from '@/utils/returnToCampus'
 import { getUserProfile, followUser } from '@/api/profile'
 import { getWrongProblems } from '@/api/agent'
 import { updateUser, updatePassword, uploadAvatar as uploadAvatarApi } from '@/api/user'
@@ -537,7 +538,7 @@ const handleFollow = async () => {
   }
 }
 
-const goLobby = () => window.top.location.assign('/')
+const goLobby = returnToCampus
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'

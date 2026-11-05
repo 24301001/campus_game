@@ -31,6 +31,8 @@ def load_config(name: str, default: Any = None) -> Any:
     data = {k: v for k, v in data.items() if not k.startswith("_")} if isinstance(data, dict) else data
     # Local LAN acceptance can run without a paid model key. Normal operation
     # still uses the original provider settings in config/*.json.
+    if name == "retrieval" and isinstance(data, dict) and os.environ.get("XBG_EMBEDDING_PROVIDER"):
+        data["embedding"] = {**data.get("embedding", {}), "provider": os.environ["XBG_EMBEDDING_PROVIDER"]}
     if os.environ.get("XBG_LOCAL_MODE") == "1" and isinstance(data, dict):
         if name == "retrieval":
             data["embedding"] = {**data.get("embedding", {}), "provider": "hash"}
