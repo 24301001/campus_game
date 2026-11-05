@@ -44,6 +44,9 @@
 /* 每日任务接在「呼叫老丁」下面（老丁 top:236、高约 34 ⇒ 276 正好接住，跟上面同一套排法）。 */
 #mpRoot #mpTaskToggle{position:absolute;left:14px;top:276px;padding:7px 11px;border:1px solid var(--mp-line);border-radius:4px;background:var(--mp-bg);color:var(--mp-gold);pointer-events:auto}
 #mpRoot #mpTaskToggle:hover{border-color:var(--mp-gold);color:#ffe397}
+/* 传送门接在「每日任务」下面（任务 top:276、高约 34 ⇒ 316 正好接住，同一套排法）。 */
+#mpRoot #mpPortalToggle{position:absolute;left:14px;top:316px;padding:7px 11px;border:1px solid var(--mp-line);border-radius:4px;background:var(--mp-bg);color:var(--mp-gold);pointer-events:auto}
+#mpRoot #mpPortalToggle:hover{border-color:var(--mp-gold);color:#ffe397}
 /* 单机那两个按钮挪到左下角：它们和"个人主页/玩家精灵"是同一时刻可见的
    （单机访客也是登录态），原来三条 top 全挤在左上同一列里互相压着。 */
 #mpRoot #mpSoloCanteen{position:absolute;left:14px;bottom:60px;padding:7px 11px;border:1px solid var(--mp-line);border-radius:4px;background:var(--mp-bg);color:var(--mp-gold);pointer-events:auto}
@@ -63,13 +66,14 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpSoloCanteen{display:none}
 #mpRoot #mpBoard,
 #mpRoot #mpNotice,
 #mpRoot #mpTask,
+#mpRoot #mpPortal,
 #mpRoot #mpOnline{position:absolute;right:16px;top:53px;width:330px;max-height:min(520px,calc(100vh - 70px));display:flex;flex-direction:column}
 /* 大厅的面板与按钮统一抬到 46：地图上那几颗楼宇「i」在 45（building.css），
    这样点开公告/留言板/私聊/每日任务/当前在线时能把「i」盖住。
    仍然低于猫图的 52 —— 猫猫图鉴原来的层序不动。 */
-#mpRoot #mpBoard,#mpRoot #mpNotice,#mpRoot #mpTask,#mpRoot #mpOnline,#mpRoot #mpChat,#mpRoot #mpGuard,
+#mpRoot #mpBoard,#mpRoot #mpNotice,#mpRoot #mpTask,#mpRoot #mpPortal,#mpRoot #mpOnline,#mpRoot #mpChat,#mpRoot #mpGuard,
 #mpRoot #mpNearby,#mpRoot #mpAuthShade,#mpRoot #mpProfileShade,#mpRoot #mpLookShade,
-#mpRoot #mpTopBtns,#mpRoot #mpSelf,#mpRoot #mpSprite,#mpRoot #mpSummonGuard,#mpRoot #mpTaskToggle,
+#mpRoot #mpTopBtns,#mpRoot #mpSelf,#mpRoot #mpSprite,#mpRoot #mpSummonGuard,#mpRoot #mpTaskToggle,#mpRoot #mpPortalToggle,
 #mpRoot #mpSoloCanteen,#mpRoot #mpSoloExit,#mpRoot #mpStatus,#mpRoot #mpMenu{z-index:46}
 /* [QODER-FIX #20] 抽屉里的 NPC 应用自身顶部也有“退出/返回”按钮，原来的公告按钮正好压在上面。
    嵌入状态（#ctrP 可见）把右上角那排按钮连同面板整体下移一行，避开 NPC 自己的标题栏。 */
@@ -77,6 +81,7 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpTopBtns{top:64px}
 body:has(#ctrP:not([hidden])) #mpRoot #mpBoard,
 body:has(#ctrP:not([hidden])) #mpRoot #mpNotice,
 body:has(#ctrP:not([hidden])) #mpRoot #mpTask,
+body:has(#ctrP:not([hidden])) #mpRoot #mpPortal,
 body:has(#ctrP:not([hidden])) #mpRoot #mpOnline{top:101px}
 #mpRoot #mpBoardList{overflow:auto;min-height:100px;max-height:370px}
 /* ---- 📢 公告：企划组的更新通知（写死在 lobby.js 的 NOTICES 里，不占数据库） ---- */
@@ -105,6 +110,16 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpOnline{top:101px}
 #mpRoot .mp-task-food b{font-size:16px;color:var(--mp-gold);font-variant-numeric:tabular-nums}
 #mpRoot .mp-task-tip{margin:10px 0 4px;font-size:11px;line-height:1.7;color:var(--mp-muted)}
 #mpRoot .mp-task-foot{padding:8px 12px;border-top:1px solid var(--mp-line);text-align:center;font-size:11px;color:var(--mp-muted)}
+/* ---- 🌀 传送门：一行一个目的地，点一下就站到楼门口 ---- */
+#mpRoot #mpPortalBody{padding:8px 12px 10px;display:flex;flex-direction:column;gap:8px;overflow:auto;max-height:370px}
+#mpRoot .mp-portal-row{display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;border:1px solid var(--mp-line);border-radius:5px;background:var(--mp-deep);color:var(--mp-ink);text-align:left}
+#mpRoot .mp-portal-row:hover{border-color:var(--mp-gold);background:#232b36}
+#mpRoot .mp-portal-row:active{transform:translateY(1px)}
+#mpRoot .mp-portal-tag{flex:none;font-size:19px;line-height:1}
+#mpRoot .mp-portal-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+#mpRoot .mp-portal-text b{font-size:13px;color:var(--mp-gold)}
+#mpRoot .mp-portal-text span{font-size:11px;color:var(--mp-muted)}
+#mpRoot .mp-portal-go{flex:none;font-size:11px;color:var(--mp-teal)}
 /* ---- 👥 当前在线：只要头像 + 昵称，没有任何可以点的东西 ---- */
 #mpRoot #mpOnlineList{overflow:auto;min-height:90px;max-height:370px;padding:10px 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px 6px}
 #mpRoot .mp-online-cell{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
@@ -276,7 +291,7 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpOnline{top:101px}
 #mpRoot #mpMenu button:hover{background:#354052}
 #mpRoot .mp-empty{padding:20px 14px;color:var(--mp-muted);text-align:center}
 #huduser{display:none}
-@media(max-width:650px){#mpRoot #mpBoard,#mpRoot #mpNotice,#mpRoot #mpTask,#mpRoot #mpOnline,#mpRoot #mpChat{right:8px;width:min(350px,calc(100vw - 16px))}#mpRoot #mpSelf{top:12px;left:8px}#mpRoot #mpSprite{top:82px;left:8px}#mpRoot #mpSummonGuard{top:172px;left:8px}#mpRoot #mpTaskToggle{top:212px;left:8px}#mpRoot #mpTopBtns{right:8px;top:12px}#mpRoot #mpSoloCanteen{bottom:58px;left:8px}#mpRoot #mpSoloExit{bottom:14px;left:8px}#mpRoot #mpGuard{right:8px;bottom:8px;max-height:calc(100vh - 24px)}#mpRoot #mpGuardLog{min-height:150px}
+@media(max-width:650px){#mpRoot #mpBoard,#mpRoot #mpNotice,#mpRoot #mpTask,#mpRoot #mpPortal,#mpRoot #mpOnline,#mpRoot #mpChat{right:8px;width:min(350px,calc(100vw - 16px))}#mpRoot #mpSelf{top:12px;left:8px}#mpRoot #mpSprite{top:82px;left:8px}#mpRoot #mpSummonGuard{top:172px;left:8px}#mpRoot #mpTaskToggle{top:212px;left:8px}#mpRoot #mpPortalToggle{top:252px;left:8px}#mpRoot #mpTopBtns{right:8px;top:12px}#mpRoot #mpSoloCanteen{bottom:58px;left:8px}#mpRoot #mpSoloExit{bottom:14px;left:8px}#mpRoot #mpGuard{right:8px;bottom:8px;max-height:calc(100vh - 24px)}#mpRoot #mpGuardLog{min-height:150px}
   /* 窄屏右上角要挤下三颗按钮，而左边个人中心那块也占着 12px 那一行：
      按钮只留图标（字在面板标题里、鼠标悬停也有提示），不然三颗一定压到左列上去。 */
   #mpRoot #mpTopBtns .mp-btn-txt{display:none}

@@ -23,6 +23,7 @@
     <button id="mpSprite" type="button" hidden>🧍 玩家精灵</button>
     <button id="mpSummonGuard" type="button" hidden>📣 呼叫老丁</button>
     <button id="mpTaskToggle" type="button" hidden>📋 每日任务</button>
+    <button id="mpPortalToggle" type="button" hidden>🌀 传送门</button>
     <button id="mpSoloCanteen" type="button" hidden>🍜 进入食堂</button>
     <button id="mpSoloExit" type="button" hidden>退出单机 · 登录</button>
     <!-- 右上角两颗：公告（企划组发，只报更新）｜留言板（全校谁都能发）。
@@ -44,6 +45,11 @@
       <div class="mp-head"><span class="mp-title">每日任务</span><button class="mp-icon" id="mpTaskClose" aria-label="关闭每日任务">×</button></div>
       <div id="mpTaskBody"></div>
       <div class="mp-task-foot">每天零点（北京时间）重新开始。</div>
+    </section>
+    <section id="mpPortal" class="mp-panel" hidden aria-label="传送门">
+      <div class="mp-head"><span class="mp-title">🌀 传送门</span><button class="mp-icon" id="mpPortalClose" aria-label="关闭传送门">×</button></div>
+      <div id="mpPortalBody"></div>
+      <div class="mp-task-foot">点一下直接站到门口，不用自己走过去。</div>
     </section>
     <section id="mpOnline" class="mp-panel" hidden aria-label="当前在线">
       <div class="mp-head"><span class="mp-title">当前在线</span><button class="mp-icon" id="mpOnlineClose" aria-label="关闭当前在线">×</button></div>
@@ -337,7 +343,7 @@
      防止浏览器自动填充把上一位用户的昵称/密码又填回来。 */
   function showAuth(msg=''){setAuthMode('login');$('mpAuthForm').reset();$('mpName').value='';$('mpPass').value='';$('mpAuthPhoto').value='';$('mpAuthLookPreview').replaceChildren();$('mpAuthLookPreview').hidden=true;authLook=null;$('mpAuthShade').hidden=false;$('mpAuthError').textContent=msg;$('mpName').focus()}
   function hideAuth(){$('mpAuthShade').hidden=true}
-  function connectedUI(on){$('mpSelf').hidden=$('mpSprite').hidden=$('mpSummonGuard').hidden=$('mpTopBtns').hidden=$('mpTaskToggle').hidden=!on;if(!on){$('mpTask').hidden=true;$('mpOnline').hidden=true;clearInterval(onlineTimer);onlineTimer=0;$('mpRunHud').hidden=true;$('mpBoard').hidden=true;$('mpNotice').hidden=true;$('mpChat').hidden=true;$('mpProfileShade').hidden=true;$('mpLookShade').hidden=true;$('mpMenu').hidden=true;$('mpNearby').hidden=true;nearUser=null;taskState=null;runReset()}else updateSelf()}
+  function connectedUI(on){$('mpSelf').hidden=$('mpSprite').hidden=$('mpSummonGuard').hidden=$('mpTopBtns').hidden=$('mpTaskToggle').hidden=$('mpPortalToggle').hidden=!on;if(!on){$('mpTask').hidden=true;$('mpPortal').hidden=true;$('mpOnline').hidden=true;clearInterval(onlineTimer);onlineTimer=0;$('mpRunHud').hidden=true;$('mpBoard').hidden=true;$('mpNotice').hidden=true;$('mpChat').hidden=true;$('mpProfileShade').hidden=true;$('mpLookShade').hidden=true;$('mpMenu').hidden=true;$('mpNearby').hidden=true;nearUser=null;taskState=null;runReset()}else updateSelf()}
   function updateSelf(){if(!me)return;const el=$('mpSelf');el.replaceChildren(avatarEl(look,me.id,true,false),document.createTextNode(me.nickname+' · 个人中心'))}
   function clearNpcTickets(){/* [QODER-FIX #9] 换账号时把 NPC 侧的会话/历史一起清掉：
       活着的密钥按前缀扫（老丁 guard_v…_chat_、guard_v…_player_，算法哥 agent_watch_），
@@ -476,7 +482,7 @@
   /* --- 右上角四块面板共用一个坑位 ------------------------------------------
      公告 / 留言板 / 每日任务 / 当前在线都是 right:16 top:53 那一格，
      同一时刻只许开一块（以前是两两互相 hidden，加到四块就成 12 条了）。 */
-  const TOP_PANELS=['mpBoard','mpNotice','mpTask','mpOnline'];
+  const TOP_PANELS=['mpBoard','mpNotice','mpTask','mpOnline','mpPortal'];
   function closeTopPanels(keep=''){for(const id of TOP_PANELS)if(id!==keep)$(id).hidden=true}
   function anyTopPanelOpen(){return TOP_PANELS.some(id=>!$(id).hidden)}
 
@@ -515,6 +521,67 @@
   function openTask(){closeTopPanels('mpTask');$('mpTask').hidden=false;renderTask();loadTask()}
   async function loadTask(){if(!token)return;try{setTask(await api('/task/me'))}catch{}}
   function setTask(state){if(!state)return;taskState=state;renderTask();runHudUpdate()}
+
+  /* --- 🌀 传送门 ----------------------------------------------------------
+     四颗按钮一键站到楼门口。位置**现算**：拿楼名在 CAMPUS 里找那一行，再用
+     zoneRect 换算成像素，取矩形下沿正中 —— 全图的门都开在朝南那条边上，
+     门口气泡 #dtip 也是钉在 rect.y + rect.h。
+     ⚠️ 落点必须过 `blocked`（建筑、树、围墙）和 `canWalk`（校园边界）两道闸。
+        主循环只放行"下一格不撞"的移动，把人塞进碰撞盒里就再也走不出来了。
+        所以正中撞了就往两侧退，还不行就往下挪一档。
+     ⚠️ `player` / `blocked` / `keys` / `CAMPUS` 都是地图那个 script 里的顶层
+        声明，本文件是它之后的另一条 script，运行时读得到（加载期读会撞 TDZ，
+        所以这里全写在点击回调里）。 */
+  const PORTAL_SPOTS=[
+    {tag:'🍜',name:'食堂阿姨',place:'学生1食堂门口',bld:'学生1食堂',tip:'到食堂门口了'},
+    {tag:'💻',name:'算法哥',  place:'计算机中心门口',bld:'计算机中心',tip:'到计算机中心门口了 · 按 F 进去'},
+    {tag:'📚',name:'学霸姐',  place:'逸夫楼门口',    bld:'逸夫楼',    tip:'到逸夫楼门口了 · 按 F 进去'},
+    {tag:'🙈',name:'躲猫猫',  place:'逸夫楼门口',    bld:'逸夫楼',    tip:'到逸夫楼门口了 · 进楼走到公告栏前按 F'}
+  ];
+  function portalOpen(){
+    closeTopPanels('mpPortal');
+    const body=$('mpPortalBody');
+    if(!body.childElementCount){
+      for(const s of PORTAL_SPOTS){
+        const b=document.createElement('button');
+        b.type='button';b.className='mp-portal-row';
+        /* 四个标签全是本文件里写死的常量，不含任何用户输入 ⇒ 与公告面板同一套写法。 */
+        b.innerHTML='<span class="mp-portal-tag">'+s.tag+'</span>'
+          +'<span class="mp-portal-text"><b>'+s.name+'</b><span>'+s.place+'</span></span>'
+          +'<span class="mp-portal-go">去 →</span>';
+        b.onclick=()=>portalGo(s);
+        body.append(b);
+      }
+    }
+    $('mpPortal').hidden=false;
+  }
+  function portalGo(s){
+    if(typeof CAMPUS==='undefined'||typeof zoneRect!=='function'
+       ||typeof player==='undefined'||typeof blocked!=='function'){
+      status('地图还没准备好，等画面出来再点',true);return;
+    }
+    const entry=CAMPUS.find(e=>e[0]===s.bld);
+    if(!entry){status('地图上找不到「'+s.bld+'」',true);return;}
+    const r=zoneRect(entry),cx=r.x+r.w/2;
+    let spot=null;
+    for(const dy of [24,40,56,74,96]){
+      for(const dx of [0,26,-26,52,-52,84,-84]){
+        const x=cx+dx,y=r.y+r.h+dy;
+        if(!blocked(x,y)&&(typeof canWalk!=='function'||canWalk(x,y))){spot={x,y};break;}
+      }
+      if(spot)break;
+    }
+    if(!spot){status('没能站到「'+s.bld+'」门口，换个地方再试',true);return;}
+    if(typeof CENTER!=='undefined'){
+      if(CENTER.active&&typeof roomLeave==='function')roomLeave();
+      else if(CENTER.plat&&typeof ctrClosePlatform==='function')ctrClosePlatform();
+    }
+    player.x=spot.x;player.y=spot.y;player.dir='up';
+    if(typeof keys==='object'&&keys)for(const k in keys)keys[k]=0;
+    if(window.MP&&MP.changeScene)MP.changeScene('out',spot.x,spot.y);
+    closeTopPanels();
+    status(s.tip,true);
+  }
 
   /* 跑道的几何：整个操场是 CAMPUS 里那格（1.0840,0.3889,1.0340,1.9090），
      世界像素按 450/1.1521=390.59 换算 ⇒ 包围盒 403.9×745.6。
@@ -881,6 +948,8 @@
   $('mpNoticeClose').onclick=()=>$('mpNotice').hidden=true;
   $('mpTaskToggle').onclick=()=>{$('mpTask').hidden?openTask():$('mpTask').hidden=true};
   $('mpTaskClose').onclick=()=>$('mpTask').hidden=true;
+  $('mpPortalToggle').onclick=()=>{$('mpPortal').hidden?portalOpen():$('mpPortal').hidden=true};
+  $('mpPortalClose').onclick=()=>$('mpPortal').hidden=true;
   $('mpOnlineToggle').onclick=()=>{$('mpOnline').hidden?openOnline():closeOnline()};
   $('mpOnlineClose').onclick=closeOnline;
   updateNoticeDot();
