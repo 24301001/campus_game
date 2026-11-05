@@ -3044,23 +3044,65 @@ let locked = false;
    （previewing 这个变量声明在文件最前面，见那里的注释。） */
 const keys = Object.create(null);
 
-overlay.addEventListener('click', () => {
-  initAudio();               // 浏览器要求先有用户操作才允许出声
-  if (gameOver) return;
+/* ── 指针锁拿不到时的兜底 ────────────────────────────────────────────
+   指针锁是浏览器给不给的权限。被拒的时候 requestPointerLock() **不抛错、
+   不弹窗**（只有返回的 Promise 才带拒绝原因，老内核连 Promise 都没有），
+   在玩家眼里就是「画面能走、视角怎么甩都不转、鼠标像失效了」。
+   —— 「单人预览地图」那条路尤其容易撞上：它是从大厅页 postMessage 过来、
+   新 iframe 还一次都没被点过，自动申请锁十次有几次会被浏览器直接吞掉。
+
+   两条兜底，缺一不可：
+   ① 页面上任何一次点击都再申请一次锁，真被拒就把原因写到横幅上，不再静默；
+   ② 按着左键拖动也能转视角 —— 锁拿不到的时候至少还能玩，不至于卡死。 */
+let dragLook = false;
+let dragX = 0, dragY = 0;
+let lockWarned = false;
+
+function lockFail(err) {
+  const why = (err && (err.message || err.name)) || '浏览器没有给原因';
+  if (window.console) console.warn('[pointerlock] 申请失败：', err);
+  if (lockWarned) return;
+  lockWarned = true;
+  showBanner('鼠标锁定被浏览器拒绝（' + why + '）· 按住左键拖动也能转视角', 6);
+}
+
+function tryLock() {
   /* 模型没加载完就锁鼠标 = 进了一局空场（对面隐身、自己也没枪），
      看起来就像坏了。这里先按住，进度条走完才放行。 */
   if (!LOAD.ready) { paintLoad(); return; }
-  canvas.requestPointerLock();
+  let p = null;
+  try { p = canvas.requestPointerLock(); } catch (e) { lockFail(e); return; }
+  if (p && typeof p.catch === 'function') p.catch(lockFail);
+}
+
+overlay.addEventListener('click', () => {
+  initAudio();               // 浏览器要求先有用户操作才允许出声
+  if (gameOver) return;
+  tryLock();
+});
+
+/* 老内核只发这个事件，不返回 Promise —— 兜住它，失败原因才看得见。 */
+document.addEventListener('pointerlockerror', () => lockFail(null));
+
+/* 点哪儿都能重新上锁。UI 按钮上的点击不算（那些点要留给按钮自己），
+   遮罩自己有上面那条，别重复申请。 */
+document.addEventListener('click', (e) => {
+  if (locked || gameOver || !LOAD.ready) return;
+  if (e.target === overlay) return;
+  const t = e.target;
+  if (t && t.closest && t.closest('button, input, select, a, #wait, #pick')) return;
+  tryLock();
 });
 
 document.addEventListener('pointerlockchange', () => {
   locked = document.pointerLockElement === canvas;
+  if (locked) { dragLook = false; lockWarned = false; }
   /* 预览里按 Esc 松开指针 = 退出预览回等待界面。不做这一步的话，人会被
      扔回"点击进入"遮罩上，而那个提示在预览里根本不该出现。 */
   if (!locked && previewing) { exitPreview(); return; }
   // 真正开打：从这一刻起算波次和 10 秒开门；按 Esc 松开鼠标等于暂停
   started = locked;
-  overlay.classList.toggle('hidden', locked || gameOver || hsUiUp());
+  overlay.classList.toggle('hidden', locked || dragLook || gameOver || hsUiUp());
   if (!locked) {
     for (const k in keys) keys[k] = false;
     mouseDown = false;
@@ -3071,7 +3113,19 @@ document.addEventListener('pointerlockchange', () => {
 
 document.addEventListener('mousedown', (e) => {
   initAudio();
-  if (!locked) return;
+  if (!locked) {
+    /* 没锁上：左键按住 = 拖动转视角（兜底方案，见 tryLock 上面的说明）。
+       按在按钮/等待界面上不算 —— 那些地方要留给按钮自己响应。 */
+    const t = e.target;
+    const onUi = t && t.closest && t.closest('button, input, select, a, #wait, #pick');
+    if (e.button === 0 && LOAD.ready && !gameOver && !onUi) {
+      dragLook = true;
+      dragX = e.clientX;
+      dragY = e.clientY;
+      overlay.classList.add('hidden');
+    }
+    return;
+  }
   /* 右键 = 举枪瞄准（按住不放）。躲藏者没有枪、结算中、被关在门外都不响应。 */
   if (e.button === 2) {
     e.preventDefault();
@@ -3086,7 +3140,7 @@ document.addEventListener('mousedown', (e) => {
 });
 
 document.addEventListener('mouseup', (e) => {
-  if (e.button === 0) mouseDown = false;
+  if (e.button === 0) { mouseDown = false; dragLook = false; }
   if (e.button === 2) aimHeld = false;
 });
 
@@ -3095,12 +3149,22 @@ document.addEventListener('mouseup', (e) => {
 document.addEventListener('contextmenu', (e) => { if (locked) e.preventDefault(); });
 
 document.addEventListener('mousemove', (e) => {
-  if (!locked) return;
+  const lim = Math.PI / 2 - 0.05;
+  if (!locked) {
+    /* 兜底：没拿到指针锁时按着左键拖动转视角。这里用光标位移自己算，
+       不用 movementX —— 没锁定的时候各浏览器给的值不一致。 */
+    if (!dragLook) return;
+    const dx = e.clientX - dragX, dy = e.clientY - dragY;
+    dragX = e.clientX; dragY = e.clientY;
+    const sens = MOUSE_SENS * 0.6;
+    player.yaw -= dx * sens;
+    player.pitch = clamp(player.pitch - dy * sens, -lim, lim);
+    return;
+  }
   // 举着枪视角转得慢一些：不然一甩就过头，瞄准等于白瞄
   const sens = MOUSE_SENS * (1 - 0.40 * aimK);
   player.yaw -= e.movementX * sens;
   player.pitch -= e.movementY * sens;
-  const lim = Math.PI / 2 - 0.05;
   player.pitch = clamp(player.pitch, -lim, lim);
 });
 
@@ -3426,10 +3490,7 @@ function chooseGun(key) {
      那层"点击进入"，浏览器重新给指针锁会晚一帧以上，就是"视角卡一下再动"。
      借这次按键/点击的用户手势提前锁上；之后要换枪仍然按 1/2。 */
   if (LOAD.ready && !locked && !iAmHider() && (hs.phase === 'pick' || hs.phase === 'hide')) {
-    try {
-      const p = canvas.requestPointerLock();
-      if (p && p.catch) p.catch(() => {});
-    } catch (_) {}
+    tryLock();
   }
 }
 function netApplyGun(key) {
@@ -4011,7 +4072,7 @@ function hsUiUp() {
   /* 预览时一般别让"点击进入"遮罩压上来；但从房间大厅点「一个人先逛地图」
      进来那条路没法借用户手势，指针锁会被浏览器拒掉 —— 那一下就把遮罩留着，
      点一下画面才开始，跟平时进游戏一个动作。锁上了遮罩自己就收。 */
-  if (previewing) return !locked;
+  if (previewing) return !locked && !dragLook;
   return hs.phase === 'lobby' || iAmLockedOut();
 }
 
@@ -5013,7 +5074,7 @@ function hideUpdateUI() {
   // 开场遮罩的显隐原来只在 pointerlockchange 里改。现在等待界面会主动把鼠标
   // 锁放开（见下面两行），那个事件就不一定踩得上了，所以每帧按"现在该不该
   // 显示"兜一次 —— 漏掉的后果是追捕开始时遮罩再也不出来，玩家没法重新锁鼠标。
-  overlay.classList.toggle('hidden', locked || gameOver || hsUiUp());
+  overlay.classList.toggle('hidden', locked || dragLook || gameOver || hsUiUp());
 
   /* 等待期间不再一律松开鼠标。以前这里每次等待都 exitPointerLock，进场时
      再点一次遮罩重新申请；浏览器收回/重给指针锁不是同一帧完成的，表现出来
@@ -6133,12 +6194,10 @@ function startPreview() {
   if (previewExitEl) previewExitEl.classList.remove('hidden');
   showBanner('预览模式 · 只逛地图，不影响对局 · 按 Esc 退出', 4);
   hideUpdateUI();                                  // 让等待界面立刻收起来
-  if (LOAD.ready) {
-    try {
-      const p = canvas.requestPointerLock();
-      if (p && p.catch) p.catch(() => {});
-    } catch (_) {}
-  }
+  /* 走进来这条并不总有手势：从大厅点「一个人先逛地图」是 postMessage 过来、
+     新 iframe 一次没被点过，浏览器会直接吞掉这次申请（不抛错也不提示）。
+     吞掉了就靠"点任意位置重锁 / 按住左键拖动转视角"两条兜底，见 tryLock。 */
+  tryLock();
 }
 
 function exitPreview() {

@@ -137,6 +137,11 @@
       if (mpRoot) {
         var wantZ = CENTER.plat ? "15" : "50";
         if (mpRoot.style.zIndex !== wantZ) mpRoot.style.zIndex = wantZ;
+        /* 层级压到 15 只是"被抽屉盖住"，可那块 `inset:0` 的透明根节点照样接鼠标
+           —— 抽屉里点不到、拖不动的时候，它就是头号嫌疑。锁着的时候直接不让它
+           收事件（抽屉开着时它本来就在不透明背景底下，没人看得到也没人点得到）。 */
+        var wantPE = CENTER.plat ? "none" : "";
+        if (mpRoot.style.pointerEvents !== wantPE) mpRoot.style.pointerEvents = wantPE;
         out.mpRootZ = wantZ;
       }
       requestAnimationFrame(pulse);
