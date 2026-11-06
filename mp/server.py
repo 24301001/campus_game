@@ -26,6 +26,7 @@ from email.message import EmailMessage
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from http.cookies import SimpleCookie
 from pathlib import Path
+import urllib.request
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from websockets.asyncio.server import serve
@@ -40,6 +41,10 @@ try:
     from rate_store import store as rate_store
 except ImportError:  # pragma: no cover
     from mp.rate_store import store as rate_store
+try:
+    import npc_guard                      # NPC 转发口的限速 + 提示词注入体检
+except ImportError:  # pragma: no cover
+    from mp import npc_guard
 # 注册验证码（拖动拼图 + 轨迹校验）自己实现，见 captcha.py。
 try:
     import captcha as captcha_mod
@@ -166,6 +171,54 @@ with lock:
     CREATE INDEX IF NOT EXISTS idx_mp_captcha_time ON mp_captcha(created_at);
     CREATE TABLE IF NOT EXISTS mp_captcha_ticket(token TEXT PRIMARY KEY, ip TEXT NOT NULL DEFAULT '',
         issued_at REAL NOT NULL, expires_at REAL NOT NULL, used INTEGER NOT NULL DEFAULT 0);
+    /* ---------------- 审核与举报（2026-11-06） ----------------
+       口径是「先发布、后审核」：内容照常进库照常给别人看，同时往 mp_review 记一行，
+       后台的「审核和举报中心」盯着这一行。status：0 待审 / 1 通过 / 2 已清理。
+       mp_report：私聊里的「举报」，带举报理由和被举报内容的快照（消息可能被删，快照留着）。
+       mp_block：拉黑。user_id 拉黑 target_id，双向都不再收对方的新私聊。 */
+    CREATE TABLE IF NOT EXISTS mp_review(id INTEGER PRIMARY KEY, kind TEXT NOT NULL, ref_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL, ip TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '',
+        extra TEXT NOT NULL DEFAULT '', status INTEGER NOT NULL DEFAULT 0, created_at REAL NOT NULL,
+        reviewed_at REAL NOT NULL DEFAULT 0, reviewer TEXT NOT NULL DEFAULT '');
+    CREATE INDEX IF NOT EXISTS idx_mp_review_status ON mp_review(status, id);
+    CREATE TABLE IF NOT EXISTS mp_report(id INTEGER PRIMARY KEY, reporter_id INTEGER NOT NULL,
+        target_id INTEGER NOT NULL, msg_id INTEGER NOT NULL DEFAULT 0, kind TEXT NOT NULL DEFAULT 'chat',
+        content TEXT NOT NULL DEFAULT '', reason TEXT NOT NULL DEFAULT '', ip TEXT NOT NULL DEFAULT '',
+        status INTEGER NOT NULL DEFAULT 0, created_at REAL NOT NULL, handled_at REAL NOT NULL DEFAULT 0,
+        handler TEXT NOT NULL DEFAULT '', action TEXT NOT NULL DEFAULT '');
+    CREATE INDEX IF NOT EXISTS idx_mp_report_status ON mp_report(status, id);
+    CREATE TABLE IF NOT EXISTS mp_block(user_id INTEGER NOT NULL, target_id INTEGER NOT NULL,
+        created_at REAL NOT NULL, PRIMARY KEY(user_id, target_id));
+    /* ---------------- NPC 对话（2026-11-06） ----------------
+       mp_npc_chat：对 NPC 的每一次提问记一行（谁、哪个角色、问的什么、当天第几次）。
+              管理后台「NPC 对话」页签就是这张表摊开。verdict：
+              ok 正常进模型 / soft 可疑但放行 / block 被体检拦下 / quota 超当日额度 /
+              banned 提问权已被停用 / rate 一分钟内问太急被拦。
+       保留 90 天，另有 20 万行硬上限（prune_npc_log 在重启和写日志时顺手裁）。
+       mp_npc_limit：单个账号对单个角色的每日上限，覆盖全局默认；没有这行＝用默认。
+       mp_npc_ban：停用某个账号对某个角色的提问权；kind='*' 表示全部角色，until=0 表示永久。 */
+    CREATE TABLE IF NOT EXISTS mp_npc_chat(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL,
+        kind TEXT NOT NULL, text TEXT NOT NULL DEFAULT '', day INTEGER NOT NULL,
+        at REAL NOT NULL, verdict TEXT NOT NULL DEFAULT 'ok');
+    CREATE INDEX IF NOT EXISTS idx_mp_npc_chat_user ON mp_npc_chat(user_id, kind, day);
+    CREATE INDEX IF NOT EXISTS idx_mp_npc_chat_at ON mp_npc_chat(at);
+    CREATE TABLE IF NOT EXISTS mp_npc_limit(user_id INTEGER NOT NULL, kind TEXT NOT NULL,
+        daily INTEGER NOT NULL, PRIMARY KEY(user_id, kind));
+    CREATE TABLE IF NOT EXISTS mp_npc_ban(user_id INTEGER NOT NULL, kind TEXT NOT NULL,
+        until REAL NOT NULL DEFAULT 0, reason TEXT NOT NULL DEFAULT '',
+        created_by TEXT NOT NULL DEFAULT '', created_at REAL NOT NULL, PRIMARY KEY(user_id, kind));
+    /* 个人主页的「近期动态」（2026-11-06）：喂猫、乐跑这类没有现成流水的事记在这里；
+       和 NPC 的对话、留言板发言分别从 mp_npc_chat / mp_announcement 现查，不重复存。
+       只留 30 天，启动时顺手清。 */
+    CREATE TABLE IF NOT EXISTS mp_activity(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL,
+        kind TEXT NOT NULL, text TEXT NOT NULL DEFAULT '', day INTEGER NOT NULL, at REAL NOT NULL);
+    CREATE INDEX IF NOT EXISTS idx_mp_activity_user ON mp_activity(user_id, at);
+    /* 全校动态里的老丁失物：挂失/认领发生在老丁的 iframe 里，浏览器本地存，
+       服务端只在事发时收一条"什么物品、挂失还是认领"，用来排"最近最多的物品"。
+       不记是谁，也不记联系方式。保留 30 天。 */
+    CREATE TABLE IF NOT EXISTS mp_pulse_event(id INTEGER PRIMARY KEY, kind TEXT NOT NULL,
+        item TEXT NOT NULL DEFAULT '', at REAL NOT NULL);
+    CREATE INDEX IF NOT EXISTS idx_mp_pulse_event_at ON mp_pulse_event(at);
     """)
     if "visibility_json" not in {column["name"] for column in db.execute("PRAGMA table_info(mp_player)")}:
         db.execute("ALTER TABLE mp_player ADD COLUMN visibility_json TEXT NOT NULL DEFAULT '{\"bio\":true,\"college\":true,\"grade\":true,\"tags\":true}'")
@@ -175,7 +228,10 @@ with lock:
                        ("ban_reason", "ALTER TABLE mp_user ADD COLUMN ban_reason TEXT NOT NULL DEFAULT ''"),
                        ("created_at", "ALTER TABLE mp_user ADD COLUMN created_at REAL NOT NULL DEFAULT 0"),
                        # 昵称规范化键：全角/半角、大小写视为同一个名字，唯一索引就建在它上面
-                       ("name_key", "ALTER TABLE mp_user ADD COLUMN name_key TEXT NOT NULL DEFAULT ''")):
+                       ("name_key", "ALTER TABLE mp_user ADD COLUMN name_key TEXT NOT NULL DEFAULT ''"),
+                       # 禁言：只挡「发东西」（私聊、留言板、楼宇照片/留言），不禁登录
+                       ("muted_until", "ALTER TABLE mp_user ADD COLUMN muted_until REAL NOT NULL DEFAULT 0"),
+                       ("mute_reason", "ALTER TABLE mp_user ADD COLUMN mute_reason TEXT NOT NULL DEFAULT ''")):
         if _col not in _user_cols:
             db.execute(_ddl)
     for _r in db.execute("SELECT id,nickname FROM mp_user WHERE name_key=''").fetchall():
@@ -382,33 +438,19 @@ SMTP_PASS = os.environ.get("MP_SMTP_PASS", "")
 SITE_NAME = os.environ.get("MP_SITE_NAME", "像素校园")
 
 
-def alert_admin_login(ip: str, user_agent: str = "", at: float | None = None):
-    """管理员登录后发提醒邮件。放到后台线程里发，登录不等它。"""
+def send_admin_mail(subject: str, body: str):
+    """给管理员邮箱发一封信。放后台线程，调用方不等它。没配口令就只打日志。"""
     if not SMTP_PASS:
-        print("[alert] 没有配置 MP_SMTP_PASS，跳过管理员登录提醒")
+        print(f"[alert] 没有配置 MP_SMTP_PASS，跳过：{subject}")
         return
-    when = at or time.time()
-    stamp = datetime.fromtimestamp(when + TZ_SHIFT, timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-    try:
-        region = (geo_regions([ip]) or {}).get(ip, "")
-    except Exception:
-        region = ""
 
     def worker():
         try:
             msg = EmailMessage()
-            msg["Subject"] = f"{SITE_NAME}：管理员账号登录提醒"
+            msg["Subject"] = subject
             msg["From"] = SMTP_USER
             msg["To"] = ALERT_TO
-            msg.set_content(
-                f"管理员账号 {ADMIN_NICK} 刚刚登录了{SITE_NAME}。\n\n"
-                f"登录时间：{stamp}（北京时间）\n"
-                f"登录 IP：{ip}\n"
-                f"归属地：{region or '未知'}\n"
-                f"浏览器：{user_agent[:200] or '未知'}\n\n"
-                f"如果这不是你本人操作的，请立刻改管理员密码，"
-                f"并到后台「网络安全」里把这个 IP 封掉。\n"
-            )
+            msg.set_content(body)
             if SMTP_PORT == 465:
                 with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10) as smtp:
                     smtp.login(SMTP_USER, SMTP_PASS)
@@ -418,11 +460,79 @@ def alert_admin_login(ip: str, user_agent: str = "", at: float | None = None):
                     smtp.starttls()
                     smtp.login(SMTP_USER, SMTP_PASS)
                     smtp.send_message(msg)
-            print(f"[alert] 管理员登录提醒已发到 {ALERT_TO}")
+            print(f"[alert] 已发到 {ALERT_TO}：{subject}")
         except Exception as exc:
-            print(f"[alert] 管理员登录提醒发送失败：{exc}")
+            print(f"[alert] 发送失败（{subject}）：{exc}")
 
     threading.Thread(target=worker, daemon=True).start()
+
+
+def alert_admin_login(ip: str, user_agent: str = "", at: float | None = None):
+    """管理员登录后发提醒邮件。"""
+    when = at or time.time()
+    stamp = datetime.fromtimestamp(when + TZ_SHIFT, timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        region = (geo_regions([ip]) or {}).get(ip, "")
+    except Exception:
+        region = ""
+    send_admin_mail(
+        f"{SITE_NAME}：管理员账号登录提醒",
+        f"管理员账号 {ADMIN_NICK} 刚刚登录了{SITE_NAME}。\n\n"
+        f"登录时间：{stamp}（北京时间）\n"
+        f"登录 IP：{ip}\n"
+        f"归属地：{region or '未知'}\n"
+        f"浏览器：{user_agent[:200] or '未知'}\n\n"
+        f"如果这不是你本人操作的，请立刻改管理员密码，"
+        f"并到后台「网络安全」里把这个 IP 封掉。\n")
+
+
+# ---------------------------------------------------------------------------
+# 审核提醒邮件（2026-11-06）
+#   有人发了内容进待审队列、或者有人提交举报，就给管理员发一封信。
+#   不是来一条发一条 —— 第一条进来后先等 NOTIFY_DELAY 秒，把这段时间里的
+#   一起写进同一封；两封之间至少隔 NOTIFY_GAP 秒，免得有人一分钟发五十条
+#   把邮箱刷爆。从没配过 MP_SMTP_PASS 就只打日志，不影响发内容。
+# ---------------------------------------------------------------------------
+SITE_URL = os.environ.get("MP_SITE_URL", "https://bjtupixelcampus.online").rstrip("/")
+NOTIFY_DELAY = 60          # 第一条进来后攒多久
+NOTIFY_GAP = 600           # 两封提醒之间至少隔多久
+_notify_lock = threading.Lock()
+_notify_items: list[str] = []
+_notify_timer = None
+_notify_next_at = 0.0
+
+
+def notify_moderation(line: str):
+    """记一笔"要提醒管理员"的事，攒一会儿一起发。"""
+    global _notify_timer
+    with _notify_lock:
+        _notify_items.append(line)
+        if _notify_timer is not None:
+            return                      # 已经有一个在倒计时，它会连这条一起发
+        delay = max(NOTIFY_DELAY, _notify_next_at - time.time())
+        t = threading.Timer(delay, _flush_moderation)
+        t.daemon = True
+        _notify_timer = t
+        t.start()
+
+
+def _flush_moderation():
+    global _notify_timer, _notify_next_at
+    with _notify_lock:
+        items = _notify_items[:]
+        _notify_items.clear()
+        _notify_timer = None
+        _notify_next_at = time.time() + NOTIFY_GAP
+    if not items:
+        return
+    shown = items[:20]
+    tail = "" if len(items) <= 20 else f"\n……还有 {len(items) - 20} 条，请到后台查看。"
+    send_admin_mail(
+        f"{SITE_NAME}：{len(items)} 条待审核 / 举报",
+        f"{SITE_NAME}后台有 {len(items)} 件事等你处理。\n\n"
+        + "\n".join(shown) + tail + "\n\n"
+        f"处理入口：{SITE_URL}/admin.html 第三个页签「审核和举报中心」\n"
+        "这些内容已经先发布出去了，看着不合适就点「清理」，人会当场看到它消失。\n")
 
 
 def day_key(ts: float) -> int:
@@ -433,6 +543,273 @@ def day_text(key: int) -> str:
     # day_key() 的产物是"北京时间的第几天"，直接按 UTC 打印就是北京日历上的日期。
     # ⚠️ 不要再减 TZ_SHIFT —— 减了会整体退回前一天（2026-11-04 显示成 11-03）。
     return datetime.fromtimestamp(key * 86400, timezone.utc).strftime("%Y-%m-%d")
+
+
+# ---------------- NPC 对话：额度、停用、流水（2026-11-06） ----------------
+# 口径只有一处：这里算，管理后台只负责画。
+NPC_KINDS = {"xbg": "学霸姐", "cmr": "食堂阿姨", "ld": "保安老丁", "agent": "算法哥"}
+NPC_DAILY_DEFAULT = 200        # 每人每角色每天提问上限的默认值（后台可改）
+NPC_LOG_KEEP_DAYS = 90         # 提问流水保留天数
+NPC_LOG_MAX_ROWS = 200000      # 再加一道硬上限，防止一天刷爆
+
+# ---------------- 个人主页：近期动态（2026-11-06） ----------------
+ACTIVITY_KINDS = {"cat": ("🐱", "喂了猫"), "run": ("🏃", "乐跑")}
+NPC_ICONS = {"xbg": "🎓", "cmr": "🍚", "ld": "🛡️", "agent": "💻"}
+ACTIVITY_KEEP_DAYS = 30
+ACTIVITY_LIMIT = 30
+
+
+def log_activity(uid: int, kind: str, text: str):
+    """喂猫、乐跑这类没有现成流水的事，单独记一行给主页的动态看。"""
+    execute("INSERT INTO mp_activity(user_id,kind,text,day,at) VALUES(?,?,?,?,?)",
+            (uid, kind, (text or "")[:80], day_key(time.time()), time.time()))
+
+
+def prune_activity():
+    execute("DELETE FROM mp_activity WHERE at<?", (time.time() - ACTIVITY_KEEP_DAYS * 86400,))
+
+
+def activity_feed(uid: int, limit: int = ACTIVITY_LIMIT) -> list:
+    """一个人最近 30 天的动态：NPC 对话、喂猫、乐跑、留言板发言，按时间倒序。
+
+    NPC 对话只取真正进了模型的（ok/soft），被拦下的尝试不上墙。"""
+    since = time.time() - ACTIVITY_KEEP_DAYS * 86400
+    items = []
+    for r in rows("SELECT kind,text,at FROM mp_npc_chat WHERE user_id=? AND verdict IN ('ok','soft') "
+                  "AND at>=? ORDER BY at DESC LIMIT ?", (uid, since, limit)):
+        text = (r["text"] or "").strip()
+        if text:
+            items.append({"at": r["at"], "icon": NPC_ICONS.get(r["kind"], "🤖"),
+                          "label": "问了" + npc_kind_name(r["kind"]), "text": text[:60]})
+    for r in rows("SELECT kind,text,at FROM mp_activity WHERE user_id=? AND at>=? "
+                  "ORDER BY at DESC LIMIT ?", (uid, since, limit)):
+        icon, label = ACTIVITY_KINDS.get(r["kind"], ("·", "动态"))
+        items.append({"at": r["at"], "icon": icon, "label": label, "text": (r["text"] or "")[:60]})
+    for r in rows("SELECT content,created_at FROM mp_announcement WHERE user_id=? AND created_at>=? "
+                  "ORDER BY id DESC LIMIT ?", (uid, since, limit)):
+        items.append({"at": r["created_at"], "icon": "📣", "label": "发了留言",
+                      "text": (r["content"] or "")[:60]})
+    items.sort(key=lambda x: x["at"], reverse=True)
+    return [{"icon": i["icon"], "label": i["label"], "text": i["text"], "at": now_iso(i["at"])}
+            for i in items[:limit]]
+
+
+# ---------------- 全校动态（2026-11-06） ----------------
+# 右上角「📊 动态」面板的四块：算法哥刷题榜（问 Java 要）、食堂阿姨常被问的、
+# 学霸姐常被问到的知识点、老丁这几天最多的失物。口径都在这一个函数里。
+PULSE_DAYS = 7
+CURATED_FOOD = Path("/opt/campus_portal/campus_game_cmr/aunt/data/curated_food.json")
+XBG_DB = "/opt/campus_portal/xueba-ge/data/xueba.db"
+
+
+def _dish_names() -> list:
+    try:
+        data = json.loads(CURATED_FOOD.read_text(encoding="utf-8"))
+        return sorted({str(e.get("dish") or "").strip() for e in data.get("entries", [])
+                       if str(e.get("dish") or "").strip()}, key=len, reverse=True)
+    except Exception:
+        return []
+
+
+DISH_NAMES = _dish_names()
+
+
+def _norm_q(text: str) -> str:
+    t = re.sub(r"[\s，。！？、,.!?;；:：()（）\[\]【】…]+", "", text or "")
+    return t[:30]
+
+
+def _top_pairs(counter: dict, limit: int = 6) -> list:
+    return [{"text": k, "count": v}
+            for k, v in sorted(counter.items(), key=lambda kv: (-kv[1], kv[0]))[:limit]]
+
+
+def cmr_pulse() -> dict:
+    """阿姨最近被问最多的话 + 最常出现的菜。菜名从阿姨的菜品库里认，不在库里的不算。"""
+    since = time.time() - PULSE_DAYS * 86400
+    qs, dishes = {}, {}
+    for r in rows("SELECT text FROM mp_npc_chat WHERE kind='cmr' AND verdict IN ('ok','soft') AND at>=?",
+                  (since,)):
+        raw = (r["text"] or "").strip()
+        q = _norm_q(raw)
+        if q:
+            qs[q] = qs.get(q, 0) + 1
+        for name in DISH_NAMES:
+            if name in raw:
+                dishes[name] = dishes.get(name, 0) + 1
+                break
+    return {"questions": _top_pairs(qs), "dishes": _top_pairs(dishes)}
+
+
+def xbg_pulse() -> dict:
+    """学霸姐最近回答引用最多的章节。refs 是每条回答自己带的出处，不推断。"""
+    try:
+        con = sqlite3.connect("file:%s?mode=ro" % XBG_DB, uri=True)
+        con.row_factory = sqlite3.Row
+        rs = con.execute("SELECT refs FROM message WHERE role='assistant' AND created_at>=?",
+                         (time.time() - PULSE_DAYS * 86400,)).fetchall()
+        con.close()
+    except Exception:
+        return {"points": []}
+    counts = {}
+    for r in rs:
+        try:
+            refs = json.loads(r["refs"] or "[]")
+        except Exception:
+            continue
+        seen = set()
+        for ref in refs if isinstance(refs, list) else []:
+            if not isinstance(ref, dict):
+                continue
+            name = str(ref.get("section") or ref.get("chapter") or "").strip()
+            if not name or "习题" in name or name in seen:
+                continue
+            seen.add(name)
+            counts[name] = counts.get(name, 0) + 1
+    return {"points": _top_pairs(counts)}
+
+
+def ld_pulse() -> dict:
+    since = time.time() - PULSE_DAYS * 86400
+    return {"items": [{"text": r["item"], "count": r["n"], "lost": r["lost"], "claim": r["claim"]}
+                      for r in rows("SELECT item, SUM(kind='lost') AS lost, SUM(kind='claim') AS claim, "
+                                    "COUNT(*) AS n FROM mp_pulse_event WHERE at>=? GROUP BY item "
+                                    "ORDER BY n DESC LIMIT 6", (since,))]}
+
+
+def agent_pulse() -> dict:
+    """算法哥的刷题榜在 Java 那边（MySQL），这里只转发；他不在也不影响另外三块。"""
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:8081/api/agent/public/pulse", timeout=2) as r:
+            payload = json.loads(r.read().decode("utf-8"))
+        data = payload.get("data") or {}
+        return {"leaders": data.get("leaders") or [], "recent": data.get("recent") or []}
+    except Exception:
+        return {"leaders": [], "recent": [], "offline": True}
+
+
+_PULSE_CACHE = {"at": 0.0, "data": None}
+
+
+def pulse_payload() -> dict:
+    now = time.time()
+    if _PULSE_CACHE["data"] and now - _PULSE_CACHE["at"] < 10:
+        return _PULSE_CACHE["data"]
+    data = {"agent": agent_pulse(), "cmr": cmr_pulse(), "xbg": xbg_pulse(), "ld": ld_pulse(),
+            "days": PULSE_DAYS, "updatedAt": now_iso(now)}
+    _PULSE_CACHE.update(at=now, data=data)
+    return data
+
+
+def prune_pulse():
+    execute("DELETE FROM mp_pulse_event WHERE at<?", (time.time() - 30 * 86400,))
+
+
+def npc_kind_name(kind: str) -> str:
+    return NPC_KINDS.get(kind, kind)
+
+
+def npc_default_limit() -> int:
+    try:
+        return max(1, int(setting_get("npc_daily_default", str(NPC_DAILY_DEFAULT))))
+    except ValueError:
+        return NPC_DAILY_DEFAULT
+
+
+def npc_user_limit(uid: int, kind: str) -> int:
+    """单账号对单角色的每日上限：有单独设过就用它，否则用全局默认。"""
+    r = row("SELECT daily FROM mp_npc_limit WHERE user_id=? AND kind=?", (uid, kind))
+    return int(r["daily"]) if r and r["daily"] > 0 else npc_default_limit()
+
+
+def npc_ban_of(uid: int, kind: str):
+    """这个账号对这个角色有没有被停用。'*' 优先（停用全部角色）。"""
+    now = time.time()
+    return row("SELECT * FROM mp_npc_ban WHERE user_id=? AND kind IN (?, '*') "
+               "AND (until=0 OR until>?) ORDER BY (kind='*') DESC LIMIT 1", (uid, kind, now))
+
+
+def npc_today_count(uid: int, kind: str) -> int:
+    """今天真正进了模型的提问数。被拦下的（block/banned/quota/rate）不算额度。"""
+    return row("SELECT COUNT(*) AS n FROM mp_npc_chat WHERE user_id=? AND kind=? AND day=? "
+               "AND verdict IN ('ok','soft')", (uid, kind, day_key(time.time())))["n"]
+
+
+def npc_log(uid: int, kind: str, text: str, verdict: str):
+    execute("INSERT INTO mp_npc_chat(user_id,kind,text,day,at,verdict) VALUES(?,?,?,?,?,?)",
+            (uid, kind, (text or "")[:500], day_key(time.time()), time.time(), verdict))
+
+
+def prune_npc_log():
+    execute("DELETE FROM mp_npc_chat WHERE at<?", (time.time() - NPC_LOG_KEEP_DAYS * 86400,))
+    n = row("SELECT COUNT(*) AS n FROM mp_npc_chat")["n"]
+    if n > NPC_LOG_MAX_ROWS:
+        execute("DELETE FROM mp_npc_chat WHERE id IN "
+                "(SELECT id FROM mp_npc_chat ORDER BY id ASC LIMIT ?)", (n - NPC_LOG_MAX_ROWS,))
+
+
+def npc_admin_payload(query: dict) -> dict:
+    """管理后台「NPC 对话」页签的全部数据，一次给全。"""
+    day = (query.get("day") or [""])[0]
+    try:
+        target_day = int(day) if day else day_key(time.time())
+    except ValueError:
+        target_day = day_key(time.time())
+    kind = (query.get("kind") or [""])[0]
+    q = (query.get("q") or [""])[0].strip()[:40]
+    try:
+        cap = max(1, min(500, int((query.get("limit") or ["200"])[0])))
+    except ValueError:
+        cap = 200
+    where, args = ["c.day=?"], [target_day]
+    if kind in NPC_KINDS:
+        where.append("c.kind=?")
+        args.append(kind)
+    if q:
+        where.append("(c.text LIKE ? OR u.nickname LIKE ?)")
+        args += ["%" + q + "%", "%" + q + "%"]
+    logs = rows("SELECT c.id,c.user_id,u.nickname,c.kind,c.text,c.at,c.verdict FROM mp_npc_chat c "
+                "LEFT JOIN mp_user u ON u.id=c.user_id WHERE " + " AND ".join(where) +
+                " ORDER BY c.id DESC LIMIT ?", tuple(args) + (cap,))
+    usage = rows("SELECT c.user_id,u.nickname,c.kind,COUNT(*) AS n FROM mp_npc_chat c "
+                 "LEFT JOIN mp_user u ON u.id=c.user_id WHERE c.day=? AND c.verdict IN ('ok','soft') "
+                 "GROUP BY c.user_id,c.kind ORDER BY n DESC", (target_day,))
+    limits = {(r["user_id"], r["kind"]): r["daily"] for r in rows("SELECT * FROM mp_npc_limit")}
+    now = time.time()
+    bans = [r for r in rows("SELECT b.*,u.nickname FROM mp_npc_ban b LEFT JOIN mp_user u ON u.id=b.user_id "
+                            "WHERE b.until=0 OR b.until>? ORDER BY b.created_at DESC", (now,))]
+    default = npc_default_limit()
+    items = []
+    for r in usage:
+        key = (r["user_id"], r["kind"])
+        own = next((b for b in bans if b["user_id"] == r["user_id"] and b["kind"] in (r["kind"], "*")), None)
+        items.append({"userId": r["user_id"], "nickname": r["nickname"] or ("#" + str(r["user_id"])),
+                      "kind": r["kind"], "kindName": npc_kind_name(r["kind"]), "used": r["n"],
+                      "limit": limits.get(key) or default, "custom": bool(limits.get(key)),
+                      "banned": bool(own), "banKind": own["kind"] if own else "",
+                      "banUntil": own["until"] if own else 0,
+                      "banReason": own["reason"] if own else ""})
+    stats = {
+        "day": day_text(target_day),
+        "total": sum(i["used"] for i in items),
+        "users": len({i["userId"] for i in items}),
+        "blocked": row("SELECT COUNT(*) AS n FROM mp_npc_chat WHERE day=? AND verdict='block'",
+                       (target_day,))["n"],
+        "banned": len(bans),
+        "default": default,
+    }
+    return {
+        "stats": stats,
+        "logs": [{"id": r["id"], "userId": r["user_id"], "nickname": r["nickname"] or ("#" + str(r["user_id"])),
+                  "kind": r["kind"], "kindName": npc_kind_name(r["kind"]), "text": r["text"],
+                  "at": now_iso(r["at"]), "verdict": r["verdict"]} for r in logs],
+        "usage": items,
+        "bans": [{"userId": b["user_id"], "nickname": b["nickname"] or ("#" + str(b["user_id"])),
+                  "kind": b["kind"], "kindName": "全部角色" if b["kind"] == "*" else npc_kind_name(b["kind"]),
+                  "until": b["until"], "reason": b["reason"], "by": b["created_by"],
+                  "at": now_iso(b["created_at"])} for b in bans],
+        "kinds": [{"key": k, "name": v} for k, v in NPC_KINDS.items()],
+    }
 
 
 def stamp_text(ts) -> str:
@@ -622,6 +999,128 @@ def ban_message(banned_until: float) -> str:
     return f"该账号封禁至 {stamp_text(banned_until)}，时间到之后才能登录"
 
 
+# ---------------- 审核与举报（2026-11-06） ----------------
+# 口径：先发布、后审核。内容照常进库、照常显示，同时往 mp_review 记一行。
+# 管理员在「审核和举报中心」里通过（什么都不用做）或清理（真删）。
+
+REVIEW_KINDS = {"announce": "留言板", "bld_comment": "楼宇留言", "bld_photo": "楼宇照片"}
+
+
+def blocked_ids(user_id: int) -> list:
+    return [r["target_id"] for r in rows("SELECT target_id FROM mp_block WHERE user_id=?", (user_id,))]
+
+
+def is_muted(user_id: int) -> bool:
+    info = row("SELECT muted_until FROM mp_user WHERE id=?", (user_id,))
+    return bool(info and info["muted_until"] and info["muted_until"] > time.time())
+
+
+def mute_message(muted_until: float) -> str:
+    if muted_until >= BAN_FOREVER:
+        return "你已被禁言，暂时不能发消息、留言和传照片，可以浏览别人的内容"
+    return f"你被禁言到 {stamp_text(muted_until)}，这期间不能发私聊、留言和传照片"
+
+
+def push_review(kind: str, ref_id: int, user_id: int, ip: str, content: str, extra: str = ""):
+    """先发布后审核：内容落库的同时记一条待审记录，后台据此排队。"""
+    execute("INSERT INTO mp_review(kind,ref_id,user_id,ip,content,extra,status,created_at) VALUES(?,?,?,?,?,?,0,?)",
+            (kind, int(ref_id), int(user_id), ip or "", (content or "")[:600], (extra or "")[:60], time.time()))
+    try:
+        who = row("SELECT nickname FROM mp_user WHERE id=?", (int(user_id),))
+        where = REVIEW_KINDS.get(kind, kind)
+        if kind in ("bld_comment", "bld_photo") and extra:
+            where += "·" + (BLD_NAMES.get(extra) or extra)
+        text = (content or "").replace("\n", " ")[:120]
+        notify_moderation(f"[{where}] {(who['nickname'] if who else '（未知）')}"
+                          f"（{ip or 'IP 未知'}） {stamp_text(time.time())}\n    {text}")
+    except Exception as exc:      # 发信出问题不能拖累发布
+        print(f"[alert] 待审提醒没排上：{exc}")
+
+
+def _review_dict(r) -> dict:
+    u = row("SELECT nickname,muted_until,banned_until FROM mp_user WHERE id=?", (r["user_id"],)) if r["user_id"] else None
+    return {"id": r["id"], "kind": r["kind"], "kindName": REVIEW_KINDS.get(r["kind"], r["kind"]),
+            "refId": r["ref_id"], "userId": r["user_id"],
+            "nickname": (u["nickname"] if u else "（已删号）"),
+            "muted": bool(u and u["muted_until"] > time.time()),
+            "banned": bool(u and u["banned_until"] > time.time()),
+            "ip": r["ip"] or "", "content": r["content"] or "", "extra": r["extra"] or "",
+            "bldName": BLD_NAMES.get(r["extra"], r["extra"] or ""),
+            "status": r["status"], "createdAt": stamp_text(r["created_at"]),
+            "reviewedAt": stamp_text(r["reviewed_at"]) if r["reviewed_at"] else "",
+            "reviewer": r["reviewer"] or "",
+            # 照片要能直接看缩略图：content 里存的就是相对 ROOT 的路径
+            "image": r["content"] if r["kind"] == "bld_photo" else ""}
+
+
+def _report_dict(r) -> dict:
+    rep = row("SELECT nickname FROM mp_user WHERE id=?", (r["reporter_id"],))
+    tgt = row("SELECT nickname,muted_until,banned_until FROM mp_user WHERE id=?", (r["target_id"],))
+    return {"id": r["id"], "reporterId": r["reporter_id"], "targetId": r["target_id"],
+            "reporter": rep["nickname"] if rep else "（已删号）",
+            "target": tgt["nickname"] if tgt else "（已删号）",
+            "muted": bool(tgt and tgt["muted_until"] > time.time()),
+            "banned": bool(tgt and tgt["banned_until"] > time.time()),
+            "msgId": r["msg_id"], "kind": r["kind"], "content": r["content"] or "",
+            "reason": r["reason"] or "", "ip": r["ip"] or "", "status": r["status"],
+            "createdAt": stamp_text(r["created_at"]),
+            "handledAt": stamp_text(r["handled_at"]) if r["handled_at"] else "",
+            "handler": r["handler"] or "", "action": r["action"] or ""}
+
+
+def review_payload() -> dict:
+    pending = [_review_dict(r) for r in rows("SELECT * FROM mp_review WHERE status=0 ORDER BY id DESC LIMIT 200")]
+    handled = [_review_dict(r) for r in rows("SELECT * FROM mp_review WHERE status<>0 ORDER BY id DESC LIMIT 100")]
+    reports = [_report_dict(r) for r in rows("SELECT * FROM mp_report WHERE status=0 ORDER BY id DESC LIMIT 200")]
+    report_handled = [_report_dict(r) for r in rows("SELECT * FROM mp_report WHERE status<>0 ORDER BY id DESC LIMIT 100")]
+    return {"pending": pending, "handled": handled, "reports": reports,
+            "reportHandled": report_handled,
+            "counts": {"pending": len(pending), "reports": len(reports)}}
+
+
+def notify_all(payload: dict):
+    """内容被清理时广播一枪，开着的页面立刻把它拿掉，不用等刷新。"""
+    loop = event_loop
+    if not loop:
+        return
+    try:
+        loop.call_soon_threadsafe(lambda: asyncio.create_task(broadcast(payload, list(active.values()))))
+    except RuntimeError:
+        pass
+
+
+def review_mark(rev_id: int, status: int, admin_name: str):
+    execute("UPDATE mp_review SET status=?,reviewed_at=?,reviewer=? WHERE id=?",
+            (status, time.time(), admin_name, rev_id))
+
+
+def review_remove(rev_id: int, admin_name: str) -> dict:
+    """清理一条被否掉的内容：真删，删完广播。照片连文件一起删。"""
+    rev = row("SELECT * FROM mp_review WHERE id=?", (rev_id,))
+    if not rev:
+        raise ValueError("没有这条待审记录")
+    kind, ref_id = rev["kind"], rev["ref_id"]
+    if kind == "announce":
+        execute("DELETE FROM mp_announcement WHERE id=?", (ref_id,))
+        notify_all({"type": "announce.remove", "id": ref_id})
+    elif kind == "bld_comment":
+        execute("DELETE FROM mp_bld_comment WHERE id=?", (ref_id,))
+        notify_all({"type": "bld.remove", "bld": rev["extra"], "kind": "comment", "id": ref_id})
+    elif kind == "bld_photo":
+        photo = row("SELECT file FROM mp_bld_photo WHERE id=?", (ref_id,))
+        execute("DELETE FROM mp_bld_photo WHERE id=?", (ref_id,))
+        if photo and photo["file"]:
+            try:
+                (ROOT / photo["file"]).unlink()
+            except OSError:
+                pass      # 文件已经被手工删过，不要因为少一个文件让整个操作失败
+        notify_all({"type": "bld.remove", "bld": rev["extra"], "kind": "photo", "id": ref_id})
+    else:
+        raise ValueError("这种内容不会自动删，请手动处理")
+    review_mark(rev_id, 2, admin_name)
+    return {"ok": True, "review": review_payload()}
+
+
 def require_admin(handler):
     """先过普通登录，再看 mp_user.is_admin。两关都过才返回 user。"""
     user = handler.auth()
@@ -679,11 +1178,12 @@ def admin_stats(days: int = 7) -> dict:
 def admin_users() -> list:
     now = time.time()
     result = []
-    for u in rows("SELECT id,nickname,is_admin,banned_until,ban_reason,created_at FROM mp_user ORDER BY id"):
+    for u in rows("SELECT id,nickname,is_admin,banned_until,ban_reason,muted_until,mute_reason,created_at FROM mp_user ORDER BY id"):
         last = row("SELECT at,ip FROM mp_login_log WHERE user_id=? ORDER BY at DESC LIMIT 1", (u["id"],))
         play = row("SELECT MAX(ended_at) AS last_end, SUM(COALESCE(ended_at,?)-started_at) AS secs, COUNT(*) AS n FROM mp_play WHERE user_id=?", (now, u["id"]))
         secret = row("SELECT 1 AS ok FROM mp_user_secret WHERE user_id=?", (u["id"],))
         banned_until = u["banned_until"] or 0
+        muted_until = u["muted_until"] or 0
         result.append({
             "id": u["id"], "nickname": u["nickname"], "admin": bool(u["is_admin"]),
             "createdAt": stamp_text(u["created_at"]) if u["created_at"] else "",
@@ -698,6 +1198,10 @@ def admin_users() -> list:
             "bannedUntil": stamp_text(banned_until) if banned_until > now else "",
             "banForever": banned_until >= BAN_FOREVER,
             "banReason": u["ban_reason"] or "",
+            "muted": muted_until > now,
+            "mutedUntil": stamp_text(muted_until) if muted_until > now else "",
+            "muteForever": muted_until >= BAN_FOREVER,
+            "muteReason": u["mute_reason"] or "",
         })
     return result
 
@@ -1419,6 +1923,54 @@ class Handler(BaseHTTPRequestHandler):
             return None, None
         return token_user(item.value), hashlib.sha256(item.value.encode()).hexdigest()
 
+    def npc_gate(self, kind, user, body):
+        """NPC 提问的两道闸。返回 None = 放行，否则返回已经写好的响应。
+
+        1. 限速：每人每角色一分钟 8 次、一天 200 次。挡的不是坏人，是**烧钱**——
+           一次提问就是一次模型调用，挂个循环就能把额度跑干。
+        2. 体检：把这句话归一化后比对一组"想改我设定"的话术。命中就拦，不进模型。
+        """
+        uid = int(user["id"]) if user else 0
+        name = npc_kind_name(kind)
+        ban = npc_ban_of(uid, kind)
+        if ban:
+            npc_log(uid, kind, "", "banned")
+            until = float(ban["until"] or 0)
+            tail = "永久停用" if not until else "解禁时间 " + datetime.fromtimestamp(until).strftime("%m-%d %H:%M")
+            why = ("（" + ban["reason"] + "）") if ban["reason"] else ""
+            return self.send_json(403, {"error": f"管理员已停用你对{name}的提问{why}，{tail}。",
+                                        "npcBan": True})
+        ok, msg = npc_guard.check_rate(uid, kind)
+        if not ok:
+            print(f"[npc] 限速 kind={kind} uid={uid}：{msg}")
+            npc_log(uid, kind, "", "rate")
+            return self.send_json(429, {"error": msg, "retryAfter": 60})
+        used, limit = npc_today_count(uid, kind), npc_user_limit(uid, kind)
+        if used >= limit:
+            npc_log(uid, kind, "", "quota")
+            return self.send_json(429, {"error": f"今天已经跟{name}问了 {used} 次，到每日上限（{limit} 次）了，明天再来。",
+                                        "npcQuota": True, "limit": limit})
+        try:
+            data = json.loads(body.decode("utf-8", "replace") or "{}")
+        except Exception:
+            return None
+        text = ""
+        for key in ("question", "message", "content", "q"):
+            if isinstance(data.get(key), str):
+                text = data[key]
+                break
+        verdict, reason = npc_guard.screen(text)
+        if verdict == "block":
+            print(f"[npc] 拦下可疑提问 kind={kind} uid={uid} 原文={text[:150]!r}")
+            npc_log(uid, kind, text, "block")
+            return self.send_json(400, {"error": reason, "blocked": "injection"})
+        if verdict == "soft":
+            print(f"[npc] 可疑但放行 kind={kind} uid={uid} 信号={reason} 原文={text[:100]!r}")
+            npc_log(uid, kind, text, "soft")
+        else:
+            npc_log(uid, kind, text, "ok")
+        return None
+
     def proxy(self, path):
         browser_user, digest = self.browser_session()
         if not browser_user:
@@ -1452,6 +2004,15 @@ class Handler(BaseHTTPRequestHandler):
             if size < 0 or size > 20 * 1024 * 1024:
                 return self.send_json(413, {"error": "请求体过大"})
             body = self.rfile.read(size) if size else None
+            # NPC 转发口的两道闸：先限速（挡烧钱），再体检这句话（挡改设定）。
+            # 只对聊天接口做，图片识别、查资料、健康检查这些照旧。
+            # 聊天口：三个 Python NPC 是 /<角色>/api/chat，算法哥是 /api/agent/chat。
+            chat_path = path.rstrip("/").endswith("/api/chat") or (
+                kind == "agent" and path.rstrip("/") == "/api/agent/chat")
+            if body and chat_path:
+                refused = self.npc_gate(kind, browser_user, body)
+                if refused is not None:
+                    return refused
             headers = {k: v for k, v in self.headers.items()
                        if k.lower() not in ("connection", "content-length", "transfer-encoding", "host")}
             headers["Host"] = self.headers.get("Host", f"localhost:{HTTP_PORT}") if kind == "cmr" else f"127.0.0.1:{port}"
@@ -1624,6 +2185,9 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_json(404, {"error": "接口不存在"})
                 slug, action = parts
                 u = self.auth()
+                mute = row("SELECT muted_until FROM mp_user WHERE id=?", (u["id"],))
+                if mute and mute["muted_until"] and mute["muted_until"] > time.time():
+                    return self.send_json(403, {"error": mute_message(mute["muted_until"])})
                 if action == "photo":
                     data = self.body(limit=5 * 1024 * 1024)
                     note = str(data.get("note", "")).strip()
@@ -1635,8 +2199,9 @@ class Handler(BaseHTTPRequestHandler):
                         raise ValueError(f"每人每栋楼最多传 {BLD_USER_PHOTO_MAX} 张")
                     rel = save_bld_photo(slug, data.get("dataUrl", ""))
                     with lock:
-                        db.execute("INSERT INTO mp_bld_photo(bld,user_id,file,note,created_at) VALUES(?,?,?,?,?)",
-                                   (slug, u["id"], rel, note, time.time()))
+                        cur = db.execute("INSERT INTO mp_bld_photo(bld,user_id,file,note,created_at) VALUES(?,?,?,?,?)",
+                                         (slug, u["id"], rel, note, time.time()))
+                    push_review("bld_photo", cur.lastrowid, u["id"], client_ip(self), rel, slug)
                     self.send_json(201, bld_payload(slug))
                 else:
                     data = self.body()
@@ -1649,8 +2214,9 @@ class Handler(BaseHTTPRequestHandler):
                     if last and time.time() - last["created_at"] < 3:
                         raise ValueError("留言太快了，歇三秒再发")
                     with lock:
-                        db.execute("INSERT INTO mp_bld_comment(bld,user_id,content,created_at) VALUES(?,?,?,?)",
-                                   (slug, u["id"], content, time.time()))
+                        cur = db.execute("INSERT INTO mp_bld_comment(bld,user_id,content,created_at) VALUES(?,?,?,?)",
+                                         (slug, u["id"], content, time.time()))
+                    push_review("bld_comment", cur.lastrowid, u["id"], client_ip(self), content, slug)
                     self.send_json(201, bld_payload(slug))
             elif path == "/api/mp/app/open":
                 # 地图里打开小应用时由 mp/app-track.js 打一枪，只记"谁、哪天、开了哪个"。
@@ -1662,13 +2228,87 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("未知的小应用")
                 execute("INSERT INTO mp_app_log(user_id,app,at) VALUES(?,?,?)", (u["id"], app, time.time()))
                 self.send_json(200, {"ok": True})
+            elif path == "/api/mp/pulse/event":
+                # 老丁 iframe 里的挂失/认领；只收物品名和动作，不收人。
+                u = self.auth()
+                data = self.body()
+                kind = str(data.get("kind", ""))
+                item = str(data.get("item", "")).strip()[:20]
+                if kind not in ("lost", "claim") or not item:
+                    raise ValueError("动态数据不对")
+                ok, _ = rate_store.hit("pulse:" + str(u["id"]), 60, limit=30)
+                if not ok:
+                    return self.send_json(429, {"error": "上报太频繁了"})
+                execute("INSERT INTO mp_pulse_event(kind,item,at) VALUES(?,?,?)", (kind, item, time.time()))
+                self.send_json(200, {"ok": True})
             elif path == "/api/mp/task/feed":
                 # 喂猫那一刻扣粮。前端已经在"伸手之前"问过 MPTask.noFood()，
                 # 这里再判一次是因为手上可能同时开了两个页面，或者刚把最后一份用掉。
                 u = self.auth()
                 if not daily_use_food(u["id"]):
                     return self.send_json(409, {"error": "今日猫粮不够了", **daily_state(u["id"])})
+                log_activity(u["id"], "cat", "喂了一次猫")
                 self.send_json(200, daily_state(u["id"]))
+            elif path == "/api/mp/admin/npc/limit":
+                require_admin(self)
+                data = self.body()
+                target = int(data.get("userId", 0))
+                kind = str(data.get("kind", ""))
+                if kind not in NPC_KINDS:
+                    raise ValueError("角色不对")
+                if not row("SELECT id FROM mp_user WHERE id=?", (target,)):
+                    raise ValueError("没有这个账号")
+                daily = int(data.get("daily", 0) or 0)
+                if daily < 0:
+                    raise ValueError("次数不能是负数")
+                if daily == 0:
+                    execute("DELETE FROM mp_npc_limit WHERE user_id=? AND kind=?", (target, kind))
+                else:
+                    execute("INSERT INTO mp_npc_limit(user_id,kind,daily) VALUES(?,?,?) "
+                            "ON CONFLICT(user_id,kind) DO UPDATE SET daily=excluded.daily",
+                            (target, kind, daily))
+                self.send_json(200, {"ok": True, **npc_admin_payload({})})
+            elif path == "/api/mp/admin/npc/default":
+                require_admin(self)
+                try:
+                    daily = int(self.body().get("daily", 0) or 0)
+                except (TypeError, ValueError):
+                    raise ValueError("次数要写数字")
+                if not 1 <= daily <= 5000:
+                    raise ValueError("默认上限请在 1 到 5000 之间")
+                setting_set("npc_daily_default", str(daily))
+                self.send_json(200, {"ok": True, "default": npc_default_limit()})
+            elif path == "/api/mp/admin/npc/ban":
+                admin = require_admin(self)
+                data = self.body()
+                target = int(data.get("userId", 0))
+                kind = str(data.get("kind", "*") or "*")
+                if kind != "*" and kind not in NPC_KINDS:
+                    raise ValueError("角色不对")
+                info = row("SELECT is_admin FROM mp_user WHERE id=?", (target,))
+                if not info:
+                    raise ValueError("没有这个账号")
+                if info["is_admin"]:
+                    raise ValueError("不能停管理员账号")
+                hours = float(data.get("hours", 0) or 0)
+                until = time.time() + hours * 3600 if hours > 0 else 0
+                reason = str(data.get("reason", "")).strip()[:60] or "管理员停用"
+                execute("INSERT INTO mp_npc_ban(user_id,kind,until,reason,created_by,created_at) "
+                        "VALUES(?,?,?,?,?,?) ON CONFLICT(user_id,kind) DO UPDATE SET "
+                        "until=excluded.until, reason=excluded.reason, "
+                        "created_by=excluded.created_by, created_at=excluded.created_at",
+                        (target, kind, until, reason, admin["nickname"], time.time()))
+                self.send_json(200, {"ok": True, **npc_admin_payload({})})
+            elif path == "/api/mp/admin/npc/unban":
+                require_admin(self)
+                data = self.body()
+                target = int(data.get("userId", 0))
+                kind = str(data.get("kind", "*") or "*")
+                if kind == "*":
+                    execute("DELETE FROM mp_npc_ban WHERE user_id=?", (target,))
+                else:
+                    execute("DELETE FROM mp_npc_ban WHERE user_id=? AND kind=?", (target, kind))
+                self.send_json(200, {"ok": True, **npc_admin_payload({})})
             elif path == "/api/mp/admin/ban":
                 require_admin(self)
                 data = self.body()
@@ -1743,6 +2383,104 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("没有这个账号")
                 execute("UPDATE mp_user SET banned_until=0,ban_reason='' WHERE id=?", (target,))
                 self.send_json(200, {"ok": True, "users": admin_users()})
+            elif path == "/api/mp/admin/review/approve":
+                admin = require_admin(self)
+                rev_id = int(self.body().get("id", 0))
+                if not row("SELECT id FROM mp_review WHERE id=?", (rev_id,)):
+                    raise ValueError("没有这条待审记录")
+                review_mark(rev_id, 1, admin["nickname"])
+                self.send_json(200, {"ok": True, **review_payload()})
+            elif path == "/api/mp/admin/review/remove":
+                admin = require_admin(self)
+                rev_id = int(self.body().get("id", 0))
+                self.send_json(200, review_remove(rev_id, admin["nickname"]))
+            elif path == "/api/mp/admin/mute":
+                admin = require_admin(self)
+                data = self.body()
+                target = int(data.get("userId", 0))
+                info = row("SELECT is_admin FROM mp_user WHERE id=?", (target,))
+                if not info:
+                    raise ValueError("没有这个账号")
+                if info["is_admin"]:
+                    raise ValueError("不能禁言管理员账号")
+                reason = str(data.get("reason", "")).strip()[:60]
+                if str(data.get("mode", "forever")) == "forever":
+                    muted_until = BAN_FOREVER
+                else:
+                    muted_until = float(data.get("until", 0) or 0)
+                    if muted_until <= time.time():
+                        raise ValueError("解禁时间要晚于现在")
+                execute("UPDATE mp_user SET muted_until=?,mute_reason=? WHERE id=?", (muted_until, reason, target))
+                # 正在里头的立马看到提示，别等下一次发东西才发现
+                old = active.get(target)
+                if old and event_loop:
+                    payload = {"type": "muted", "msg": mute_message(muted_until)}
+                    event_loop.call_soon_threadsafe(lambda: asyncio.create_task(send(old["ws"], payload)))
+                self.send_json(200, {"ok": True, **review_payload()})
+            elif path == "/api/mp/admin/unmute":
+                require_admin(self)
+                target = int(self.body().get("userId", 0))
+                if not row("SELECT id FROM mp_user WHERE id=?", (target,)):
+                    raise ValueError("没有这个账号")
+                execute("UPDATE mp_user SET muted_until=0,mute_reason='' WHERE id=?", (target,))
+                self.send_json(200, {"ok": True, **review_payload()})
+            elif path == "/api/mp/admin/report/handle":
+                admin = require_admin(self)
+                data = self.body()
+                rid = int(data.get("id", 0))
+                rep = row("SELECT * FROM mp_report WHERE id=?", (rid,))
+                if not rep:
+                    raise ValueError("没有这条举报")
+                action = str(data.get("action", "accept"))
+                if action not in ("accept", "dismiss"):
+                    raise ValueError("处理方式无效")
+                execute("UPDATE mp_report SET status=?,handled_at=?,handler=?,action=? WHERE id=?",
+                        (1 if action == "accept" else 2, time.time(), admin["nickname"], action, rid))
+                self.send_json(200, {"ok": True, **review_payload()})
+            elif path == "/api/mp/report":
+                # 私聊里的「举报」：任何登录用户都能提，带上被举报的那条消息做快照。
+                u = self.auth()
+                _, allowed = rate_store.hit("report:%d" % u["id"], 3600, limit=20)
+                if not allowed:
+                    return self.send_json(429, {"error": "举报太频繁了，歇一会儿再来"})
+                data = self.body()
+                target = int(data.get("targetId", 0))
+                reason = str(data.get("reason", "")).strip()
+                if target == u["id"] or not row("SELECT id FROM mp_user WHERE id=?", (target,)):
+                    raise ValueError("举报对象无效")
+                if not 2 <= len(reason) <= 200:
+                    raise ValueError("举报理由请写 2 到 200 字")
+                msg_id, content = int(data.get("msgId", 0) or 0), ""
+                if msg_id:
+                    m = row("SELECT * FROM mp_message WHERE id=?", (msg_id,))
+                    if m and {m["from_user"], m["to_user"]} == {u["id"], target}:
+                        content = m["content"][:300]
+                last_ip = row("SELECT ip FROM mp_login_log WHERE user_id=? ORDER BY at DESC LIMIT 1", (target,))
+                execute("INSERT INTO mp_report(reporter_id,target_id,msg_id,kind,content,reason,ip,status,created_at) VALUES(?,?,?,?,?,?,?,0,?)",
+                        (u["id"], target, msg_id, "chat", content, reason,
+                         (last_ip["ip"] if last_ip else "") or "", time.time()))
+                try:
+                    tgt = row("SELECT nickname FROM mp_user WHERE id=?", (target,))
+                    notify_moderation(
+                        f"[举报] {u['nickname']}（id {u['id']}）举报 "
+                        f"{(tgt['nickname'] if tgt else target)}（id {target}） {stamp_text(time.time())}\n"
+                        f"    理由：{reason[:120]}\n"
+                        f"    被举报原话：{(content or '（没带消息）')[:120]}")
+                except Exception as exc:
+                    print(f"[alert] 举报提醒没排上：{exc}")
+                self.send_json(200, {"ok": True, "msg": "举报已提交，管理员会尽快受理"})
+            elif path == "/api/mp/block":
+                u = self.auth()
+                data = self.body()
+                target = int(data.get("targetId", 0))
+                if target == u["id"] or not row("SELECT id FROM mp_user WHERE id=?", (target,)):
+                    raise ValueError("拉黑对象无效")
+                if data.get("on", True):
+                    execute("INSERT OR IGNORE INTO mp_block(user_id,target_id,created_at) VALUES(?,?,?)",
+                            (u["id"], target, time.time()))
+                else:
+                    execute("DELETE FROM mp_block WHERE user_id=? AND target_id=?", (u["id"], target))
+                self.send_json(200, {"ok": True, "blocked": blocked_ids(u["id"])})
             elif path.startswith("/api/mp/npc/"):
                 u = self.auth()
                 kind = path.rsplit("/", 1)[1]
@@ -1811,6 +2549,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, {"users": users, "total": len(users),
                                         "online": sum(1 for x in users if x["online"]),
                                         "banned": sum(1 for x in users if x["banned"])})
+        if path == "/api/mp/admin/npc":
+            return self.send_json(200, npc_admin_payload(parse_qs(urlsplit(self.path).query)))
+        if path == "/api/mp/admin/review":
+            return self.send_json(200, review_payload())
         if path == "/api/mp/admin/security":
             return self.send_json(200, security_payload())
         if path == "/api/mp/admin/waf":
@@ -1931,6 +2673,13 @@ class Handler(BaseHTTPRequestHandler):
                             conversations.append(group)
                         group["items"].append({"id": m["id"], "mine": m["from_user"] == u["id"], "content": m["content"], "at": now_iso(m["created_at"])})
                     return self.send_json(200, {"announcements": [{"id": a["id"], "content": a["content"], "at": now_iso(a["created_at"])} for a in sent_board], "private": [{"id": m["id"], "to": m["to_user"], "nickname": m["nickname"], "content": m["content"], "at": now_iso(m["created_at"])} for m in sent_private], "conversations": conversations})
+                if path == "/api/mp/pulse":
+                    return self.send_json(200, pulse_payload())
+                if path.startswith("/api/mp/activity/"):
+                    target = int(path.rsplit("/", 1)[1])
+                    if not row("SELECT id FROM mp_user WHERE id=?", (target,)):
+                        return self.send_json(404, {"error": "玩家不存在"})
+                    return self.send_json(200, {"userId": target, "items": activity_feed(target)})
                 if path.startswith("/api/mp/profile/"):
                     target = int(path.rsplit("/", 1)[1])
                     profile = public_profile(target, u["id"])
@@ -2011,7 +2760,8 @@ async def handle_message(s, data):
         peers = [peer_data(p) for p in active.values() if p is not s and p["hello"] and p["scene"] == scene and authorized(p)]
         execute("INSERT INTO mp_presence(user_id,last_seen,last_scene) VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET last_seen=excluded.last_seen,last_scene=excluded.last_scene", (uid, time.time(), scene))
         s["last_save"] = time.monotonic()
-        await send(s["ws"], {"type": "welcome", "me": player_of(uid), "scene": scene, "peers": peers, "serverTime": now_iso()})
+        await send(s["ws"], {"type": "welcome", "me": player_of(uid), "scene": scene, "peers": peers,
+                             "blocks": blocked_ids(uid), "serverTime": now_iso()})
         await send(s["ws"], {"type": "task.state", **daily_state(uid)})
         await broadcast({"type": "peer.join", "peer": peer_data(s)}, [p for p in active.values() if p is not s and p["hello"] and p["scene"] == scene])
         await broadcast({"type": "presence", "userId": uid, "online": True}, [p for p in active.values() if p is not s and p["hello"]])
@@ -2070,6 +2820,7 @@ async def handle_message(s, data):
         execute("UPDATE mp_daily SET laps=? WHERE user_id=? AND day=?", (laps, uid, day_key(time.time())))
         if laps == RUN_GOAL:
             daily_grant(uid, "run")
+            log_activity(uid, "run", f"跑完 {RUN_GOAL} 圈，领到一份猫粮")
         await send(s["ws"], {"type": "task.state", **daily_state(uid)})
     elif typ == "announce.list":
         await send(s["ws"], {"type": "announce.list", "items": announcements(data.get("limit", 50))})
@@ -2078,6 +2829,11 @@ async def handle_message(s, data):
         key = str(data.get("clientMsgId", ""))[:80]
         if not content or len(content) > 200:
             return await send(s["ws"], {"type": "error", "code": "ANNOUNCE_LENGTH", "msg": "留言须为 1 至 200 字", "clientMsgId": key})
+        # 禁言横着挡三个口子：私聊、留言板、楼宇照片/留言。这里只禁止"发"，浏览不受影响。
+        mute = row("SELECT muted_until FROM mp_user WHERE id=?", (uid,))
+        if mute and mute["muted_until"] and mute["muted_until"] > time.time():
+            return await send(s["ws"], {"type": "error", "code": "ANNOUNCE_MUTED",
+                                        "msg": mute_message(mute["muted_until"]), "clientMsgId": key})
         if key:
             duplicate = row("SELECT id FROM mp_announcement WHERE user_id=? AND client_msg_id=?", (uid, key))
             if duplicate:
@@ -2088,6 +2844,7 @@ async def handle_message(s, data):
             return await send(s["ws"], {"type": "error", "code": "ANNOUNCE_RATE", "msg": "留言每 30 秒一条，每天最多 20 条", "clientMsgId": key})
         stamp = time.time()
         cur = execute("INSERT INTO mp_announcement(user_id,content,created_at,client_msg_id) VALUES(?,?,?,?)", (uid, content, stamp, key or None))
+        push_review("announce", cur.lastrowid, uid, ws_ip(s["ws"]), content)
         await broadcast({"type": "announce.new", "id": cur.lastrowid, "userId": uid, "nickname": s["nickname"], "look": s["look"], "content": content, "at": now_iso(stamp), "online": True}, list(active.values()))
         if s["ws"].state.name == "OPEN":
             await send(s["ws"], {"type": "announce.ack", "clientMsgId": key, "id": cur.lastrowid})
@@ -2111,6 +2868,18 @@ async def handle_message(s, data):
         dup = row("SELECT * FROM mp_message WHERE from_user=? AND client_msg_id=?", (uid, key))
         if dup:
             return await send(s["ws"], {"type": "chat.ack", "clientMsgId": key, "msgId": dup["id"], "at": now_iso(dup["created_at"])})
+        # 拉黑：对方拉黑了你 → 你这条发不出去；你拉黑了对方 → 先解除才能发。
+        # 两边都发不了，是为了让"拉黑"真的等于"不想再有来往"，而不是单方面的静音。
+        if row("SELECT 1 AS x FROM mp_block WHERE user_id=? AND target_id=?", (other, uid)):
+            return await send(s["ws"], {"type": "error", "code": "CHAT_BLOCKED_BY",
+                                        "msg": "对方已把你拉黑，消息没有送达", "clientMsgId": key})
+        if row("SELECT 1 AS x FROM mp_block WHERE user_id=? AND target_id=?", (uid, other)):
+            return await send(s["ws"], {"type": "error", "code": "CHAT_BLOCKED_ME",
+                                        "msg": "你已拉黑对方，解除拉黑后才能发消息", "clientMsgId": key})
+        mute = row("SELECT muted_until FROM mp_user WHERE id=?", (uid,))
+        if mute and mute["muted_until"] and mute["muted_until"] > time.time():
+            return await send(s["ws"], {"type": "error", "code": "CHAT_MUTED",
+                                        "msg": mute_message(mute["muted_until"]), "clientMsgId": key})
         recent = row("SELECT created_at FROM mp_message WHERE from_user=? ORDER BY id DESC LIMIT 1", (uid,))
         minute = row("SELECT COUNT(*) AS n FROM mp_message WHERE from_user=? AND created_at>?", (uid, time.time()-60))["n"]
         if recent and time.time()-recent["created_at"] < 1 or minute >= 30:
@@ -2219,6 +2988,9 @@ async def main():
     close_stale_plays()
     prune_chat()             # 私聊每个会话只留最近 200 条
     prune_security_log()     # 请求记录只留 7 天，重启时先清一遍
+    prune_npc_log()          # NPC 提问流水只留 90 天 / 20 万行
+    prune_activity()         # 主页动态只留 30 天
+    prune_pulse()            # 老丁失物动态只留 30 天
     print(f"大厅页面: http://localhost:{HTTP_PORT}/  (局域网其他电脑用本机 IP 替换 localhost)")
     print(f"WebSocket: ws://<本机 IP>:{WS_PORT}/mp | SQLite: {DB_PATH}")
     async with serve(handle_ws, HOST, WS_PORT, max_size=4096, ping_interval=None):

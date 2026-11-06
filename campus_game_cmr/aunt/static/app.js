@@ -128,6 +128,42 @@
     renderConversations();
     if (conversations.length) await openConversation(conversations[0].id);
     else await newConversation();
+    await showRecap(conversations);
+  }
+
+  /* 进门的「小纸条」：上次聊到哪儿、要不要接着聊。
+     有历史才出现；点两个按钮之一、或开始打字，就收起来 —— 它只是开场，不挡聊天。 */
+  function recapWhen(value) {
+    const date = new Date(value);
+    if (isNaN(date)) return "";
+    const now = new Date();
+    const sameDay = (a, b) => a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    if (sameDay(date, now)) return "今天";
+    if (sameDay(date, new Date(now.getTime() - 86400000))) return "昨天";
+    return (date.getMonth() + 1) + "月" + date.getDate() + "日";
+  }
+
+  async function showRecap(conversations) {
+    const card = $("#recap-card");
+    if (!card) return;
+    let memory = null;
+    try { memory = await api("/api/memory"); } catch (_) { memory = null; }
+    state.memory = memory;
+    const last = conversations.find(item => item.messageCount > 0) || null;
+    state.lastConversation = last;
+    const count = memory && memory.count ? memory.count : 0;
+    if (!last && !count) { card.hidden = true; return; }
+    const parts = [];
+    if (last) parts.push("上次（" + recapWhen(last.updatedAt) + "）你问的是「" + last.title + "」");
+    if (count) parts.push((parts.length ? "前后" : "你之前") + "一共问过 " + count + " 次");
+    $("#recap-text").textContent = parts.join("，") + "。要接着上次聊，还是换个话题？";
+    card.hidden = false;
+  }
+
+  function hideRecap() {
+    const card = $("#recap-card");
+    if (card) card.hidden = true;
   }
 
   function renderConversations() {
@@ -149,6 +185,7 @@
   }
 
   async function openConversation(id) {
+    hideRecap();
     const version = ++state.loadVersion;
     state.conversationId = id;
     state.emotion = "neutral";
@@ -171,6 +208,21 @@
 
   $("#new-conversation").addEventListener("click", async () => {
     try { await newConversation(); } catch (error) { setError($("#chat-error"), error.message); }
+  });
+
+  // 小纸条上的两个选择：接着上次聊 / 换个话题。
+  $("#recap-continue").addEventListener("click", async () => {
+    hideRecap();
+    const last = state.lastConversation;
+    if (last && state.conversationId !== last.id) {
+      try { await openConversation(last.id); } catch (error) { setError($("#chat-error"), error.message); }
+    }
+    chatInput.focus();
+  });
+  $("#recap-new").addEventListener("click", async () => {
+    hideRecap();
+    try { await newConversation(); } catch (error) { setError($("#chat-error"), error.message); }
+    chatInput.focus();
   });
 
   // 「← 返回校园」：只在被地图抽屉挂载时出现（那时 PREFIX 非空），独立运行时按钮一直藏着。
@@ -247,6 +299,7 @@
       return;
     }
     if (!text || state.sending) return;
+    hideRecap();
     state.sending = true;
     $("#send-button").disabled = true;
     setError($("#chat-error"), "");

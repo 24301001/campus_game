@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>像素校园 · 管理后台</title>
-<link rel="stylesheet" href="mp/admin.css?v=20261105-waf2">
+<link rel="stylesheet" href="mp/admin.css?v=20261106-npc1">
 </head>
 <body>
 
@@ -36,6 +36,8 @@
     <nav class="ad-tabs" id="adTabs">
       <button class="ad-tab on" data-pane="paneMain">用户与日活</button>
       <button class="ad-tab" data-pane="paneSec">网络安全</button>
+      <button class="ad-tab" data-pane="paneMod">审核和举报中心 <span class="ad-badge" id="modBadge" hidden>0</span></button>
+      <button class="ad-tab" data-pane="paneNpc">NPC 对话</button>
     </nav>
 
     <div id="paneMain">
@@ -188,6 +190,87 @@
       </section>
 
     </div><!-- /paneSec -->
+
+    <!-- ==================== 页签三：审核和举报中心 ==================== -->
+    <div id="paneMod" hidden>
+
+      <section class="ad-cards" id="modCards"></section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>待审核内容</h2>
+          <span class="ad-note">先发布、后审核：下面这些内容此刻已经显示在游戏里，看不过去就清理</span>
+          <div class="ad-right">
+            <label class="ad-check"><input type="checkbox" id="modAuto" checked> 每 30 秒自动刷新</label>
+            <button class="ad-btn small" id="modRefresh">刷新</button>
+          </div>
+        </div>
+        <div class="ad-users" id="modPending"></div>
+      </section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>玩家举报</h2>
+          <span class="ad-note">玩家在私聊里点「举报」提交的，带理由和被举报内容快照</span>
+        </div>
+        <div class="ad-users" id="modReports"></div>
+      </section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>已处理记录</h2>
+          <span class="ad-note">最近 100 条，通过 / 清理 / 已受理 / 已驳回</span>
+        </div>
+        <div class="ad-users" id="modHistory"></div>
+      </section>
+
+    </div><!-- /paneMod -->
+
+    <div id="paneNpc" hidden>
+
+      <section class="ad-cards" id="npcCards"></section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>每天能问几次</h2>
+          <span class="ad-note">默认值对所有账号、所有角色生效；某个账号单独设过就以单独设的为准（填 0 恢复默认）</span>
+          <div class="ad-right">
+            <input class="ad-field" id="npcDefault" type="number" min="1" max="5000" style="width:96px">
+            <button class="ad-btn" id="npcDefaultSave">保存默认</button>
+          </div>
+        </div>
+        <div class="ad-err" id="npcErr"></div>
+        <div class="npc-wrap">
+          <table class="npc-table" id="npcUsage"></table>
+        </div>
+      </section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>今天问了什么</h2>
+          <span class="ad-note" id="npcLogNote">按北京时间切日；问题正文最多存 500 字，只留 90 天</span>
+          <div class="ad-right">
+            <select class="ad-field" id="npcKind"><option value="">全部角色</option></select>
+            <input class="ad-field" id="npcQ" placeholder="搜昵称或问题" style="width:150px">
+            <input class="ad-field" id="npcDay" type="date" style="width:142px">
+            <button class="ad-btn" id="npcRefresh">刷新</button>
+          </div>
+        </div>
+        <div class="npc-wrap">
+          <table class="npc-table" id="npcLogs"></table>
+        </div>
+      </section>
+
+      <section class="ad-panel">
+        <div class="ad-panel-h">
+          <h2>被停用的人</h2>
+          <span class="ad-note">停用只关掉他问 NPC 的功能，登录、私聊、玩游戏都不受影响</span>
+        </div>
+        <div class="npc-wrap">
+          <table class="npc-table" id="npcBans"></table>
+        </div>
+      </section>
+    </div><!-- /paneNpc -->
   </main>
 </div>
 
@@ -234,7 +317,44 @@
   </div>
 </div>
 
+<!-- 禁言弹窗 -->
+<div class="ad-modal" id="adMute" hidden>
+  <div class="ad-modal-box">
+    <h3 id="adMuteTitle">禁言账号</h3>
+    <p class="ad-note" id="adMuteWho" style="margin:0 0 10px"></p>
+    <label><input type="radio" name="mutemode" value="3600" checked> 禁言 1 小时</label>
+    <label><input type="radio" name="mutemode" value="86400"> 禁言 1 天</label>
+    <label><input type="radio" name="mutemode" value="604800"> 禁言 7 天</label>
+    <label><input type="radio" name="mutemode" value="forever"> 永久禁言（手动解禁才恢复）</label>
+    <input class="ad-field" id="adMuteReason" placeholder="禁言原因（选填，最多 60 字）" maxlength="60">
+    <div class="ad-err" id="adMuteErr"></div>
+    <div class="ad-actions">
+      <button class="ad-btn" id="adMuteCancel">取消</button>
+      <button class="ad-btn danger" id="adMuteOk">确认禁言</button>
+    </div>
+  </div>
+</div>
+
+<div id="npcBanMask" class="ad-mask" hidden>
+  <div class="ad-modal">
+    <div class="ad-modal-box">
+      <h3>停用提问</h3>
+      <p class="ad-note" id="npcBanWho" style="margin:0 0 10px"></p>
+      <label><input type="radio" name="npcbantime" value="1" checked> 停 1 小时</label>
+      <label><input type="radio" name="npcbantime" value="24"> 停 1 天</label>
+      <label><input type="radio" name="npcbantime" value="168"> 停 7 天</label>
+      <label><input type="radio" name="npcbantime" value="0"> 永久（手动解禁才恢复）</label>
+      <input class="ad-field" id="npcBanReason" placeholder="原因（选填，最多 60 字）" maxlength="60">
+      <div class="ad-err" id="npcBanErr"></div>
+      <div class="ad-actions">
+        <button class="ad-btn" id="npcBanCancel">取消</button>
+        <button class="ad-btn danger" id="npcBanOk">确认停用</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="mp/look.js?v=20261104-sec2"></script>
-<script src="mp/admin.js?v=20261105-waf4"></script>
+<script src="mp/admin.js?v=20261106-npc1"></script>
 </body>
 </html>

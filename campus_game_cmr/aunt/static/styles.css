@@ -301,3 +301,26 @@ html.aunt-embed #aunt-boot {
   color: var(--muted); font-size: 14px; letter-spacing: 3px;
 }
 html.aunt-embed #auth-screen { display: none !important; }
+
+/* ---------- 进门的「小纸条」（2026-11-06） ----------
+   上次聊到哪儿、要不要接着聊。只在有历史时出现；点按钮或开始打字就收起。
+   配色跟聊天面板一致（米黄底 + 蓝按钮），左边一道金边当"便签"的视觉记号。 */
+.recap-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin: 10px 14px 0; padding: 9px 11px;
+  border: 1px solid #c9dbe7; border-left: 4px solid #e7b96b; border-radius: 6px;
+  background: #fdf8ee;
+}
+.recap-copy { min-width: 0; }
+.recap-kicker { display: block; margin-bottom: 2px; color: #8a6a2f; font-size: 10px; font-weight: 800; letter-spacing: .06em; }
+.recap-text { margin: 0; color: #2c4b63; font-size: 12px; line-height: 1.55; }
+.recap-actions { display: flex; flex: none; gap: 6px; }
+.recap-actions button { padding: 5px 9px; border-radius: 5px; font-size: 11px; font-weight: 800; }
+.recap-primary { border: 0; background: #315b91; color: #fff; }
+.recap-primary:hover { background: #3c6da8; }
+.recap-secondary { border: 1px solid #b6cbd8; background: #fff; color: #365c7c; }
+.recap-secondary:hover { border-color: #315f99; background: #edf5fa; }
+@media (max-width: 560px) {
+  .recap-card { flex-direction: column; align-items: stretch; }
+  .recap-actions { justify-content: flex-end; }
+}

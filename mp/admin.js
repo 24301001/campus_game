@@ -357,6 +357,7 @@
       } else {
         tdState.append(el("span", "tag " + (u.online ? "on" : "off"), u.online ? "在线" : "离线"));
       }
+      if (u.muted) tdState.append(el("span", "tag muted", u.muteForever ? "永久禁言" : "禁言到 " + u.mutedUntil));
 
       var tdAct = el("td");
       var btnDetail = el("button", "ad-btn small", "详情");
@@ -370,6 +371,17 @@
           if (u.banned) unban(u); else openBan(u);
         };
         tdAct.append(btnBan);
+        if (u.muted) {
+          var btnMute = el("button", "ad-btn small ok", "解禁");
+          btnMute.style.marginLeft = "6px";
+          btnMute.onclick = function (e) {
+            e.stopPropagation();
+            if (!confirm("解除 " + u.nickname + " 的禁言？解禁后马上能发消息。")) return;
+            api("/api/mp/admin/unmute", { method: "POST", body: { userId: u.id } }).then(loadAll)
+              .catch(function (err) { alert("改不了：" + err.message); });
+          };
+          tdAct.append(btnMute);
+        }
       }
 
       [tdName, tdLogin, tdIp, tdEnd, tdDur, tdState, tdAct].forEach(function (td) { tr.append(td); });
@@ -1054,21 +1066,466 @@
     }).catch(function (e) { alert("改不了：" + e.message); });
   }
 
+  /* ---------------- 审核和举报中心（2026-11-06） ----------------
+     口径是「先发布、后审核」：内容发出去当场就显示，这里只是排队给管理员看。
+     通过 = 什么都不改；清理 = 真删（留言板 / 楼宇留言 / 楼宇照片连图片文件）。
+     另外三个按钮是账号级处置，和「用户管理」里的是同一套接口。 */
+  var MOD = { data: null, loaded: false, muteUser: null };
+
+  function loadMod() {
+    return api("/api/mp/admin/review").then(function (d) {
+      MOD.data = d; MOD.loaded = true; renderMod();
+    }).catch(function (e) {
+      if (e.status === 401 || e.status === 403) { showGate(e.message); return; }
+      $("modPending").replaceChildren(el("div", "ad-empty", "加载失败：" + e.message));
+    });
+  }
+
+  function modPost(path, body, ask) {
+    if (ask && !confirm(ask)) return;
+    api(path, { method: "POST", body: body }).then(function (r) {
+      // 大部分接口直接回整份审核数据，省一次往返；封号那类只回 users，就重新拉一遍
+      if (r && r.pending) { MOD.data = r; renderMod(); } else { loadMod(); }
+    }).catch(function (e) { alert("操作失败：" + e.message); });
+  }
+
+  function modCount() {
+    var c = (MOD.data && MOD.data.counts) || { pending: 0, reports: 0 };
+    return c.pending + c.reports;
+  }
+
+  function renderMod() {
+    var d = MOD.data || { pending: [], handled: [], reports: [], reportHandled: [], counts: { pending: 0, reports: 0 } };
+    var badge = $("modBadge");
+    var n = modCount();
+    badge.hidden = !n;
+    badge.textContent = String(n);
+
+    var cards = $("modCards");
+    cards.replaceChildren();
+    [
+      ["待审核内容", d.pending.length, d.pending.length ? "warn" : "teal", "新发的留言、楼宇留言、照片"],
+      ["待处理举报", d.reports.length, d.reports.length ? "warn" : "teal", "玩家在私聊里提交的"],
+      ["已处理 · 审核", d.handled.length, "", "最近 100 条"],
+      ["已处理 · 举报", d.reportHandled.length, "", "最近 100 条"]
+    ].forEach(function (c) {
+      var card = el("div", "ad-card" + (c[2] ? " " + c[2] : ""));
+      card.append(el("span", "", c[0]), el("b", "", String(c[1])), el("small", "", c[3]));
+      cards.append(card);
+    });
+
+    renderPending(d.pending);
+    renderReports(d.reports);
+    renderModHistory(d);
+  }
+
+  function modWho(r) {
+    var box = el("div", "nm");
+    box.append(el("span", "", r.nickname || "—"));
+    if (r.muted) box.append(el("span", "tag muted", "已禁言"));
+    if (r.banned) box.append(el("span", "tag banned", "已封禁"));
+    return box;
+  }
+
+  function modActionsFor(userId, nickname) {
+    var wrap = el("div", "mod-acts");
+    var bMute = el("button", "ad-btn small", "禁言");
+    bMute.onclick = function () { openMute(userId, nickname); };
+    var bBan = el("button", "ad-btn small danger", "封号");
+    bBan.onclick = function () { openBan({ id: userId, nickname: nickname }); };
+    wrap.append(bMute, bBan);
+    return wrap;
+  }
+
+  function renderPending(list) {
+    var box = $("modPending");
+    box.replaceChildren();
+    if (!list.length) { box.append(el("div", "ad-empty", "没有待审内容。有人发留言、楼宇留言或照片时会自动排到这里。")); return; }
+    var table = el("table", "ad-ut"), thead = el("thead"), htr = el("tr");
+    ["时间", "类型", "谁发的", "IP", "内容", "操作"].forEach(function (h) { htr.append(el("th", "", h)); });
+    thead.append(htr);
+    var tbody = el("tbody");
+    list.forEach(function (r) {
+      var tr = el("tr", "row");
+      tr.append(el("td", "muted", r.createdAt));
+      tr.append(el("td", "", r.kindName + (r.bldName ? " · " + r.bldName : "")));
+      var tdWho = el("td"); tdWho.append(modWho(r)); tr.append(tdWho);
+      tr.append(el("td", "ip", r.ip || "—"));
+
+      var tdBody = el("td", "mod-body");
+      if (r.image) {
+        var img = el("img", "mod-thumb");
+        img.src = "/" + r.image;
+        img.alt = "待审照片";
+        tdBody.append(img);
+      }
+      tdBody.append(el("div", "mod-text", r.kind === "bld_photo" ? "照片（点开大图在楼宇主页）" : r.content));
+      tr.append(tdBody);
+
+      var tdAct = el("td");
+      var acts = el("div", "mod-acts");
+      var ok = el("button", "ad-btn small ok", "通过");
+      ok.onclick = function () { modPost("/api/mp/admin/review/approve", { id: r.id }); };
+      var rm = el("button", "ad-btn small danger", "清理");
+      rm.onclick = function () {
+        modPost("/api/mp/admin/review/remove", { id: r.id },
+          "确认清理这条" + r.kindName + "？删掉就找不回来了。");
+      };
+      acts.append(ok, rm);
+      tdAct.append(acts, modActionsFor(r.userId, r.nickname));
+      if (r.ip) {
+        var bIp = el("button", "ad-btn small", "封 IP");
+        bIp.onclick = function () { openIpBan(r.ip); };
+        tdAct.append(bIp);
+      }
+      tr.append(tdAct);
+      tbody.append(tr);
+    });
+    table.append(thead, tbody);
+    box.append(table);
+  }
+
+  function renderReports(list) {
+    var box = $("modReports");
+    box.replaceChildren();
+    if (!list.length) { box.append(el("div", "ad-empty", "没有待处理举报。")); return; }
+    var table = el("table", "ad-ut"), thead = el("thead"), htr = el("tr");
+    ["时间", "谁举报", "被举报人", "理由", "被举报内容", "对象 IP", "操作"].forEach(function (h) { htr.append(el("th", "", h)); });
+    thead.append(htr);
+    var tbody = el("tbody");
+    list.forEach(function (r) {
+      var tr = el("tr", "row");
+      tr.append(el("td", "muted", r.createdAt));
+      tr.append(el("td", "", r.reporter));
+      var tdT = el("td"); tdT.append(modWho({ nickname: r.target, muted: r.muted, banned: r.banned })); tr.append(tdT);
+      tr.append(el("td", "", r.reason || "—"));
+      var tdC = el("td", "mod-body");
+      tdC.append(el("div", "mod-text", r.content || "（没有附消息快照）"));
+      tr.append(tdC);
+      tr.append(el("td", "ip", r.ip || "—"));
+
+      var tdAct = el("td");
+      var acts = el("div", "mod-acts");
+      var acc = el("button", "ad-btn small ok", "受理");
+      acc.onclick = function () { modPost("/api/mp/admin/report/handle", { id: r.id, action: "accept" }); };
+      var dis = el("button", "ad-btn small", "驳回");
+      dis.onclick = function () { modPost("/api/mp/admin/report/handle", { id: r.id, action: "dismiss" }); };
+      acts.append(acc, dis);
+      tdAct.append(acts, modActionsFor(r.targetId, r.target));
+      if (r.ip) {
+        var bIp = el("button", "ad-btn small", "封 IP");
+        bIp.onclick = function () { openIpBan(r.ip); };
+        tdAct.append(bIp);
+      }
+      tr.append(tdAct);
+      tbody.append(tr);
+    });
+    table.append(thead, tbody);
+    box.append(table);
+  }
+
+  function renderModHistory(d) {
+    var box = $("modHistory");
+    box.replaceChildren();
+    var rows = [];
+    (d.handled || []).forEach(function (r) {
+      rows.push({ at: r.reviewedAt || r.createdAt, what: "审核 · " + r.kindName + (r.bldName ? " · " + r.bldName : ""),
+        who: r.nickname, body: r.kind === "bld_photo" ? "（照片）" : r.content,
+        result: r.status === 1 ? "已通过" : "已清理", by: r.reviewer });
+    });
+    (d.reportHandled || []).forEach(function (r) {
+      rows.push({ at: r.handledAt || r.createdAt, what: "举报 · " + r.reporter + " → " + r.target,
+        who: "", body: r.reason, result: r.action === "accept" ? "已受理" : "已驳回", by: r.handler });
+    });
+    if (!rows.length) { box.append(el("div", "ad-empty", "还没有处理记录。")); return; }
+    rows.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
+    var table = el("table", "ad-ut"), thead = el("thead"), htr = el("tr");
+    ["处理时间", "事项", "内容", "结果", "处理人"].forEach(function (h) { htr.append(el("th", "", h)); });
+    thead.append(htr);
+    var tbody = el("tbody");
+    rows.slice(0, 100).forEach(function (r) {
+      var tr = el("tr", "row");
+      tr.append(el("td", "muted", r.at));
+      tr.append(el("td", "", r.what));
+      tr.append(el("td", "mod-body", r.body || ""));
+      tr.append(el("td", "", r.result));
+      tr.append(el("td", "muted", r.by || "—"));
+      tbody.append(tr);
+    });
+    table.append(thead, tbody);
+    box.append(table);
+  }
+
+  /* 禁言弹窗 */
+  function openMute(userId, nickname) {
+    MOD.muteUser = { id: userId, nickname: nickname };
+    $("adMuteTitle").textContent = "禁言 " + nickname;
+    $("adMuteWho").textContent = "禁言期间不能发私聊、不能发留言板、不能给楼宇传照片和写留言；浏览不受影响。";
+    $("adMuteErr").textContent = "";
+    $("adMuteReason").value = "";
+    var radios = document.querySelectorAll('input[name="mutemode"]');
+    for (var i = 0; i < radios.length; i++) radios[i].checked = radios[i].value === "3600";
+    $("adMute").hidden = false;
+  }
+  function closeMute() { $("adMute").hidden = true; MOD.muteUser = null; }
+  function submitMute() {
+    if (!MOD.muteUser) return;
+    var mode = document.querySelector('input[name="mutemode"]:checked').value;
+    var body = { userId: MOD.muteUser.id, mode: mode === "forever" ? "forever" : "until",
+                 reason: $("adMuteReason").value.trim() };
+    if (mode !== "forever") body.until = Date.now() / 1000 + Number(mode);
+    $("adMuteOk").disabled = true;
+    api("/api/mp/admin/mute", { method: "POST", body: body }).then(function (r) {
+      closeMute();
+      if (r && r.pending) { MOD.data = r; renderMod(); } else { loadMod(); }
+      loadAll();                    // 用户表里的"已禁言"标记也跟着更新
+    }).catch(function (e) {
+      $("adMuteErr").textContent = e.message;
+    }).then(function () { $("adMuteOk").disabled = false; });
+  }
+
+  /* ---------------- NPC 对话（2026-11-06） ----------------
+     数据全是服务端算好的（mp/server.py 的 npc_admin_payload），这里只画。
+     口径：一人一角色每天一个额度；被停用的人连门都进不来（大厅在转发前就退了）。 */
+  var NPC = { loaded: false, data: null, banUser: null, day: "" };
+
+  var NPC_VERDICT = { ok: "正常", soft: "可疑放行", block: "被拦下", quota: "超额度", banned: "已停用", rate: "太快" };
+
+  function npcWhen(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso);
+    if (isNaN(d)) return String(iso);
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+  function npcUntil(sec) {
+    if (!sec) return "永久";
+    var d = new Date(Number(sec) * 1000);
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+  function npcCell(tr, text, cls) {
+    var td = el("td", cls || "");
+    td.textContent = text === undefined || text === null ? "" : String(text);
+    tr.appendChild(td);
+    return td;
+  }
+  function npcHead(table, cols) {
+    table.innerHTML = "";
+    var tr = el("tr");
+    for (var i = 0; i < cols.length; i++) { var th = el("th", "", cols[i]); tr.appendChild(th); }
+    var head = el("thead");
+    head.appendChild(tr);
+    table.appendChild(head);
+    var body = el("tbody");
+    table.appendChild(body);
+    return body;
+  }
+  function npcEmpty(table, text, span) {
+    table.innerHTML = "";
+    var body = el("tbody"), tr = el("tr"), td = el("td", "npc-empty", text);
+    td.colSpan = span || 5;
+    tr.appendChild(td); body.appendChild(tr); table.appendChild(body);
+  }
+
+  function loadNpc() {
+    var q = [];
+    if (NPC.day) q.push("day=" + encodeURIComponent(NPC.day));
+    var kind = $("npcKind") ? $("npcKind").value : "";
+    if (kind) q.push("kind=" + encodeURIComponent(kind));
+    var kw = $("npcQ") ? $("npcQ").value.trim() : "";
+    if (kw) q.push("q=" + encodeURIComponent(kw));
+    $("npcErr").textContent = "";
+    return api("/api/mp/admin/npc" + (q.length ? "?" + q.join("&") : "")).then(function (data) {
+      NPC.loaded = true;
+      NPC.data = data;
+      renderNpc();
+    }).catch(function (e) {
+      NPC.loaded = false;
+      $("npcErr").textContent = e.message;
+    });
+  }
+
+  function renderNpc() {
+    var d = NPC.data || {};
+    var s = d.stats || {};
+    var cards = $("npcCards");
+    cards.innerHTML = "";
+    var items = [
+      ["今天提问", s.total || 0, "次（进了模型才算）"],
+      ["提问人数", s.users || 0, "人"],
+      ["被体检拦下", s.blocked || 0, "次（没进模型）"],
+      ["当前被停用", s.banned || 0, "条记录"]
+    ];
+    for (var i = 0; i < items.length; i++) {
+      var c = el("div", "ad-card");
+      c.appendChild(el("div", "ad-card-k", items[i][0]));
+      c.appendChild(el("div", "ad-card-v", items[i][1]));
+      c.appendChild(el("div", "ad-card-n", items[i][2]));
+      cards.appendChild(c);
+    }
+
+    // 角色下拉（只在第一次填）
+    var sel = $("npcKind");
+    if (sel.options.length <= 1 && d.kinds) {
+      for (var k = 0; k < d.kinds.length; k++) {
+        var opt = document.createElement("option");
+        opt.value = d.kinds[k].key; opt.textContent = d.kinds[k].name;
+        sel.appendChild(opt);
+      }
+    }
+    if (!$("npcDefault").value) $("npcDefault").value = s.default || 200;
+
+    // 额度表
+    var body = npcHead($("npcUsage"), ["账号", "角色", "今天已问", "每日上限", "操作"]);
+    if (!(d.usage || []).length) npcEmpty($("npcUsage"), "今天还没有人提问", 5);
+    (d.usage || []).forEach(function (u) {
+      var tr = el("tr");
+      npcCell(tr, u.nickname + "（#" + u.userId + "）");
+      npcCell(tr, u.kindName);
+      var used = npcCell(tr, u.used + " / " + u.limit, u.used >= u.limit ? "npc-hot" : "");
+      used.title = u.custom ? "单独设过" : "用的默认值";
+      var td = el("td");
+      var inp = el("input", "ad-field npc-num");
+      inp.type = "number"; inp.min = "0"; inp.max = "5000";
+      inp.value = u.custom ? u.limit : "";
+      inp.placeholder = String(u.limit);
+      inp.title = "填 0 恢复默认";
+      var save = el("button", "ad-btn", "保存");
+      save.onclick = function () { saveLimit(u.userId, u.kind, inp.value); };
+      td.appendChild(inp); td.appendChild(save);
+      tr.appendChild(td);
+      var act = el("td");
+      if (u.banned) {
+        var un = el("button", "ad-btn", "解禁");
+        un.onclick = function () { unbanNpc(u.userId, u.banKind || "*"); };
+        act.appendChild(un);
+        act.appendChild(el("span", "npc-tag off", "已停用"));
+      } else {
+        var b = el("button", "ad-btn danger", "停用");
+        b.onclick = function () { openNpcBan(u); };
+        act.appendChild(b);
+      }
+      tr.appendChild(act);
+      body.appendChild(tr);
+    });
+
+    // 流水表
+    var logs = npcHead($("npcLogs"), ["时间", "账号", "角色", "问的什么", "结果"]);
+    if (!(d.logs || []).length) npcEmpty($("npcLogs"), "这一天没有记录", 5);
+    (d.logs || []).forEach(function (l) {
+      var tr = el("tr");
+      npcCell(tr, npcWhen(l.at));
+      npcCell(tr, l.nickname + "（#" + l.userId + "）");
+      npcCell(tr, l.kindName);
+      npcCell(tr, l.text || "（空）", "npc-q");
+      var v = npcCell(tr, NPC_VERDICT[l.verdict] || l.verdict,
+        l.verdict === "ok" ? "npc-ok" : (l.verdict === "soft" ? "npc-soft" : "npc-bad"));
+      v.title = l.verdict;
+      body.appendChild(tr);
+    });
+    $("npcLogNote").textContent = (s.day || "") + " · 按北京时间切日；问题正文最多存 500 字，只留 90 天";
+
+    // 停用表
+    var bans = npcHead($("npcBans"), ["账号", "范围", "解禁时间", "原因", "操作"]);
+    if (!(d.bans || []).length) npcEmpty($("npcBans"), "没有人被停用", 5);
+    (d.bans || []).forEach(function (b) {
+      var tr = el("tr");
+      npcCell(tr, b.nickname + "（#" + b.userId + "）");
+      npcCell(tr, b.kindName);
+      npcCell(tr, npcUntil(b.until));
+      npcCell(tr, b.reason || "—");
+      var act = el("td");
+      var un = el("button", "ad-btn", "解禁");
+      un.onclick = function () { unbanNpc(b.userId, b.kind || "*"); };
+      act.appendChild(un);
+      tr.appendChild(act);
+      bans.appendChild(tr);
+    });
+  }
+
+  function npcAfter(res) {
+    if (res && res.stats) { NPC.data = res; NPC.loaded = true; renderNpc(); }
+    else loadNpc();
+    loadAll();                      // 用户表里的封禁标记也跟着变
+  }
+
+  function saveLimit(userId, kind, value) {
+    var daily = Number(value || 0);
+    if (isNaN(daily) || daily < 0) { $("npcErr").textContent = "次数要写 0 或正整数"; return; }
+    api("/api/mp/admin/npc/limit", { method: "POST", body: { userId: userId, kind: kind, daily: daily } })
+      .then(npcAfter).catch(function (e) { $("npcErr").textContent = e.message; });
+  }
+
+  function saveDefault() {
+    var daily = Number($("npcDefault").value || 0);
+    api("/api/mp/admin/npc/default", { method: "POST", body: { daily: daily } })
+      .then(function () { $("npcErr").textContent = ""; loadNpc(); })
+      .catch(function (e) { $("npcErr").textContent = e.message; });
+  }
+
+  function openNpcBan(u) {
+    NPC.banUser = u;
+    $("npcBanWho").textContent = "停用「" + u.nickname + "」对「" + u.kindName + "」的提问";
+    $("npcBanReason").value = "";
+    $("npcBanErr").textContent = "";
+    $("npcBanMask").hidden = false;
+  }
+  function closeNpcBan() { $("npcBanMask").hidden = true; NPC.banUser = null; }
+  function submitNpcBan() {
+    if (!NPC.banUser) return;
+    var u = NPC.banUser;
+    var radios = document.querySelectorAll('input[name="npcbantime"]');
+    var hours = 0;
+    for (var i = 0; i < radios.length; i++) if (radios[i].checked) hours = Number(radios[i].value) || 0;
+    var body = { userId: u.userId, kind: u.kind, hours: hours, reason: $("npcBanReason").value.trim() };
+    $("npcBanOk").disabled = true;
+    api("/api/mp/admin/npc/ban", { method: "POST", body: body }).then(function (res) {
+      closeNpcBan(); npcAfter(res);
+    }).catch(function (e) {
+      $("npcBanErr").textContent = e.message;
+    }).then(function () { $("npcBanOk").disabled = false; });
+  }
+  function unbanNpc(userId, kind) {
+    api("/api/mp/admin/npc/unban", { method: "POST", body: { userId: userId, kind: kind } })
+      .then(npcAfter).catch(function (e) { $("npcErr").textContent = e.message; });
+  }
+
+  function bindNpc() {
+    $("npcRefresh").onclick = loadNpc;
+    $("npcDefaultSave").onclick = saveDefault;
+    $("npcKind").onchange = loadNpc;
+    $("npcQ").oninput = function () { clearTimeout(NPC.timer); NPC.timer = setTimeout(loadNpc, 350); };
+    $("npcDay").onchange = function () { NPC.day = this.value.trim(); loadNpc(); };
+    $("npcBanCancel").onclick = closeNpcBan;
+    $("npcBanOk").onclick = submitNpcBan;
+    $("npcBanMask").onclick = function (e) { if (e.target === $("npcBanMask")) closeNpcBan(); };
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeNpcBan(); });
+  }
+
   /* ---------------- 页签切换 ---------------- */
   function showPane(id) {
     var tabs = document.querySelectorAll(".ad-tab");
     for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle("on", tabs[i].getAttribute("data-pane") === id);
     $("paneMain").hidden = id !== "paneMain";
     $("paneSec").hidden = id !== "paneSec";
+    $("paneMod").hidden = id !== "paneMod";
+    $("paneNpc").hidden = id !== "paneNpc";
     if (id === "paneSec" && !SEC.loaded) loadSec();
     if (id === "paneSec") { renderSecChart(); }
-    else { renderChart(); }
+    if (id === "paneMod" && !MOD.loaded) loadMod();
+    if (id === "paneNpc" && !NPC.loaded) loadNpc();
+    if (id === "paneMain") { renderChart(); }
   }
 
   /* ---------------- 事件绑定 ---------------- */
   function bind() {
+    bindNpc();
     $("adRefresh").onclick = function () {
-      if (!$("paneSec").hidden) loadSec(); else loadAll();
+      if (!$("paneSec").hidden) loadSec();
+      else if (!$("paneMod").hidden) loadMod();
+      else if (!$("paneNpc").hidden) loadNpc();
+      else loadAll();
     };
     // 页签
     var tabs = document.querySelectorAll(".ad-tab");
@@ -1079,6 +1536,9 @@
     }
     $("secRefresh").onclick = loadSec;
     $("wafRefresh").onclick = loadWaf;
+    $("modRefresh").onclick = loadMod;
+    $("adMuteCancel").onclick = closeMute;
+    $("adMuteOk").onclick = submitMute;
     $("secMaint").onclick = toggleMaint;
     $("secAutoban").onclick = toggleAutoban;
     $("secBanNew").onclick = function () { openIpBan(""); };
@@ -1091,6 +1551,7 @@
     // 安全页签开着且勾了"自动刷新"时，每 30 秒自己抓一次
     setInterval(function () {
       if (!$("paneSec").hidden && $("secAuto").checked) loadSec();
+      if (!$("paneMod").hidden && $("modAuto").checked) loadMod();
     }, 30000);
     $("adGateRetry").onclick = boot;
     $("adLogout").onclick = function () {
@@ -1108,7 +1569,7 @@
     $("adFilter").oninput = function () { state.filter = this.value; renderUsers(); };
     $("adDetailClose").onclick = closeDetail;
     $("adMask").onclick = closeDetail;
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeDetail(); closeBan(); closeIpBan(); } });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeDetail(); closeBan(); closeIpBan(); closeMute(); } });
     var radios = document.querySelectorAll('input[name="banmode"]');
     for (var i = 0; i < radios.length; i++) {
       radios[i].onchange = function () { $("adBanUntil").disabled = this.value !== "until"; };

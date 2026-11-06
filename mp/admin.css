@@ -116,6 +116,15 @@ table.ad-ut{width:100%;border-collapse:collapse;font-size:12.5px;min-width:860px
 .tag.banned{color:#f0a9a4;border-color:#6d3a37;background:#2a1716}
 .tag.on{color:#a9e0bd;border-color:#3d6c4e;background:#15241b}
 .tag.off{color:var(--muted);border-color:var(--line);background:#20262f}
+.tag.muted{color:#f0d49a;border-color:#6b5a2a;background:#2a2413}
+/* 审核和举报中心 */
+.ad-badge{display:inline-block;min-width:17px;padding:0 5px;margin-left:5px;border-radius:9px;
+  background:var(--danger);color:#fff;font-size:11px;line-height:17px;text-align:center;vertical-align:1px}
+.ad-ut .mod-body{max-width:340px}
+.mod-text{color:var(--ink);font-size:12px;line-height:1.55;word-break:break-word;
+  max-height:52px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.mod-thumb{display:block;max-height:64px;max-width:120px;border-radius:4px;border:1px solid var(--line);margin-bottom:4px}
+.mod-acts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
 /* 管理员自己登录用过的 IP：绿色小标，提醒"这行不是外人" */
 .tag.self{color:#a9e0bd;border-color:#3d6c4e;background:#15241b;margin-left:6px;
   font-family:system-ui,"Microsoft YaHei",sans-serif}
@@ -201,3 +210,23 @@ table.ad-ut{width:100%;border-collapse:collapse;font-size:12.5px;min-width:860px
   .ad-apps{grid-template-columns:repeat(2,1fr)}
   .ad-chartwrap{height:220px}
 }
+
+
+/* ---------------- NPC 对话页签（2026-11-06） ---------------- */
+.npc-wrap{overflow-x:auto;margin-top:6px}
+.npc-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.npc-table th{text-align:left;font-weight:600;color:var(--muted);padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.12);white-space:nowrap}
+.npc-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:middle}
+.npc-table tr:hover td{background:rgba(255,255,255,.03)}
+.npc-q{max-width:520px;word-break:break-word;line-height:1.5}
+.npc-empty{color:var(--muted);text-align:center;padding:18px 8px}
+.npc-num{width:78px;margin-right:6px;padding:4px 6px}
+.npc-tag{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:9px;font-size:11px}
+.npc-tag.off{background:rgba(255,90,90,.16);color:#ff9a9a}
+.npc-ok{color:#6fd08c}
+.npc-soft{color:#e6c35c}
+.npc-bad{color:#ff8a8a}
+.npc-hot{color:#ff9a9a;font-weight:600}
+.ad-card-k{font-size:12px;color:var(--muted)}
+.ad-card-v{font-size:24px;font-weight:700;margin:4px 0 2px}
+.ad-card-n{font-size:11.5px;color:var(--muted)}

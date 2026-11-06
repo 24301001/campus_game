@@ -67,6 +67,18 @@
           <div class="conversation-heading"><button id="new-conversation" type="button">＋ 新对话</button></div>
           <div id="conversation-list" class="conversation-list" aria-label="历史对话"></div>
         </details>
+        <!-- 进门的「小纸条」（2026-11-06）：上次聊到哪儿、要不要接着聊。
+             只在有历史时出现；点按钮或开始打字就收起，不挡聊天。 -->
+        <div id="recap-card" class="recap-card" hidden>
+          <div class="recap-copy">
+            <span class="recap-kicker">阿姨记得你</span>
+            <p id="recap-text" class="recap-text"></p>
+          </div>
+          <div class="recap-actions">
+            <button id="recap-continue" class="recap-primary" type="button">接着上次聊</button>
+            <button id="recap-new" class="recap-secondary" type="button">换个话题</button>
+          </div>
+        </div>
         <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
         <div class="chat-bottom">
           <div id="suggestions" class="suggestions" aria-label="提问示例">

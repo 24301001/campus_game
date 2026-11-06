@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>像素校园 · 全校地图</title>
-<link rel="stylesheet" href="mp/theme.css?v=20261105-portal2">
+<link rel="stylesheet" href="mp/theme.css?v=20261106-cap1">
 <link rel="stylesheet" href="pixel-3d/pixel-3d.css?v=20261031-main3d">
 <link rel="stylesheet" href="cat-dex/cat-dex.css?v=20261104-look">
 <link rel="stylesheet" href="building/building.css?v=20261104-bldz">
@@ -4904,7 +4904,7 @@ function buildChar(HH, PAL) {
       P(bx, SHOE_TOP, 4, 1, C.shoeL);
     }
     /* ---------- 侧视的头与躯干（与相位无关，抽出来只为让 side() 读起来是"人"不是"色块"） ---------- */
-    function sideBody(sw) {
+    function sideBody(step) {
       P(cx - H2 + 1, HY, HW - 2, 1, C.hairL);
       P(cx - H2, HY + 1, HW, 1, C.hair);
       P(cx - H2, HY + 2, HW, HH - 2, C.skin);
@@ -4927,15 +4927,19 @@ function buildChar(HH, PAL) {
       /* ⚠️ 侧视摆臂**故意摆 2px**（正/背面只有 1px）：侧视的"通过帧"在几何上近乎对称，
          两帧只能靠亮暗边换边 + 手臂位置区分，摆 1px 时两帧差异只有 ~20 像素、几乎看不出。
          侧视里手臂是唯一能大幅表达节奏的部位，摆大一点整个步态才读得出来。 */
-      const ao = sw ? 2 : 0;
-      P(cx - 4, ty + 2 + ao, 2, ARMR, C.coatL);             // 前臂摆到身前
-      P(cx - 4, ty + 2 + ao + ARMR, 2, 2, C.skin);          // 手
+      /* ⚠️ 侧视摆臂＝**以肩膀为圆心前后摆**，不是整条胳膊横着平移：
+         肩点固定在 (cx-3, ty+2)，正好压在躯干最前那一列，越往下偏得越多，手最后落在 swing 处 ——
+         画出来是一条斜着的胳膊，走路才有钟摆感。
+         0 帧左腿在前 ⇒ 胳膊向后 +3；2 帧右腿在前 ⇒ 胳膊向前 -3；通过帧 ±2。 */
+      const swing = [3, 2, -3, -2][step] || 0, sgn = Math.sign(swing);
+      for (let i = 0; i < ARMR; i++) P(cx - 3 + sgn * Math.round(Math.abs(swing) * i / ARMR), ty + 2 + i, 2, 1, C.coatL);
+      P(cx - 3 + swing, ty + 2 + ARMR, 2, 2, C.skin);       // 手
     }
 
     if (dir === "up")        { head(false); torso(true);  arms(F.sw, true);  legs(F.fl, F.spread); }
     else if (dir === "down") { head(true);  torso(false); arms(F.sw, false); legs(F.fl, F.spread); }
     /* ⚠️ 顺序不能反：先头/躯干再腿，腿压在躯干上沿 —— 反过来衣摆会盖住大腿根。 */
-    else                     { sideBody(F.sw); side(F.m, F.sw); }
+    else                     { sideBody(step); side(F.m, F.sw); }
 
     /* ---------- 长发（可选钩子，`C.longHair`）----------
        侧视只画**后脑那一侧**：side() 画的是朝左的人（后脑恒在 x 较大的一侧），
@@ -20764,9 +20768,9 @@ function loop(now) {
 requestAnimationFrame(loop);
 
 </script>
-<script src="mp/look.js?v=20261031-main3d"></script>
+<script src="mp/look.js?v=20261106-arm3"></script>
 <script src="pixel-3d/pixel-3d.js?v=20261031-main3d"></script>
-<script src="mp/lobby.js?v=20261105-portal2"></script>
+<script src="mp/lobby.js?v=20261106-cap2"></script>
 <!-- 小应用日活埋点：盯 #ctrF 的 src，开了哪个应用就记一笔（后台按天去重） -->
 <script src="mp/app-track.js?v=20261104-admin"></script>
 <script src="mp/duo1-bridge.js?v=duobridge03"></script>

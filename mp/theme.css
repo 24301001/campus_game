@@ -72,7 +72,7 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpSoloCanteen{display:none}
    这样点开公告/留言板/私聊/每日任务/当前在线时能把「i」盖住。
    仍然低于猫图的 52 —— 猫猫图鉴原来的层序不动。 */
 #mpRoot #mpBoard,#mpRoot #mpNotice,#mpRoot #mpTask,#mpRoot #mpPortal,#mpRoot #mpOnline,#mpRoot #mpChat,#mpRoot #mpGuard,
-#mpRoot #mpNearby,#mpRoot #mpAuthShade,#mpRoot #mpProfileShade,#mpRoot #mpLookShade,
+#mpRoot #mpNearby,#mpRoot #mpAuthShade,#mpRoot #mpProfileShade,#mpRoot #mpLookShade,#mpRoot #mpReportShade,
 #mpRoot #mpTopBtns,#mpRoot #mpSelf,#mpRoot #mpSprite,#mpRoot #mpSummonGuard,#mpRoot #mpTaskToggle,#mpRoot #mpPortalToggle,
 #mpRoot #mpSoloCanteen,#mpRoot #mpSoloExit,#mpRoot #mpStatus,#mpRoot #mpMenu{z-index:46}
 /* [QODER-FIX #20] 抽屉里的 NPC 应用自身顶部也有“退出/返回”按钮，原来的公告按钮正好压在上面。
@@ -146,7 +146,7 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpOnline{top:101px}
 #mpRoot .mp-message small{display:block;color:var(--mp-muted);font-size:10px}
 #mpRoot #mpChatForm{display:flex;gap:6px;padding:10px;border-top:1px solid var(--mp-line)}
 #mpRoot #mpChatInput{flex:1;resize:none;min-height:38px;max-height:95px}
-#mpRoot #mpAuthShade,#mpRoot #mpProfileShade,#mpRoot #mpLookShade{position:absolute;inset:0;background:rgba(8,12,18,.72);pointer-events:auto;display:flex;align-items:center;justify-content:center;padding:16px}
+#mpRoot #mpAuthShade,#mpRoot #mpProfileShade,#mpRoot #mpLookShade,#mpRoot #mpReportShade{position:absolute;inset:0;background:rgba(8,12,18,.72);pointer-events:auto;display:flex;align-items:center;justify-content:center;padding:16px}
 #mpRoot #mpAuth{width:min(370px,100%);padding:18px;max-height:100%;overflow:auto}
 #mpRoot #mpAuth h2{font-size:18px;color:var(--mp-gold);margin:0 0 5px}
 #mpRoot #mpAuth p{color:var(--mp-muted);margin:0 0 15px}
@@ -180,7 +180,11 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpOnline{top:101px}
 #mpRoot .mp-cap-track.bad{border-color:#c2605a;background:#3a2224}
 #mpRoot .mp-cap-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#3f6f9a,#4f97c4);opacity:.55}
 #mpRoot .mp-cap-track.ok .mp-cap-fill{background:linear-gradient(90deg,#3d8a63,#57b98a)}
-#mpRoot .mp-cap-knob{position:absolute;left:0;top:50%;transform:translateY(-50%);width:38px;height:38px;margin:1px;border-radius:50%;background:#f3f6fb;color:#243043;display:grid;place-items:center;font-size:16px;font-weight:700;cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.4);touch-action:none}
+/* 滑块按钮：**竖直方向正好填满轨道的内高**（40 高减掉上下 1px 边框 = 38），
+   left/top 都是 0，位置只由 JS 的 translateX 决定。
+   ⚠️ 老写法是 top:50% + translateY(-50%)，但 JS 每次都会覆写 transform 成 translateX(…)，
+      竖直居中当场失效 —— 按钮上半截顶在轨道中线，下半截被 overflow 裁掉，看着像"只露一半"。 */
+#mpRoot .mp-cap-knob{position:absolute;left:0;top:0;width:38px;height:38px;border-radius:50%;background:#f3f6fb;color:#243043;display:grid;place-items:center;font-size:16px;font-weight:700;cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.4);touch-action:none}
 #mpRoot .mp-cap-knob:active{cursor:grabbing}
 #mpRoot .mp-cap-knob.ok{background:#57b98a;color:#0d2a1d}
 #mpRoot .mp-cap-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--mp-muted)}
@@ -362,3 +366,57 @@ body:has(#ctrP:not([hidden])) #mpRoot #mpOnline{top:101px}
 #mpRoot #mpLook .mp-pixel3d-host{--p3d-h:320px}
 #mpRoot #mpProfile.mp-other-profile .mp-pixel3d-host{--p3d-h:300px}
 #mpRoot .mp-pixel3d-host .p3d-cv{height:var(--p3d-h)!important}
+
+/* ---------- 举报 / 拉黑（2026-11-06） ---------- */
+#mpRoot #mpReportShade{z-index:46}
+#mpRoot #mpReport{width:min(360px,100%);padding:16px}
+#mpRoot #mpReport textarea{width:100%;min-height:78px;resize:vertical;margin:8px 0}
+#mpRoot .mp-message.failed .mp-bubble{border-color:#e3a29c;background:#fff2f1;color:#7a2f2b}
+#mpRoot .mp-fail-bang{color:#c6534d;font-size:11px;font-weight:600;line-height:1.4;margin-top:2px}
+
+/* 个人主页「近期动态」：和「我的聊天记录」同一套观感，但所有人可见 */
+#mpRoot .mp-activity{margin-top:14px;padding:9px 10px;border:1px solid var(--mp-line);border-radius:4px}
+#mpRoot .mp-activity summary{cursor:pointer;color:var(--mp-gold)}
+#mpRoot .mp-activity p{padding:5px 0;margin:0;border-bottom:1px solid #343c48;white-space:pre-wrap;overflow-wrap:anywhere}
+#mpRoot .mp-act-icon{margin-right:4px}
+#mpRoot .mp-act-label{margin-right:6px;color:var(--mp-muted)}
+#mpRoot .mp-activity-body{min-height:22px}
+
+/* 全校动态面板：四块榜单，蓝色数字，每行一条 */
+#mpRoot #mpPulseBody{flex:1;min-height:0;overflow:auto}
+#mpRoot .mp-pulse-sec{margin-bottom:9px}
+#mpRoot .mp-pulse-sub{margin:0 0 3px;color:var(--mp-gold);font-size:12px;font-weight:700}
+#mpRoot .mp-pulse-row{display:flex;gap:6px;align-items:baseline;padding:2px 0;margin:0;font-size:12px;line-height:1.5;border-bottom:1px dashed #2c343f}
+#mpRoot .mp-pulse-rank{color:var(--mp-muted);font-size:11px;min-width:16px}
+#mpRoot .mp-pulse-text{flex:1;overflow-wrap:anywhere}
+#mpRoot .mp-pulse-n{color:var(--mp-gold);font-size:12px;white-space:nowrap}
+#mpRoot .mp-pulse-feed{display:flex;gap:6px;align-items:baseline;padding:2px 0;margin:0;font-size:11px;line-height:1.5}
+#mpRoot .mp-pulse-time{margin-left:auto;color:var(--mp-muted);font-size:11px;white-space:nowrap}
+
+/* 📊 全校动态：小窗。定宽 300，贴在「动态」按钮下面；高度跟着内容走，
+   内容再多也只到 60vh，里面滚，不把整个屏幕铺满。 */
+#mpRoot #mpPulse{position:absolute;right:16px;top:53px;width:300px;max-height:min(60vh,460px);display:flex;flex-direction:column;z-index:46}
+body:has(#ctrP:not([hidden])) #mpRoot #mpPulse{top:101px}
+#mpRoot #mpPulseBody{flex:1;min-height:0;overflow:auto;padding:8px 12px 2px}
+#mpRoot #mpPulse .mp-notice-foot{padding:6px 10px;font-size:10px}
+#mpRoot #mpPulse .mp-head{padding:8px 10px}
+@media(max-width:650px){#mpRoot #mpPulse{right:8px;width:min(300px,calc(100vw - 16px));max-height:56vh}}
+
+/* ---- 登录窗改成左右两栏：左边小剧场、右边表单 ----
+   宽度 588；高度跟内容走，最高不超过一屏（减 32）——注册那套（强度条＋拼图＋照片）
+   比登录高一大截，多出来的部分在右栏里滚，整个窗口不会顶到屏幕外面去。
+   左栏画布是「舞台」里的绝对定位元素，高度随窗口长，画面不会空一块。 */
+#mpRoot #mpAuth{width:min(588px,100%);padding:0;max-height:calc(100vh - 32px);overflow:hidden;display:flex;align-items:stretch}
+#mpRoot .mp-auth-art{flex:none;width:210px;min-height:0;padding:9px 9px 8px;background:#0d141c;border-right:1px solid var(--mp-line);display:flex;flex-direction:column;gap:7px}
+#mpRoot .mp-auth-stage{flex:1;min-height:80px;position:relative;border:1px solid #243040;background:#0b1119;overflow:hidden}
+#mpRoot .mp-auth-stage canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;display:block}
+#mpRoot .mp-auth-tip{margin:0;min-height:54px;font-size:12px;line-height:1.55;color:#cfe4da}
+#mpRoot .mp-auth-dots{display:flex;gap:5px;justify-content:center;margin:0}
+#mpRoot .mp-auth-dots i{width:7px;height:7px;background:#2c3743;transition:background .25s}
+#mpRoot .mp-auth-dots i.on{background:var(--mp-gold)}
+#mpRoot .mp-auth-main{flex:1;min-width:0;min-height:0;padding:18px;overflow:auto}
+@media(max-width:640px){#mpRoot #mpAuth{width:min(370px,100%)}#mpRoot .mp-auth-art{display:none}}
+/* 注册页收起左侧小剧场：注册那栏本来就高（强度条＋拼图＋照片），
+   左边再占 210 只会把窗口撑得更宽更挤；窗口收回 370 的单栏。 */
+#mpRoot #mpAuth.mp-auth-reg{width:min(370px,100%)}
+#mpRoot #mpAuth.mp-auth-reg .mp-auth-art{display:none}

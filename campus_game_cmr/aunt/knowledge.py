@@ -228,31 +228,39 @@ def sources_for(ids):
     return result
 
 
+def _search_text(text):
+    """Ignore spacing and punctuation commonly inserted by voice input."""
+    return re.sub(r"[\s，。！？、,!?：:·（）()]", "", text).lower()
+
+
 def find_canteen(text):
+    text = _search_text(text)
     hits = []
     for canteen in CATALOG["canteens"]:
         for alias in [canteen["name"]] + canteen.get("aliases", []):
-            if alias and alias in text:
+            if alias and _search_text(alias) in text:
                 hits.append((len(alias), canteen))
     hits.sort(key=lambda item: item[0], reverse=True)
     return hits[0][1] if hits else None
 
 
 def matched_dishes(text, canteen=None):
+    text = _search_text(text)
     result = []
     for entry in DISHES:
-        if entry["dish"]["name"] in text and (canteen is None or entry["canteen"]["id"] == canteen["id"]):
+        if _search_text(entry["dish"]["name"]) in text and (canteen is None or entry["canteen"]["id"] == canteen["id"]):
             result.append(entry)
     return result
 
 
 def find_zone(text, canteen=None):
+    text = _search_text(text)
     direct = []
     for zone_id, zone in ZONES.items():
         if canteen and ZONE_CONTEXT[zone_id]["canteenId"] != canteen["id"]:
             continue
         short_name = zone["name"].replace(ZONE_CONTEXT[zone_id]["canteen"], "")
-        if zone["name"] in text or (canteen and len(short_name) >= 3 and short_name in text):
+        if _search_text(zone["name"]) in text or (canteen and len(short_name) >= 3 and _search_text(short_name) in text):
             direct.append((zone.get("kind") == "window", len(zone["name"]), zone_id))
     window_hits = [item for item in direct if item[0]]
     if window_hits:
@@ -371,6 +379,7 @@ def _zone_name(zone_id):
 
 
 def _requested_floor(text, canteen):
+    text = _search_text(text)
     for label, words in (("1F", ("1F", "一楼", "一层", "1楼", "1层")),
                          ("2F", ("2F", "二楼", "二层", "2楼", "2层")),
                          ("3F", ("3F", "三楼", "三层", "3楼", "3层"))):
@@ -398,6 +407,48 @@ def _food_request(text):
         return True
     return any(word in text for word in ("面", "粉", "米线", "饺子", "馄饨")) and any(
         word in text for word in ("有", "哪", "什么", "吃", "来碗"))
+
+
+def _menu_request(text):
+    return any(word in text for word in (
+        "菜单", "菜品", "有哪些菜", "有什么菜", "有啥菜", "卖什么", "卖啥",
+        "都有什么", "有什么吃的", "有啥吃的", "提供什么", "有哪些档口", "有什么窗口",
+    )) or bool(re.search(r"(?:这|那|一|二|三|1|2|3)?(?:楼|层).{0,4}有什么[？?]?$", text))
+
+
+def _catalog_answer(text, canteen, zone_id):
+    if not canteen:
+        return _result("目前收录学活、明湖、学四、留园、东区、学苑和益民。想看哪个食堂的菜单？", ["R"])
+    floor = _focused_floor(text, canteen, zone_id)
+    if any(word in text for word in ("有哪些档口", "有什么窗口", "哪些窗口")):
+        floors = [floor] if floor else canteen["floors"]
+        lines = [item["name"] + "（" + level["label"] + "）" for level in floors
+                 for item in level["stalls"] if item.get("kind") != "placeholder"]
+        if lines:
+            return _result(canteen["name"] + "已收录的档口或分区有：" + "、".join(lines[:15]) +
+                           "。部分位置来自示意图，具体营业状态请以现场为准。", ["R"])
+        return _result(canteen["name"] + "暂没有可核实的档口名单。", emotion="thinking")
+    if zone_id:
+        zone = ZONES[zone_id]
+        entries = [entry for entry in DISHES if entry["zone"] and entry["zone"]["id"] == zone_id]
+        place = _zone_name(zone_id)
+    else:
+        entries = [entry for entry in all_dishes(canteen) if floor is None or
+                   (entry["floor"] and entry["floor"]["label"] == floor["label"])]
+        place = canteen["name"] + (" " + floor["label"] if floor else "")
+    selected = list({entry["dish"]["name"]: entry for entry in entries}.values())[:12]
+    unique = list(dict.fromkeys(entry["dish"]["name"] for entry in entries))
+    evidence = [source for entry in selected for source in entry["dish"].get("evidence", [])]
+    if unique:
+        suffix = "等" if len(unique) > 12 else ""
+        return _result(place + "已收录的菜品有：" + "、".join(unique[:12]) + suffix +
+                       "。这是部分资料菜单，是否在售和现价请以现场为准。", evidence or ["R"])
+    if floor:
+        names = [item["name"] for item in floor["stalls"] if item.get("kind") != "placeholder"]
+        if names:
+            return _result(place + "的资料列出" + "、".join(names[:12]) +
+                           "；这些档口的完整菜品和当前在售情况还没有核实。", ["R"])
+    return _result(place + "目前没有可核实的菜品明细。你可以换个楼层或问具体菜名。", emotion="thinking")
 
 
 def _recommendations(text, canteen, zone_id):
@@ -441,6 +492,13 @@ def _recommendations(text, canteen, zone_id):
 
 
 def answer(text, user_id, connection, context_zone_id=None):
+    simple = _search_text(text)
+    if re.fullmatch(r"(?:阿姨)?(?:你好|您好|嗨|哈喽|hello|hi|在吗|早上好|中午好|下午好|晚上好|早|你在吗)(?:阿姨)?", simple):
+        return _result("在呢，孩子！想吃什么？告诉我食堂、楼层或菜名，我帮你查已有资料。", emotion="happy")
+    if re.fullmatch(r"(?:谢谢|谢啦|多谢|感谢)(?:阿姨)?", simple):
+        return _result("不客气，孩子。还想查哪家食堂或哪道菜？", emotion="happy")
+    if any(word in simple for word in ("你是谁", "你能做什么", "你会什么", "怎么问你")):
+        return _result("我是食堂阿姨。可以帮你查已收录的食堂楼层、档口、菜品、历史价格和口碑；说具体食堂或菜名会更准。", emotion="happy")
     if any(word in text for word in ("图书馆", "选课", "绩点", "失物招领", "教务", "借书", "考试安排")):
         return _result("这个我没有可靠资料。食堂楼层、菜品和口碑可以问我；校园其他事务请问负责的同学。", emotion="thinking")
     canteen = find_canteen(text)
@@ -462,6 +520,10 @@ def answer(text, user_id, connection, context_zone_id=None):
                 "；但图上没有标具体品种、是否在售和价格，我不能替它报价。想吃哪一类，可以到窗口确认当天菜单。",
                 ["P5"], emotion="thinking")
     dishes = matched_dishes(text, canteen)
+    focused_floor = _focused_floor(text, canteen, zone_id)
+    if focused_floor:
+        dishes = [entry for entry in dishes if entry["floor"] and
+                  entry["floor"]["label"] == focused_floor["label"]]
     question = any(word in text for word in ("？", "?", "吗", "多少", "什么", "哪个", "哪家", "有没有", "几点", "在哪", "怎么样", "推荐不"))
     if "推荐" in text and "我推荐" not in text and "不推荐" not in text:
         question = True
@@ -504,7 +566,7 @@ def answer(text, user_id, connection, context_zone_id=None):
             return _result(_zone_name(zone_id) + "最近三小时没有可核实的排队反馈，我不知道现在等多久。", emotion="thinking")
         return _result("最近一条反馈说，%s 排队约 %d 分钟。队伍会变，出发前再留意现场。" % (_zone_name(zone_id), row["queue_minutes"]))
 
-    price_question = any(word in text for word in ("多少钱", "价格", "贵不贵", "几块", "售价"))
+    price_question = any(word in text for word in ("多少钱", "价格", "价钱", "贵不贵", "几块", "几元", "售价", "怎么卖", "多少块"))
     if price_question:
         if zone_id and ZONES[zone_id].get("kind") == "window" and dishes:
             dishes = [entry for entry in dishes if entry["zone"] and entry["zone"]["id"] == zone_id]
@@ -523,6 +585,20 @@ def answer(text, user_id, connection, context_zone_id=None):
         if canteen:
             return _result(canteen["name"] + "的资料只覆盖部分菜品，没有完整的当前价目表。说一道菜名，我查已核到的资料；没有来源的价格我不报。", ["R"])
         return _result("说一下食堂和菜名，我查已有来源的历史价格。当前价格仍要以现场为准。", emotion="thinking")
+
+    if dishes and (any(word in text for word in ("有没有", "卖吗", "能买到", "能吃到", "提供吗"))
+                   or re.search(r"有.{1,12}吗", text)):
+        if zone_id and ZONES[zone_id].get("kind") == "window":
+            dishes = [entry for entry in dishes if entry["zone"] and entry["zone"]["id"] == zone_id]
+        if dishes:
+            names = list(dict.fromkeys(entry["dish"]["name"] for entry in dishes))
+            evidence = [source for entry in dishes for source in entry["dish"].get("evidence", [])]
+            place = _zone_name(zone_id) if zone_id else canteen["name"] + (
+                " " + focused_floor["label"] if focused_floor else "") if canteen else "已有资料"
+            return _result(place + "的资料里有" + "、".join(names[:5]) +
+                           "的记录；是否现在仍在售，请以窗口当天菜单为准。", evidence or ["R"])
+    if _menu_request(text):
+        return _catalog_answer(text, canteen, zone_id)
 
     if any(word in text for word in ("几点", "营业", "开门", "关门", "什么时候")):
         if zone_id:
@@ -664,6 +740,4 @@ def answer(text, user_id, connection, context_zone_id=None):
         evidence = [source for entry in all_dishes(canteen)[:14] for source in entry["dish"].get("evidence", [])]
         return _result(canteen["name"] + "已核到的楼层功能：\n" + "\n".join(floor_lines) + ("\n资料中出现的菜品：" + menu_names + "。" if menu_names else "") + "\n这是不完整菜单，具体档口位置尚未核验。", ["R", *evidence])
 
-    if any(word in text for word in ("你好", "您好", "嗨", "在吗")):
-        return _result("孩子，想吃点什么？你可以问食堂楼层、菜品、资料价格和口碑，或者告诉我某个分区的真实体验。", emotion="happy")
     return _result("这个我没有可靠资料。食堂楼层、菜品和口碑可以问我；选课、图书馆规则、失物招领等事要问负责的同学。", emotion="thinking")

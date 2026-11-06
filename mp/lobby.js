@@ -8,6 +8,8 @@
      localStorage['mpNoticeSeen']，浏览器级、不按账号分 —— 更新通知是给这台
      机器前面的人看的，换号不该再提示一遍没读过的旧闻。 */
   const NOTICES = [
+    { id: 4, at: '2026-11-06T21:00:00+08:00', title: '登录窗小剧场与全校动态上线',
+      body: '本游戏企划组：登录窗口和右上角都换了新样子。\n🎬 登录窗：右边照常填账号密码，左边多了一块像素小动画，每 5 秒换一幕 —— 食堂的猫、湖里的鸭子、能留言的公告板、操场上的乐跑，配一句话提醒。点「注册」时左栏自动收起，把地方让给表单。\n📊 全校动态：右上角新增「📊 动态」，一次看四块 —— 算法哥的刷题榜、食堂阿姨最常被问的话和点得最多的菜、学霸姐被问到最多的知识点、老丁最近收到的失物类别。二十秒自动刷新，只算最近七天。\n👕 另外修了几处小毛病：小人的胳膊改成绕肩膀前后摆，鸭子游的方向和头一致；验证码的缺口不再有一圈白边，白色滑块按钮也和轨道严丝合缝了。' },
     { id: 3, at: '2026-11-04T21:40:00+08:00', title: '每日任务与乐跑上线',
       body: '本游戏企划组：新增「每日任务」和「当前在线」。\n📋 每日任务：每天第一次进来送一份猫粮；到新体育馆旁边的操场，绕着跑道跑满五圈再送一份。一天最多两份，一份猫粮只能喂一次猫，同一只猫一天也只吃一次。\n👥 当前在线：右上角能看到现在校园里有谁，只显示头像和昵称。' },
     { id: 2, at: '2026-11-04T17:50:00+08:00', title: '管理后台与安全中心上线',
@@ -34,6 +36,7 @@
       <button id="mpNoticeToggle" type="button">📢<span class="mp-btn-txt"> 公告</span><span id="mpNoticeDot" hidden>●</span></button>
       <button id="mpBoardToggle" type="button">📌<span class="mp-btn-txt"> 留言板</span><span id="mpUnread" hidden>0</span></button>
       <button id="mpOnlineToggle" type="button" title="当前在线">👥<span class="mp-btn-txt"> 在线</span><span id="mpOnlineNum">0</span></button>
+      <button id="mpPulseToggle" type="button" title="全校动态">📊<span class="mp-btn-txt"> 动态</span></button>
     </div>
     <div id="mpRunHud" hidden><b>🏃 乐跑</b><span id="mpRunText"></span></div>
     <section id="mpNotice" class="mp-panel" hidden aria-label="公告">
@@ -56,6 +59,11 @@
       <div id="mpOnlineList"></div>
       <div class="mp-notice-foot">这里只看得到头像和昵称，点不开个人资料。</div>
     </section>
+    <section id="mpPulse" class="mp-panel" hidden aria-label="全校动态">
+      <div class="mp-head"><span class="mp-title">📊 全校动态</span><button class="mp-icon" id="mpPulseClose" aria-label="关闭动态">×</button></div>
+      <div id="mpPulseBody"><div class="mp-empty">正在读取…</div></div>
+      <div class="mp-notice-foot">每 20 秒自动刷新 · 只显示最近 7 天的公开数字</div>
+    </section>
     <section id="mpBoard" class="mp-panel" hidden aria-label="留言板">
       <div class="mp-head"><span class="mp-title">留言板 · 全校</span><button class="mp-icon" id="mpBoardClose" aria-label="关闭留言板">×</button></div>
       <div id="mpBoardList"><div class="mp-empty">还没有人留言，说第一句吧。</div></div>
@@ -63,16 +71,19 @@
       <div id="mpBoardError" class="mp-error" role="alert" style="padding:0 10px"></div>
     </section>
     <section id="mpChat" class="mp-panel" hidden aria-label="私聊">
-      <div class="mp-head"><span id="mpChatAvatar"></span><span id="mpChatTitle"></span><button type="button" id="mpChatHistory" class="mp-chat-history" title="查看与这位玩家的聊天记录">聊天记录</button><button class="mp-icon" id="mpChatClose" aria-label="关闭私聊">×</button></div>
+      <div class="mp-head"><span id="mpChatAvatar"></span><span id="mpChatTitle"></span><button type="button" id="mpChatHistory" class="mp-chat-history" title="查看与这位玩家的聊天记录">聊天记录</button><button type="button" id="mpChatReport" class="mp-chat-history" title="举报这位玩家">举报</button><button type="button" id="mpChatBlock" class="mp-chat-history" title="拉黑后双方都不能再发私聊">拉黑</button><button class="mp-icon" id="mpChatClose" aria-label="关闭私聊">×</button></div>
       <div id="mpChatLog"></div>
       <form id="mpChatForm"><textarea id="mpChatInput" class="mp-field" maxlength="500" rows="1" placeholder="输入消息，Enter 发送" aria-label="私聊消息"></textarea><button class="mp-primary">发送</button></form>
       <div id="mpChatError" class="mp-error" role="alert" style="padding:0 10px"></div>
     </section>
     <div id="mpAuthShade" hidden><section id="mpAuth" class="mp-panel" aria-label="大厅登录">
+      <div class="mp-auth-art" aria-hidden="true"><div class="mp-auth-stage"><canvas id="mpAuthArt"></canvas></div><p class="mp-auth-tip" id="mpAuthTip"></p><div class="mp-auth-dots" id="mpAuthDots"><i class="on"></i><i></i><i></i><i></i></div></div>
+      <div class="mp-auth-main">
       <h2>进入联机大厅</h2><p>注册或登录后，就能看见同场景的同学。</p>
       <div class="mp-tabs"><button type="button" class="mp-secondary" id="mpLoginTab">登录</button><button type="button" class="mp-secondary" id="mpRegisterTab">注册</button></div>
       <form id="mpAuthForm" autocomplete="off"><input id="mpName" class="mp-field" minlength="2" maxlength="16" placeholder="昵称（2–16 字）" autocomplete="off" required><input id="mpPass" class="mp-field" type="password" minlength="8" placeholder="密码（至少 8 位）" autocomplete="new-password" required><div id="mpPassMeter" class="mp-pass" hidden><div class="mp-pass-bars"><i></i><i></i><i></i><i></i></div><span id="mpPassHint" class="mp-pass-hint"></span></div><div id="mpNameHint" class="mp-name-hint" hidden></div><div id="mpCapBox" class="mp-cap" hidden><div class="mp-cap-stage" id="mpCapStage"><img id="mpCapBg" alt="验证图片" draggable="false"><img id="mpCapPiece" class="mp-cap-piece" alt="拼图块" draggable="false"><span id="mpCapLoading" class="mp-cap-loading">验证图片加载中…</span></div><div class="mp-cap-track" id="mpCapTrack"><div class="mp-cap-fill" id="mpCapFill"></div><div class="mp-cap-knob" id="mpCapKnob" role="slider" tabindex="0" aria-label="拖动完成验证" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">»</div></div><div class="mp-cap-foot"><span id="mpCapState" class="mp-cap-state">按住滑块，把碎片拖进缺口</span><button type="button" id="mpCapRefresh" class="mp-cap-refresh">换一张</button></div></div><label id="mpAuthPhotoLine" hidden>选择照片在浏览器生成卡通小人（可选，照片不上传）<input id="mpAuthPhoto" type="file" accept="image/*" class="mp-field"></label><div id="mpAuthLookPreview" hidden></div><button class="mp-primary" id="mpAuthSubmit">登录并进入</button><div id="mpAuthError" class="mp-error" role="alert"></div></form>
       <button type="button" class="mp-secondary" id="mpSolo">暂时单机游览</button>
+      </div>
     </section></div>
     <div id="mpProfileShade" hidden><section id="mpProfile" class="mp-panel" aria-label="个人主页"><div class="mp-head"><span class="mp-title" id="mpProfileTitle">个人中心</span><button class="mp-icon" id="mpProfileClose" aria-label="关闭主页">×</button></div><div id="mpProfileBody"></div></section></div>
     <div id="mpLookShade" hidden><section id="mpLook" class="mp-panel" aria-label="设置我的形象"><div class="mp-head"><span class="mp-title">设置我的形象</span><button class="mp-icon" id="mpLookClose" aria-label="关闭形象设置">×</button></div><div id="mpLookBody"></div></section></div>
@@ -80,13 +91,23 @@
     <section id="mpGuard" class="mp-panel" hidden aria-label="地图上和老丁对话"><div class="mp-head"><span class="mp-title">保安 · 老丁</span><button id="mpGuardClose" class="mp-icon" aria-label="关闭老丁对话">×</button></div><div id="mpGuardLog" role="log" aria-live="polite"></div><div id="mpGuardQuick" role="group" aria-label="快捷功能"><button type="button" data-act="lost_search">找失物</button><button type="button" data-act="lost_intake">登记失物</button><button type="button" data-act="repair">报修</button><button type="button" data-act="claim">认领核对</button></div><form id="mpGuardForm"><button type="button" id="mpGuardPhoto" title="拍照或选图——找东西、认证件">图</button><input id="mpGuardFile" type="file" accept="image/*" hidden><input id="mpGuardInput" class="mp-field" maxlength="500" placeholder="和老丁说句话，回车发送" aria-label="给老丁发消息"><button class="mp-primary">发送</button></form></section>
     <iframe id="mpGuardBridge" src="about:blank" hidden title="老丁对话服务"></iframe>
     <div id="mpMenu" class="mp-panel" hidden><button id="mpMenuChat">💬 发起对话</button><button id="mpMenuProfile">👤 个人主页</button></div>
+    <div id="mpReportShade" hidden><section id="mpReport" class="mp-panel" aria-label="举报玩家">
+      <div class="mp-head"><span class="mp-title" id="mpReportTitle">举报</span><button class="mp-icon" id="mpReportClose" aria-label="关闭举报">×</button></div>
+      <p class="mp-muted" id="mpReportHint"></p>
+      <textarea id="mpReportReason" class="mp-field" maxlength="200" rows="3" placeholder="请写清楚举报理由（2–200 字）"></textarea>
+      <div class="mp-near-actions"><button type="button" id="mpReportSubmit" class="mp-primary">提交举报</button></div>
+      <div id="mpReportError" class="mp-error" role="alert"></div>
+    </section></div>
     `;
   document.body.append(root);
   const $=id=>document.getElementById(id), tokenKey='mpToken';
   let token='',me=null,ws=null,chatWith=null,authMode='login',authLook=null,showLookPrompt=false,retries=0,reconnectTimer=0,connectTimer=0,pingTimer=0,moveAt=0,lastMove='',scene='out',unread=0,menuUser=null,menuAnchor=null,boardSending='',nearUser=null,profileUser=null,guardReady=false,guardOpening=false,soloMode=false,offlineSolo=false,allowReconnect=true,lastRx=0,netTimer=0;
   const peers=new Map(),profiles=new Map(),chatCache=new Map(),pending=new Map(),seenMsgs=new Set(),chatMore=new Map(),chatOldest=new Map();
+  /* 拉黑名单：服务端在 welcome 里一次性下发，之后每次拉黑/解除都整份替换。
+     没发出去的私聊用一个很大的假 msgId 排在最后，气泡旁边打红感叹号。 */
+  let blocks=new Set(),failedSeq=0;
   let boardItems=[],look=L.fallback,boardTimer=0,menuAt=0;
-  let taskState=null,onlineUsers=[],onlineTimer=0,runHudKey='';
+  let taskState=null,onlineUsers=[],onlineTimer=0,runHudKey='',pulseTimer=0;
   let statusTimer=0;
   /* keep=false 的那条到点先淡出再收起；keep=true 是"连接中断，正在重连…"这类要一直挂着的状态。
      ⚠️ 淡出用 class 不用 hidden：hidden 是瞬时消失，用户报的就是"老丁已到达"那条硬挂在地图顶上。 */
@@ -291,8 +312,10 @@
     try{track.setPointerCapture(event.pointerId)}catch{}
     const rect=track.getBoundingClientRect();
     const knobW=$('mpCapKnob').offsetWidth||30;
-    const usable=Math.max(1,rect.width-knobW);
-    cap.drag={start:performance.now(),usable,knobW,left:rect.left,trail:[],last:-1};
+    /* 轨道的 1px 边框不算可用宽度：clientWidth 才是滑块真正能走的距离，
+       clientLeft 是左边框厚度。不扣这两处，按钮中心和碎片会差 1 像素。 */
+    const usable=Math.max(1,track.clientWidth-knobW);
+    cap.drag={start:performance.now(),usable,knobW,left:rect.left+track.clientLeft,trail:[],last:-1};
     capMove(event);
   }
   function capMove(event){
@@ -340,44 +363,128 @@
     $('mpCapRefresh').onclick=capLoad;
   }
   $('mpName').addEventListener('input',nickSchedule);
-  function setAuthMode(mode){authMode=mode;$('mpAuthSubmit').textContent=mode==='register'?'注册并进入':'登录并进入';$('mpAuthPhotoLine').hidden=mode!=='register';$('mpPassMeter').hidden=mode!=='register';$('mpCapBox').hidden=mode!=='register';$('mpAuthPhoto').required=false;$('mpLoginTab').style.borderColor=mode==='login'?'#ffd76e':'';$('mpRegisterTab').style.borderColor=mode==='register'?'#ffd76e':'';$('mpAuthError').textContent='';if(mode!=='register'){$('mpNameHint').hidden=true;cap.ticket='';cap.challenge=null}else{capBind();pwSchedule();nickSchedule();capLoad()}}
+  function setAuthMode(mode){authMode=mode;$('mpAuthSubmit').textContent=mode==='register'?'注册并进入':'登录并进入';$('mpAuthPhotoLine').hidden=mode!=='register';$('mpPassMeter').hidden=mode!=='register';$('mpCapBox').hidden=mode!=='register';$('mpAuthPhoto').required=false;$('mpLoginTab').style.borderColor=mode==='login'?'#ffd76e':'';$('mpRegisterTab').style.borderColor=mode==='register'?'#ffd76e':'';$('mpAuthError').textContent='';if(mode!=='register'){$('mpNameHint').hidden=true;cap.ticket='';cap.challenge=null}else{capBind();pwSchedule();nickSchedule();capLoad()};if(mode==='register'){authArtStop();$('mpAuth').classList.add('mp-auth-reg')}else{$('mpAuth').classList.remove('mp-auth-reg');if(!$('mpAuthShade').hidden)authArtStart()}}
   /* [QODER-FIX #1] 退出登录后给一张干净的登录页：除了 reset()，再显式清空账号密码，
      防止浏览器自动填充把上一位用户的昵称/密码又填回来。 */
-  function showAuth(msg=''){setAuthMode('login');$('mpAuthForm').reset();$('mpName').value='';$('mpPass').value='';$('mpAuthPhoto').value='';$('mpAuthLookPreview').replaceChildren();$('mpAuthLookPreview').hidden=true;authLook=null;$('mpAuthShade').hidden=false;$('mpAuthError').textContent=msg;$('mpName').focus()}
-  function hideAuth(){$('mpAuthShade').hidden=true}
-  function connectedUI(on){$('mpSelf').hidden=$('mpSprite').hidden=$('mpSummonGuard').hidden=$('mpTopBtns').hidden=$('mpTaskToggle').hidden=$('mpPortalToggle').hidden=!on;if(!on){$('mpTask').hidden=true;$('mpPortal').hidden=true;$('mpOnline').hidden=true;clearInterval(onlineTimer);onlineTimer=0;$('mpRunHud').hidden=true;$('mpBoard').hidden=true;$('mpNotice').hidden=true;$('mpChat').hidden=true;$('mpProfileShade').hidden=true;$('mpLookShade').hidden=true;$('mpMenu').hidden=true;$('mpNearby').hidden=true;nearUser=null;taskState=null;runReset()}else updateSelf()}
-  function updateSelf(){if(!me)return;const el=$('mpSelf');el.replaceChildren(avatarEl(look,me.id,true,false),document.createTextNode(me.nickname+' · 个人中心'))}
-  function clearNpcTickets(){/* [QODER-FIX #9] 换账号时把 NPC 侧的会话/历史一起清掉：
-      活着的密钥按前缀扫（老丁 guard_v…_chat_、guard_v…_player_，算法哥 agent_watch_），
-      再把已经加载的抽屉和地图对话桥接 iframe 打回空白页，避免上一位用户的聊天还挂在界面上。 */
-    const exact=['xbg_token','ld_token','token','user','mpNickname','xbg_cred','ld_cred','cmr_cred','campus_cred','xbg_shot_auto'];
-    try{for(const key of Object.keys(localStorage)){if(exact.includes(key)||/^(guard_v\d+_|agent_watch_)/.test(key))localStorage.removeItem(key)}}catch{}
-    try{sessionStorage.removeItem('mpGuest')}catch{}
-    try{$('mpGuardBridge').src='about:blank';guardReady=false;$('mpGuardLog').replaceChildren()}catch{}
-    try{if(ctrF)ctrF.setAttribute('src','about:blank')}catch{}}
-  function resetWorld(){
-    $('mpSoloCanteen').hidden=true;
-    $('mpSoloExit').hidden=true;closeLookPanel();
-    GUARD.summoned=false;GUARD.path=null;GUARD.spot=0;GUARD.wi=0;GUARD.pauseT=1.2;GUARD.summonRepath=0;
-    if(GUARD_SPOTS.length){const home=guardSnap(GUARD_SPOTS[0].x,GUARD_SPOTS[0].y);GUARD.x=home.x;GUARD.y=home.y}
-    guardReady=false;guardOpening=false;$('mpGuard').hidden=true;$('mpGuardLog').replaceChildren();$('mpGuardInput').value='';$('mpGuardBridge').src='about:blank';
-    if(CENTER.active)roomLeave();else if(CENTER.plat)ctrClosePlatform();
-    if(ctrF)ctrF.setAttribute('src','about:blank');
-    player.x=SPAWN.x;player.y=SPAWN.y;player.dir='down';player.step=0;player.walk=0;player.idle=0;player.act=null;/* [QODER-FIX #2] 每次登录/登出都把玩家送回南门出生点，不继承上一位用户站的位置 */
-    for(const k in keys)keys[k]=0;for(const k in CKEYS)CKEYS[k]=0;
-    scene='out';lastMove='';hudTick();
+  function showAuth(msg=''){setAuthMode('login');$('mpAuthForm').reset();$('mpName').value='';$('mpPass').value='';$('mpAuthPhoto').value='';$('mpAuthLookPreview').replaceChildren();$('mpAuthLookPreview').hidden=true;authLook=null;$('mpAuthShade').hidden=false;$('mpAuthError').textContent=msg;$('mpName').focus();authArtStart()}
+  function hideAuth(){$('mpAuthShade').hidden=true;authArtStop()}
+  /* --- 登录窗左半边的小剧场 ------------------------------------------------
+     用地图上同一套像素小人（L.sprite）在迷你场景里走，每 5 秒换一条提示。
+     全部是 canvas 现画，不加载任何图片，断网也看得见。 */
+  const AUTH_SCENES=[
+    {tip:'每天登录都能领一份猫粮，点左上角的任务就有。',sky:'#243649',skyTop:'#0b1119',ground:'#24301f',prop:'canteen'},
+    {tip:'别靠湖边的鸭子太近，它真的会追着人咬。',sky:'#1b2a39',skyTop:'#0a1018',ground:'#2a3324',prop:'lake'},
+    {tip:'想在哪儿留句话就点开哪栋楼，留言全校都能看。',sky:'#262b37',skyTop:'#0c1017',ground:'#26301f',prop:'board'},
+    {tip:'跑满 5 圈乐跑，食堂阿姨会再给你一包猫粮。',sky:'#1f2836',skyTop:'#0b1016',ground:'#2c2a1b',prop:'track'}
+  ];
+  /* 星星位置写死：用同一个公式算出来，刷新也不会乱跳 */
+  const AUTH_STARS=[...Array(16)].map((_,i)=>({x:(i*47+9)%196,y:(i*61+13)%96}));
+  let authArtRAF=0,authArtScene=0,authArtAt=0;
+  function authArtStart(){
+    authArtAt=performance.now();authArtScene=0;authArtTip();
+    if(authArtRAF)return;
+    const tick=now=>{
+      if($('mpAuthShade').hidden){authArtRAF=0;return}
+      if(now-authArtAt>5000){authArtAt=now;authArtScene=(authArtScene+1)%AUTH_SCENES.length;authArtTip()}
+      authArtPaint(now);authArtRAF=requestAnimationFrame(tick);
+    };
+    authArtRAF=requestAnimationFrame(tick);
   }
-  function clearAccountState(){
-    soloMode=false;offlineSolo=false;clearTimeout(boardTimer);boardSending='';
-    allowReconnect=true;clearInterval(netTimer);
-    clearTimeout(reconnectTimer);clearTimeout(connectTimer);clearInterval(pingTimer);const old=ws;ws=null;old?.close();
-    saveToken('');clearNpcTickets();MP.connected=false;me=null;look=L.fallback;showLookPrompt=false;
-    peers.clear();profiles.clear();chatCache.clear();chatMore.clear();chatOldest.clear();boardItems=[];pending.clear();seenMsgs.clear();
-    chatWith=null;menuUser=null;menuAnchor=null;nearUser=null;profileUser=null;unread=0;boardSending='';updateUnread();
-    $('mpBoardList').replaceChildren();$('mpChatLog').replaceChildren();$('mpBoardInput').value='';$('mpChatInput').value='';
-    $('mpBoardError').textContent='';$('mpChatError').textContent='';$('mpBoardForm').querySelector('button').disabled=false;
-    connectedUI(false);resetWorld();status('');
+  function authArtStop(){if(authArtRAF)cancelAnimationFrame(authArtRAF);authArtRAF=0}
+  function authArtTip(){
+    const tip=$('mpAuthTip');if(!tip)return;tip.textContent=AUTH_SCENES[authArtScene].tip;
+    if(tip.animate)tip.animate([{opacity:0,transform:'translateY(3px)'},{opacity:1,transform:'none'}],{duration:280,easing:'ease-out'});
+    const dots=$('mpAuthDots');if(dots)for(const [i,d] of [...dots.children].entries())d.className=i===authArtScene?'on':'';
   }
+  function mixColor(a,b,t){
+    const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16),c=(s,sh)=>Math.round(((pa>>sh)&255)*(1-t)+((pb>>sh)&255)*t);
+    return 'rgb('+c(0,16)+','+c(0,8)+','+c(0,0)+')';
+  }
+  function authArtProp(g,kind,W,gy,now,box){
+    if(kind==='canteen'){
+      box(112,gy-108,74,108,'#28323f');
+      box(108,gy-115,82,8,'#3b4a5b');
+      for(let i=0;i<6;i++)box(110+i*13,gy-107,7,6,i%2?'#d9ac4a':'#8a5a3a');
+      for(let i=0;i<3;i++)box(120+i*20,gy-92,12,13,'#f0cf76');
+      box(140,gy-34,24,34,'#171f29');
+      box(143,gy-30,18,28,'#e3c070');
+      box(97,gy-8,15,8,'#c9a15a');box(99,gy-11,11,4,'#e0b370');box(100,gy-13,9,2,'#f0cc88');
+      const st=Math.floor(now/180)%6;
+      g.globalAlpha=.35;
+      box(102,gy-17-st*2,3,3,'#cfe0e8');box(107,gy-21-((st+3)%6)*2,3,3,'#cfe0e8');
+      g.globalAlpha=1;
+      const wag=Math.floor(now/380)%2,blink=now%3200<140;
+      box(78,gy-13,13,13,'#8a6a46');
+      box(80,gy-17,3,5,'#8a6a46');box(86,gy-17,3,5,'#8a6a46');
+      if(blink)box(83,gy-9,7,1,'#5a4530');
+      else{box(83,gy-9,2,2,'#20242a');box(88,gy-9,2,2,'#20242a')}
+      box(74,gy-5-wag*2,4,2,'#8a6a46');
+    } else if(kind==='lake'){
+      box(52,gy-2,148,30,'#1b3646');
+      box(52,gy-2,148,2,'#2b5568');
+      for(let i=0;i<6;i++)box(60+i*24+Math.sin(now/700+i)*4,gy+6+(i%3)*7,14,2,'#2f5a6e');
+      box(56,gy-16,2,16,'#3a5a32');box(59,gy-20,2,20,'#3a5a32');
+      const dx=100+Math.sin(now/1100)*24,dy=gy+10+Math.sin(now/500)*2;
+      /* 头跟着**速度方向**转：sin 在走、cos 是速度，速度朝左时整只鸭子镜像，
+         不然会看到它倒着游 —— 头朝右、身子往左。 */
+      const right=Math.cos(now/1100)>=0,hx=right?dx+11:dx-3;
+      box(dx,dy,15,9,'#e6d38a');
+      box(hx,dy-6,7,7,'#efe0a0');
+      box(right?hx+7:hx-5,dy-4,5,2,'#d98c3f');
+      box(hx+2,dy-3,2,2,'#20242a');
+      box(right?dx-1:dx-3,dy+8,17,1,'#2b5568');
+    } else if(kind==='board'){
+      box(66,gy-74,76,54,'#3b3226');
+      box(70,gy-70,68,46,'#c9b998');
+      const notes=[[74,gy-66,26,18,'#d98c6a'],[104,gy-64,28,22,'#8fb4c9'],[76,gy-44,26,16,'#e0c46a'],[106,gy-38,24,14,'#b7d39a']];
+      for(const [x,y,w,h,col] of notes){box(x,y,w,h,col);box((x+w/2)|0,y,2,2,'#c6534d')}
+      box(66,gy-20,5,20,'#3b3226');box(137,gy-20,5,20,'#3b3226');
+      box(150,gy-58,3,58,'#39404a');box(146,gy-65,11,7,'#e8c86a');
+      g.globalAlpha=.1;box(136,gy-86,32,32,'#ffd98a');g.globalAlpha=1;
+    } else {
+      box(0,gy+14,W,2,'#cdc6ae');box(0,gy+28,W,2,'#cdc6ae');box(0,gy+42,W,2,'#cdc6ae');
+      for(let i=0;i<3;i++)for(let j=0;j<2;j++)box(14+i*7,gy+14+j*7,7,7,(i+j)%2?'#d8d2c0':'#b14a3f');
+      box(166,gy-70,3,70,'#5a6270');
+      const wave=Math.sin(now/260)*2;
+      box(169,gy-70,16,3,'#c25a4a');box(169,gy-67,18+wave,3,'#d96b58');box(169,gy-64,14,3,'#c25a4a');
+      box(120,gy-9,9,9,'#c25a4a');box(122,gy-12,5,3,'#e07a4a');
+    }
+  }
+  function authArtPaint(now){
+    const c=$('mpAuthArt');if(!c)return;
+    const stage=c.parentElement,cw=stage.clientWidth,ch=stage.clientHeight;
+    if(cw<40||ch<60)return;
+    /* 画布缓冲区按显示比例算高度：注册时窗口变高，天空跟着长，画面不会空一块 */
+    const W=200,H=Math.min(460,Math.max(150,Math.round(W*ch/cw)));
+    if(c.width!==W||c.height!==H){c.width=W;c.height=H}
+    const g=c.getContext('2d');g.imageSmoothingEnabled=false;
+    const gy=H-58,sc=AUTH_SCENES[authArtScene];
+    const box=(x,y,w,h,col)=>{if(w<=0||h<=0)return;g.fillStyle=col;g.fillRect(x|0,y|0,Math.ceil(w),Math.ceil(h))};
+    for(let i=0;i<8;i++)box(0,H*i/8,W,H/8+1,mixColor(sc.skyTop,sc.sky,i/7));
+    for(let i=0;i<AUTH_STARS.length;i++){
+      if((Math.floor(now/600)+i)%4===0)continue;
+      box(AUTH_STARS[i].x,AUTH_STARS[i].y,1,1,i%5===0?'#cfe3ff':'#7d90a8');
+    }
+    for(let i=0;i<7;i++){
+      const bw=18+(i*13)%14,bh=26+(i*29)%54,x=6+i*29;
+      box(x,gy-bh,bw,bh,'#0a121b');
+      for(let j=0;j<2;j++)if((i+j)%3)box(x+4+j*8,gy-bh+7+j*13,3,4,'#2a3b4d');
+    }
+    box(0,gy,W,H-gy,sc.ground);
+    box(0,gy,W,3,'#35462b');box(0,gy+3,W,2,'#1d2a17');
+    for(let i=4;i<W;i+=13){box(i,gy+10,2,3,'#33452a');box(i+4,gy+13,2,2,'#2b3c23')}
+    box(22,gy-72,3,72,'#3a3f45');box(18,gy-79,11,7,'#e8c86a');
+    g.globalAlpha=.1;box(6,gy-98,40,40,'#ffd98a');g.globalAlpha=1;
+    authArtProp(g,sc.prop,W,gy,now,box);
+    const span=W-88,t=(now/1000*30)%(2*span),x=32+(t<span?t:2*span-t),right=t<span;
+    if(sc.prop==='track'){
+      g.globalAlpha=.16;
+      for(let i=0;i<3;i++)box(x-6-i*6,gy-6-i*2,3,3,'#d8d2c0');
+      g.globalAlpha=1;
+    }
+    g.drawImage(L.sprite(L.fallback,right?'right':'left',Math.floor(now/135)%4),x,gy-56,36,56);
+  }
+
   async function submitAuth(e){e.preventDefault();const nickname=$('mpName').value.trim(),password=$('mpPass').value,button=$('mpAuthSubmit');button.disabled=true;$('mpAuthError').textContent='';try{
     if(authMode==='register'){
       const verdict=pwLocal(password,nickname);
@@ -416,7 +523,7 @@
     socket.onclose=e=>{if(ws!==socket)return;ws=null;clearTimeout(connectTimer);clearInterval(pingTimer);clearInterval(netTimer);if(e.code===4001||e.code===4003){clearAccountState();showAuth(e.code===4001?'该账号已在另一处登录':'请重新登录');return}if(boardSending){boardSending='';$('mpBoardForm').querySelector('button').disabled=false;$('mpBoardError').textContent='连接中断，留言未确认，请重试'}scheduleReconnect()};
   }
   function onPacket(m){switch(m.type){
-    case 'welcome':{const recovered=offlineSolo;offlineSolo=false;$('mpSoloCanteen').hidden=true;$('mpSoloExit').hidden=true;me=m.me;look=me.look;profiles.set(me.id,me);chatRestore();scene=m.scene;peers.clear();m.peers.forEach(addPeer);MP.connected=true;lastMove='';connectedUI(true);updateSelf();
+    case 'welcome':{const recovered=offlineSolo;offlineSolo=false;$('mpSoloCanteen').hidden=true;$('mpSoloExit').hidden=true;me=m.me;look=me.look;profiles.set(me.id,me);chatRestore();scene=m.scene;peers.clear();m.peers.forEach(addPeer);blocks=new Set((m.blocks||[]).map(Number));MP.connected=true;lastMove='';connectedUI(true);updateSelf();
       /* 进场就抓一次每日任务和在线人数；之后每 15 秒刷一次在线数（按钮上那个数字）。 */
       loadTask();clearInterval(onlineTimer);onlineTimer=setInterval(loadOnline,15000);loadOnline();if(recovered)status('网络已恢复，自动返回联机大厅');if(showLookPrompt){showLookPrompt=false;openLookPanel();status('请设置你的卡通形象')}
       /* 重连之后把正开着的私聊重新拉一遍：断线期间对方发的、以及本地没存到的，一次补齐。 */
@@ -430,12 +537,21 @@
     case 'peer.look':{const p=peers.get(m.id);if(p)p.look=m.look;const q=profiles.get(m.id);if(q)q.look=m.look;if(nearUser===m.id)nearUser=null;renderBoard();if(chatWith===m.id)renderChat();break}
     case 'announce.list':boardItems=m.items;renderBoard();break;
     case 'announce.new':boardItems.push(m);boardItems=boardItems.slice(-50);if($('mpBoard').hidden){unread++;updateUnread()}renderBoard();break;
+    /* 管理员在后台点「清理」，那条留言当场从所有人的留言板上消失 */
+    case 'announce.remove':boardItems=boardItems.filter(a=>Number(a.id)!==Number(m.id));renderBoard();break;
+    case 'muted':status(m.msg||'你已被禁言');break;
     case 'announce.ack':if(m.clientMsgId===boardSending){clearTimeout(boardTimer);boardSending='';$('mpBoardInput').value='';$('mpBoardForm').querySelector('button').disabled=false;$('mpBoardError').textContent='留言已发送'}break;
     case 'chat.history':chatCache.set(m.withUser,mergeMessages(chatCache.get(m.withUser)||[],m.items));chatMore.set(m.withUser,!!m.hasMore);if(m.items.length)chatOldest.set(m.withUser,Number(m.items[0].msgId));chatSave(m.withUser);if(chatWith===m.withUser)renderChat();break;
     case 'chat.msg':{if(seenMsgs.has(m.msgId))break;seenMsgs.add(m.msgId);const other=m.from===me.id?m.to:m.from;chatCache.set(other,mergeMessages(chatCache.get(other)||[],[m]));chatSave(other);if(chatWith===other)renderChat();else status(m.fromNickname+' 发来新消息');break}
     case 'chat.ack':{const p=pending.get(m.clientMsgId);if(p){pending.delete(m.clientMsgId);const msg={...p,msgId:m.msgId,at:m.at};chatCache.set(p.to,mergeMessages(chatCache.get(p.to)||[],[msg]));chatSave(p.to);if(chatWith===p.to)renderChat()}break}
     case 'presence':{const p=profiles.get(m.userId);if(p){p.online=m.online;p.lastSeen=m.lastSeen}renderBoard();if(chatWith===m.userId)renderChatTitle();break}
-    case 'error':if(m.code?.startsWith('ANNOUNCE')){if(!m.clientMsgId||m.clientMsgId===boardSending){clearTimeout(boardTimer);boardSending='';$('mpBoardForm').querySelector('button').disabled=false;$('mpBoardError').textContent=m.msg}}else if(m.code?.startsWith('CHAT'))$('mpChatError').textContent=m.msg;status(m.msg);break;
+    case 'error':if(m.code?.startsWith('ANNOUNCE')){if(!m.clientMsgId||m.clientMsgId===boardSending){clearTimeout(boardTimer);boardSending='';$('mpBoardForm').querySelector('button').disabled=false;$('mpBoardError').textContent=m.msg}}else if(m.code?.startsWith('CHAT')){
+      $('mpChatError').textContent=m.msg;
+      /* 没送达的那条也要留在聊天记录里，旁边打一个红色感叹号 ——
+         否则用户只看到输入框清空了，不知道对方到底收没收到。 */
+      const p=m.clientMsgId?pending.get(m.clientMsgId):null;
+      if(p){pending.delete(m.clientMsgId);const msg={...p,msgId:8e15+(++failedSeq),at:new Date().toISOString(),failed:m.msg};chatCache.set(p.to,mergeMessages(chatCache.get(p.to)||[],[msg]));chatSave(p.to);if(chatWith===p.to)renderChat()}
+    }status(m.msg);break;
   }}
   function mergeMessages(a,b){const map=new Map([...a,...b].map(x=>[x.msgId,x]));return [...map.values()].sort((x,y)=>x.msgId-y.msgId)}
   function addPeer(v){if(v.id===me?.id)return;peers.set(v.id,{...v,fromX:v.x,fromY:v.y,at:performance.now()});profiles.set(v.id,{...(profiles.get(v.id)||{}),...v,online:true})}
@@ -484,8 +600,8 @@
   /* --- 右上角四块面板共用一个坑位 ------------------------------------------
      公告 / 留言板 / 每日任务 / 当前在线都是 right:16 top:53 那一格，
      同一时刻只许开一块（以前是两两互相 hidden，加到四块就成 12 条了）。 */
-  const TOP_PANELS=['mpBoard','mpNotice','mpTask','mpOnline','mpPortal'];
-  function closeTopPanels(keep=''){for(const id of TOP_PANELS)if(id!==keep)$(id).hidden=true}
+  const TOP_PANELS=['mpBoard','mpNotice','mpTask','mpOnline','mpPortal','mpPulse'];
+  function closeTopPanels(keep=''){for(const id of TOP_PANELS)if(id!==keep)$(id).hidden=true;if(keep!=='mpPulse'){clearInterval(pulseTimer);pulseTimer=0}}
   function anyTopPanelOpen(){return TOP_PANELS.some(id=>!$(id).hidden)}
 
   /* --- 📋 每日任务 + 🏃 乐跑 ------------------------------------------------
@@ -687,8 +803,58 @@
   /* ⚠️ 只收面板、不停轮询：onlineTimer 是"进场就开、断线才停"的那一根，
      关掉面板就把它清了，右上角那个在线数会停在关面板的那一刻。 */
   function closeOnline(){$('mpOnline').hidden=true}
+  /* --- 📊 全校动态 ----------------------------------------------------------
+     四块一次拿全：算法哥刷题榜（大厅代为向 Java 要）、阿姨常被问的、学霸姐常被问
+     到的知识点、老丁最近最多的失物。都是公开聚合数字，不带任何人的私聊内容。 */
+  function pulseTime(s){const t=String(s||'');if(!t)return '';return timeText(/[zZ]|[+-]\d\d:?\d\d$/.test(t)?t:t+'+08:00')}
+  function pulseSub(parent,text){const h=document.createElement('div');h.className='mp-pulse-sub';h.textContent=text;parent.append(h)}
+  function pulseRows(parent,rows,valueOf,empty){
+    if(!rows.length){if(empty){const p=document.createElement('p');p.className='mp-muted';p.textContent=empty;parent.append(p)}return}
+    rows.forEach((r,i)=>{const p=document.createElement('p');p.className='mp-pulse-row';
+      const k=document.createElement('span');k.className='mp-pulse-rank';k.textContent=(i+1)+'.';
+      const t=document.createElement('span');t.className='mp-pulse-text';t.textContent=r.text;
+      const n=document.createElement('b');n.className='mp-pulse-n';n.textContent=valueOf(r);
+      p.append(k,t,n);parent.append(p)});
+  }
+  function renderPulse(d){
+    const body=$('mpPulseBody');body.dataset.loaded='1';body.replaceChildren();
+    const a=document.createElement('section');a.className='mp-pulse-sec';
+    pulseSub(a,'💻 算法哥 · 最近 7 天');
+    pulseRows(a,((d.agent||{}).leaders||[]).map(r=>({text:r.name||'玩家',solved:r.solved||0})),r=>r.solved+' 题',
+      (d.agent&&d.agent.offline)?'算法哥这会儿没接上，稍后再看':'最近还没有人通过题目');
+    const recent=((d.agent||{}).recent||[]).slice(0,5);
+    if(recent.length){pulseSub(a,'刚刚通过');
+      for(const r of recent){const p=document.createElement('p');p.className='mp-pulse-feed';
+        const who=document.createElement('span');who.textContent=r.name||'玩家';
+        const what=document.createElement('span');what.className='mp-muted';what.textContent=' 通过了 '+(r.problem||'一道题');
+        const tm=document.createElement('span');tm.className='mp-pulse-time';tm.textContent=pulseTime(r.at);
+        p.append(who,what,tm);a.append(p)}}
+    body.append(a);
+
+    const c=document.createElement('section');c.className='mp-pulse-sec';
+    pulseSub(c,'🍚 食堂阿姨 · 最近被问');
+    pulseRows(c,((d.cmr||{}).questions||[]).map(r=>({text:r.text,count:r.count})),r=>r.count+' 次','最近还没有人问阿姨');
+    const dishes=(d.cmr||{}).dishes||[];
+    if(dishes.length){pulseSub(c,'被点到的菜');pulseRows(c,dishes,r=>r.count+' 次')}
+    body.append(c);
+
+    const x=document.createElement('section');x.className='mp-pulse-sec';
+    pulseSub(x,'🎓 学霸姐 · 常被问到的知识点');
+    pulseRows(x,((d.xbg||{}).points||[]).map(r=>({text:r.text,count:r.count})),r=>r.count+' 次','最近还没有人问学霸姐');
+    body.append(x);
+
+    const l=document.createElement('section');l.className='mp-pulse-sec';
+    pulseSub(l,'🛡️ 老丁 · 最近最多的失物');
+    pulseRows(l,((d.ld||{}).items||[]).map(r=>({text:r.text,count:r.count,lost:r.lost,claim:r.claim})),
+      r=>'挂失 '+r.lost+' · 认领 '+r.claim,'最近还没有新的挂失或认领');
+    body.append(l);
+  }
+  function openPulse(){if(!MP.connected){status('联机暂不可用',true);return}closeTopPanels('mpPulse');$('mpPulse').hidden=false;loadPulse();clearInterval(pulseTimer);pulseTimer=setInterval(loadPulse,20000)}
+  function closePulse(){$('mpPulse').hidden=true;clearInterval(pulseTimer);pulseTimer=0}
+  async function loadPulse(){if(!token)return;const body=$('mpPulseBody');if(!body.dataset.loaded)body.textContent='正在读取…';
+    try{const d=await api('/pulse');if(!$('mpPulse').hidden)renderPulse(d)}catch(e){if(!body.dataset.loaded)body.textContent='动态读取失败：'+e.message}}
   function chatProfile(id){return profiles.get(id)||{id,nickname:'玩家 '+id,look:L.fallback,online:false}}
-  function renderChatTitle(){if(!chatWith)return;const p=chatProfile(chatWith);iconTo($('mpChatAvatar'),p.look,chatWith,p.online);$('mpChatTitle').replaceChildren();const b=document.createElement('b');b.textContent=p.nickname;const small=document.createElement('div');small.className='mp-muted';small.textContent=p.online?(peers.has(chatWith)?'同场景在线':'在线 · 已离开当前场景'):'离线 · 上线后可收到消息';$('mpChatTitle').append(b,small)}
+  function renderChatTitle(){if(!chatWith)return;const p=chatProfile(chatWith);iconTo($('mpChatAvatar'),p.look,chatWith,p.online);$('mpChatTitle').replaceChildren();const b=document.createElement('b');b.textContent=p.nickname;const small=document.createElement('div');small.className='mp-muted';small.textContent=blocks.has(Number(chatWith))?'已拉黑 · 双方都发不了新消息':(p.online?(peers.has(chatWith)?'同场景在线':'在线 · 已离开当前场景'):'离线 · 上线后可收到消息');$('mpChatTitle').append(b,small);$('mpChatBlock').textContent=blocks.has(Number(chatWith))?'解除拉黑':'拉黑'}
   /* ---------- 私聊记录本地留底 ----------
      服务端才是唯一真相（记录全在库里，重登就重新拉一份），本地这份只干两件事：
      断线的那几秒先显示上次看到的，以及开窗口时不闪一下「还没有消息」。
@@ -699,7 +865,7 @@
   function renderChat(){if(!chatWith)return;renderChatTitle();const log=$('mpChatLog'),stick=log.scrollHeight-log.scrollTop-log.clientHeight<48,previousScroll=log.scrollTop;log.replaceChildren();const data=chatCache.get(chatWith)||[];
     if(chatMore.get(chatWith)){const more=document.createElement('button');more.type='button';more.className='mp-secondary mp-chat-more';more.textContent='加载更早的消息';more.onclick=()=>{more.disabled=true;more.textContent='正在加载…';socketSend({type:'chat.history',withUser:chatWith,beforeId:chatOldest.get(chatWith)||undefined,limit:30})};log.append(more)}
     if(!data.length){const empty=document.createElement('div');empty.className='mp-empty';empty.textContent=MP.connected?'还没有消息，向对方打个招呼吧。':'暂时没有本机记录；恢复联机后会自动从服务器补全。';log.append(empty);return}
-    let lastDay='',lastTime=0;for(const m of data){const at=new Date(m.at).getTime(),day=chatDay(m.at);if(day!==lastDay||at-lastTime>5*60*1000){const sep=document.createElement('div');sep.className='mp-chat-separator';sep.textContent=day+' '+chatTime(m.at);log.append(sep)}lastDay=day;lastTime=at;const mine=Number(m.from)===Number(me.id),p=mine?me:chatProfile(chatWith),wrap=document.createElement('div'),side=document.createElement('div'),bubble=document.createElement('div'),small=document.createElement('small');wrap.className='mp-message'+(mine?' mine':'');bubble.className='mp-bubble';bubble.textContent=m.content;small.textContent=chatTime(m.at);side.className='mp-message-content';side.append(bubble,small);wrap.append(avatarEl(p.look,p.id,p.online,true,'查看个人主页'),side);log.append(wrap)}if(stick)log.scrollTop=log.scrollHeight;else log.scrollTop=previousScroll;
+    let lastDay='',lastTime=0;for(const m of data){const at=new Date(m.at).getTime(),day=chatDay(m.at);if(day!==lastDay||at-lastTime>5*60*1000){const sep=document.createElement('div');sep.className='mp-chat-separator';sep.textContent=day+' '+chatTime(m.at);log.append(sep)}lastDay=day;lastTime=at;const mine=Number(m.from)===Number(me.id),p=mine?me:chatProfile(chatWith),wrap=document.createElement('div'),side=document.createElement('div'),bubble=document.createElement('div'),small=document.createElement('small');wrap.className='mp-message'+(mine?' mine':'')+(m.failed?' failed':'');bubble.className='mp-bubble';bubble.textContent=m.content;small.textContent=m.failed?'未送达 · '+chatTime(m.at):chatTime(m.at);side.className='mp-message-content';side.append(bubble,small);if(m.failed){const bang=document.createElement('span');bang.className='mp-fail-bang';bang.textContent='! '+m.failed;bang.title=m.failed;side.append(bang)}wrap.append(avatarEl(p.look,p.id,p.online,true,'查看个人主页'),side);log.append(wrap)}if(stick)log.scrollTop=log.scrollHeight;else log.scrollTop=previousScroll;
   }
   /* 断线时也允许打开：先用本地留底把窗口画出来，连上之后 welcome 那一段会再拉一次服务端记录。 */
   function openChat(id){if(!me||Number(id)===Number(me.id))return;chatWith=Number(id);$('mpBoard').hidden=true;$('mpNearby').hidden=true;$('mpChat').hidden=false;$('mpChatError').textContent='';renderChat();if(MP.connected)socketSend({type:'chat.history',withUser:chatWith,limit:30});$('mpChatInput').focus();for(const k in keys)keys[k]=0;for(const k in CKEYS)CKEYS[k]=0}
@@ -710,11 +876,28 @@
   async function colleges(){if(collegeList)return collegeList;try{collegeList=(await api('/colleges')).colleges||[]}catch{collegeList=[]}return collegeList}
   function fillColleges(sel,current){colleges().then(list=>{sel.replaceChildren();const blank=document.createElement('option');blank.value='';blank.textContent='（未选择）';sel.append(blank);for(const name of list){const o=document.createElement('option');o.value=name;o.textContent=name;sel.append(o)}if(current&&!list.includes(current)){const old=document.createElement('option');old.value=current;old.textContent=current+'（原来填的，请重新选择）';sel.append(old)}sel.value=current})}
   function closeProfile(){unmountAvatarViewers($('mpProfileBody'));profileUser=null;$('mpProfileShade').hidden=true}
+  /* 个人主页的「📢 近期动态」：自己和别人都能看。
+     内容 = 跟 NPC 的提问（只算真正进了模型的）、喂猫、乐跑、留言板发言，按时间倒序。
+     数据只走 GET /activity/<id>，服务端已把被拦下的提问排除在外。 */
+  function activityBlock(id){
+    const box=document.createElement('details');box.className='mp-activity';
+    box.innerHTML='<summary>📢 近期动态</summary><div class="mp-activity-body mp-muted">展开后加载…</div>';
+    box.addEventListener('toggle',async()=>{if(!box.open)return;const body=box.querySelector('.mp-activity-body');if(body.dataset.loaded)return;body.textContent='正在加载…';
+      try{const data=await api('/activity/'+id);body.dataset.loaded='1';body.replaceChildren();
+        if(!data.items.length){const p=document.createElement('p');p.className='mp-muted';p.textContent='最近还没有动态';body.append(p);return}
+        for(const it of data.items){const row=document.createElement('p'),when=document.createElement('span'),icon=document.createElement('span'),label=document.createElement('span');
+          when.className='mp-his-time';when.textContent=timeText(it.at);
+          icon.className='mp-act-icon';icon.textContent=it.icon;
+          label.className='mp-act-label';label.textContent=it.label;
+          row.append(when,icon,label,document.createTextNode(it.text));body.append(row)}
+      }catch(e){body.textContent='动态加载失败：'+e.message}});
+    return box;
+  }
   function showProfile(id,historyPeer=0){id=Number(id);$('mpMenu').hidden=true;$('mpNearby').hidden=true;profileUser=id;const mine=id===me.id;$('mpProfile').classList.toggle('mp-other-profile',!mine);$('mpProfileShade').hidden=false;$('mpProfileTitle').textContent=mine?'个人中心':'个人主页';const body=$('mpProfileBody');unmountAvatarViewers(body);body.replaceChildren();
     ensureProfile(id).then(p=>{if($('mpProfileShade').hidden||profileUser!==id||!me)return;body.replaceChildren();const top=document.createElement('div');top.className='mp-profile-top';top.append(avatarEl(p.look,id,p.online,false));const details=document.createElement('div');const name=document.createElement('strong');name.textContent=p.nickname;const line=document.createElement('div');line.className='mp-muted';line.textContent=mine?'昵称不可修改 · ID '+id:(p.online?'● 在线 · ID '+id:'○ 离线 · ID '+id+' · '+(p.lastSeen?timeText(p.lastSeen):'暂无记录'));details.append(name,line);top.append(details);body.append(top);
       /* [QODER-FIX #16] 别人的主页按公开/隐藏设置显示：后端已把隐藏项清空，
          这里再按 visibility 兜一层（防止接口变化时把隐藏资料又渲染出来）。 */
-      if(!mine){body.append(avatarViewer(p.look));const vis=p.visibility||{},info=document.createElement('dl');info.className='mp-public-info';for(const [key,label] of [['bio','签名'],['college','学院'],['grade','年级'],['tags','兴趣标签']]){if(vis[key]===false)continue;const row=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;const value=key==='tags'?(p.tags||[]):p[key];if(key==='tags'&&value.length){for(const tag of value){const chip=document.createElement('span');chip.className='mp-tag';chip.textContent=tag;dd.append(chip)}}else dd.textContent=key==='tags'?'未填写':(value||'未填写');row.append(dt,dd);info.append(row)}body.append(info);const button=document.createElement('button');button.className='mp-primary';button.textContent='💬 发起私聊';button.onclick=()=>{closeProfile();openChat(id)};body.append(button);return}
+      if(!mine){body.append(avatarViewer(p.look));const vis=p.visibility||{},info=document.createElement('dl');info.className='mp-public-info';for(const [key,label] of [['bio','签名'],['college','学院'],['grade','年级'],['tags','兴趣标签']]){if(vis[key]===false)continue;const row=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;const value=key==='tags'?(p.tags||[]):p[key];if(key==='tags'&&value.length){for(const tag of value){const chip=document.createElement('span');chip.className='mp-tag';chip.textContent=tag;dd.append(chip)}}else dd.textContent=key==='tags'?'未填写':(value||'未填写');row.append(dt,dd);info.append(row)}body.append(info);body.append(activityBlock(id));const button=document.createElement('button');button.className='mp-primary';button.textContent='💬 发起私聊';button.onclick=()=>{closeProfile();openChat(id)};body.append(button);return}
       const form=document.createElement('form');form.id='mpProfileForm';form.innerHTML=`<div class="mp-form-grid"><label class="wide">签名<input name="bio" class="mp-field" maxlength="40"></label><label>学院（从学校院系名单里选）<select name="college" class="mp-field" title="只能从下拉名单里选，不接受手填"></select></label><label>年级<select name="grade" class="mp-field"><option value="">未填写</option><option>大一</option><option>大二</option><option>大三</option><option>大四</option><option>硕士</option><option>博士</option></select></label><label class="wide">兴趣标签（输入后按逗号，最多 5 个）<span id="mpTagChips" class="mp-tag-list"></span><input name="tags" class="mp-field" maxlength="6" placeholder="输入标签后按逗号（,）生成"></label></div><fieldset class="mp-privacy"><legend>别人能看到的资料</legend><label><input type="checkbox" name="showBio"> 签名</label><label><input type="checkbox" name="showCollege"> 学院</label><label><input type="checkbox" name="showGrade"> 年级</label><label><input type="checkbox" name="showTags"> 兴趣标签</label></fieldset><p class="mp-muted mp-privacy-hint">勾选 = 公开；取消勾选后，其他玩家在你的主页看不到这一项。</p><p class="mp-muted mp-privacy-hint">形象（脸型、发型、穿搭）在左上角「🧍 玩家精灵」里设置。</p><div class="mp-profile-actions"><button class="mp-primary">保存资料</button><button type="button" id="mpLogout" class="mp-secondary">退出登录</button></div><div class="mp-error" id="mpProfileError" role="alert"></div>`;
       body.append(form);form.elements.bio.value=p.bio||'';fillColleges(form.elements.college,p.college||'');form.elements.grade.value=p.grade||'';for(const field of ['Bio','College','Grade','Tags'])form.elements['show'+field].checked=p.visibility?.[field.toLowerCase()]!==false;
       const tags=[...(p.tags||[])],chips=$('mpTagChips');
@@ -735,7 +918,7 @@
          数据只走 GET /api/mp/history/me，那个接口只按当前 token 查库 ⇒ 别人的主页看不到这块。 */
       const history=document.createElement('details');history.className='mp-history';
       history.innerHTML='<summary>💬 我的聊天记录 · 仅自己可见</summary><div class="mp-history-body mp-muted">展开后加载记录…</div>';
-      body.append(history);
+      body.append(history);body.append(activityBlock(id));
       history.addEventListener('toggle',async()=>{if(!history.open)return;const box=history.querySelector('.mp-history-body');if(box.dataset.loaded)return;box.textContent='正在加载…';
         const groupByPeer=list=>{const map=new Map();for(const m of list){if(!map.has(m.to))map.set(m.to,{peer:m.to,nickname:m.nickname,items:[]});map.get(m.to).items.push(m)}return[...map.values()]};
         try{const data=await api('/history/me');box.dataset.loaded='1';box.replaceChildren();
@@ -765,7 +948,41 @@
   /* [QODER-FIX #5/#8] 点击地图上的玩家精灵（没有 DOM 锚点，按点击坐标）弹出双选菜单
      （发起对话 / 个人主页），补回“点别人精灵直接私聊”的入口；不再一点就直接跳进私聊。 */
   function showMenuAt(id,x,y){id=Number(id);if(id===me.id){showProfile(id);return}menuUser=id;menuAnchor=null;const menu=$('mpMenu');menuAt=performance.now();menu.hidden=false;const h=80;menu.style.left=Math.max(6,Math.min(window.innerWidth-150,x-10))+'px';menu.style.top=(y>h+12?y-h-5:y+5)+'px'}
-  function closeChat(){$('mpChat').hidden=true;chatWith=null;$('mpChatInput').blur();for(const k in keys)keys[k]=0;for(const k in CKEYS)CKEYS[k]=0}
+  function closeChat(){$('mpChat').hidden=true;$('mpReportShade').hidden=true;chatWith=null;$('mpChatInput').blur();for(const k in keys)keys[k]=0;for(const k in CKEYS)CKEYS[k]=0}
+
+  /* ---------- 举报 / 拉黑（2026-11-06） ----------
+     举报：把理由和"最近一条私聊"的原话一起交给管理员，消息事后被删也留有快照。
+     拉黑：双方都不能再发新的私聊；对方硬发的那条会在自己这边显示红色感叹号。 */
+  function authHeaders(){return {'Content-Type':'application/json','Authorization':'Bearer '+token}}
+  function openReport(){
+    if(!chatWith||!me)return;
+    $('mpReportTitle').textContent='举报 '+chatProfile(chatWith).nickname;
+    $('mpReportHint').textContent='举报会连同最近一条私聊的内容一起交给管理员。恶意举报一样会被处理。';
+    $('mpReportReason').value='';$('mpReportError').textContent='';
+    $('mpReportShade').hidden=false;$('mpReportReason').focus();
+  }
+  function closeReport(){$('mpReportShade').hidden=true}
+  function submitReport(){
+    const reason=$('mpReportReason').value.trim();
+    if(reason.length<2){$('mpReportError').textContent='请写清楚举报理由（至少 2 个字）';return}
+    const list=chatCache.get(Number(chatWith))||[];
+    const last=[...list].reverse().find(x=>!x.failed);
+    $('mpReportSubmit').disabled=true;
+    fetch('/api/mp/report',{method:'POST',headers:authHeaders(),body:JSON.stringify({targetId:Number(chatWith),reason,msgId:last?Number(last.msgId)||0:0})})
+      .then(r=>r.json().catch(()=>({})).then(d=>{if(!r.ok)throw new Error(d.error||'提交失败');return d}))
+      .then(d=>{closeReport();status(d.msg||'举报已提交，管理员会尽快受理')})
+      .catch(e=>{$('mpReportError').textContent=e.message})
+      .finally(()=>{$('mpReportSubmit').disabled=false});
+  }
+  function toggleBlock(){
+    if(!chatWith)return;
+    const id=Number(chatWith),on=!blocks.has(id);
+    if(on&&!confirm('拉黑 '+chatProfile(id).nickname+'？拉黑后你们双方都发不了新的私聊。'))return;
+    fetch('/api/mp/block',{method:'POST',headers:authHeaders(),body:JSON.stringify({targetId:id,on})})
+      .then(r=>r.json().catch(()=>({})).then(d=>{if(!r.ok)throw new Error(d.error||'操作失败');return d}))
+      .then(d=>{blocks=new Set((d.blocked||[]).map(Number));renderChatTitle();status(on?'已拉黑，双方都不能再发私聊':'已解除拉黑')})
+      .catch(e=>{$('mpChatError').textContent=e.message});
+  }
   function activePoint(e,indoor){const c=indoor?ctrCv:cv,r=c.getBoundingClientRect();if(indoor){const z=Math.max(1,Math.min(Math.floor(c.width/CTR_W),Math.floor(c.height/CTR_H))),ox=((c.width-CTR_W*z)/2)|0,oy=((c.height-CTR_H*z)/2)|0;return{x:((e.clientX-r.left)*c.width/r.width-ox)/z,y:((e.clientY-r.top)*c.height/r.height-oy)/z}}return{x:cam.x+((e.clientX-r.left)*VIEW_W/r.width)/zoom,y:cam.y+((e.clientY-r.top)*VIEW_H/r.height)/zoom}}
   function hit(e,indoor){if(!MP.connected||scene!==(indoor?CENTER.room?.key:'out'))return null;const at=activePoint(e,indoor);if(indoor){const n=CENTER.room?.npc;if(n&&Math.abs(at.x-n.x)<18&&Math.abs(at.y-n.y)<28)return null}else{for(const n of [GUIDE,GUARD,AUNT])if(n&&Math.abs(at.x-n.x)<18&&Math.abs(at.y-n.y)<30)return null}return [...peers.values()].filter(p=>{const v=point(p,performance.now());return Math.abs(at.x-v.x)<14&&at.y>=v.y-32&&at.y<=v.y+7}).sort((a,b)=>b.y-a.y)[0]||null}
   function bindHits(c,indoor){let down=null;c.addEventListener('pointerdown',e=>{if(e.button!==0)return;const p=hit(e,indoor);down=p?{id:p.id,x:e.clientX,y:e.clientY}:null});c.addEventListener('pointerup',e=>{if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<=5)showMenuAt(down.id,e.clientX,e.clientY);down=null});c.addEventListener('pointermove',e=>{c.style.cursor=hit(e,indoor)?'pointer':''});c.addEventListener('pointercancel',()=>down=null)}
@@ -843,7 +1060,7 @@
     try{
       const result=await MP.ensureNpc('ld');
       if(result!=='ok'){guardFail(result==='auth'?'登录票据没换成，请重新登录后再呼叫老丁':'当前站点服务器的老丁服务暂不可用，请稍后重试');return}
-      if(!guardReady){$('mpGuardBridge').src='/ld/';if(!await guardWaitReady(8000)){guardFail('桥没响应：老丁的页面没加载出来，点重试再连一次');return}}
+      if(!guardReady){$('mpGuardBridge').src='/ld/?v=20261106pulse';if(!await guardWaitReady(8000)){guardFail('桥没响应：老丁的页面没加载出来，点重试再连一次');return}}
       guardConnectingDone();
       /* 中途关过面板再打开的，让 iframe 把还走得通的那套处理界面（比对卡片 / 当面认一眼）
          再递一次；那句"已经接通"晚 150ms 再说，恢复出来的按钮才排在我这句话上面。 */
@@ -887,6 +1104,8 @@
   },drawIndoorLabels(g){if(!me||(!MP.connected&&!offlineSolo&&!soloMode)||scene==='out')return;g.save();g.font='bold 10px system-ui';g.textAlign='center';const own=myPos();for(const p of [{id:me.id,nickname:me.nickname+' #'+me.id,x:own.x,y:own.y,fromX:own.x,fromY:own.y,at:performance.now()},...peers.values()]){const v=point(p,performance.now()),w=g.measureText(p.nickname).width+6;g.fillStyle='rgba(19,27,35,.9)';g.fillRect(v.x-w/2,v.y-43,w,13);g.fillStyle='#fff';g.fillText(p.nickname,v.x,v.y-33)}g.restore()}};
   Object.defineProperty(MP,'offlineSolo',{get:()=>offlineSolo||soloMode});
   MP.openGuardTalk=openGuardTalk;
+  /* 打开与某位玩家的私聊面板（大厅内部本来就用它；挂到 MP 上方便别的模块和自动化测试调用） */
+  MP.openChat=openChat;
   MP.guardArrived=()=>{status('老丁已到达');openGuardTalk()};
   MP.callGuard=callGuard;
   window.MP=MP;
@@ -954,6 +1173,8 @@
   $('mpPortalClose').onclick=()=>$('mpPortal').hidden=true;
   $('mpOnlineToggle').onclick=()=>{$('mpOnline').hidden?openOnline():closeOnline()};
   $('mpOnlineClose').onclick=closeOnline;
+  $('mpPulseToggle').onclick=()=>{$('mpPulse').hidden?openPulse():closePulse()};
+  $('mpPulseClose').onclick=closePulse;
   updateNoticeDot();
   $('mpSprite').onclick=openLookPanel;$('mpSummonGuard').onclick=callGuard;
   $('mpBoardForm').onsubmit=e=>{e.preventDefault();const input=$('mpBoardInput'),content=input.value.trim(),error=$('mpBoardError'),button=$('mpBoardForm').querySelector('button');if(!content||content.length>200){error.textContent='留言须为 1 至 200 字';return}/* [QODER-FIX #7] 上一条没收到服务器确认时，旧代码在这里静默 return，
@@ -962,7 +1183,10 @@
     const id=clientId();if(!socketSend({type:'announce.post',content,clientMsgId:id})){error.textContent='当前未连接，留言没有发送';return}
     boardSending=id;button.disabled=true;error.textContent='正在发送…';
     clearTimeout(boardTimer);boardTimer=setTimeout(()=>{if(boardSending!==id)return;boardSending='';button.disabled=false;error.textContent='发送超时：联机通道没有确认，请检查网络后重试'},8000)};
-  $('mpChatClose').onclick=closeChat;$('mpChatHistory').onclick=()=>{if(chatWith)showProfile(me.id,chatWith)};$('mpChatForm').onsubmit=e=>{e.preventDefault();const input=$('mpChatInput'),content=input.value.trim();if(!content||!chatWith)return;const clientMsgId=clientId();pending.set(clientMsgId,{from:me.id,to:chatWith,content,fromNickname:me.nickname,look,clientMsgId});if(socketSend({type:'chat.send',to:chatWith,content,clientMsgId})){input.value='';$('mpChatError').textContent='';input.focus()}else pending.delete(clientMsgId)};
+  $('mpChatClose').onclick=closeChat;$('mpChatHistory').onclick=()=>{if(chatWith)showProfile(me.id,chatWith)};
+  $('mpChatReport').onclick=openReport;$('mpChatBlock').onclick=toggleBlock;
+  $('mpReportClose').onclick=closeReport;$('mpReportSubmit').onclick=submitReport;
+  $('mpReportShade').onclick=e=>{if(e.target.id==='mpReportShade')closeReport()};$('mpChatForm').onsubmit=e=>{e.preventDefault();const input=$('mpChatInput'),content=input.value.trim();if(!content||!chatWith)return;const clientMsgId=clientId();pending.set(clientMsgId,{from:me.id,to:chatWith,content,fromNickname:me.nickname,look,clientMsgId});if(socketSend({type:'chat.send',to:chatWith,content,clientMsgId})){input.value='';$('mpChatError').textContent='';input.focus()}else pending.delete(clientMsgId)};
   $('mpChatInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();$('mpChatForm').requestSubmit()}};
   $('mpProfileClose').onclick=closeProfile;$('mpProfileShade').onclick=e=>{if(e.target===$('mpProfileShade'))closeProfile()};
   $('mpLookClose').onclick=closeLookPanel;$('mpLookShade').onclick=e=>{if(e.target===$('mpLookShade'))closeLookPanel()};
@@ -978,7 +1202,7 @@
   $('mpGuardFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!guardLive())return;
     try{const image=await shrinkPhoto(f);const text=$('mpGuardInput').value.trim();$('mpGuardInput').value='';guardLine('self','【照片】'+f.name);guardPost({type:'campus.guard.photo',image,text})}
     catch(err){guardLine('sys','这张照片读不出来，换一张再试')}};
-  window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==$('mpGuardBridge').contentWindow)return;if(e.data?.type==='campus.guard.ready'){guardReady=true;guardConnectingDone();return}if($('mpGuard').hidden)return;if(e.data?.type==='campus.guard.reply')guardLine(e.data.who==='sys'?'sys':'guard',String(e.data.text||''));else if(e.data?.type==='campus.guard.ui')guardUi(e.data.ui)});
+  window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==$('mpGuardBridge').contentWindow)return;if(e.data?.type==='campus.guard.ready'){guardReady=true;guardConnectingDone();return}if(e.data?.type==='campus.guard.event'){const d=e.data;if(d.kind==='lost'||d.kind==='claim')api('/pulse/event',{method:'POST',body:JSON.stringify({kind:d.kind,item:String(d.category||'').slice(0,20)})}).catch(()=>{});return}if($('mpGuard').hidden)return;if(e.data?.type==='campus.guard.reply')guardLine(e.data.who==='sys'?'sys':'guard',String(e.data.text||''));else if(e.data?.type==='campus.guard.ui')guardUi(e.data.ui)});
   /* [QODER-FIX #8] menuAt：pointerup 打开双选菜单后，浏览器还会补发一次 click，
      旧逻辑会立刻把菜单关掉。250ms 内的点击不算“点空白处关闭”。 */
   root.addEventListener('click',e=>{const av=e.target.closest('.mp-avatar');if(av&&av.dataset.user){if(av.closest('#mpChat'))showProfile(av.dataset.user);else showMenu(av.dataset.user,av);e.stopPropagation()}else if(!$('mpMenu').hidden&&!e.target.closest('#mpMenu')&&performance.now()-menuAt>250)$('mpMenu').hidden=true});

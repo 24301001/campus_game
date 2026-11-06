@@ -108,26 +108,24 @@ def make_challenge(assets_dir: Path, sources: list[Image.Image] | None = None) -
     size = (PIECE_W, PIECE)
     small = mask.resize(size, Image.Resampling.LANCZOS)
 
-    # 拼图块：从原图里抠出来，加一圈浅色描边，看着像一块真的碎片
+    # 拼图块：从原图里抠出来，只收一条**深色**边。用户点名不要白圈 ——
+    # 白圈在深色底上像贴了张纸，抠图痕迹反而更重。
     piece = bg.crop((target, y, target + PIECE_W, y + PIECE)).convert("RGBA")
     piece.putalpha(small)
-    # 描边 = 稍微胀大一圈减掉本身，得到一条干净的两像素边，比 FIND_EDGES 少毛刺
+    # 收边 = 稍微胀大一圈减掉本身，得到一条干净的两像素边，比 FIND_EDGES 少毛刺
     edge = ImageChops.subtract(small.filter(ImageFilter.MaxFilter(5)),
                                small.filter(ImageFilter.MinFilter(3)))
-    glow = Image.new("RGBA", size, (255, 255, 255, 0))
-    glow.putalpha(edge.point(lambda v: int(v * 0.85)))
+    glow = Image.new("RGBA", size, (12, 8, 24, 255))
+    glow.putalpha(edge.point(lambda v: int(v * 0.45)))
     piece = Image.alpha_composite(piece, glow)
 
-    # 背景挖洞：缺口压暗 + 描边，用户一眼能看到要拖到哪。
-    # 阴影和描边都先铺到整张画布的透明图层上再合成 —— 直接 paste 会把底色
-    # 的透明度一起覆盖掉，边缘会发黑。
+    # 背景挖洞：只压暗，**不描白边**（那圈白就是用户说的"缺块一圈白边"）。
+    # 阴影先铺到整张画布的透明图层上再合成 —— 直接 paste 会把底色的透明度
+    # 一起覆盖掉，边缘会发黑。
     hole = bg.convert("RGBA")
     shade = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
     shade.paste((12, 8, 24, 255), (target, y), small.point(lambda v: int(v * 0.62)))
     hole = Image.alpha_composite(hole, shade)
-    outline = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
-    outline.paste((255, 255, 255, 255), (target, y), edge.point(lambda v: int(v * 0.55)))
-    hole = Image.alpha_composite(hole, outline)
 
     return {
         "id": secrets.token_urlsafe(18),

@@ -156,8 +156,14 @@
       px(cx + 3, ty + 1, 1, TORSO - 3, C.packD);
       px(cx + 1, ty + 1, 3, 1, C.packL);
       if (v.clothPattern === 'stripe') for (let r = ty + 2; r < ty + TORSO - 1; r += 3) px(cx - 3, r, 6, 1, v.clothAlt);
-      const ao = crouched ? (pose === 'pet' || pose === 'feed' ? -1 : 0) : F.sw * 2;
-      px(cx - 4, ty + 2 + ao, 2, ARMR, C.coatL); px(cx - 4, ty + 2 + ao + ARMR, 2, 2, C.skin);
+      /* ⚠️ 侧视摆臂＝**以肩膀为圆心前后摆**，不是整条胳膊横着平移：
+         肩点固定在 (cx-3, ty+2)，正好压在躯干最前那一列，越往下偏得越多，手最后落在 swing 处 ——
+         画出来是一条斜着的胳膊，走路才有钟摆感。
+         近侧腿跨前的那两帧（0、2）胳膊反着来：0 帧向后 +3、2 帧向前 -3，通过帧 ±2。 */
+      const swing = crouched ? -3 : ([3, 2, -3, -2][step] || 0);
+      const sgn = Math.sign(swing);
+      for (let i = 0; i < ARMR; i++) px(cx - 3 + sgn * Math.round(Math.abs(swing) * i / ARMR), ty + 2 + i, 2, 1, C.coatL);
+      px(cx - 3 + swing, ty + 2 + ARMR, 2, 2, C.skin);
     }
     function legsSide() {
       // One foot plants while the other passes one pixel above the ground.

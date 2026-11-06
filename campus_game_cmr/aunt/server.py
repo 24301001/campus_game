@@ -84,6 +84,11 @@ def init_db():
                 recommendations_json TEXT NOT NULL DEFAULT '[]',
                 created_at REAL NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS user_memory (
+                user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                data_json TEXT NOT NULL DEFAULT '{}',
+                updated_at REAL NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS reviews (
                 id INTEGER PRIMARY KEY,
                 user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -172,6 +177,223 @@ class ChatInput(BaseModel):
     message: str = Field(min_length=1, max_length=1000)
     conversation_id: Optional[int] = None
     context_stall_id: Optional[str] = None
+
+
+FOLLOWUP_WORDS = (
+    "多少钱", "价格", "价钱", "几元", "怎么卖", "几点", "营业", "开门", "关门",
+    "在哪", "位置", "排队", "等多久", "好吃吗", "怎么样", "有吗", "卖什么",
+    "有什么菜", "有哪些菜", "有什么吃", "有啥吃",
+)
+
+
+def is_followup_without_topic(message: str) -> bool:
+    """这句话是不是"接着上一句问"：只说了多少钱/在哪，没点名哪家食堂、哪个档口。
+
+    分成函数是因为现在有两个地方要用它：同一段对话里往前找（contextual_question），
+    以及换了一段对话、靠长期记忆往前找（chat 里的跨会话补全）。
+    """
+    return (any(word in message for word in FOLLOWUP_WORDS)
+            and not knowledge.find_canteen(message)
+            and not knowledge.find_zone(message)
+            and not knowledge.matched_dishes(message))
+
+
+def contextual_question(message: str, previous_messages) -> str:
+    """Carry named food and venue into short follow-up questions only."""
+    if not is_followup_without_topic(message):
+        return message
+    for earlier in previous_messages:
+        canteen = knowledge.find_canteen(earlier)
+        dishes = knowledge.matched_dishes(earlier, canteen)
+        zone_id = knowledge.find_zone(earlier, canteen)
+        if not (canteen or dishes or zone_id):
+            continue
+        parts = [canteen["name"]] if canteen else []
+        floor = knowledge._requested_floor(earlier, canteen)
+        if floor and not knowledge._requested_floor(message, canteen):
+            parts.append(floor)
+        if zone_id and not dishes:
+            parts.append(knowledge.ZONES[zone_id]["name"])
+        if dishes:
+            parts.append(max((entry["dish"]["name"] for entry in dishes), key=len))
+        return " ".join(parts + [message])
+    return message
+
+
+# ---------------------------------------------------------------------------
+# 长期记忆（2026-11-06）：跨会话的"小纸条"
+#
+#   conversations / messages 记的是"这一段里聊了什么"；user_memory 记的是
+#   "这个人常看哪家食堂、常问哪道菜、上一次问的是什么"。两者分工：
+#     · 同一段对话里，"多少钱"指哪道菜，靠 messages 往前找 5 句；
+#     · 换了一段对话（点"新对话"、隔天再登），靠这份小纸条接着答；
+#     · 问"你还记得我吗"，直接从这份小纸条里报账。
+#
+#   只从**这个人自己的提问**里统计：不调模型、不推理、不猜口味，写进去的都是
+#   他自己打出来的食堂名和菜名。别人看不到，删账号一起删。
+# ---------------------------------------------------------------------------
+MEMORY_SCAN = 200          # 老账号第一次用到时，最多回扫这么多条自己的历史提问
+RECALL_HINTS = ("还记得我", "记得我吗", "记得我吧", "还认得我", "我是谁", "我叫什么", "认识我吗")
+
+
+def _memory_topics(text):
+    """从一句话里认出他提到了哪家食堂、哪个档口、哪道菜。"""
+    canteen = knowledge.find_canteen(text)
+    zone_id = knowledge.find_zone(text, canteen)
+    dishes = knowledge.matched_dishes(text, canteen)
+    return canteen, zone_id, dishes
+
+
+def _topic_phrase(canteen, zone_id, dishes, text="") -> str:
+    """拼成一句人话，例如「明湖 1F 川湘风味 麻辣香锅」。"""
+    parts = []
+    if zone_id:
+        parts.append(knowledge._zone_name(zone_id))
+    elif canteen:
+        parts.append(canteen["name"])
+        floor = knowledge._requested_floor(text, canteen) if text else None
+        if floor:
+            parts.append(floor)
+    if dishes:
+        parts.append(max((entry["dish"]["name"] for entry in dishes), key=len))
+    return " ".join(parts)
+
+
+def _absorb(memory: dict, text: str) -> dict:
+    """把一句话记进小纸条。纯计数，不做任何推断。"""
+    canteen, zone_id, dishes = _memory_topics(text)
+    now = time.time()
+    memory["n"] = int(memory.get("n") or 0) + 1
+    memory["first_at"] = memory.get("first_at") or now
+    memory["last_at"] = now
+    if canteen:
+        bucket = memory.setdefault("canteens", {})
+        bucket[canteen["id"]] = int(bucket.get(canteen["id"]) or 0) + 1
+    if zone_id:
+        bucket = memory.setdefault("zones", {})
+        bucket[zone_id] = int(bucket.get(zone_id) or 0) + 1
+    for entry in dishes:
+        name = entry["dish"]["name"]
+        bucket = memory.setdefault("dishes", {})
+        bucket[name] = int(bucket.get(name) or 0) + 1
+    phrase = _topic_phrase(canteen, zone_id, dishes, text)
+    if phrase:
+        memory["last_topic"] = phrase
+        memory["last_topic_at"] = now
+    return memory
+
+
+def _trim(memory: dict) -> dict:
+    """纸条有上限：只留问得最多的几个，别让它越记越长。"""
+    for key, cap in (("canteens", 8), ("zones", 12), ("dishes", 20)):
+        bucket = memory.get(key) or {}
+        if len(bucket) > cap:
+            memory[key] = dict(sorted(bucket.items(), key=lambda item: (-item[1], item[0]))[:cap])
+    return memory
+
+
+def save_memory(connection, user_id: int, memory: dict):
+    connection.execute(
+        "INSERT INTO user_memory(user_id,data_json,updated_at) VALUES(?,?,?) "
+        "ON CONFLICT(user_id) DO UPDATE SET data_json=excluded.data_json,updated_at=excluded.updated_at",
+        (user_id, json.dumps(memory, ensure_ascii=False), time.time()),
+    )
+
+
+def load_memory(connection, user_id: int) -> dict:
+    """读出这个人的小纸条；老账号第一次用就从自己的历史提问里补一份。
+
+    为什么要回扫：上线当天库里已经有一批历史提问，不回扫的话每个老用户都要
+    "从今天起重新认识"，他们会觉得记忆丢了。
+    """
+    row = connection.execute("SELECT data_json FROM user_memory WHERE user_id=?", (user_id,)).fetchone()
+    if row is not None:
+        try:
+            return json.loads(row["data_json"] or "{}")
+        except ValueError:
+            return {}
+    rows = connection.execute(
+        "SELECT content FROM messages WHERE user_id=? AND role='user' ORDER BY id DESC LIMIT ?",
+        (user_id, MEMORY_SCAN),
+    ).fetchall()
+    memory = {}
+    for item in reversed(rows):
+        memory = _absorb(memory, item["content"])
+    if memory:
+        _trim(memory)
+        save_memory(connection, user_id, memory)
+    return memory
+
+
+MESSAGE_KEEP = 600     # 每个账号只留最近 600 条消息（约 300 轮问答）
+
+
+def prune_messages(connection, user_id):
+    """聊得再多，库里也只留最近 MESSAGE_KEEP 条。
+
+    会话列表、"上次聊的"、记忆画像要的东西都在最近这一段里；更早的旧账
+    除了把库撑大没有别的用处，所以从旧往新删。每次写完顺手删一次，
+    不需要定时任务，也不会某天突然丢掉一大批。"""
+    connection.execute(
+        "DELETE FROM messages WHERE user_id=? AND id NOT IN "
+        "(SELECT id FROM messages WHERE user_id=? ORDER BY id DESC LIMIT ?)",
+        (user_id, user_id, MESSAGE_KEEP),
+    )
+
+
+def remember_message(connection, user_id: int, message: str, memory: dict) -> dict:
+    """把刚问的这句话记进去（memory 是**问这句话之前**读出来的那份）。"""
+    memory = _trim(_absorb(memory, message))
+    save_memory(connection, user_id, memory)
+    return memory
+
+
+def is_recall_question(text: str) -> bool:
+    return any(hint in text for hint in RECALL_HINTS)
+
+
+def recall_answer(memory: dict) -> str:
+    """回答「你还记得我吗」。报的全是数出来的账，不猜。"""
+    count = int(memory.get("n") or 0)
+    if count <= 0:
+        return "还没在这边聊过呢，孩子。想吃什么、问哪家食堂，说一句我就记下了。"
+    parts = ["记得呀，你在这边问过 %d 次。" % count]
+    canteens = memory.get("canteens") or {}
+    if canteens:
+        top_id, top_count = max(canteens.items(), key=lambda item: item[1])
+        name = (knowledge.CANTEENS.get(top_id) or {}).get("name")
+        if name:
+            parts.append("看得最多的是%s，%d 次。" % (name, top_count))
+    topic = memory.get("last_topic")
+    if topic:
+        parts.append("最近问的是%s。" % topic)
+    dishes = memory.get("dishes") or {}
+    if dishes:
+        top_dish, top_count = max(dishes.items(), key=lambda item: item[1])
+        parts.append("常问的菜是%s，%d 次。" % (top_dish, top_count))
+    parts.append("今天想吃点啥？")
+    return "".join(parts)
+
+
+def memory_text(memory: dict) -> str:
+    """给接口看的一行摘要。"""
+    count = int(memory.get("n") or 0)
+    if count <= 0:
+        return ""
+    parts = ["在食堂这边问过 %d 次" % count]
+    canteens = memory.get("canteens") or {}
+    if canteens:
+        names = []
+        for key, cnt in sorted(canteens.items(), key=lambda item: -item[1])[:3]:
+            names.append("%s（%d 次）" % ((knowledge.CANTEENS.get(key) or {}).get("name") or key, cnt))
+        parts.append("常看：" + "、".join(names))
+    dishes = memory.get("dishes") or {}
+    if dishes:
+        top = sorted(dishes.items(), key=lambda item: -item[1])[:3]
+        parts.append("常问的菜：" + "、".join("%s（%d 次）" % item for item in top))
+    if memory.get("last_topic"):
+        parts.append("上次问的是：" + str(memory["last_topic"]))
+    return "；".join(parts) + "。"
 
 
 def password_hash(password: str, salt: Optional[bytes] = None) -> str:
@@ -377,6 +599,28 @@ def history(request: Request):
             for row in rows]
 
 
+@app.get("/api/memory")
+def memory_view(request: Request):
+    """阿姨记得这位同学的什么。只读自己的，返回一句人话。"""
+    user = current_user(request)
+    with db() as connection:
+        memory = load_memory(connection, user["id"])
+    return {"count": int(memory.get("n") or 0),
+            "lastTopic": memory.get("last_topic"),
+            "text": memory_text(memory),
+            "updatedAt": iso(memory["last_at"]) if memory.get("last_at") else None}
+
+
+@app.delete("/api/memory")
+def memory_forget(request: Request):
+    """让他忘掉这位同学（只删小纸条，历史对话还在，要删对话另有接口）。"""
+    check_origin(request)
+    user = current_user(request)
+    with db() as connection:
+        connection.execute("DELETE FROM user_memory WHERE user_id=?", (user["id"],))
+    return {"ok": True}
+
+
 def get_rating(stall_id: str) -> dict:
     if stall_id not in knowledge.ZONES:
         raise KeyError(stall_id)
@@ -458,6 +702,18 @@ def chat(payload: ChatInput, request: Request):
         raise HTTPException(404, "没有这个档口")
     with db() as connection:
         conversation_id = require_conversation(connection, user["id"], payload.conversation_id)
+        memory = load_memory(connection, user["id"])          # 问这句话之前的样子
+        previous_messages = [row["content"] for row in connection.execute(
+            "SELECT content FROM messages WHERE conversation_id=? AND role='user' ORDER BY id DESC LIMIT 5",
+            (conversation_id,),
+        ).fetchall()]
+        answer_question = contextual_question(message, previous_messages)
+        # 换了一段对话、又只问"多少钱/在哪"：用上次问过的东西把问题补全。
+        used_memory = False
+        if (not previous_messages and memory.get("last_topic")
+                and is_followup_without_topic(message)):
+            answer_question = str(memory["last_topic"]) + " " + message
+            used_memory = True
         previous_count = connection.execute(
             "SELECT COUNT(*) AS n FROM messages WHERE conversation_id=? AND role='user'", (conversation_id,)
         ).fetchone()["n"]
@@ -465,9 +721,19 @@ def chat(payload: ChatInput, request: Request):
             "INSERT INTO messages(user_id,conversation_id,role,content,created_at) VALUES(?,?,'user',?,?)",
             (user["id"], conversation_id, message, time.time()),
         )
-        result = knowledge.answer(message, user["id"], connection, payload.context_stall_id)
+        recalled = is_recall_question(message)
+        if recalled:
+            # "你还记得我吗" 不走知识库也不走模型：只报自己数出来的账。
+            result = {"reply": recall_answer(memory), "evidence": [], "ratingsChanged": False,
+                      "emotion": "happy", "ranking": [], "recommendations": []}
+        else:
+            result = knowledge.answer(answer_question, user["id"], connection, payload.context_stall_id)
     # Do not hold a SQLite write transaction while the external model answers.
-    result["reply"] = tone.respond(message, result)
+    if not recalled:
+        result["reply"] = tone.respond(answer_question, result)
+        if used_memory:
+            result["reply"] = (result["reply"].rstrip() + "\n（我记着你上次问的是"
+                               + str(memory["last_topic"]) + "，就按这个接着查的。）")
     with db() as connection:
         connection.execute(
             "INSERT INTO messages(user_id,conversation_id,role,content,evidence_json,ranking_json,recommendations_json,created_at) "
@@ -476,6 +742,8 @@ def chat(payload: ChatInput, request: Request):
              json.dumps(result["ranking"], ensure_ascii=False),
              json.dumps(result["recommendations"], ensure_ascii=False), time.time()),
         )
+        remember_message(connection, user["id"], message, memory)
+        prune_messages(connection, user["id"])
         if previous_count == 0:
             title = message.replace("\n", " ")[:18]
             connection.execute("UPDATE conversations SET title=?,updated_at=? WHERE id=?",

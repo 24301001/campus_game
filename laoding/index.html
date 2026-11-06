@@ -259,7 +259,7 @@ header .sp{flex:1}
 <section id="chat-view" class="hidden">
   <header>
     <canvas id="hd-sprite" class="mini" width="12" height="13" style="width:28px;height:30px"></canvas>
-    <div class="title">保安 · 老丁<small id="role-line">保卫处值班 · 公文腔</small></div>
+    <div class="title">保安 · 老丁<small id="role-line">保卫处值班 · 刀子嘴豆腐心</small></div>
     <span id="status-chip" class="chip">—</span>
     <button id="clock" title="点击可拨时间（演示用）">--:--</button>
     <span class="sp"></span>
@@ -387,15 +387,15 @@ header .sp{flex:1}
 <script id="seed-agent" type="application/json">{"id":"guard","name":"保安 · 老丁","role":"保卫处值班","avatar":"sprite_guard","home":"baoweichu",
 "schedule":[{"t":"08:00-12:00","at":"baoweichu"},{"t":"12:00-14:00","at":"shitang2"},{"t":"14:00-22:00","at":"baoweichu"}],
 "roam":{"type":"patrol","speed":30,"stay_seconds":20,"waypoints":["nanmen","ximen","siyuanlou","tushuguan","shitang2","caochang","minghu","jx3"]},
-"persona":"公文腔，只讲流程，不寒暄",
+"persona":"刀子嘴豆腐心：规矩一步不让，学生的事能帮就帮",
 "knows":["失物招领","报修","门禁","证件核对","巡逻","保卫处职能"],
 "refuses":["选课","绩点","食堂评分","考研","社团","校园信息"],
 "tools":["matchLostItem","matchByImage","reportRepair"],
-"greeting":"保卫处值班。丢东西、报修，讲。",
-"unknown_line":"这事儿不归保卫处管，你找对应的人问去。",
-"refuse_routes":{"选课":"选课的事儿找学长，我这块儿管不了。","绩点":"绩点的事儿找学长或者教务处，保卫处管不着这块儿。","食堂评分":"食堂好不好吃找食堂阿姨，我这儿只管丢东西、报修。","考研":"考研的事儿找学长打听去，我帮不上忙。","社团":"社团的事儿找学长，别找我。","校园信息":"这个找向导小北问去，不归值班窗口管。"},
-"call_greeting":"来了来了，嘛事儿？",
-"offduty_line":"这会儿下班了，明儿白天再来吧。",
+"greeting":"哎，来啦。丢东西、报修，还是替人送东西？坐下慢慢说。",
+"unknown_line":"这个我还真管不着——不是推你，是怕耽误你。找对的人问，比我在这儿瞎指强。",
+"refuse_routes":{"选课":"选课得问学长，他们门儿清。我这儿只管丢东西、报修，别嫌我推你。","绩点":"绩点、成绩归教务处管，学长也比我清楚。我一个看大门的，插不上嘴。","食堂评分":"食堂好不好吃，你得问食堂阿姨。我只管丢东西和报修，饭菜我说了不算。","考研":"考研的事找学长打听，我这把年纪，只懂巡逻和登记。","社团":"社团招新找学长去，我这儿不办这个。","校园信息":"校园里怎么走、哪有啥，问向导小北。我守着这一片，出了门儿就说不准了。"},
+"call_greeting":"来了来了——同学，啥事儿？别急，我这不是到了嘛。",
+"offduty_line":"这会儿下班了，明早八点我在这儿。东西丢不了，先回去歇着。",
 "service_hours":{"start":"08:00","end":"22:00"},"dailyBudget":2}</script>
 
 <script>
@@ -1010,34 +1010,34 @@ function setMood(mood, hold){
 }
 /* ---------- 场景气泡 + 小挂件交互（参考互动演示） ---------- */
 const DING_IDLE_LINES = [
-  '丢东西别急——东西没长腿，跑不出校园。',
-  '盯着屏幕看没用，先把东西特征给我说说。',
-  '饭点前后最容易落东西，食堂那边我天天收一堆。',
-  '库里东西不少，不报特征我可不给你乱点鸳鸯谱。',
-  '证件丢了最省事——直接报学号，我按号查。',
-  '刚巡逻一圈回来，板凳还没坐热呢。',
-  '下雨天丢伞的最多，说颜色，我给你翻。'
+  '丢东西别急，东西没长腿，跑不出这个校园。',
+  '别光盯着屏幕，把东西的特征给我说说，比干着急强。',
+  '饭点前后最容易落东西，食堂那边我一天能收好几件。',
+  '库里东西不少，你不报特征，我可没法给你乱点鸳鸯谱。',
+  '证件丢了最省事——报学号，我按号一查就知道。',
+  '刚巡逻一圈回来，这板凳还没坐热呢。',
+  '下雨天丢伞的最多。说个颜色，我去给你翻。'
 ];
 const DING_STAGE_LINES = {
-  ask:'报学号，或者说说丢了啥——别让我猜。',
-  verify_name:'念姓名这关，错一个字都不能给。',
-  confirm_owner:'当面认一眼，你点头了我才销账。',
-  handover:'当面点清，出了门再说少了我可不认。',
-  desc:'颜色、牌子、贴纸……特征越细越好找。',
-  place:'说清楚在哪儿捡的，地图我比你熟。',
+  ask:'报学号，或者说说丢了啥，我照着给你查。',
+  verify_name:'姓名这关错一个字都不行——卡给错人，咱俩都麻烦。',
+  confirm_owner:'你当面认准了再点头，销了账可就找不回来了。',
+  handover:'当面点清。出了这个门再说少了，我可就说不清了。',
+  desc:'颜色、牌子、贴纸……你说得越细，我找得越快。',
+  place:'在哪儿捡的说清楚，这校园我闭着眼都能走。',
   photo:'拍清楚点，模糊了我这老花眼看不真。',
-  repair:'哪儿坏了、什么毛病，说具体。',
-  collect:'什么东西、在哪儿丢的，先说一样。',
+  repair:'哪儿坏了、什么毛病，说具体点，我好给你派对人。',
+  collect:'什么东西、在哪儿丢的，先说一样，我顺着往下问。',
   refine:'再补一句特征，我帮你接着筛。',
   card_photo:'卡面放平、别反光，学号姓名我都认。'
 };
 const PET_TEASE = [
   '点我干嘛？丢的东西又不会自己回来。',
-  '手感不错吧？可惜东西不是点一点就能找到的。',
-  '屏幕上戳八遍，不如来保卫处登记一趟。',
-  '别拽了，帽子都让你拽歪了。',
-  '我在这儿盯着呢，库里又躺着几件没人领的。',
-  '找东西报特征，戳我可不给你变出来。'
+  '手感不错吧？可惜东西不是点一点就能找着的。',
+  '在这儿戳八遍，不如来窗口登记一趟。',
+  '别拽了别拽了，帽子都让你拽歪了。',
+  '我盯着呢，库里又躺着几件没人领的。',
+  '找东西报特征。戳我，我可变不出来。'
 ];
 let _bubbleTimer = null, _idleBubbleTimer = null, _bubbleLock = 0;
 function showBubble(text, ttl){
@@ -1080,7 +1080,7 @@ function initMascot(){
   document.getElementById('guard-portrait').addEventListener('click', e => {
     if(e.target.closest('#pt-bubble')) return;
     setMood('greet');
-    if(!state.flow){ showBubble('值班呢。丢东西、找东西、报修，开口讲。', 6000); document.getElementById('inp').focus(); }
+    if(!state.flow){ showBubble('值班呢。丢了什么、在哪儿丢的，说说，我帮你查。', 6000); document.getElementById('inp').focus(); }
   });
   // 小挂件：拖拽换位；未拖动时的点击弹调侃
   const pet = document.getElementById('ding-pet'), bubble = document.getElementById('pet-bubble');
@@ -1119,12 +1119,12 @@ function autoMood(m){
   if(m.kind === 'orders') return 'busy';
   if(m.kind === 'cards') return /最像/.test(m.note || '') ? 'found' : 'think';
   if(/受理|入库了|销单|工单/.test(t)) return 'busy';
-  if(/对上了|没跑|是你的|值班点领|来保卫处领|最像这一条|找到了/.test(t)) return 'found';
-  if(/没有对得上|还没人捡到|没登记着|确实没/.test(t)) return 'none';
-  if(/管不了|不归|找学长|找阿姨|找小北|教务处|向导/.test(t)) return 'refuse';
-  if(/学号|姓名|证件|校园卡|核对|念给你|确认一下|念一下|我念/.test(t)) return 'serious';
-  if(/来了来了|丢东西、报修|丢什么了|报修是吧|认领东西|登记捡到|说吧|什么事/.test(t)) return 'greet';
-  if(/补充|再补|查了|比对|有点像|说清楚|说说|先讲|再想想/.test(t)) return 'think';
+  if(/对上了|没跑|是你的|值班点领|来保卫处领|最像|找到了|是你这张/.test(t)) return 'found';
+  if(/没有对得上|没对得上|还没人捡到|没人捡到|没登记着|没登记到|没找着|确实没|一件都没有|查了几遍/.test(t)) return 'none';
+  if(/管不了|管不着|不归|找学长|问学长|找阿姨|食堂阿姨|找小北|教务处|向导/.test(t)) return 'refuse';
+  if(/学号|姓名|证件|校园卡|核对|念给你|确认一下|念一下|我念|卡面/.test(t)) return 'serious';
+  if(/来了来了|丢东西、报修|丢什么了|报修是吧|认领东西|登记捡到|下一位|说吧|什么事/.test(t)) return 'greet';
+  if(/补充|再补|查了|比对|有点像|说清楚|说说|先讲|再想想|差点意思/.test(t)) return 'think';
   return 'idle';
 }
 
@@ -1136,14 +1136,14 @@ function startFlow(type){
   FLOWS[type].enter();
 }
 function endFlow(){ state.flow = null; }
-// 按注册昵称称呼用户——公文腔只在开场、受理、办结等关键节点叫一声，不句句叫
+// 按注册昵称称呼用户——只在开场、受理、办结等关键节点叫一声，不句句叫
 function addr(){ const n = state.user && state.user.nickname; return n ? n + '，' : ''; }
 
 const FLOWS = {
   /* ---------- 找失物（描述路 / 照片路 / 证件精确路） ---------- */
   lost_search: {
     enter(){
-      say(addr() + '丢什么了？说说什么东西、在哪儿丢的、大概几点钟、长什么样。说不清楚也行，直接拍张照片发过来。');
+      say(addr() + '丢什么了？别急，慢慢说——什么东西、在哪儿丢的、大概几点，长什么样。说不太清也不要紧，拍张照片过来，我帮你认。');
       state.flow.stage = 'collect';
     },
     async handle(text, photo){
@@ -1156,7 +1156,7 @@ const FLOWS = {
            实测玩家对着卡片回一句「就是这个」，旧正则不认，被当成新描述又查一轮，
            回出来"按你说的查了一轮，不太像"——玩家看到的正是"对上了却不能认领"。 */
         if(/^(都不是|不是我的|没有我的|算了|不对|不是这个|不是它|这个不是|那个不是)$/.test(text) || /^(没有|没了|没有了|记不清|想不起来|不知道)$/.test(text)){
-          confirmNone(d, d.showedHedge ? '行，这几条都不是的话，那就是还没人捡到。' : '行，先这样。');
+          confirmNone(d, d.showedHedge ? '行，都不是啊。那就是还没人捡到。' : '行，那先这样。');
           return;
         }
         if(d.showedHedge && /^(是这条|就是这个|就是这|就这个|是这个|这个|就是它|就它|是它|它|对上了|对就是这个|对|是|对对|嗯|第一条|第1条|第二|第二条|第2条|第三|第三条|第3条)$/.test(text)){
@@ -1183,11 +1183,11 @@ const FLOWS = {
         const hits = findCardsByTail(tail);
         if(hits.length === 1){
           const entry = hits[0]; d.entryId = entry.id;
-          say('尾号 ' + tail + ' 对上了——' + entry.place + '捡到的' + entry.category + '，登记学号 ' + entry.studentId + '。你把卡面上的姓名念一下，学号姓名都对上才能给。');
+          say('尾号 ' + tail + ' 对上了——' + entry.place + '捡到的' + entry.category + '，登记的学号是 ' + entry.studentId + '。你念一下卡面上的姓名，学号、姓名都对上，我才能把卡给你。');
           f.type = 'claim'; f.stage = 'verify_name'; return;
         }
-        if(hits.length > 1){ say('尾号 ' + tail + ' 有 ' + hits.length + ' 张卡对上，你把完整学号报一下。'); f.type = 'card_query'; f.stage = 'card_query'; return; }
-        say('库里没找着尾号 ' + tail + ' 的卡。有人交来了我第一时间按学号对上你。');
+        if(hits.length > 1){ say('尾号 ' + tail + ' 的卡，我这儿翻出 ' + hits.length + ' 张，得你报完整学号才分得清。'); f.type = 'card_query'; f.stage = 'card_query'; return; }
+        say('库里没找着尾号 ' + tail + ' 的卡。别急，有人交来，我头一个按学号对上你。');
         Store.memPush('丢了' + d.category + '，尾号 ' + tail, 6);
         endFlow(); return;
       }
@@ -1197,7 +1197,7 @@ const FLOWS = {
         f.type = 'card_query'; f.stage = 'card_query';
         return;
       }
-      if(!d.category && !d.desc.trim()){ say('好歹说个东西吧——什么东西、在哪儿丢的、啥时候的事，随便先说一样。'); return; }
+      if(!d.category && !d.desc.trim()){ say('得，你总得给我个线头——丢了什么、在哪儿丢的、什么时候，先说一样，我好往下问。'); return; }
       evaluateSearch(d);
     }
   },
@@ -1207,7 +1207,7 @@ const FLOWS = {
     async handle(text, photo){
       const f = state.flow, d = f.data;
       if(/(没有|不知道|忘了|记不清)/.test(text || '')){
-        say('行，没学号就按特征来。再说两句——卡套什么颜色、有没有挂绳之类的。');
+        say('行，没学号就按特征来。卡套什么颜色？有没有挂绳、贴纸？多说一句，我多一分把握。');
         d.category = d.category || '校园卡'; f.type = 'lost_search'; f.stage = 'collect';
         return;
       }
@@ -1218,39 +1218,39 @@ const FLOWS = {
           const hits = findCardsByTail(tail);
           if(hits.length === 1){
             const entry = hits[0]; d.entryId = entry.id;
-            say('尾号 ' + tail + ' 对上了——' + entry.place + '捡到的' + entry.category + '，登记学号 ' + entry.studentId + '。你把卡面上的姓名念一下，学号姓名都对上才能给。');
+            say('尾号 ' + tail + ' 对上了——' + entry.place + '捡到的' + entry.category + '，登记的学号是 ' + entry.studentId + '。你念一下卡面上的姓名，学号、姓名都对上，我才能把卡给你。');
             f.type = 'claim'; f.stage = 'verify_name'; return;
           }
-          if(hits.length > 1){ say('尾号 ' + tail + ' 有 ' + hits.length + ' 张卡对上，你把完整学号报一下。'); return; }
-          say('库里没找着尾号 ' + tail + ' 的卡——你报完整学号试试。'); return;
+          if(hits.length > 1){ say('尾号 ' + tail + ' 的卡，我这儿翻出 ' + hits.length + ' 张，得你报完整学号才分得清。'); return; }
+          say('尾号 ' + tail + ' 没对上——你报完整学号，我再查一遍。'); return;
         }
       }
       if(!sid && photo){
         sys('云端证件识别中……');
         try{
           const o = await toolOcrCard(photo);
-          if(!o.isCard){ say('这张看着不是证件——直接把学号打出来吧。'); return; }
+          if(!o.isCard){ say('这张看着不像证件。你把学号直接打出来，我按号查。'); return; }
           sid = o.studentId;
           if(o.name) d.expectName = o.name;
-          say(o.studentId ? ('认出来了，学号 ' + o.studentId + (o.name ? '，姓名 ' + o.name : '') + '。') : '没认准学号，你直接把学号打出来吧。');
-        }catch(e){ say(e && e.code === 'no_key' ? VISION_KEY_HINT : '识别系统这会儿连不上，你直接把学号打出来吧。'); }
+          say(o.studentId ? ('认出来了——学号 ' + o.studentId + (o.name ? '，姓名 ' + o.name : '') + '。') : '学号没认准，你直接打给我吧。');
+        }catch(e){ say(e && e.code === 'no_key' ? VISION_KEY_HINT : '识别系统这会儿连不上，不耽误事儿——你直接把学号打给我。'); }
         if(!sid) return;
       }
-      if(!sid){ say('报一下学号吧——卡面上那一串数字。或者拍张卡面照片发过来。'); return; }
+      if(!sid){ say('报一下学号吧，卡面上那一串数字。嫌麻烦就拍张卡面给我。'); return; }
       const entry = toolFindCardBySid(sid);
       if(!entry){
-        say('库里没登记到 ' + sid + ' 这张卡。建议你先去挂失；有人交到保卫处了，我按学号一查就能对上你。');
+        say('库里没登记到 ' + sid + ' 这张卡。你最好先去挂失，免得被人捡去乱用；有人交到保卫处，我按学号一查就能对上你。');
         Store.memPush('丢了' + (d.category || '证件') + '，学号 ' + sid, 6);
         endFlow(); return;
       }
       d.entryId = entry.id;
-      say('有了——' + entry.place + '那边捡到一张' + entry.category + '，登记学号 ' + entry.studentId + '。你把卡面上的姓名念一下，学号姓名都对上了才能领。');
+      say('有了——' + entry.place + '那边捡到一张' + entry.category + '，登记学号 ' + entry.studentId + '。你念一下卡面上的姓名，学号、姓名都对上，我才能给你。');
       f.type = 'claim'; f.stage = 'verify_name';
     }
   },
   /* ---------- 登记失物 ---------- */
   lost_intake: {
-    enter(){ say(addr() + '登记捡到的东西。什么东西？长什么样说两句。'); state.flow.stage = 'desc'; },
+    enter(){ say(addr() + '来，登记捡到的东西。你捡着什么了？长什么样，说两句。'); state.flow.stage = 'desc'; },
     async handle(text, photo){
       const f = state.flow, d = f.data;
       if(f.stage === 'desc'){
@@ -1265,26 +1265,26 @@ const FLOWS = {
             if(nc) d.category = nc.cat; else if(dd.category) d.category = dd.category;
             const sum = visionItemSummary(dd);
             if(!d.desc && (dd.desc || sum)) d.desc = dd.desc || sum;
-            if(sum){ say('认出来了——' + sum + '。'); setMood('found', 4000); }
+            if(sum){ say('我瞧瞧……认出来了——' + sum + '。'); setMood('found', 4000); }
           }catch(e){
-            sys(e && e.code === 'no_key' ? VISION_KEY_HINT : '这张没认准——回头你口头补两句特征也行。');
+            sys(e && e.code === 'no_key' ? VISION_KEY_HINT : '这张没看准。没事，你口头补两句特征也行。');
           }
           return nextIntakePlace();
         }
         const cat = normCategory(text);
         if(cat) d.category = cat.cat;
         if(isCardCat(d.category)){
-          say('是证件啊。拍一张卡面照片发过来——对准了、别反光，我给你认学号和姓名入库。不方便拍就直接报学号和姓名。');
+          say('是证件啊，那得按规矩来。拍张卡面给我，对准、别反光，我把学号和姓名认下来入库；不方便拍，就把学号和姓名报给我。');
           f.type = 'card_intake'; f.stage = 'card_photo'; return;
         }
         d.desc = text;
-        if(!d.desc || d.desc.length < 2){ say('再说两句特征呗——什么颜色、有没有贴纸、啥牌子，随便说两样。'); return; }
+        if(!d.desc || d.desc.length < 2){ say('再给我两样特征呗——什么颜色、有没有贴纸、什么牌子，随便说两样，我好记。'); return; }
         return nextIntakePlace();
       }
       if(f.stage === 'place'){
         const pl = Store.resolvePlace(text);
         d.place = pl ? pl.point.name : text.trim();
-        say('什么时候捡到的？回「现在」或具体时间，比如：昨天下午、前天 18:30。');
+        say('什么时候捡的？回「现在」也行，说具体点更好，比如「昨天下午」「前天 18:30」。');
         f.stage = 'when';
         return;
       }
@@ -1293,7 +1293,7 @@ const FLOWS = {
         d.foundTime = wh.getTime();
         // 用户已经在「描述」阶段发过照片了，不再重复要，直接入库
         if(d.photo){ finishIntake(d, true); return; }
-        say('有照片就发一张——入库的时候顺手存个特征，以后有人找好对上。没有就回「跳过」。');
+        say('有照片就发一张，入库时顺手记个特征，回头人家来找也好对上。没有就回「跳过」，不勉强。');
         f.stage = 'photo';
         return;
       }
@@ -1316,73 +1316,74 @@ const FLOWS = {
           try{
             const o = await toolOcrCard(photo);
             sid = o.studentId || null; nm = o.name || null;
-            if(o.isCard === false){ say('这张看着不是证件——重新拍一张，或直接报学号和姓名。'); f.stage = 'card_manual'; return; }
+            if(o.isCard === false){ say('这张看着不像证件。你重拍一张，或者直接把学号和姓名报给我。'); f.stage = 'card_manual'; return; }
           }catch(e){
             if(e && e.code === 'no_key'){ sys('没配 Qwen key（server/qwen_key.txt 或 DASHSCOPE_API_KEY）。'); }
-            say('识别系统连不上。直接报学号和姓名吧。'); f.stage = 'card_manual'; return;
+            say('识别系统这会儿连不上，不折腾了——你直接把学号和姓名报给我。'); f.stage = 'card_manual'; return;
           }
           if(!sid || !nm){
-            say('有几个字没认准——认不出的我们就不瞎判，别给人认错了。你直接报一下学号和姓名。');
+            say('有几个字没认准。认不准的我不瞎写——名字写错了，失主找上门更麻烦。你直接报一下学号和姓名。');
             f.stage = 'card_manual'; return;
           }
         } else if(text){
           sid = parseSid(text); nm = parseName(text);
-          if(!sid || !nm){ say('学号和姓名都得报——比如：20231234，李某某。'); return; }
-        } else { say('拍一张卡面照片，或者直接报学号和姓名。'); return; }
+          if(!sid || !nm){ say('学号、姓名都得有——比如「20231234，李某某」。'); return; }
+        } else { say('拍张卡面，或者把学号和姓名报给我。'); return; }
         d.sid = sid; d.name = nm;
         // 人机协同：把识别结果念出来让你确认——既兜 OCR 的不确定性，也是人格化动作
-        say('认出来了——学号 ' + sid + '，姓名 ' + nm + '。对不对？对的话回「对」我入库，不对就重来。');
+        say('我认出来了——学号 ' + sid + '，姓名 ' + nm + '。你给个准话：对，我就入库；不对，咱重来。');
         f.stage = 'card_confirm'; return;
       }
       if(f.stage === 'card_confirm'){
         if(/^(对|对得上|没错|是|好的|嗯)/.test(text.trim())){
           const e = toolRegisterCard({ studentId:d.sid, name:d.name, place:'保卫处', reporter: state.user.nickname });
-          say(addr() + '入库了。编号 ' + e.id + '——校园卡，学号 ' + e.studentId + '，姓名 ' + e.name + '，在 ' + e.place + ' 捡到的。照片不留底，只存了学号和姓名。失主来核对对了就给。');
+          say(addr() + '入库了。编号 ' + e.id + '——校园卡，学号 ' + e.studentId + '，姓名 ' + e.name + '，在 ' + e.place + ' 捡的。照片我不留底，只存学号和姓名——这是规矩。失主来核对得上，我就还他。');
           // MAP: 入库条目按捡到地点打标记
           MapBridge.addPin({ placeId: e.placeId, label: e.place + ' · ' + e.category, type:'lost', ref: e.id });
           Store.memPush('登记捡到校园卡（' + e.studentId + '）', 5);
+          pulseEvent('lost', '校园卡');
           endFlow(); return;
         }
-        say('行，重来——重新拍一张，或者直接报学号和姓名。'); f.stage = 'card_photo'; return;
+        say('行，重来。你再拍一张，或者直接报学号和姓名。'); f.stage = 'card_photo'; return;
       }
       if(f.stage === 'card_manual'){
         const sid = parseSid(text || ''), nm = parseName(text || '');
-        if(!sid || !nm){ say('学号（一串数字）和姓名（两到四个字）都得有。比如：20231234，李某某。'); return; }
+        if(!sid || !nm){ say('学号是一串数字，姓名两到四个字，缺一样都入不了库。比如「20231234，李某某」。'); return; }
         d.sid = sid; d.name = nm;
-        say('登记为学号 ' + sid + '，姓名 ' + nm + '。对的话回「对」入库，不对重来。');
+        say('那我记成——学号 ' + sid + '，姓名 ' + nm + '。对就回「对」，不对就说一声，咱重来。');
         f.stage = 'card_confirm'; return;
       }
     }
   },
   /* ---------- 报修 ---------- */
   repair: {
-    enter(){ say(addr() + '报修是吧。在哪儿、什么问题？一句话说清，比如：三教二楼水龙头坏了。'); state.flow.stage = 'collect'; },
+    enter(){ say(addr() + '报修是吧，行。哪儿坏了、什么毛病？一句话说清，比如「三教二楼水龙头漏水」，我好给你派对人。'); state.flow.stage = 'collect'; },
     async handle(text){
       const f = state.flow, d = f.data;
       if(f.stage === 'collect'){
         const pl = Store.resolvePlace(text);
         if(pl) d.place = pl.point.name;
         d.problem = text.trim();
-        if(!d.place){ say('具体在哪儿？说个地名——教学楼、食堂、图书馆、操场这些就行。'); f.stage = 'place'; return; }
-        if(d.problem.length < 3){ say('什么问题？灯不亮、水漏了、门坏了，说清楚。'); f.stage = 'problem'; return; }
+        if(!d.place){ say('具体在哪儿？说个地名就行——教学楼、食堂、图书馆、操场，我好记在工单上。'); f.stage = 'place'; return; }
+        if(d.problem.length < 3){ say('什么毛病？灯不亮、水漏了、门关不上——说清楚点，师傅来了才好下手。'); f.stage = 'problem'; return; }
         return createRepair(d);
       }
-      if(f.stage === 'place'){ d.place = text.trim(); if(!d.problem) { say('什么问题？'); f.stage='problem'; return; } return createRepair(d); }
+      if(f.stage === 'place'){ d.place = text.trim(); if(!d.problem) { say('什么毛病？'); f.stage='problem'; return; } return createRepair(d); }
       if(f.stage === 'problem'){ d.problem = text.trim(); return createRepair(d); }
     }
   },
   /* ---------- 认领核对（核验证件 → 当面确认 → 交还销账 → 开启新一轮） ---------- */
   claim: {
-    enter(){ say(addr() + '认领东西？卡类报学号，或者说说什么东西、在哪儿丢的，我帮你查。'); state.flow.stage = 'ask'; },
+    enter(){ say(addr() + '来认领东西？卡类报学号；别的就说说什么东西、在哪儿丢的，我帮你查。'); state.flow.stage = 'ask'; },
     async handle(text, photo){
       const f = state.flow, d = f.data;
       if(f.stage === 'ask'){
         const sid = parseSid(text || '');
         if(sid){
           const e = toolFindCardBySid(sid);
-          if(!e){ say('库里没这张卡（学号 ' + sid + '）。有人交来了我第一时间按学号对上你。'); endFlow(); return; }
+          if(!e){ say('库里没这张卡（学号 ' + sid + '）。别急，有人交来，我头一个按学号对上你。'); endFlow(); return; }
           d.entryId = e.id;
-          say('有这张卡——' + e.place + '捡到的，登记学号 ' + e.studentId + '。把卡面上的姓名念一下，学号姓名都对上才能给。');
+          say('有这张卡——' + e.place + '捡到的，登记学号 ' + e.studentId + '。你念一下卡面上的姓名，学号、姓名都对上，我才能给。');
           f.stage = 'verify_name'; return;
         }
         // 学号尾号匹配：「尾号1035」「后四位1035」这类
@@ -1391,11 +1392,11 @@ const FLOWS = {
           const hits = findCardsByTail(tail);
           if(hits.length === 1){
             const e = hits[0]; d.entryId = e.id;
-            say('尾号 ' + tail + ' 对上了——' + e.place + '捡到的' + e.category + '，登记学号 ' + e.studentId + '。把卡面上的姓名念一下，学号姓名都对上才能给。');
+            say('尾号 ' + tail + ' 对上了——' + e.place + '捡到的' + e.category + '，登记的学号是 ' + e.studentId + '。你念一下卡面上的姓名，学号、姓名都对上，我才能给。');
             f.stage = 'verify_name'; return;
           }
-          if(hits.length > 1){ say('尾号 ' + tail + ' 有 ' + hits.length + ' 张卡对上，你把完整学号报一下。'); return; }
-          say('库里没找着尾号 ' + tail + ' 的卡——你报完整学号试试，或者说说什么东西。'); return;
+          if(hits.length > 1){ say('尾号 ' + tail + ' 的卡，我这儿翻出 ' + hits.length + ' 张，得你报完整学号才分得清。'); return; }
+          say('尾号 ' + tail + ' 没对上——你报完整学号试试，或者换个说法讲讲那东西。'); return;
         }
         if(photo){
           sys('云端证件识别中……');
@@ -1403,35 +1404,35 @@ const FLOWS = {
           let sid = null;
           try{
             const o = await toolOcrCard(photo);
-            if(o.isCard === false){ say('这张看着不是证件——报学号，或者说说什么东西。'); return; }
+            if(o.isCard === false){ say('这张看着不像证件。你报学号，或者说说什么东西。'); return; }
             sid = o.studentId || null;
           }catch(e){ if(e && e.code === 'no_key') sys('没配 Qwen key。'); }
           if(sid){ f.handle(String(sid)); return; }
-          say('没认准学号，你直接打出来吧。');
+          say('学号没认准，你直接打给我吧。');
           return;
         }
         // 按类别 / 地点检索库里条目（「认领这条」按钮走 startClaimFor，带上下文直达）
         const cat = normCategory(text || ''), pl = Store.resolvePlace(text || '');
-        if(!sid && !cat && !pl){ say('报个学号（卡类），或者说说什么东西、在哪儿丢的。'); return; }
+        if(!sid && !cat && !pl){ say('卡类就报学号；别的说说是什么、在哪儿丢的。'); return; }
         let cands = Store.lost.filter(i => i.status === 'in_storage');
         if(cat) cands = cands.filter(i => i.category === cat.cat);
         if(pl) cands = cands.filter(i => i.placeId === pl.point.id);
-        if(!cands.length){ say('库里没有对得上的。先去「找失物」里查查，或者报学号。'); endFlow(); return; }
+        if(!cands.length){ say('库里没对得上的。你先点「找失物」查查，卡类就报学号。'); endFlow(); return; }
         const e = cands[0];
         if(isCardCat(e.category)){
           d.entryId = e.id;
-          say(e.place + '捡到一张' + e.category + '，登记学号 ' + e.studentId + '。把卡面上的姓名念一下，学号姓名都对上才能给。');
+          say(e.place + '捡到一张' + e.category + '，登记学号 ' + e.studentId + '。你念一下卡面上的姓名，学号、姓名都对上，我才能给。');
           f.stage = 'verify_name'; return;
         }
         return enterOwnerConfirm(e.id);
       }
       if(f.stage === 'verify_name'){
         const name = parseName(text || '');
-        if(!name){ say('念一下卡面上的姓名，两到四个字。'); return; }
+        if(!name){ say('卡面上的姓名念一下，两到四个字。'); return; }
         const e = Store.itemById(d.entryId);
         const r = toolVerifyClaim(e, { studentId:null, name });
-        if(r.pass){ say(addr() + '学号、姓名都对上了——没跑了。'); enterOwnerConfirm(d.entryId); }
-        else { say(r.reason + '。这张卡不能给你——宁可让你再核一次，也不能把卡给错人。'); endFlow(); }
+        if(r.pass){ say(addr() + '学号、姓名都对上了——是你这张，没跑。'); enterOwnerConfirm(d.entryId); }
+        else { say(r.reason + '。这张卡今天不能给你——多核一次不丢人，给错人才是我失职。'); endFlow(); }
         return;
       }
       // 当面确认：是不是失主本人的失物
@@ -1439,7 +1440,7 @@ const FLOWS = {
         text = (text || '').trim();
         if(/不是|不对|再看|再想|没有|算了/.test(text)){ holdItem(d.entryId); return; }
         if(/是|对|我的|没错/.test(text)){ doHandover(d.entryId); return; }
-        say('认清楚再说话——是你的就回「是，这就是我的」，拿不准就回「不是，我再想想」。');
+        say('看准了再答——是你的就回「是，这就是我的」；拿不准就说「不是，我再想想」。我不催你。');
         return;
       }
       // 交还：失主当面点清，拿到手才销账
@@ -1447,20 +1448,25 @@ const FLOWS = {
         text = (text || '').trim();
         if(/少了|不对|有问题|错了|不是这/.test(text)){ handoverProblem(d.entryId); return; }
         if(/拿到|谢谢|没问题|没事|可以了|好了|^好$|^是/.test(text)){ completeHandover(d.entryId); return; }
-        say('当面点一下——拿到了、没问题就回「拿到了」；要是少了什么、东西不对，直接说。');
+        say('当面点一点——没问题就回「拿到了」；少了什么、东西不对，现在就直说，出了门我可不认。');
       }
     }
   }
 };
+/* 挂失/认领报给大厅，做全校「最近最多的失物」；只报物品类别，不报人。 */
+function pulseEvent(kind, category){
+  try{ if(window.parent!==window) window.parent.postMessage({type:'campus.guard.event', kind, category:String(category||'其他').slice(0,20)}, location.origin); }catch(_e){}
+}
 function isCardLostAsk(){ return '校园卡、学生证这类，不靠「像不像」，只认「是不是你的」。报一下学号——或者拍张卡面照片，我认学号精确对。'; }
-function nextIntakePlace(){ say('在哪儿捡到的？'); state.flow.stage = 'place'; }
+function nextIntakePlace(){ say('在哪儿捡的？'); state.flow.stage = 'place'; }
 async function finishIntake(d, hasPhoto){
   // 全走 Qwen：不再存 CLIP 向量，登记时把外观描述写进 desc，以图搜物走文字四维匹配
   const e = toolRegisterItem({ category: d.category, desc: d.desc, place: d.place, reporter: state.user.nickname, foundTime: d.foundTime });
-  say(addr() + '入库了。编号 ' + e.id + '——' + e.category + '，在 ' + e.place + ' 捡到的，捡到时间 ' + fmtTime(e.foundTime) + '。失主来对，对得上才给。');
+  say(addr() + '入库了。编号 ' + e.id + '——' + e.category + '，在 ' + e.place + ' 捡的，时间 ' + fmtTime(e.foundTime) + '。失主来核对，对得上我才还。');
   // MAP: 入库条目按捡到地点打标记
   MapBridge.addPin({ placeId: e.placeId, label: e.place + ' · ' + e.category, type:'lost', ref: e.id });
   Store.memPush('登记捡到' + e.category + '（' + e.place + '）', 4);
+  pulseEvent('lost', e.category);
   endFlow();
 }
 /* ---------- 找失物多轮追问：信息不全继续问，直到确认匹配或确认库里没有 ---------- */
@@ -1473,7 +1479,7 @@ function missingDims(d){
   return m;
 }
 function claimLine(){
-  return '点这张卡片底下的「认领这条」，我把东西取出来给你当面认。值班时间' + Store.agent.service_hours.start + '到' + Store.agent.service_hours.end + '，卡类的还得学号姓名都对上才给。';
+  return '看准了，就点卡片底下的「认领这条」，我把东西取出来，你当面认。我值班 ' + Store.agent.service_hours.start + ' 到 ' + Store.agent.service_hours.end + '，卡类还得学号、姓名都对上才给。';
 }
 function showHitCards(hits, note){
   state.lastHits = hits;
@@ -1485,7 +1491,7 @@ function showHitCards(hits, note){
   MapBridge.setLayer('lost', hits.map(h => h.it.placeId).filter(Boolean));
 }
 function confirmNone(d, prefix){
-  say((prefix || '') + '库里没有对得上的。别急——我把你说的记下来，有人交到保卫处，一查就能对上你。');
+  say((prefix || '') + '别急，我把你说的记在本子上了。有人交到保卫处，我一查就能对上你。');
   Store.memPush('寻找' + (d.category || '失物') + '：' + (d.desc || '').slice(0, 30), 3);
   endFlow();
 }
@@ -1497,7 +1503,7 @@ function evaluateSearch(d){
   // ① 确认匹配：达到确认阈值，且信息足够佐证（有地点 / 时间 / 外观特征），才出结果收流程
   const enriched = !!(d.place || d.when || featureHits(d.desc || '').length);
   if(best >= CFG.thMatch && enriched){
-    showHitCards(hits, '比对下来，最像的是这一条——' + (d.category ? '' : '（没听出类别，已全网搜）'));
+    showHitCards(hits, '我挨着比对了一遍，最像的是这一条——' + (d.category ? '' : '（没听出类别，整个库都给你翻了）'));
     say(claimLine());
     Store.memPush('寻找' + (d.category || '失物') + '：' + (d.desc || '').slice(0, 30), 3);
     /* ⚠️ 命中阈值这一支以前直接 endFlow()，于是"对上之后还是不能认领核销"：
@@ -1508,13 +1514,13 @@ function evaluateSearch(d){
     return;
   }
   // ② 类别已定且零命中：类别是硬筛选，库里压根没有这个类别的在库物品
-  if(d.category && !hits.length){ confirmNone(d, '库里现在没登记着「' + d.category + '」这类的东西。'); return; }
+  if(d.category && !hits.length){ confirmNone(d, '库里眼下没有「' + d.category + '」这类的东西，一件都没有。'); return; }
   // ③ 相似但不达标：摆出来让玩家核对，继续追问
   if(hits.length && best >= CFG.thHedge){
-    showHitCards(hits, '这几条有点像，但我不敢打包票——');
+    showHitCards(hits, '这几条有点像，可我不敢跟你打包票——');
     d.showedHedge = true; f.stage = 'refine';
     const miss = missingDims(d).map(x => x.label).join('、');
-    say('有没有对上的？点卡片底下的「认领这条」，或者回一句「是这条」，我带你走认领；都不是就回「都不是」，再补点' + (miss ? '——' + miss : '特征') + '，我再帮你查。');
+    say('看看有没有你的？有就点卡片底下的「认领这条」，或者回我一句「是这条」，我带你走认领。都不是就回「都不是」，再补点' + (miss ? '——' + miss : '特征') + '，我接着给你筛。');
     return;
   }
   // ④ 信息不全：追问缺失的维度，同一个维度不重复问，不硬凑结果
@@ -1522,11 +1528,11 @@ function evaluateSearch(d){
   if(miss.length && d.rounds < 4){
     d.asked = d.asked || {}; miss.forEach(x => d.asked[x.key] = 1);
     f.stage = 'refine';
-    say((d.rounds > 1 ? '还是不太像。' : (hits.length ? '按你说的查了一轮，不太像。' : '库里暂时没查到像的。')) + '先补充一下：' + miss.map(x => x.label).join('、') + '。');
+    say((d.rounds > 1 ? '还差点意思。' : (hits.length ? '按你说的查了一轮，不太像。' : '库里暂时没查到像的。')) + '你再给我补两句：' + miss.map(x => x.label).join('、') + '。');
     return;
   }
   // ⑤ 信息齐了（或追问到位）仍对不上：确认库里没有，如实告知并记录
-  confirmNone(d, '按你说的查了一遍又一遍——');
+  confirmNone(d, '按你说的，我翻来覆去查了几遍。');
 }
 async function runImageSearch(photo, d, preVision){
   // 照片气泡已由 send() 统一推送，这里不再重复
@@ -1536,25 +1542,25 @@ async function runImageSearch(photo, d, preVision){
     sys('Qwen 看图：' + r.summary);
     state.lastHits = r.hits;
     pushMsg({ who:'guard', kind:'cards', mode:'image', hits: r.hits.map(h => ({ id:h.it.id, s:h.s })),
-      note:'拿照片比出来了，最像的是这条——' });
+      note:'拿照片比出来了，最像的是这一条——' });
     const b = r.hits[0].it;
     MapBridge.addPin({ placeId: b.placeId, label: b.place + ' · ' + b.category, type:'lost', ref: b.id });
     MapBridge.setLayer('lost', r.hits.map(h => h.it.placeId).filter(Boolean));
-    say('就是这条的话，点卡片底下的「认领这条」，我当场把东西取出来给你认。觉得不太对，再补两句文字描述，我重查一遍。');
+    say('要是这条，就点卡片底下的「认领这条」，我当场把东西取出来，你认。觉得不对，再补两句描述，我重查。');
   } else if(r.mode === 'image_empty'){
     // 库里没有匹配物品——如实告知，不编造
     if(r.summary) sys('Qwen 看图：' + r.summary);
-    say(r.reason + '。换个角度再拍一张，或者用文字说说——什么东西、在哪儿丢的、啥时候的事。');
+    say(r.reason + '。你换个角度再拍一张；要不就用文字说——什么东西、在哪儿丢的、什么时候。');
   } else {
     if(r.reason === 'no_key') say(VISION_KEY_HINT);
-    else say('图像识别这会儿连不上（' + (r.reason || '超时') + '）。先按文字帮你查——');
+    else say('图像识别这会儿连不上（' + (r.reason || '超时') + '），不耽误——我先按你说的文字帮你查。');
     if(r.hits.length && r.hits[0].s.total >= CFG.thHedge){
       showHitCards(r.hits, '按文字查出来的：');
       d.showedHedge = true;
-      say('有没有对上的？回「是这条」或「都不是」，也可以再补点特征。');
+      say('有没有你的？有就回「是这条」，没有就回「都不是」；想起来了再补两句特征也行。');
     } else if(r.hits.length){
-      say('查出来几条但都不太像。先补充一下：' + (missingDims(d).map(x => x.label).join('、') || '颜色、贴纸、牌子这类细节') + '，我再帮你查。');
-    } else say('文字也没给够。什么东西、在哪儿丢的、啥时候的事、长什么样，随便补两样。');
+      say('翻出来几条，但都不太像。你再给我补点：' + (missingDims(d).map(x => x.label).join('、') || '颜色、贴纸、牌子这类细节') + '，我接着查。');
+    } else say('你给的还不够我查的。丢了什么、在哪儿丢的、什么时候、长什么样——随便再补两样。');
   }
   // 以图搜物后流程不断线：后续文字并入同一轮多轮追问，直到确认匹配或确认库里没有
   if(state.flow){ state.flow.stage = 'refine'; if(r.mode === 'image') state.flow.data.showedHedge = true; }
@@ -1568,12 +1574,12 @@ function itemBrief(e){
 // 核对通过后：把东西取出来，让失主当面再认一眼
 function enterOwnerConfirm(entryId){
   const e = Store.itemById(entryId);
-  if(!e || e.status !== 'in_storage'){ say('这一件刚被领走，库里已经销了，你来晚一步。'); endFlow(); return; }
+  if(!e || e.status !== 'in_storage'){ say('不巧，这一件刚让人领走，账都销了——你来晚一步。'); endFlow(); return; }
   state.flow = { type:'claim', stage:'confirm_owner', data:{ entryId } };
   MapBridge.focus('baoweichu');
   pushMsg({
     who:'guard', kind:'options', stage:'confirm_owner', entryId,
-    text: '东西取出来了，你当面认一眼——\n' + itemBrief(e) + '\n是不是你这一件？看清楚再点头，给错人我得担责。',
+    text: '东西我给你取出来了，你当面认一认——\n' + itemBrief(e) + '\n是不是你的？看准了再点头。给错人，我担不起这个责任。',
     options: [
       { label:'是，这就是我的', value:'是，这就是我的' },
       { label:'不是，我再想想', value:'不是，我再想想', ghost:true }
@@ -1584,12 +1590,12 @@ function enterOwnerConfirm(entryId){
 // 失主认下了：物理交还，当面点清（此时还不销账，拿到手才销）
 function doHandover(entryId){
   const e = Store.itemById(entryId);
-  if(!e){ say('东西找不着档了——你稍等，我翻翻登记本。'); endFlow(); return; }
+  if(!e){ say('怪了，这东西找不着档了。你稍等，我翻翻登记本。'); endFlow(); return; }
   state.flow.stage = 'handover';
   Store.memPush('认领确认：' + e.category + '（' + e.id + '）待当面交还', 5);
   pushMsg({
     who:'guard', kind:'options', stage:'handover', entryId,
-    text: '好，物归原主。东西给你——拿好，当面点清，别回头少了东西说不清。',
+    text: '好，物归原主。东西给你——拿好了，当面点清；别等出了门再说少了，那可就说不清了。',
     options: [
       { label:'拿到了，谢谢老丁', value:'拿到了，谢谢老丁' },
       { label:'东西好像少了/不对', value:'东西好像少了', ghost:true }
@@ -1601,26 +1607,27 @@ function doHandover(entryId){
 function completeHandover(entryId){
   const e = Store.markReturned(entryId, state.user.nickname);
   if(e) Store.memPush('认领交还：' + e.category + '（' + e.id + '）→ ' + state.user.nickname, 6);
-  say('不客气。收好了，下回留心。');
-  startNextRound(e ? e.category + '已归还，这一条我销了——' : '');
+  if(e) pulseEvent('claim', e.category);
+  say('不用谢。收好了，下回可长点心。');
+  startNextRound(e ? e.category + '已归还，这一条我销了。' : '');
 }
 // 当面没认下：东西继续留库，不销账
 function holdItem(entryId){
-  say('行，东西先留我这儿，不勉强领。再想起什么特征，或者确认是你的了，随时来保卫处。');
+  say('行，东西先搁我这儿，不勉强。什么时候想起来特征，或者确定是你的了，随时来窗口找我。');
   startNextRound();
 }
 // 交还时点出问题：东西收回暂管，登记异议，继续查
 function handoverProblem(entryId){
   const e = Store.itemById(entryId);
   if(e) Store.memPush('认领异议：' + e.category + '（' + e.id + '）物品暂留保卫处待查', 5);
-  say('那东西还归我保管，先别急着拿。你说说是哪儿不对、少了什么，我记下来接着查——不能让你把别人的东西错拿回去。');
+  say('那这东西还归我保管，你先别急着拿。哪儿不对、少了什么，你说给我听，我记下来接着查。东西是好东西，可不能认错人。');
   startNextRound();
 }
 // 一件事办结，老丁回到值班状态，开启新一轮工作对话
 function startNextRound(prefix){
   endFlow();
   setMood('greet');
-  say((prefix || '') + '下一位——丢东西、找东西、报修，讲。');
+  say((prefix || '') + '下一位——丢东西、找东西、报修，说一声。');
   updateFlowHint();
 }
 // 选项按钮点击：当前在认领流程里就喂给流程；点到历史消息上的按钮则按物品状态兜底重进
@@ -1631,8 +1638,8 @@ async function pickClaimOption(m, o){
   const inClaim = f && f.type === 'claim' && f.data && f.data.entryId === m.entryId;
   if(inClaim){ await FLOWS.claim.handle(o.value); updateFlowHint(); return; }
   const it = m.entryId ? Store.itemById(m.entryId) : null;
-  if(!it){ say('这一档记录现在查不到了。'); updateFlowHint(); return; }
-  if(it.status !== 'in_storage'){ say(addr() + '这一件已经归还办结，不用再认了。'); updateFlowHint(); return; }
+  if(!it){ say('这一档记录翻不着了，你重开一次「认领核对」吧。'); updateFlowHint(); return; }
+  if(it.status !== 'in_storage'){ say(addr() + '这一件已经归还办结，账都销了，不用再认。'); updateFlowHint(); return; }
   state.flow = { type:'claim', stage:m.stage || 'confirm_owner', data:{ entryId: it.id } };
   await FLOWS.claim.handle(o.value);
   updateFlowHint();
@@ -1640,10 +1647,10 @@ async function pickClaimOption(m, o){
 function startClaimFor(id){
   const e = Store.itemById(id); if(!e) return;
   me('认领这条');
-  if(e.status !== 'in_storage'){ say('这一件已经归还办结，不用再领了。'); return; }
+  if(e.status !== 'in_storage'){ say('这一件已经归还办结，账都销了，不用再领。'); return; }
   if(isCardCat(e.category)){
     state.flow = { type:'claim', stage:'verify_name', data:{ entryId: id } };
-    say('校园卡得核对——学号库里有了，你把卡面上的姓名念一下。');
+    say('校园卡得核对——学号库里有了，你再把卡面上的姓名念一下。');
     updateFlowHint();
   } else {
     enterOwnerConfirm(id);
@@ -1651,7 +1658,7 @@ function startClaimFor(id){
 }
 function createRepair(d){
   const o = toolReportRepair({ place: d.place, problem: d.problem, reporter: state.user.nickname });
-  pushMsg({ who:'guard', kind:'orders', orders:[o.id], note: addr() + '受理了。工单号 ' + o.id + '——地点、问题、时间、报修人都记下了，谁都能查。' });
+  pushMsg({ who:'guard', kind:'orders', orders:[o.id], note: addr() + '受理了。工单号 ' + o.id + '——地点、毛病、时间、报修人，都记在单子上了，谁查都在。' });
   Store.memPush('报修：' + o.place + ' ' + o.problem + '（' + o.id + '）', 5);
   endFlow();
 }
@@ -1659,9 +1666,9 @@ function createRepair(d){
 /* ---------- 呼叫（全图唯一叫得动，总体设计 §12） ---------- */
 // to: 玩家当前位置 {x,y}。合体时由引擎/地图层传入；独立交付期未接入地图，用保卫处前台点兜底。
 function doCall(to){
-  if(window.parent !== window){ say('我就在你身边，有事直接说。'); return; }
+  if(window.parent !== window){ say('我就在这儿，有事直接说，别客气。'); return; }
   if(!inServiceHours()){ say(Store.agent.offduty_line); return; }      // 只在 08:00–22:00 应答
-  if(state.summon === 'walking'){ say('已经在路上了，稍等。'); return; }
+  if(state.summon === 'walking'){ say('已经往你那儿走了，稍等两步。'); return; }
   state.summon = 'walking';
   const home = Store.pointById(Store.agent.home) || { x:0, y:0 };
   // 终点 = 玩家位置；独立期无地图层，落回保卫处值班台前（baoweichu 坐标）——合体后引擎传真实玩家坐标即可
@@ -1682,7 +1689,7 @@ function doCall(to){
 async function handleText(text){
   // 流程中：先喂给流程（「取消」逃生口）
   if(state.flow){
-    if(/^(取消|算了|不弄了|退出)$/.test(text)){ endFlow(); say(addr() + '行，不弄了。有事再找我。'); return; }
+    if(/^(取消|算了|不弄了|退出)$/.test(text)){ endFlow(); say(addr() + '行，那就不弄了。有事儿再喊我。'); return; }
     await FLOWS[state.flow.type].handle(text, state.pendingPhoto);
     state.pendingPhoto = null;
     return;
@@ -1693,24 +1700,24 @@ async function handleText(text){
     case 'greet': say(Store.agent.greeting); return;
     case 'my_records': {
       const mem = Store.memList();
-      if(!mem.length){ say('之前没打过交道。丢东西、报修，说吧。'); return; }
-      say('你之前的记录：\n' + mem.slice(0, 6).map(m => '· ' + m.desc + '（' + m.time + '）').join('\n'));
+      if(!mem.length){ say('咱俩之前没打过交道。丢东西、报修，说一声就行。'); return; }
+      say('你在我这儿记着这些：\n' + mem.slice(0, 6).map(m => '· ' + m.desc + '（' + m.time + '）').join('\n'));
       return;
     }
     case 'repair_query': {
       const pl = Store.resolvePlace(text);
       const mine = toolQueryRepair({ place: pl ? pl.point.name : null, reporter: state.user.nickname });
-      if(!mine.length){ say('没查到工单' + (pl ? '——' + pl.point.name + '这边没登记过' : '') + '。要是报过的话，说个地名我按地点查公开记录。'); return; }
+      if(!mine.length){ say('没查到工单' + (pl ? '——' + pl.point.name + '这边没登记过' : '') + '。要是报过，说个地名，我按地点给你翻公开记录。'); return; }
       pushMsg({ who:'guard', kind:'orders', orders: mine.map(o => o.id),
-        note:'工单状态在对话里就能查、能改——不用开后台。' });
+        note:'工单进展在这儿就能查、能催，不用你跑一趟。' });
       return;
     }
     case 'repair_status': {
       const done = /已经修好|修好了|不用修/.test(text);
       const pl = Store.resolvePlace(text) || null;
       const o = toolUpdateRepair({ place: pl ? pl.point.name : '', status: done ? '已完成' : '处理中' });
-      if(!o){ say('手头没有没结的工单。说个地名我查查。'); return; }
-      say('销了。' + o.id + '（' + o.place + '）→ ' + o.status + '。进度随时来问。');
+      if(!o){ say('手头没有没结的工单。你说个地名，我照着查。'); return; }
+      say('销了。' + o.id + '（' + o.place + '）→ ' + o.status + '。往后有进展，随时来问。');
       return;
     }
     case 'lost_intake': startFlow('lost_intake'); await FLOWS.lost_intake.handle(text); return;
@@ -1724,7 +1731,7 @@ async function handleText(text){
     }
     case 'repair_report': startFlow('repair'); await FLOWS.repair.handle(text); return;
     case 'door':
-      say('门禁坏了按报修登记；补卡、开卡去一卡通中心。这俩都归值班窗口管。');
+      say('门禁坏了，我给你按报修登记；补卡、开卡去一卡通中心——这边是值班窗口，不管办卡。');
       return;
     case 'refuse': {
       // 推诿要推给对应角色，不能笼统推教务处（标准 §1.2 / 边界 §6.1）
@@ -1740,10 +1747,10 @@ async function handleText(text){
       }
       say(line); return;
     }
-    case 'ask_way': say('问路、导航找向导小北——不归我这儿管。丢东西、报修，说吧。'); return;
+    case 'ask_way': say('问路、找地方，问向导小北，他比我路熟。我这儿管丢东西和报修——有事说事。'); return;
     default:
       if(normCategory(text) || Store.resolvePlace(text)){ startFlow('lost_search'); await FLOWS.lost_search.handle(text); return; }
-      say('没听明白。丢东西、找东西、报修——就这三样，说吧。');
+      say('我没听明白。我这儿就管三样：丢东西、找东西、报修——你说哪样？');
   }
 }
 
@@ -1830,7 +1837,7 @@ async function handlePhotoWithText(b64, text){
   if(top){
     state.flow = { type:'photo_route', stage:'route', data:{ image: b64 } };
     if(text){ await FLOWS.photo_route.handle(text); return; }
-    say('看着是证件（' + top.label + '）。是找卡还是登记捡到的卡？回「找卡」或「登记」。');
+    say('看着是证件（' + top.label + '）。你是找卡，还是登记捡到的卡？回我「找卡」或者「登记」。');
     return;
   }
   await runImageSearch(b64, parseQueryFromText(text), preVision);
@@ -1875,7 +1882,7 @@ FLOWS.photo_route = {
     const d = state.flow.data;
     if(/找|丢/.test(text)){ state.flow = { type:'card_query', stage:'card_query', data:{ category:'校园卡' } }; await FLOWS.card_query.handle(null, d.image); }
     else if(/登记|捡/.test(text)){ state.flow = { type:'card_intake', stage:'card_photo', data:{} }; await FLOWS.card_intake.handle(null, d.image); }
-    else say('回「找卡」或者「登记」。');
+    else say('回我「找卡」或者「登记」，我按你说的来。');
   }
 };
 
@@ -1943,7 +1950,7 @@ function enterChat(auth){
     state.idleCount++;
     const n = Store.lost.filter(i => i.status === 'in_storage').length;
     const m = Store.orders.filter(o => o.status !== '已完成').length;
-    say('库里还压着 ' + n + ' 件没人领，' + m + ' 张工单没销。有事说吧。');
+    say('库里还压着 ' + n + ' 件没人认领，' + m + ' 张工单没销。有事你言语一声。');
   }, 45000);
 })();
 
@@ -1962,7 +1969,7 @@ window.addEventListener('message', e => {
   const type = e.data && e.data.type;
   if(type === 'campus.guard.replay'){ replayUi(); return }
   if(type !== 'campus.guard.ask' && type !== 'campus.guard.action' && type !== 'campus.guard.photo' && type !== 'campus.guard.pick') return;
-  if(!state.user) { window.parent.postMessage({type:'campus.guard.reply', text:'老丁还在准备，请稍后再试。', who:'guard'}, location.origin); return; }
+  if(!state.user) { window.parent.postMessage({type:'campus.guard.reply', text:'老丁这边还没拾掇好，你稍等一会儿。', who:'guard'}, location.origin); return; }
   if(type === 'campus.guard.action'){ runQuickAction(e.data.act); return }
   if(type === 'campus.guard.photo'){ embedPhoto(String(e.data.image || ''), String(e.data.text || '').slice(0, 500)); return }
   if(type === 'campus.guard.pick'){

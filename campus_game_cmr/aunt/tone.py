@@ -3,6 +3,7 @@
 import json
 import os
 import re
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
@@ -115,6 +116,10 @@ def respond(question: str, result: dict) -> str:
             }, ensure_ascii=False)},
         ],
     }
+    if urlparse(endpoint).hostname == "api.siliconflow.cn":
+        # SiliconFlow uses enable_thinking instead of DeepSeek's thinking object.
+        payload.pop("thinking")
+        payload["enable_thinking"] = False
     request = Request(endpoint, data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
                       headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
                       method="POST")
