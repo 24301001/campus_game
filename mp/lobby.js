@@ -485,6 +485,51 @@
     g.drawImage(L.sprite(L.fallback,right?'right':'left',Math.floor(now/135)%4),x,gy-56,36,56);
   }
 
+  /* [2026-11-06 补回·同批] 这两个也是那次改动里没的：
+     进来后 updateSelf() 每次形象变化都调，connectedUI() 在登录/断线时调。 */
+  function connectedUI(on){
+    const setH=(id,v)=>{const el=$(id);if(el)el.hidden=v};
+    for(const id of ['mpSelf','mpSprite','mpSummonGuard','mpTopBtns','mpTaskToggle','mpPortalToggle'])setH(id,!on);
+    if(!on){
+      for(const id of ['mpTask','mpPortal','mpOnline','mpPulse','mpRunHud','mpBoard','mpNotice','mpChat','mpProfileShade','mpLookShade','mpMenu','mpNearby'])setH(id,true);
+      clearInterval(onlineTimer);onlineTimer=0;clearInterval(pulseTimer);pulseTimer=0;
+      nearUser=null;taskState=null;runReset();
+    } else updateSelf();
+  }
+  function updateSelf(){if(!me)return;const el=$('mpSelf');if(!el)return;el.replaceChildren(avatarEl(look,me.id,true,false),document.createTextNode(me.nickname+' · 个人中心'))}
+  /* [2026-11-06 补回] 这一组在一次改动里被删了，但 5 处调用还在 —— 登录第一行就是
+     clearAccountState()，函数没了直接抛 "clearAccountState is not defined"，大厅进不去。
+     按 a385e5c 那版恢复，只留下当前代码里还存在的符号：老丁巡逻点（GUARD_SPOTS /
+     guardSnap）和居中场景 iframe（ctrF / hudTick）新版已经删掉，这里不再引用。 */
+  function clearNpcTickets(){
+    const exact=['xbg_token','ld_token','token','user','mpNickname','xbg_cred','ld_cred','cmr_cred','campus_cred','xbg_shot_auto'];
+    try{for(const key of Object.keys(localStorage)){if(exact.includes(key)||/^(guard_v\d+_|agent_watch_)/.test(key))localStorage.removeItem(key)}}catch{}
+    try{sessionStorage.removeItem('mpGuest')}catch{}
+    try{$('mpGuardBridge').src='about:blank';guardReady=false;$('mpGuardLog').replaceChildren()}catch{}
+  }
+  function resetWorld(){
+    $('mpSoloCanteen').hidden=true;$('mpSoloExit').hidden=true;closeLookPanel();
+    try{if(typeof GUARD!=='undefined'&&GUARD){GUARD.summoned=false;GUARD.summonRepath=0}}catch{}
+    guardReady=false;guardOpening=false;$('mpGuard').hidden=true;$('mpGuardLog').replaceChildren();$('mpGuardInput').value='';
+    try{$('mpGuardBridge').src='about:blank'}catch{}
+    try{if(typeof CENTER!=='undefined'&&CENTER.active)roomLeave();else if(typeof CENTER!=='undefined'&&CENTER.plat)ctrClosePlatform()}catch{}
+    try{player.x=SPAWN.x;player.y=SPAWN.y;player.dir='down';player.step=0;player.walk=0;player.idle=0}catch{}
+    try{for(const k in keys)keys[k]=0;for(const k in CKEYS)CKEYS[k]=0}catch{}
+    scene='out';lastMove='';
+  }
+  function clearAccountState(){
+    soloMode=false;offlineSolo=false;clearTimeout(boardTimer);boardSending='';
+    allowReconnect=true;clearInterval(netTimer);
+    clearTimeout(reconnectTimer);clearTimeout(connectTimer);clearInterval(pingTimer);
+    const old=ws;ws=null;try{old&&old.close()}catch{}
+    saveToken('');clearNpcTickets();MP.connected=false;me=null;look=L.fallback;showLookPrompt=false;
+    peers.clear();profiles.clear();chatCache.clear();chatMore.clear();chatOldest.clear();boardItems=[];pending.clear();seenMsgs.clear();
+    chatWith=null;menuUser=null;menuAnchor=null;nearUser=null;profileUser=null;unread=0;boardSending='';updateUnread();
+    $('mpBoardList').replaceChildren();$('mpChatLog').replaceChildren();$('mpBoardInput').value='';$('mpChatInput').value='';
+    $('mpBoardError').textContent='';$('mpChatError').textContent='';$('mpBoardForm').querySelector('button').disabled=false;
+    connectedUI(false);resetWorld();status('');
+  }
+
   async function submitAuth(e){e.preventDefault();const nickname=$('mpName').value.trim(),password=$('mpPass').value,button=$('mpAuthSubmit');button.disabled=true;$('mpAuthError').textContent='';try{
     if(authMode==='register'){
       const verdict=pwLocal(password,nickname);
