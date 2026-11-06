@@ -13,7 +13,7 @@
 
 </div>
 
-> 联机大厅请运行 [启动像素校园.bat](启动像素校园.bat)，打开 `http://localhost:3000/`。它使用下方的原地图 HTML；照片形象、统一登录和四个角色的本地接入说明见 [mp/README.md](mp/README.md)。
+> https://bjtupixelcampus.online/ 我们项目已经上线。可以直接体验线上版！！！联机大厅请运行 [启动像素校园.bat](启动像素校园.bat)，打开 `http://localhost:3000/`。它使用下方的原地图 HTML；照片形象、统一登录和四个角色的本地接入说明见 [mp/README.md](mp/README.md)。
 
 ![思源楼前，像素人物来回走动](assets/siyuan-walk.gif)
 
