@@ -16926,6 +16926,3167 @@ function styleOf(name) {
   return { p: 4, floors: 3 };
 }
 
+/* ===== 楼体资源 · 西侧一列七栋（2026-11-07） ===== */
+
+window.PC_BUILDINGS = window.PC_BUILDINGS || [];
+
+/* =========================================================================
+   像素校园 · 楼体资源 —— 公共绘制层
+   -------------------------------------------------------------------------
+   这一层不是新画法：所有笔法都抄自地图的 30_building.js / 70_jianyi.js，
+   只把「一栋楼」拆成两步：
+       ① PC.make(spec)  —— 与地图同款屋面板、檐口、墙体、接地阴影、屋名牌；
+       ② spec.draw(B)   —— 每栋楼自己的正面（窗阵 / 门厅 / 柱廊 / 招牌）。
+   层高 FLOOR_H=34、窗 16×22、SUN=(-0.6,-0.8)、接地阴影带、明暗方向全部沿用
+   地图的既有口径，所以这些楼体可以直接贴回像素校园的画面里。
+   ========================================================================= */
+(function (global) {
+  "use strict";
+
+  /* --- 与地图完全同值的常量 -------------------------------------------- */
+  const SUN = { x: -0.60, y: -0.80 };
+  const FLOOR_H = 34;
+  const WIN_W = 16, WIN_H = 22, WIN_GAP = 12;
+  const PADX = 26, PADT = 18;
+  const SIGN_FS = 18;
+
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+
+  /* --- 1. 基础笔法（逐字取自地图） ------------------------------------- */
+  function mkCanvas(w, h) {
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    return c;
+  }
+  function px(g, x, y, w, h, col) {
+    g.fillStyle = col;
+    g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  }
+  function makeRng(seed) {
+    let s = seed >>> 0;
+    return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  }
+  function poly(g, pts, col) {
+    g.fillStyle = col;
+    g.beginPath();
+    g.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
+    g.closePath();
+    g.fill();
+  }
+  function speckle(g, x, y, w, h, col, count, rng) {
+    g.fillStyle = col;
+    for (let i = 0; i < count; i++) g.fillRect(x + ((rng() * w) | 0), y + ((rng() * h) | 0), 1, 1);
+  }
+
+  const _hc = Object.create(null);
+  function rgb(hex) {
+    let v = _hc[hex];
+    if (v === undefined) {
+      v = [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+      _hc[hex] = v;
+    }
+    return v;
+  }
+  /* k > 0 提亮（偏暖）；k < 0 压暗（偏冷）—— 与地图同一套光源 */
+  function shade(hex, k) {
+    const c = rgb(hex);
+    let r, g, b;
+    if (k >= 0) {
+      r = c[0] + (255 - c[0]) * k;
+      g = c[1] + (255 - c[1]) * (k * 0.93);
+      b = c[2] + (255 - c[2]) * (k * 0.80);
+    } else {
+      const t = -k;
+      r = c[0] * (1 - t * 1.08);
+      g = c[1] * (1 - t * 1.00);
+      b = c[2] * (1 - t * 0.86);
+    }
+    return "rgb(" + (r | 0) + "," + (g | 0) + "," + (b | 0) + ")";
+  }
+  function mix(a, b, t) {
+    const A = rgb(a), B = rgb(b);
+    return "rgb(" + ((A[0] + (B[0] - A[0]) * t) | 0) + ","
+                   + ((A[1] + (B[1] - A[1]) * t) | 0) + ","
+                   + ((A[2] + (B[2] - A[2]) * t) | 0) + ")";
+  }
+  function shadowQuad(g, x0, y0, x1, y1, dx, dy, alpha, layers) {
+    const L = layers || 4, step = alpha / L;
+    for (let i = L; i >= 1; i--) {
+      const t = i / L, ox = dx * t, oy = dy * t;
+      poly(g, [[x0, y0], [x1, y0], [x1 + ox, y0 + oy], [x1 + ox, y1 + oy], [x0 + ox, y1 + oy], [x0, y1]],
+        "rgba(14,18,28," + step.toFixed(3) + ")");
+    }
+  }
+  function contactBand(g, x0, x1, y, h, alpha) {
+    const w = x1 - x0, e = w * 0.16;
+    px(g, x0, y, w, h, "rgba(14,18,28," + alpha + ")");
+    px(g, x0, y, e, h, "rgba(14,18,28," + (alpha * 0.45) + ")");
+    px(g, x1 - e, y, e, h, "rgba(14,18,28," + (alpha * 0.45) + ")");
+  }
+
+  /* --- 2. 屋名牌（逐字照 30_building.js §3.0） -------------------------- */
+  const _signCache = Object.create(null);
+  function makeSign(name) {
+    if (name in _signCache) return _signCache[name];
+    const FONT = "bold " + SIGN_FS + "px 'Microsoft YaHei','SimHei','PingFang SC',sans-serif";
+    const t = mkCanvas(8, 8);
+    let tc = t.getContext("2d");
+    tc.font = FONT;
+    const tw = Math.ceil(tc.measureText(name).width) + 8, th = SIGN_FS + 10;
+    t.width = tw; t.height = th;
+    tc = t.getContext("2d");
+    tc.font = FONT;
+    tc.textBaseline = "top";
+    tc.fillStyle = "#000";
+    tc.fillText(name, 4, 4);
+    const d = tc.getImageData(0, 0, tw, th).data;
+    const pts = [];
+    let minX = tw, maxX = -1, minY = th, maxY = -1;
+    for (let y = 0; y < th; y++) {
+      for (let x = 0; x < tw; x++) {
+        if (d[(y * tw + x) * 4 + 3] > 100) {
+          pts.push(x, y);
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX < 0) return (_signCache[name] = null);
+    const gw = maxX - minX + 1, gh = maxY - minY + 1;
+    const pw = gw + 20, ph = SIGN_FS + 9;
+    const c = mkCanvas(pw, ph), g = c.getContext("2d");
+    px(g, 0, 1, pw, ph - 1, "#5d564a");
+    px(g, 0, 1, pw, 1, "#7d7669");
+    px(g, 0, ph - 1, pw, 1, "#3a352c");
+    px(g, 0, 1, 1, ph - 1, "#6d6557");
+    px(g, pw - 1, 1, 1, ph - 1, "#443f35");
+    const ox = Math.round((pw - gw) / 2) - minX, oy = Math.round((ph - gh) / 2) - minY;
+    g.fillStyle = "#e8d9a8";
+    for (let i = 0; i < pts.length; i += 2) g.fillRect(ox + pts[i], oy + pts[i + 1], 1, 1);
+    return (_signCache[name] = { c: c, w: pw, h: ph });
+  }
+  function signRect(sgn, x0, w, eaveY) {
+    if (!sgn) return null;
+    return { x: Math.round(x0 + (w - sgn.w) / 2), y: eaveY - 8 - sgn.h, w: sgn.w, h: sgn.h };
+  }
+
+  /* --- 3. 系统字体 → 二值化（30 段 / 70 段同一套，字形永远 1px 硬边） --- */
+  const _txtCache = Object.create(null);
+  function textPixels(text, fs) {
+    const key = fs + "|" + text;
+    if (key in _txtCache) return _txtCache[key];
+    const FONT = "bold " + fs + "px 'Microsoft YaHei','SimHei','PingFang SC',sans-serif";
+    const t = mkCanvas(8, 8);
+    let tc = t.getContext("2d");
+    tc.font = FONT;
+    const tw = Math.ceil(tc.measureText(text).width) + 4, th = fs + 8;
+    t.width = tw; t.height = th;
+    tc = t.getContext("2d");
+    tc.font = FONT;
+    tc.textBaseline = "top";
+    tc.fillStyle = "#000";
+    tc.fillText(text, 2, 3);
+    const d = tc.getImageData(0, 0, tw, th).data;
+    const pts = [];
+    let minX = tw, maxX = -1, minY = th, maxY = -1;
+    for (let y = 0; y < th; y++) {
+      for (let x = 0; x < tw; x++) {
+        if (d[(y * tw + x) * 4 + 3] > 100) {
+          pts.push(x, y);
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    const out = maxX < 0 ? null : { pts: pts, w: maxX - minX + 1, h: maxY - minY + 1, minX: minX, minY: minY };
+    _txtCache[key] = out;
+    return out;
+  }
+  function stampText(g, tp, x, y, color) {
+    if (!tp) return;
+    g.fillStyle = color;
+    for (let i = 0; i < tp.pts.length; i += 2)
+      g.fillRect(x + tp.pts[i] - tp.minX, y + tp.pts[i + 1] - tp.minY, 1, 1);
+  }
+  function drawText(g, text, x, y, fs, color) {
+    const tp = textPixels(text, fs);
+    stampText(g, tp, x, y, color);
+    return tp;
+  }
+
+  /* --- 4. 一栋楼的标准骨架 ------------------------------------------------
+     spec:
+       name    楼名（默认挂屋名牌；sign:false 可撤）
+       w       立面宽（世界像素，≈ 地图 footprint 宽）
+       depth   进深（默认 0.5w）
+       floors  层数（每层 34 行）
+       wall / roof / glass / door   与地图 PALETTE 同义的四个色
+       texture "brick"（默认）| "tile" | "none"
+       roofStyle "flat"（默认）| "tile"（红瓦坡顶，只给 8 号公寓楼）
+       sign     默认 true；false = 不挂屋名牌
+       draw(B)  正面绘制
+       after(B) 接地带之后的绘制（台阶、地坪等） */
+  function make(spec) {
+    const w = Math.round(spec.w);
+    const depth = spec.depth || Math.round(w * 0.50);
+    const floors = spec.floors || 3;
+    const wallH = floors * FLOOR_H;
+    const roofT = spec.roofT != null ? Math.round(spec.roofT)
+                                     : clamp(Math.round(depth * 0.60), 20, 190);
+    const SHX = Math.round(-SUN.x * 26), SHY = Math.round(-SUN.y * 26);
+    const c = mkCanvas(w + PADX * 2, PADT + roofT + wallH + SHY + 14);
+    const g = c.getContext("2d");
+    const x0 = PADX, x1 = PADX + w;
+    const eaveY = PADT + roofT;
+    const baseY = eaveY + wallH;
+    const wall = spec.wall, roof = spec.roof, glass = spec.glass || "#8FB6D9";
+    const sgn = spec.name && spec.sign !== false ? makeSign(spec.name) : null;
+    const sg = signRect(sgn, x0, w, eaveY);
+    const rng = makeRng(spec.seed || ((w * 131 + floors * 17 + 7) | 0));
+
+    /* 4.1 方向性投影（footprint 朝右下） */
+    shadowQuad(g, x0 + 2, baseY - Math.min(24, depth * 0.3), x1 - 2, baseY, SHX, SHY, 0.28, 4);
+
+    /* 4.2 屋面：平顶（地图同款）或红瓦坡顶 */
+    if (spec.roofStyle === "tile") {
+      drawTileRoof(g, x0, x1, w, PADT, roofT, roof, rng);
+    } else {
+      px(g, x0 - 3, PADT, w + 6, roofT, shade(roof, -0.34));
+      px(g, x0, PADT + 2, w, roofT - 5, shade(roof, -0.04));
+      px(g, x0, PADT + 2, w, 4, shade(roof, 0.26));
+      px(g, x0, PADT + 6, w, 3, "rgba(14,18,28,0.34)");
+      px(g, x0, PADT + 6, 4, roofT - 9, shade(roof, 0.14));
+      px(g, x1 - 4, PADT + 6, 4, roofT - 9, "rgba(14,18,28,0.22)");
+      for (let j = 1; j <= 3; j++)
+        px(g, x0 + 5, PADT + Math.round((roofT - 12) * j / 4) + 6, w - 10, 1, "rgba(255,255,255,0.08)");
+      px(g, x0 - 3, PADT + roofT - 1, w + 6, 2, shade(roof, -0.60));
+      if (roofT > 46) {
+        const nb = 2 + ((rng() * 3) | 0);
+        for (let i = 0; i < nb; i++) {
+          const bw = 18 + rng() * 34, bh = 12 + rng() * 20;
+          const bx = Math.round(x0 + 14 + rng() * Math.max(1, w - 28 - bw));
+          const by = Math.round(PADT + 14 + rng() * Math.max(1, roofT - 28 - bh - bh * 0.5));
+          if (sg && bx < sg.x + sg.w + 6 && bx + bw + 6 > sg.x
+                && by < sg.y + sg.h + 3 && by + bh + 6 > sg.y) continue;
+          px(g, bx + 4, by + 4, bw, bh, "rgba(14,18,28,0.30)");
+          px(g, bx, by + bh - 4, bw, 4, shade(roof, -0.38));
+          px(g, bx, by, bw, bh, shade(roof, 0.16));
+          px(g, bx, by, bw, 3, shade(roof, 0.34));
+          px(g, bx, by + bh - 1, bw, 1, "rgba(14,18,28,0.30)");
+        }
+      }
+      speckle(g, x0 + 4, PADT + 7, w - 8, roofT - 12, "rgba(255,255,255,0.05)", (w / 3) | 0, rng);
+      speckle(g, x0 + 4, PADT + 7, w - 8, roofT - 12, "rgba(0,0,0,0.07)", (w / 4) | 0, rng);
+    }
+
+    /* 4.3 屋名牌 */
+    if (sg) {
+      px(g, sg.x + 3, sg.y + 3, sg.w, sg.h, "rgba(14,18,28,0.30)");
+      g.drawImage(sgn.c, sg.x, sg.y);
+    }
+
+    /* 4.4 墙体 */
+    px(g, x0, eaveY + 2, w, wallH, shade(wall, -0.10));
+    const texture = spec.texture || "brick";
+    if (texture === "brick") {
+      for (let yy = eaveY + 7; yy < baseY; yy += 5) {
+        px(g, x0, yy, w, 1, "rgba(0,0,0,0.09)");
+        const off = ((((yy - eaveY) / 5) | 0) & 1) ? 4 : 0;
+        for (let xx = x0 + off; xx < x1; xx += 8) px(g, xx, yy - 5, 1, 5, "rgba(0,0,0,0.06)");
+      }
+    } else if (texture === "tile") {
+      for (let yy = eaveY + 5; yy < baseY; yy += 3)
+        px(g, x0, yy, w, 1, "rgba(0,0,0,0.07)");
+      for (let xx = x0 + 3; xx < x1; xx += 6)
+        for (let yy = eaveY + 3; yy < baseY; yy += 3)
+          px(g, xx, yy, 1, 3, "rgba(0,0,0,0.045)");
+    }
+    speckle(g, x0, eaveY + 3, w, wallH - 3, "rgba(255,255,255,0.05)", (w / 3) | 0, rng);
+    speckle(g, x0, eaveY + 3, w, wallH - 3, "rgba(0,0,0,0.09)", (w / 2) | 0, rng);
+    px(g, x0, eaveY + 2, 3, wallH, shade(wall, 0.18));
+    px(g, x1 - 4, eaveY + 2, 4, wallH, shade(wall, -0.30));
+    for (let i = 0; i < 10; i++)
+      px(g, x0, eaveY + 2 + i, w, 1, "rgba(14,18,28," + (0.34 * (1 - i / 10)).toFixed(3) + ")");
+    for (let f = 1; f < floors; f++)
+      px(g, x0, eaveY + f * FLOOR_H, w, 2, shade(wall, -0.20));
+
+    /* 4.5 外轮廓 */
+    px(g, x0 - 1, eaveY + 1, w + 2, 1, shade(wall, -0.44));
+    px(g, x0 - 1, eaveY + 1, 1, wallH + 2, shade(wall, -0.44));
+    px(g, x1, eaveY + 1, 1, wallH + 2, shade(wall, -0.44));
+
+    /* --- B：交给各栋楼的绘制上下文 ------------------------------------- */
+    const B = {
+      canvas: c, g: g, w: w, depth: depth, floors: floors,
+      x0: x0, x1: x1, eaveY: eaveY, baseY: baseY, wallH: wallH, roofT: roofT,
+      wall: wall, roof: roof, glass: glass, door: spec.door || "#5a3f2a",
+      sign: sg, signImg: sgn, PADX: PADX, PADT: PADT,
+      px: function (x, y, ww, hh, col) { px(g, x, y, ww, hh, col); },
+      shade: shade, mix: mix, rgba: function (hex, a) { const q = rgb(hex); return "rgba(" + q[0] + "," + q[1] + "," + q[2] + "," + a + ")"; },
+      win: function (x, y, ww, hh, o) { winAt(g, B, x, y, ww, hh, o); },
+      band: function (x, y, ww, hh, o) { winBand(g, B, x, y, ww, hh, o); },
+      ac: function (x, y, o) { acUnit(g, B, x, y, o); },
+      door: function (x, y, ww, hh, col, o) { doorLeaf(g, B, x, y, ww, hh, col, o); },
+      steps: function (cx, y, ww, n, col) { stairSteps(g, cx, y, ww, n, col); },
+      text: function (txt, x, y, fs, col) { return drawText(g, txt, x, y, fs, col); },
+      vtext: function (txt, x, y, fs, col, step) {
+        for (let i = 0; i < txt.length; i++) drawText(g, txt.charAt(i), x, y + i * step, fs, col);
+      },
+      plate: function (txt, x, y, fs, col) {
+        /* 返回字面尺寸，供居中摆放；不画。 */
+        return textPixels(txt, fs);
+      },
+      stamp: function (tp, x, y, col) { stampText(g, tp, x, y, col); },
+      mullions: function (x, y, ww, hh, step, col) {
+        for (let xx = x + step; xx < x + ww; xx += step) px(g, xx, y, 1, hh, col);
+      },
+      column: function (x, y, ww, hh, col) {
+        px(g, x, y, ww, hh, col);
+        px(g, x, y, 2, hh, shade(col, 0.20));
+        px(g, x + ww - 2, y, 2, hh, "rgba(20,24,32,0.22)");
+      },
+      /* 砖纹补丁：给首层/基座单独铺红砖用（与 30 段 §3.3 同一支笔） */
+      brickPatch: function (x, y, ww, hh, col) {
+        px(g, x, y, ww, hh, col);
+        for (let yy = y + 5; yy < y + hh; yy += 5) {
+          px(g, x, yy, ww, 1, "rgba(0,0,0,0.10)");
+          const off = ((((yy - y) / 5) | 0) & 1) ? 4 : 0;
+          for (let xx = x + off; xx < x + ww; xx += 8) px(g, xx, yy - 5, 1, 5, "rgba(0,0,0,0.07)");
+        }
+        px(g, x, y, ww, 1, shade(col, 0.18));
+        px(g, x, y, 2, hh, shade(col, 0.12));
+        px(g, x + ww - 3, y, 3, hh, shade(col, -0.24));
+      },
+      /* 挂在墙上的楼名牌：奶油色板 + 深色字（照片里宿舍楼门口那块） */
+      signPlate: function (text, cx, top, fs, o) {
+        o = o || {};
+        const tp = textPixels(text, fs);
+        if (!tp) return null;
+        const padX = o.padX != null ? o.padX : 6, padY = o.padY != null ? o.padY : 4;
+        const pw = tp.w + padX * 2, ph = tp.h + padY * 2;
+        const x = Math.round(cx - pw / 2), y = Math.round(top);
+        px(g, x + 2, y + 2, pw, ph, "rgba(14,18,28,0.30)");
+        px(g, x, y, pw, ph, o.bg || "#e8e0cc");
+        px(g, x, y, pw, 1, o.bgL || "#f5efe0");
+        px(g, x, y + ph - 1, pw, 1, o.bgD || "#a79d87");
+        stampText(g, tp, x + padX, y + padY, o.col || "#3a3226");
+        return { x: x, y: y, w: pw, h: ph };
+      },
+      /* 半圆拱：从 base 往上填（研究中心 / 校史馆的门洞、连拱） */
+      arch: function (cx, base, rx, ry, col) { archFill(g, cx, base, rx, ry, col); },
+      /* 拱券带：一道有厚度的拱形边（外弧与内弧之间 + 两条腿），用于奶白石门套 */
+      archBand: function (cx, base, rx, ry, thick, col) { archBand(g, cx, base, rx, ry, thick, col); },
+      /* 圆窗：外圈石框 + 深玻璃 + 十字棂 */
+      roundWin: function (cx, cy, rx, ry, frame, glass) { roundWin(g, cx, cy, rx, ry, frame, glass); },
+      /* 帘影：窗里竖向的浅色帘子（照片里宿舍窗几乎全拉着帘） */
+      curtain: function (x, y, ww, hh, col) {
+        px(g, x, y, ww, hh, col);
+        for (let xx = x + 2; xx < x + ww - 1; xx += 5)
+          px(g, xx, y, 1, hh, "rgba(255,255,255,0.26)");
+      },
+      /* 蓝色飘带（天佑会堂首层玻璃下那条水波） */
+      wave: function (x0, x1, yBase, amp, period, col) {
+        for (let x = x0; x < x1; x++) {
+          const t = (x - x0) / period;
+          const y = yBase - Math.round(amp * (0.5 + 0.5 * Math.sin(t * Math.PI * 2)));
+          px(g, x, y, 1, 3, col);
+        }
+      },
+      /* 左右外轮廓：draw() 覆盖过底色之后补回来 */
+      edges: function (lit, dark) {
+        px(g, x0 - 1, eaveY, 1, wallH + 2, lit);
+        px(g, x1, eaveY, 1, wallH + 2, dark);
+      },
+      /* 墙上金字（信息中心、学生活动服务中心那种），带 1px 深色投影 */
+      goldText: function (text, cx, top, fs, col) {
+        const tp = textPixels(text, fs);
+        if (!tp) return null;
+        const x = Math.round(cx - tp.w / 2);
+        stampText(g, tp, x + 1, top + 1, "rgba(30,24,16,0.55)");
+        stampText(g, tp, x, top, col || "#d9b45f");
+        return { x: x, y: top, w: tp.w, h: tp.h };
+      }
+    };
+
+    if (spec.draw) spec.draw(B);
+
+    /* 4.6 接地阴影带（最后补，防止被立面覆盖） */
+    contactBand(g, x0 + 1, x1 - 1, baseY - 1, 2, 0.34);
+    if (spec.after) spec.after(B);
+
+    return { spec: spec, canvas: c, ax: x0 + w / 2, ay: baseY, w: w, h: wallH + roofT, B: B };
+  }
+
+  /* --- 5. 屋面：红瓦坡顶（8 号公寓楼那张图唯一的不同屋面） --------------- */
+  function drawTileRoof(g, x0, x1, w, top, roofT, roof, rng) {
+    px(g, x0 - 3, top, w + 6, roofT, shade(roof, -0.34));
+    px(g, x0 - 1, top + 2, w + 2, roofT - 3, roof);
+    /* 瓦垄：一行行半圆瓦，越靠下越窄（读者会读成坡屋面） */
+    for (let y = top + 4; y < top + roofT - 3; y += 5) {
+      const k = (y - top) / roofT;
+      px(g, x0, y, w, 1, shade(roof, -0.18));
+      for (let x = x0 + ((y / 5) | 0) % 2 * 5; x < x1; x += 10)
+        px(g, x, y - 3, 4, 3, shade(roof, 0.10 - k * 0.16));
+    }
+    px(g, x0, top, w, 4, shade(roof, 0.22));                 // 屋脊受光
+    px(g, x0 - 3, top + roofT - 1, w + 6, 2, shade(roof, -0.55));
+    speckle(g, x0 + 3, top + 4, w - 6, roofT - 8, "rgba(255,255,255,0.06)", (w / 3) | 0, rng);
+  }
+
+  /* --- 6. 窗 / 窗带 / 空调 / 门 / 台阶 ---------------------------------- */
+  function archFill(g, cx, base, rx, ry, col) {
+    for (let dx = -rx; dx <= rx; dx++) {
+      const t = 1 - (dx * dx) / (rx * rx);
+      if (t <= 0) continue;
+      const dy = Math.round(ry * Math.sqrt(t));
+      px(g, cx + dx, base - dy, 1, dy, col);
+    }
+  }
+  function archBand(g, cx, base, rx, ry, thick, col) {
+    for (let dx = -rx; dx <= rx; dx++) {
+      const ox = Math.abs(dx);
+      const oy = Math.round(ry * Math.sqrt(Math.max(0, 1 - (dx * dx) / (rx * rx))));
+      const ir = rx - thick;
+      const iy = ox <= ir
+        ? Math.round((ry - thick) * Math.sqrt(Math.max(0, 1 - (dx * dx) / (ir * ir))))
+        : 0;
+      const y0 = base - oy, y1 = base - iy;
+      if (y1 > y0) px(g, cx + dx, y0, 1, y1 - y0, col);
+    }
+  }
+  function roundWin(g, cx, cy, rx, ry, frame, glass) {
+    for (let dy = -ry; dy <= ry; dy++) {
+      const t = 1 - (dy * dy) / (ry * ry);
+      if (t < 0) continue;
+      const dx = Math.round(rx * Math.sqrt(t));
+      px(g, cx - dx, cy + dy, dx * 2 + 1, 1, frame);
+    }
+    for (let dy = -ry + 2; dy <= ry - 2; dy++) {
+      const t = 1 - (dy * dy) / ((ry - 2) * (ry - 2));
+      if (t < 0) continue;
+      const dx = Math.round((rx - 2) * Math.sqrt(t));
+      px(g, cx - dx, cy + dy, dx * 2 + 1, 1, glass);
+    }
+    px(g, cx, cy - ry + 2, 1, ry * 2 - 4, frame);
+    px(g, cx - rx + 2, cy, rx * 2 - 4, 1, frame);
+    px(g, cx - Math.max(1, rx - 5), cy - Math.max(1, ry - 6), 3, 2, "rgba(255,255,255,0.34)");
+  }
+  function winAt(g, B, x, y, w, h, o) {
+    o = o || {};
+    const wall = o.wall || B.wall;
+    const glass = o.glass || B.glass;
+    const frame = o.frame || shade(wall, 0.12);
+    px(g, x - 1, y - 1, w + 2, h + 2, frame);
+    px(g, x + w, y - 1, 1, h + 2, shade(wall, -0.34));
+    px(g, x, y, w, h, "#2c3746");
+    px(g, x, y, w, 2, "rgba(10,13,20,0.58)");
+    px(g, x, y, 2, h, "rgba(10,13,20,0.44)");
+    px(g, x + 2, y + 2, w - 6, 3, shade(glass, 0.28));
+    px(g, x + 3, y + 6, w - 9, 2, shade(glass, 0.12));
+    if (o.mullion !== false) {
+      const n = o.mullions || 1;
+      for (let i = 1; i <= n; i++)
+        px(g, x + Math.round(w * i / (n + 1)), y + 2, 1, h - 4, o.frame || shade(wall, -0.52));
+    }
+    px(g, x + 2, y + Math.round(h * 0.62), w - 4, Math.round(h * 0.34), shade(glass, -0.24));
+    if (o.sill !== false) {
+      px(g, x - 2, y + h, w + 4, 3, o.sillCol || shade(wall, 0.24));
+      px(g, x - 2, y + h + 3, w + 4, 1, "rgba(14,18,28,0.28)");
+    }
+  }
+
+  /* 横向窗带：信息中心、天佑会堂、宿舍楼梯间都用它（一格里 4~20 扇） */
+  function winBand(g, B, x, y, w, h, o) {
+    o = o || {};
+    const frame = o.frame || "#d7d2c6";
+    const glass = o.glass || B.glass;
+    px(g, x - 2, y - 2, w + 4, h + 4, frame);
+    px(g, x, y, w, h, "#3a4652");
+    px(g, x, y, w, 2, "rgba(10,13,20,0.55)");
+    px(g, x, y, 2, h, "rgba(10,13,20,0.40)");
+    px(g, x + 2, y + 2, w - 4, Math.max(3, Math.round(h * 0.28)), shade(glass, 0.24));
+    px(g, x + 2, y + 2, w - 4, 2, shade(glass, 0.38));
+    /* 竖梃 */
+    const step = o.step || 16;
+    for (let xx = x + step; xx < x + w; xx += step)
+      px(g, xx, y + 1, 1, h - 2, o.mullionCol || frame);
+    /* 中横档 */
+    if (o.transom !== false) {
+      const ty = y + Math.round(h * (o.transomAt || 0.55));
+      px(g, x + 1, ty, w - 2, 1, o.mullionCol || frame);
+      px(g, x + 1, ty + 1, w - 2, 2, shade(glass, -0.26));
+    }
+    if (o.sill !== false) {
+      px(g, x - 3, y + h, w + 6, 3, o.sillCol || "#c9c4b8");
+      px(g, x - 3, y + h + 3, w + 6, 1, "rgba(14,18,28,0.26)");
+    }
+  }
+
+  /* 白色空调外机（62_dorm16.js 同款） */
+  function acUnit(g, B, x, y, o) {
+    o = o || {};
+    const w = o.w || 14, h = o.h || 10;
+    const shell = o.col || "#e2e5ea";
+    px(g, x, y, w, h, shell);
+    px(g, x, y, w, 1, "#ffffff");
+    px(g, x, y + h - 1, w, 1, "#9aa0aa");
+    px(g, x, y + 2, w - 3, 1, "rgba(20,24,32,0.20)");
+    px(g, x + w - 3, y + 2, 3, h - 4, "#9aa0aa");
+    px(g, x - 1, y + h, w + 2, 1, "rgba(14,18,28,0.22)");
+  }
+
+  function doorLeaf(g, B, x, y, w, h, col, o) {
+    o = o || {};
+    px(g, x - 1, y - 1, w + 2, h + 1, o.frame || shade(col, -0.34));
+    px(g, x, y, w, h, col);
+    for (let i = 3; i < w; i += (o.panel || 6))
+      px(g, x + i, y + 2, 1, h - 2, "rgba(0,0,0,0.22)");
+    px(g, x, y, w, 1, "rgba(0,0,0,0.30)");
+    if (o.handle !== false)
+      px(g, x + Math.round(w * 0.5) - 1, y + Math.round(h * 0.45), 2, 6, "#d8c07a");
+    if (o.glass !== false) {
+      px(g, x + 2, y + 3, w - 4, Math.max(3, Math.round(h * 0.30)), "rgba(150,190,210,0.55)");
+      px(g, x + 2, y + 3, w - 4, 1, "rgba(255,255,255,0.30)");
+    }
+  }
+
+  function stairSteps(g, cx, y, w, n, col) {
+    n = n || 3;
+    col = col || "#b9b3a6";
+    for (let i = 0; i < n; i++) {
+      const sw = w + i * 5, sx = Math.round(cx - sw / 2), sy = y + i * 3 - 2;
+      px(g, sx, sy, sw, 3, shade(col, 0.10 - i * 0.11));
+      px(g, sx, sy + 3, sw, 1, "rgba(14,18,28,0.26)");
+    }
+  }
+
+  global.PC = {
+    SUN: SUN, FLOOR_H: FLOOR_H, WIN_W: WIN_W, WIN_H: WIN_H, WIN_GAP: WIN_GAP,
+    PADX: PADX, PADT: PADT,
+    mkCanvas: mkCanvas, px: px, makeRng: makeRng, poly: poly, speckle: speckle,
+    rgb: rgb, shade: shade, mix: mix, shadowQuad: shadowQuad, contactBand: contactBand,
+    makeSign: makeSign, signRect: signRect,
+    textPixels: textPixels, stampText: stampText, drawText: drawText,
+    make: make
+  };
+})(window);
+
+/* 01 建筑与艺术学院
+   照片：暖粉色涂料墙 + 三排深灰方框窗 + 首层深色玻璃幕（左侧银色帘影）
+        + 锈红色耐候钢竖板门斗 + 深灰玻璃雨篷 + 门前一块耐候钢金字招牌。
+   楼名不挂屋面：照片里名字在门前那块锈钢石板上。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "01-jianyi",
+    name: "建筑与艺术学院",
+    note: "4 层 · 暖粉涂料墙 / 深灰方窗 / 锈钢门斗 / 玻璃幕",
+    spec: {
+      w: 420, floors: 4, sign: false, seed: 6101, roofT: 84,
+      wall: "#d9bdaa", roof: "#b9a795", glass: "#839fa3", texture: "none",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY, FH = PC.FLOOR_H;
+        const C = {
+          wall: "#d9bdaa", wallL: "#e8d2c0", wallD: "#c0a28e",
+          seam: "rgba(90,58,44,0.10)",
+          ledge: "#e6d3c2", ledgeD: "#b39a86",
+          frame: "#3c3b38", frameL: "#5d5b56", glass: "#839fa3", glassD: "#4d666b",
+          curtain: "#c9c8c2",
+          lobby: "#2f3a3d", lobbyL: "#55696c",
+          corten: "#8a4a33", cortenL: "#a65f42", cortenD: "#60331f",
+          metal: "#4a4a46", metalL: "#6e6d67", metalD: "#2e2e2b",
+          gold: "#d8b877"
+        };
+        const floorTop = f => eaveY + (B.floors - 1 - f) * FH;
+
+        /* 1. 墙面：暖粉平涂 + 板缝 + 每层一道浅色窗台线 */
+        B.px(x0, eaveY, w, B.wallH, C.wall);
+        for (let x = x0 + 84; x < x1 - 6; x += 84)
+          B.px(x, eaveY + 2, 1, B.wallH - 4, C.seam);
+        for (let f = 1; f < B.floors; f++) {
+          const y = floorTop(f - 1);                 // 该层楼板线
+          B.px(x0, y - 2, w, 1, C.ledge);
+          B.px(x0, y - 1, w, 1, C.ledgeD);
+        }
+        B.px(x0, eaveY, w, 2, "#e9d6c5");             // 檐口浅石线
+
+        /* 2. 三排深灰方框窗（5 列） */
+        const cols = 5, winW = 46, winH = 26;
+        const wstep = Math.round((w - 52 - winW) / (cols - 1));
+        const winX = [];
+        for (let k = 0; k < cols; k++) winX.push(x0 + 26 + k * wstep);
+        for (let f = 1; f < B.floors; f++) {
+          const wy = floorTop(f) + 4;
+          for (let k = 0; k < cols; k++) {
+            B.win(winX[k], wy, winW, winH, {
+              frame: C.frame, glass: C.glass, mullions: 1, sill: false
+            });
+            B.px(winX[k] - 1, wy - 1, winW + 2, 2, C.frameL);   // 上框受光
+            B.px(winX[k] - 2, wy + winH, winW + 4, 2, C.ledge);  // 深窗台
+            B.px(winX[k] - 2, wy + winH + 2, winW + 4, 1, "rgba(60,40,30,0.28)");
+          }
+        }
+
+        /* 3. 首层左侧：整片深色玻璃幕（照片里室内银色帘子透出来） */
+        const gTop = baseY - 32, gBot = baseY - 2;
+        B.px(x0 + 4, gTop - 2, 230, gBot - gTop + 4, C.frame);
+        B.px(x0 + 6, gTop, 226, gBot - gTop + 1, C.lobby);
+        B.curtain(x0 + 12, gTop + 3, 200, gBot - gTop - 5, "rgba(150,160,158,0.30)");
+        for (let x = x0 + 18; x < x0 + 230; x += 18)
+          B.px(x, gTop, 1, gBot - gTop + 1, C.lobbyL);
+        B.px(x0 + 6, gTop, 226, 3, C.lobbyL);
+        B.px(x0 + 6, gBot - 1, 226, 2, C.frame);
+
+        /* 4. 锈红耐候钢门斗：从地面一直长到三层窗下的窗间墙里 */
+        const px0 = x0 + 238, px1 = x0 + 266;
+        const pTop = floorTop(1) + 22;
+        B.px(px0, pTop, px1 - px0, baseY - pTop, C.corten);
+        B.px(px0, pTop, 3, baseY - pTop, C.cortenL);
+        B.px(px1 - 4, pTop, 4, baseY - pTop, C.cortenD);
+        for (let x = px0 + 8; x < px1 - 5; x += 9)
+          B.px(x, pTop + 4, 1, baseY - pTop - 6, "rgba(60,30,18,0.26)");
+        B.px(px0, pTop, px1 - px0, 2, "#b06a4a");
+        B.px(px0 - 1, pTop, 1, baseY - pTop, "#5a2f1d");
+        B.px(px1, pTop, 1, baseY - pTop, "#5a2f1d");
+
+        /* 5. 深灰雨篷：从门斗右侧挑出，压住入口上方 */
+        const cy0 = baseY - 44;
+        B.px(px0, cy0, x0 + 356 - px0, 6, C.metal);
+        B.px(px0, cy0, x0 + 356 - px0, 2, C.metalL);
+        B.px(px0, cy0 + 6, x0 + 356 - px0, 2, C.metalD);
+        B.px(px0 + 2, cy0 + 8, x0 + 352 - px0, 2, "rgba(14,18,28,0.26)");
+        B.px(x0 + 352, cy0, 4, 9, C.metalD);
+
+        /* 6. 入口：深色玻璃双开门，藏在门斗右侧的凹口里 */
+        const dx0 = x0 + 282, dw = 48, dy0 = baseY - 34;
+        B.px(dx0 - 3, dy0 - 3, dw + 6, 37, "#2b2b29");
+        B.px(dx0, dy0, dw, 34, C.lobby);
+        B.px(dx0, dy0, 3, 34, C.lobbyL);
+        B.px(dx0, dy0 + 16, dw, 1, "rgba(180,190,188,0.45)");
+        B.px(dx0 + Math.round(dw / 2), dy0, 1, 32, "#9ca6a4");
+        B.px(dx0 + 4, dy0 + 24, 5, 1, "#b9bcb8");     // 拉手
+        B.px(dx0 + dw - 9, dy0 + 24, 5, 1, "#b9bcb8");
+
+        /* 7. 门前锈钢招牌（照片里那块大石板，金字） */
+        B.px(x0 + 334, baseY - 34, 84, 32, C.cortenD);
+        B.px(x0 + 336, baseY - 33, 80, 28, C.corten);
+        B.px(x0 + 338, baseY - 32, 76, 3, C.cortenL);
+        B.px(x0 + 336, baseY - 6, 80, 2, "rgba(20,10,6,0.40)");
+        for (let x = x0 + 342; x < x0 + 414; x += 11)
+          B.px(x, baseY - 29, 1, 21, "rgba(60,30,18,0.22)");
+        B.goldText("建筑与艺术学院", x0 + 376, baseY - 28, 9, C.gold);
+
+        /* 9. 墙面小细节：右侧一支摄像头 / 雨水口 */
+        B.px(x1 - 18, eaveY + 12, 10, 3, "#5c5a55");
+        B.px(x1 - 11, eaveY + 15, 2, 4, "#5c5a55");
+        B.px(x0 + 88, eaveY + 2, 2, B.wallH - 4, "#c7b09d");
+        B.px(x0 + 90, eaveY + 2, 1, B.wallH - 4, "#a9917e");
+
+        /* 10. 外轮廓 */
+        B.edges("#c9b09c", "#9c8371");
+      }
+    }
+  });
+})();
+
+/* 05 19号宿舍楼
+   照片：五排白色凸窗（6 个开间）的红砖主楼 + 右端红色楼梯塔
+        + 屋面一排太阳能板 + 两层银灰金属板裙房（中央雨篷挂「19号宿舍楼」）
+        + 首层玻璃门厅 + 墙根两丛修剪过的灌木。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "05-d19",
+    name: "19号宿舍楼",
+    note: "7 层 · 红砖 / 白色凸窗 / 银灰裙房 / 屋顶太阳能",
+    spec: {
+      w: 520, floors: 7, sign: false, seed: 6505,
+      wall: "#a8402f", roof: "#8f8779", glass: "#9db6c4", texture: "brick",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY, PADT = B.PADT;
+        const CX = x0 + Math.round(w / 2);
+        const C = {
+          red: "#a8402f", redL: "#bd5542", redD: "#822d20",
+          bay: "#e1e4e6", bayL: "#f2f4f5", bayD: "#b6bbbe",
+          glass: "#9db6c4", glassD: "#6f8996", glassL: "#c3d5dc",
+          spand: "#cfd5d8", spandD: "#a9b0b5",
+          metal: "#8d939c", metalL: "#a8aeb6", metalD: "#666c75",
+          metalDD: "#4f555e",
+          hall: "#3f4d55", sign: "#e8e2d2", signD: "#a79f8c",
+          solar: "#2f3f55", solarL: "#4d6b8f", shrub: "#2f5c33", shrubL: "#4a7d47"
+        };
+
+        /* 1. 屋顶太阳能板（画在屋带上，读作楼顶） */
+        for (let r = 0; r < 3; r++) {
+          const sy = PADT + 14 + r * 12;
+          for (let k = 0; k < 8; k++) {
+            const sx = x0 + 26 + k * 46;
+            if (sx + 40 > x1 - 100) break;
+            B.px(sx, sy, 40, 9, C.solar);
+            B.px(sx, sy, 40, 2, C.solarL);
+            B.px(sx, sy + 9, 40, 1, "#1b2634");
+            B.px(sx + 4, sy + 10, 2, 3, "#5a6068");
+          }
+        }
+        B.px(x0, PADT + 2, w, 2, "#b3aa99");
+
+        /* 2. 红砖主楼底 */
+        B.px(x0, eaveY, w, 170, C.red);
+        for (let y = eaveY + 5; y < eaveY + 170; y += 5) {
+          B.px(x0, y, w, 1, "rgba(0,0,0,0.10)");
+          const off = (((y - eaveY) / 5) | 0) & 1 ? 4 : 0;
+          for (let x = x0 + off; x < x1; x += 8) B.px(x, y - 5, 1, 5, "rgba(0,0,0,0.06)");
+        }
+        B.px(x0, eaveY, 3, 170, C.redL);
+        B.px(x1 - 4, eaveY, 4, 170, C.redD);
+
+        /* 3. 五排白色凸窗（6 个开间） */
+        const bays = 6, bw = 56, bstep = Math.round((w - 28 - bw) / (bays - 1));
+        for (let f = 0; f < 5; f++) {
+          const wy = eaveY + 8 + f * PC.FLOOR_H;
+          for (let k = 0; k < bays; k++) {
+            const bx = x0 + 14 + k * bstep;
+            if (bx + bw > x1 - 6) continue;
+            B.px(bx + bw, wy + 2, 2, 25, "rgba(40,16,12,0.24)");      // 右侧投在砖上的影
+            B.px(bx - 1, wy - 1, bw + 2, 28, C.bayD);
+            B.px(bx, wy, bw, 26, C.bay);
+            B.px(bx, wy, bw, 2, C.bayL);
+            B.px(bx + 2, wy + 2, bw - 4, 16, C.glass);
+            B.px(bx + 2, wy + 2, bw - 4, 3, C.glassL);
+            B.px(bx + 2, wy + 8, bw - 4, 2, "rgba(255,255,255,0.18)");
+            B.px(bx + 18, wy + 2, 2, 16, C.bay);                       // 竖棂
+            B.px(bx + 36, wy + 2, 2, 16, C.bay);
+            B.px(bx + 2, wy + 18, bw - 4, 6, C.spand);                 // 窗下白裙板
+            B.px(bx + 2, wy + 23, bw - 4, 1, C.spandD);
+            B.px(bx - 2, wy + 26, bw + 4, 2, C.bayD);                  // 凸窗底板
+            B.px(bx - 2, wy + 28, bw + 4, 1, "rgba(40,16,12,0.30)");
+          }
+        }
+
+        /* 4. 右端红色楼梯塔（从屋顶长下来，压在最后一个开间前） */
+        const tx0 = x1 - 92, tw = 88, ttop = PADT + 28;
+        B.px(tx0, ttop, tw, baseY - ttop, C.red);
+        B.px(tx0, ttop, 3, baseY - ttop, C.redL);
+        B.px(tx0 + tw - 4, ttop, 4, baseY - ttop, C.redD);
+        for (let y = ttop + 5; y < baseY; y += 5)
+          B.px(tx0, y, tw, 1, "rgba(0,0,0,0.10)");
+        B.px(tx0, ttop, tw, 2, "#c9604c");
+        B.px(tx0 - 1, ttop, 1, baseY - ttop, "#5e2318");
+        B.px(tx0 + tw, ttop, 1, baseY - ttop, "#5e2318");
+        for (let f = 0; f < 5; f++) {
+          for (let k = 0; k < 2; k++) {
+            const wx = tx0 + 14 + k * 40, wy = eaveY + 12 + f * PC.FLOOR_H;
+            if (wy + 18 > baseY - 72) continue;
+            B.px(wx - 1, wy - 1, 26, 20, "#e3e5e6");
+            B.px(wx, wy, 24, 18, C.glassD);
+            B.px(wx, wy, 24, 3, C.glass);
+            B.px(wx + 11, wy, 1, 18, "#d8dcdd");
+          }
+        }
+        /* 塔顶小机房 */
+        B.px(tx0 + 10, PADT + 12, tw - 20, 18, "#9b5040");
+        B.px(tx0 + 10, PADT + 12, tw - 20, 2, "#b96956");
+
+        /* 5. 两层银灰金属裙房 */
+        const py = eaveY + 170;
+        B.px(x0, py, w, baseY - py + 2, C.metal);
+        for (let x = x0 + 3; x < x1; x += 7)
+          B.px(x, py, 1, baseY - py + 2, "rgba(40,44,52,0.16)");       // 竖向压型肋
+        B.px(x0, py, w, 2, C.metalL);
+        B.px(x0, py + 2, w, 2, "rgba(40,44,52,0.20)");
+        B.px(x0, baseY - 4, w, 6, C.metalD);
+        B.px(x0, baseY - 1, w, 3, C.metalDD);
+
+        /* 雨篷 + 楼名牌 */
+        B.px(CX - 120, py + 4, 240, 18, C.metalD);
+        B.px(CX - 120, py + 4, 240, 2, C.metalL);
+        B.px(CX - 120, py + 22, 240, 2, "rgba(20,24,32,0.34)");
+        B.signPlate("19号宿舍楼", CX, py + 5, 14, {
+          bg: C.sign, bgL: "#f7f2e4", bgD: C.signD, col: "#2f2a24", padX: 6, padY: 3
+        });
+
+        /* 首层玻璃门厅 */
+        const dx0 = CX - 76, dx1 = CX + 76, dy0 = py + 30;
+        B.px(dx0 - 3, dy0 - 3, dx1 - dx0 + 6, baseY - dy0, "#3b424a");
+        B.px(dx0, dy0, dx1 - dx0, baseY - dy0 - 2, C.hall);
+        for (let x = dx0 + 18; x < dx1; x += 19) B.px(x, dy0, 1, baseY - dy0 - 2, "#77828a");
+        B.px(dx0, dy0, dx1 - dx0, 2, "rgba(10,13,20,0.50)");
+        B.px(dx0, baseY - 18, dx1 - dx0, 3, "#2f5f9a");                 // 蓝色门带
+        B.px(dx0 + 60, baseY - 26, 2, 8, "#c9c9c2");
+        /* 两侧卷帘门 / 窗 */
+        B.px(x0 + 18, py + 34, 54, baseY - py - 40, "#7f858d");
+        for (let y = py + 36; y < baseY - 8; y += 3) B.px(x0 + 18, y, 54, 1, "#6a7078");
+        B.px(x1 - 76, py + 34, 54, baseY - py - 40, "#7f858d");
+        for (let y = py + 36; y < baseY - 8; y += 3) B.px(x1 - 76, y, 54, 1, "#6a7078");
+
+        /* 6. 外轮廓 */
+        B.edges("#c25b48", "#7a2a1e");
+      },
+      after: function (B) {
+        /* 墙根两丛修剪灌木 */
+        const y = B.baseY - 6, x0 = B.x0, x1 = B.x1;
+        const shrub = (cx, rx) => {
+          for (let i = -rx; i <= rx; i++) {
+            const h = Math.round(8 * Math.sqrt(Math.max(0, 1 - (i * i) / (rx * rx))));
+            B.px(cx + i, y - h, 1, h + 6, "#2f5c33");
+            B.px(cx + i, y - h, 1, 2, "#4a7d47");
+          }
+        };
+        shrub(x0 + 30, 34);
+        shrub(x1 - 30, 34);
+        B.px(x0, B.baseY + 1, B.w, 2, "rgba(14,18,28,0.26)");
+      }
+    }
+  });
+})();
+
+/* 06 2号宿舍楼
+   照片：四层红砖墙 + 灰色壁柱与楼层腰带把立面分成「2–3–2」三跨
+        + 白框蓝帘窗 + 中央灰色雨篷与「2号宿舍楼」白牌 + 灰色双开门
+        + 首层一条灰色墙裙。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "06-d2",
+    name: "2号宿舍楼",
+    note: "4 层 · 红砖 / 灰色壁柱 / 三跨立面 / 灰门",
+    spec: {
+      w: 380, floors: 4, sign: false, seed: 6606,
+      /* 屋面压到 20：默认 114 的屋瓦会把天佑会堂与这栋之间那 54 行条带整个盖住
+         （画布顶 = 落地线 − ay，ay = 18+114+136 = 268 → 1990）。20 之后 ay 174、
+         画布顶 2084，屋瓦只从 2102 起，条带让给中间那排排球场；立面位置
+         （檐口 2122 / 落地 2258）一点没动，遮挡关系与百叶窗、门牌都不受影响。 */
+      roofT: 20,
+      wall: "#a8402f", roof: "#8d8577", glass: "#8fa9c8", texture: "brick",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY, FH = PC.FLOOR_H;
+        const CX = x0 + Math.round(w / 2);
+        const C = {
+          red: "#a8402f", redL: "#bd5542", redD: "#822d20",
+          grey: "#8b8e93", greyL: "#a5a8ad", greyD: "#6b6e73",
+          frame: "#e6e5e0", glass: "#8fa9c8", glassD: "#5f7797",
+          curtain: "rgba(190,210,235,0.34)",
+          door: "#8a8d92", doorD: "#5f6267",
+          sign: "#eee9dc", signD: "#a9a190"
+        };
+
+        /* 1. 红砖底：上受光、右背光 */
+        B.px(x0, eaveY, w, B.wallH, C.red);
+        B.px(x0, eaveY, 3, B.wallH, C.redL);
+        B.px(x1 - 4, eaveY, 4, B.wallH, C.redD);
+
+        /* 2. 灰色壁柱（两端 + 两道内柱） */
+        const piers = [x0, x0 + 100, x0 + 266, x1 - 14];
+        for (let i = 0; i < piers.length; i++) {
+          const px0 = piers[i], pw = 14;
+          B.px(px0, eaveY, pw, B.wallH, C.grey);
+          B.px(px0, eaveY, 2, B.wallH, C.greyL);
+          B.px(px0 + pw - 3, eaveY, 3, B.wallH, C.greyD);
+          B.px(px0, eaveY, pw, 2, "#b6b9bd");
+        }
+
+        /* 3. 楼层腰带（每层一道厚灰梁） */
+        for (let f = 0; f < B.floors; f++) {
+          const y = eaveY + f * FH;
+          B.px(x0, y, w, 7, C.grey);
+          B.px(x0, y, w, 2, C.greyL);
+          B.px(x0, y + 7, w, 2, C.greyD);
+        }
+        B.px(x0, baseY - 12, w, 14, C.grey);          // 首层墙裙
+        B.px(x0, baseY - 12, w, 2, C.greyL);
+        B.px(x0, baseY - 1, w, 3, C.greyD);
+
+        /* 4. 窗阵：左 2 / 中 3 / 右 2 */
+        const sects = [
+          { x: x0 + 22, n: 2, ww: 30, step: 38 },
+          { x: x0 + 125, n: 3, ww: 36, step: 47 },
+          { x: x0 + 292, n: 2, ww: 30, step: 38 }
+        ];
+        const rowTop = f => eaveY + (B.floors - 1 - f) * FH + 12;
+        for (let f = 1; f < B.floors; f++) {
+          for (const s of sects) {
+            for (let k = 0; k < s.n; k++) {
+              const wx = s.x + k * s.step, wy = rowTop(f);
+              B.win(wx, wy, s.ww, 24, {
+                frame: C.frame, glass: C.glass, mullions: 1, sillCol: C.greyL
+              });
+              B.curtain(wx + 2, wy + 2, s.ww - 4, 20, C.curtain);
+              B.px(wx - 1, wy - 1, s.ww + 2, 2, "#f2f1ec");
+            }
+          }
+        }
+
+        /* 5. 首层：两侧仍是窗，中央是门 */
+        for (let i = 0; i < 2; i++) {
+          const s = sects[i === 0 ? 0 : 2];
+          for (let k = 0; k < s.n; k++) {
+            const wx = s.x + k * s.step, wy = baseY - 46;
+            B.win(wx, wy, s.ww, 24, {
+              frame: C.frame, glass: C.glassD, mullions: 1, sillCol: C.greyL
+            });
+            B.curtain(wx + 2, wy + 2, s.ww - 4, 20, C.curtain);
+          }
+        }
+        /* 6. 中央雨篷 + 门牌 + 灰门 */
+        const cy = baseY - 60;
+        B.px(CX - 82, cy, 164, 20, C.greyD);
+        B.px(CX - 82, cy, 164, 2, C.greyL);
+        B.px(CX - 82, cy + 20, 164, 2, "rgba(14,18,28,0.30)");
+        B.signPlate("2号宿舍楼", CX, cy + 2, 13, {
+          bg: C.sign, bgL: "#faf6ea", bgD: C.signD, col: "#2e2a24", padX: 7, padY: 2
+        });
+        const dW = 46, dH = 38, dx = CX - Math.round(dW / 2), dy = baseY - dH;
+        B.px(dx - 4, dy - 2, dW + 8, dH + 2, C.greyD);
+        B.px(dx, dy, dW, dH, C.door);
+        B.px(dx, dy, dW, 2, "#b6b9bd");
+        B.px(dx + Math.round(dW / 2), dy, 1, dH, C.doorD);
+        B.px(dx + 4, dy + 8, dW - 8, 12, "#c9ccd0");           // 门上部小玻璃
+        B.px(dx + 4, dy + 8, dW - 8, 2, "#e6e8ea");
+        B.px(dx + 6, dy + 30, 2, 8, "#4a4d52");
+        B.px(dx + dW - 8, dy + 30, 2, 8, "#4a4d52");
+        B.px(dx - 4, baseY - 1, dW + 8, 3, "#9a9da2");
+
+        /* 7. 落水管：两根银白管贴着壁柱走 */
+        B.px(x0 + 96, eaveY + 8, 2, B.wallH - 16, "#d9d8d2");
+        B.px(x0 + 282, eaveY + 8, 2, B.wallH - 16, "#d9d8d2");
+        B.px(x0 + 95, eaveY + 8, 1, B.wallH - 16, "#b5b3ac");
+
+        /* 8. 外轮廓 */
+        B.edges("#c25b48", "#7a2a1e");
+      }
+    }
+  });
+})();
+
+/* 07 12号宿舍楼
+   照片：六层红砖楼 + 中央一整条灰蓝楼梯间（每层一对小白框窗）
+        + 两侧宽窗与密集空调外机 + 灰色雨篷挂「12号宿舍楼」白牌
+        + 深色玻璃门 + 首层防盗栅 + 门前几级台阶。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "07-d12",
+    name: "12号宿舍楼",
+    note: "6 层 · 红砖 / 灰蓝楼梯间 / 空调外机 / 白牌",
+    spec: {
+      w: 420, floors: 6, sign: false, seed: 6707,
+      wall: "#9c3b30", roof: "#8a8173", glass: "#8ea9c6", texture: "brick",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY, FH = PC.FLOOR_H;
+        const CX = x0 + Math.round(w / 2);
+        const C = {
+          red: "#9c3b30", redL: "#b65447", redD: "#76251c",
+          grey: "#7c8796", greyL: "#98a4b2", greyD: "#5b6674", greyDD: "#46505c",
+          frame: "#e9e9e4", frameD: "#b9b9b2",
+          glass: "#8ea9c6", glassD: "#5e7896",
+          curtain: "rgba(198,218,238,0.36)",
+          door: "#38424a", sign: "#e9e3d4", signD: "#a8a08e", ac: "#e2e5ea"
+        };
+        const floorTop = f => eaveY + (B.floors - 1 - f) * FH;
+
+        /* 1. 红砖墙 */
+        B.px(x0, eaveY, w, B.wallH, C.red);
+        B.px(x0, eaveY, 3, B.wallH, C.redL);
+        B.px(x1 - 4, eaveY, 4, B.wallH, C.redD);
+        for (let f = 1; f < B.floors; f++)
+          B.px(x0, floorTop(f - 1) - 1, w, 1, "rgba(30,10,8,0.28)");
+
+        /* 2. 两侧窗阵（每层 2 扇宽窗） */
+        const winW = 46, winH = 24;
+        for (let f = 0; f < B.floors; f++) {
+          const wy = floorTop(f) + 6;
+          for (let s = 0; s < 2; s++) {
+            for (let k = 0; k < 2; k++) {
+              const wx = s ? x1 - 122 + k * 58 : x0 + 18 + k * 58;
+              B.win(wx, wy, winW, winH, {
+                frame: C.frame, glass: C.glass, mullions: 1, sillCol: C.frameD
+              });
+              B.curtain(wx + 2, wy + 2, winW - 4, winH - 4, C.curtain);
+              B.px(wx - 1, wy - 1, winW + 2, 2, "#f4f4f0");
+              B.px(wx + winW + 2, wy + 3, 2, winH - 6, C.redD);
+              /* 空调外机：照片里每扇窗旁边几乎都挂一台 */
+              if (f < B.floors - 1 || k === 0)
+                B.ac(wx + winW + 4, wy + 7, { col: C.ac, w: 15, h: 11 });
+              else
+                B.ac(wx + winW + 4, wy + 5, { col: C.ac, w: 15, h: 11 });
+            }
+          }
+        }
+
+        /* 3. 中央灰蓝楼梯间 */
+        const tw = 96, tx = CX - Math.round(tw / 2);
+        B.px(tx, eaveY, tw, B.wallH, C.grey);
+        B.px(tx, eaveY, 5, B.wallH, C.greyL);
+        B.px(tx + tw - 6, eaveY, 6, B.wallH, C.greyD);
+        B.px(tx, eaveY, tw, 2, "#a9b4c1");
+        for (let x = tx + 7; x < tx + tw - 8; x += 7)
+          B.px(x, eaveY + 2, 1, B.wallH - 4, "rgba(30,38,48,0.10)");
+        for (let f = 0; f < B.floors; f++) {
+          const wy = floorTop(f) + 7;
+          for (let k = 0; k < 2; k++) {
+            const wx = CX - 25 + k * 28;
+            B.px(wx - 1, wy - 1, 24, 22, C.frame);
+            B.px(wx, wy, 22, 20, C.glassD);
+            B.px(wx, wy, 22, 3, C.glass);
+            B.px(wx + 10, wy, 1, 20, C.frame);
+            B.px(wx + 2, wy + 13, 18, 1, C.frame);
+            B.px(wx - 1, wy + 21, 24, 2, "rgba(14,18,28,0.30)");
+          }
+          /* 楼梯间的层间横线 */
+          B.px(tx, floorTop(f) + 30, tw, 1, "rgba(30,38,48,0.22)");
+        }
+        B.px(tx - 1, eaveY, 1, B.wallH, "#3d4652");
+        B.px(tx + tw, eaveY, 1, B.wallH, "#3d4652");
+
+        /* 4. 雨篷 + 楼名牌 */
+        const cy = baseY - 76;
+        B.px(CX - 92, cy, 184, 12, C.greyD);
+        B.px(CX - 92, cy, 184, 2, C.greyL);
+        B.px(CX - 92, cy + 12, 184, 2, "rgba(14,18,28,0.32)");
+        B.signPlate("12号宿舍楼", CX, cy + 1, 14, {
+          bg: C.sign, bgL: "#f8f3e5", bgD: C.signD, col: "#2e2a24", padX: 7, padY: 2
+        });
+
+        /* 5. 深色玻璃门 */
+        const dx0 = CX - 34, dx1 = CX + 34, dy0 = baseY - 54;
+        B.px(dx0 - 4, dy0 - 4, dx1 - dx0 + 8, 56, C.greyDD);
+        B.px(dx0, dy0, dx1 - dx0, 52, C.door);
+        B.px(dx0, dy0, dx1 - dx0, 2, "rgba(10,13,20,0.55)");
+        for (let x = dx0 + 16; x < dx1; x += 17) B.px(x, dy0, 1, 52, "#79838b");
+        B.px(dx0, dy0 + 24, dx1 - dx0, 1, "rgba(170,180,190,0.40)");
+        B.px(dx0 + 24, dy0 + 34, 2, 8, "#b9bcbf");
+        B.px(dx1 - 26, dy0 + 34, 2, 8, "#b9bcbf");
+
+        /* 6. 首层防盗栅（两侧） */
+        for (let s = 0; s < 2; s++) {
+          for (let k = 0; k < 2; k++) {
+            const wx = s ? x1 - 122 + k * 58 : x0 + 18 + k * 58;
+            const wy = baseY - 44;
+            for (let x = wx + 4; x < wx + winW; x += 5) B.px(x, wy, 1, 24, "#c9c9c4");
+            B.px(wx - 1, wy, winW + 2, 1, "#c9c9c4");
+            B.px(wx - 1, wy + 24, winW + 2, 1, "#c9c9c4");
+          }
+        }
+
+        /* 7. 墙面落水管（白） */
+        for (let s = 0; s < 2; s++) {
+          const px = s ? x1 - 12 : x0 + 10;
+          B.px(px, eaveY + 2, 2, B.wallH - 4, "#dcdcd6");
+          B.px(px, eaveY + 2, 1, B.wallH - 4, "#b9b9b2");
+        }
+
+        /* 8. 灰墙裙 */
+        B.px(x0, baseY - 10, w, 10, "#6f7a88");
+        B.px(x0, baseY - 10, w, 2, "#8d98a6");
+        B.px(x0, baseY - 1, w, 1, "#4e5763");
+
+        /* 9. 外轮廓 */
+        B.edges("#b65447", "#76251c");
+      },
+      after: function (B) {
+        /* 门前三级台阶 */
+        B.steps(B.x0 + Math.round(B.w / 2), B.baseY + 1, 92, 3, "#b3afa5");
+        B.px(B.x0, B.baseY + 8, B.w, 1, "rgba(14,18,28,0.22)");
+      }
+    }
+  });
+})();
+
+/* 09 研究中心
+   照片：三层红砖楼 + 浅色石材檐口与窗套 + 两侧顶层圆窗、二层双连拱窗、首层窄窗
+        + 中央一整条砖砌塔楼（顶部三连拱敞廊、中部双拱阳台、底部拱门与圆徽）
+        + 塔身正中一块「研究中心」白牌。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "09-yanjiu",
+    name: "研究中心",
+    note: "3 层 · 红砖 / 连拱窗 / 中央塔楼 / 圆徽",
+    spec: {
+      w: 440, floors: 3, sign: false, seed: 6909,
+      wall: "#963c34", roof: "#a2988a", glass: "#5b6d75", texture: "brick",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY, PADT = B.PADT;
+        const CX = x0 + Math.round(w / 2);
+        const C = {
+          brick: "#963c34", brickL: "#ad4f45", brickD: "#6f2822",
+          stone: "#e0d6c8", stoneL: "#f1e9dc", stoneD: "#b3a898", stoneDD: "#8f8574",
+          glass: "#5b6d75", glassD: "#394954", glassL: "#8ea3ab",
+          frame: "#efe9dc", door: "#2a2522"
+        };
+
+        /* 1. 红砖墙 + 檐口石带 */
+        B.px(x0, eaveY, w, B.wallH, C.brick);
+        B.px(x0, eaveY, 3, B.wallH, C.brickL);
+        B.px(x1 - 4, eaveY, 4, B.wallH, C.brickD);
+        B.px(x0 - 2, eaveY - 2, w + 4, 6, C.stone);
+        B.px(x0 - 2, eaveY - 2, w + 4, 2, C.stoneL);
+        B.px(x0 - 2, eaveY + 4, w + 4, 2, "rgba(14,18,28,0.28)");
+        /* 楼板线 */
+        B.px(x0, eaveY + 40, w, 1, "rgba(30,10,8,0.30)");
+        B.px(x0, eaveY + 76, w, 1, "rgba(30,10,8,0.30)");
+
+        /* 2. 两翼：顶层圆窗 / 中层双连拱 / 首层窄窗 */
+        for (let i = 0; i < 4; i++) {
+          const cx = i < 2 ? x0 + 40 + i * 74 : x1 - 40 - (i - 2) * 74;
+          /* 顶层圆窗 */
+          B.roundWin(cx, eaveY + 22, 12, 12, C.stone, C.glassD);
+          B.px(cx - 14, eaveY + 34, 28, 2, C.stoneD);
+          /* 中层双连拱窗 */
+          const ax = cx - 26, ay = eaveY + 44;
+          B.archBand(ax + 26, ay + 32, 27, 20, 4, C.stone);
+          B.arch(ax + 26, ay + 32, 23, 17, C.glassD);
+          B.px(ax + 4, ay + 20, 44, 3, C.glass);
+          B.px(ax + 24, ay + 15, 4, 17, C.frame);              // 中柱
+          B.px(ax + 8, ay + 18, 2, 14, C.frame);               // 两侧细柱
+          B.px(ax + 42, ay + 18, 2, 14, C.frame);
+          B.px(ax - 2, ay + 32, 56, 3, C.stone);               // 窗台
+          B.px(ax - 2, ay + 35, 56, 2, C.stoneD);
+          /* 首层窄窗（一对） */
+          for (let k = 0; k < 2; k++) {
+            const wx = cx - 20 + k * 24;
+            B.px(wx - 1, eaveY + 82, 18, 22, C.stoneD);
+            B.px(wx, eaveY + 83, 16, 20, C.glassD);
+            B.px(wx, eaveY + 83, 16, 3, C.glass);
+            B.px(wx + 7, eaveY + 83, 1, 20, C.frame);
+            B.px(wx - 2, eaveY + 80, 20, 2, C.stone);
+          }
+        }
+
+        /* 3. 中央塔楼（从屋面以上一直落到地面） */
+        const tw = 132, tx0 = CX - tw / 2, tx1 = CX + tw / 2;
+        const ttop = PADT + 6;
+        B.px(tx0, ttop, tw, baseY - ttop, C.brick);
+        B.px(tx0, ttop, 4, baseY - ttop, C.brickL);
+        B.px(tx1 - 5, ttop, 5, baseY - ttop, C.brickD);
+        B.px(tx0 - 2, ttop, 2, baseY - ttop, C.stoneD);
+        B.px(tx1, ttop, 2, baseY - ttop, C.stoneD);
+        B.px(tx0, ttop, tw, 2, C.stoneL);                        // 塔顶压顶
+        B.px(tx0 - 3, ttop, tw + 6, 3, C.stone);
+
+        /* 3a. 顶部三连拱敞廊 */
+        const ly = ttop + 12, lh = 34;
+        B.px(tx0 + 8, ly, tw - 16, lh + 6, C.stone);
+        B.px(tx0 + 8, ly, tw - 16, 2, C.stoneL);
+        for (let k = 0; k < 3; k++) {
+          const ax = tx0 + 22 + k * 30;
+          B.arch(ax, ly + lh, 12, 22, C.glassD);
+          B.px(ax - 12, ly + lh - 4, 24, 4, C.glassD);
+        }
+        for (let k = 0; k < 4; k++) {
+          const cx = tx0 + 10 + k * 30;
+          B.px(cx - 2, ly + 12, 5, lh - 12, C.frame);
+          B.px(cx - 2, ly + 12, 1, lh - 12, "#ffffff");
+          B.px(cx + 2, ly + 12, 1, lh - 12, C.stoneD);
+        }
+        B.px(tx0 + 6, ly + lh + 4, tw - 12, 4, C.stoneL);        // 敞廊底座
+        B.px(tx0 + 6, ly + lh + 8, tw - 12, 2, "rgba(14,18,28,0.28)");
+
+        /* 3b. 中部双拱阳台 */
+        const my = eaveY + 30, mBase = eaveY + 72;
+        B.archBand(CX, mBase, 48, 36, 7, C.stone);
+        B.arch(CX, mBase, 41, 30, C.glassD);
+        B.px(CX - 48, mBase - 36, 96, 4, C.stoneL);
+        B.px(CX - 3, mBase - 26, 6, 26, C.frame);                // 中柱
+        for (let k = 0; k < 2; k++) {
+          const ax = CX - 24 + k * 48;
+          B.archBand(ax, mBase - 2, 17, 15, 3, C.stoneL);
+          B.arch(ax, mBase - 2, 14, 12, C.glassD);
+          B.px(ax - 14, mBase - 14, 28, 2, C.glass);
+        }
+        B.px(CX - 52, mBase, 104, 4, C.stone);                   // 阳台板
+        B.px(CX - 52, mBase + 4, 104, 2, "rgba(14,18,28,0.30)");
+        /* 阳台上的圆雕饰 */
+        B.roundWin(CX, my + 2, 9, 9, C.stoneL, C.stoneD);
+
+        /* 3c. 「研究中心」白牌 */
+        B.signPlate("研究中心", CX, mBase + 8, 14, {
+          bg: "#efe7d2", bgL: "#fbf5e4", bgD: "#b5a98c", col: "#3a2f22", padX: 8, padY: 3
+        });
+
+        /* 3d. 底部拱门 + 圆徽 */
+        const ey = baseY - 2;
+        B.archBand(CX, ey, 42, 30, 7, C.stone);
+        B.arch(CX, ey, 35, 25, C.door);
+        B.px(CX - 35, baseY - 26, 70, 24, C.door);
+        B.px(CX, baseY - 26, 1, 24, "#4c443a");
+        B.px(CX - 16, baseY - 18, 2, 8, "#8b7d63");
+        B.px(CX + 14, baseY - 18, 2, 8, "#8b7d63");
+        B.roundWin(CX, baseY - 36, 8, 8, C.stoneL, C.stoneD);
+        B.px(CX - 3, baseY - 37, 6, 1, "#f7f0dd");
+
+        /* 4. 塔的墙面小竖缝 */
+        for (let x = tx0 + 12; x < tx1 - 8; x += 14)
+          B.px(x, my + 12, 1, baseY - my - 16, "rgba(30,10,8,0.10)");
+
+        /* 5. 外轮廓 */
+        B.px(x0 - 1, eaveY - 2, 1, B.wallH + 2, C.stoneDD);
+        B.px(x1, eaveY - 2, 1, B.wallH + 2, C.brickD);
+      },
+      after: function (B) {
+        B.steps(B.x0 + Math.round(B.w / 2), B.baseY + 1, 96, 3, "#b9b0a0");
+      }
+    }
+  });
+})();
+
+/* 10 9号公寓楼
+   照片：两层红砖 + 两道灰壁柱（左中、右中）+ 灰色楼层腰带与墙裙
+        + 绿玻璃窗（银白窗框）+ 中央暗棕双开门、门上白牌与小白雨篷
+        + 檐口一道红瓦。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "10-d9",
+    name: "9号公寓楼",
+    note: "2 层 · 红砖 / 灰壁柱 / 绿玻璃 / 暗棕门",
+    spec: {
+      w: 380, floors: 2, sign: false, seed: 7010, roofT: 54,
+      wall: "#963c32", roof: "#9a9184", glass: "#a9bd8e", texture: "brick",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY;
+        const CX = x0 + Math.round(w / 2);
+        const C = {
+          red: "#963c32", redL: "#ad4f43", redD: "#6f2821",
+          grey: "#8a8d92", greyL: "#a6a9ae", greyD: "#66696e",
+          frame: "#dcdcd6", frameL: "#f2f2ee", frameD: "#a9a9a2",
+          glass: "#a9bd8e", glassD: "#75886a", glassL: "#cfdcb4",
+          lit: "#d8d9a6", litL: "#efedc6",
+          door: "#5a3b2a", doorD: "#3d271c",
+          sign: "#ece6d8", signD: "#a9a190", tile: "#8e3a34"
+        };
+
+        /* 1. 红砖墙 */
+        B.px(x0, eaveY, w, B.wallH, C.red);
+        B.px(x0, eaveY, 3, B.wallH, C.redL);
+        B.px(x1 - 4, eaveY, 4, B.wallH, C.redD);
+
+        /* 2. 檐口红瓦 */
+        B.px(x0 - 3, eaveY - 3, w + 6, 5, C.tile);
+        for (let x = x0 - 3; x < x1 + 3; x += 6) B.px(x, eaveY - 3, 3, 2, "#a44a3f");
+        B.px(x0 - 3, eaveY + 2, w + 6, 2, "rgba(14,18,28,0.30)");
+
+        /* 3. 灰壁柱 + 楼层腰带 + 墙裙 */
+        for (const px0 of [x0 + 112, x0 + 252]) {
+          B.px(px0, eaveY + 2, 16, B.wallH - 2, C.grey);
+          B.px(px0, eaveY + 2, 2, B.wallH - 2, C.greyL);
+          B.px(px0 + 13, eaveY + 2, 3, B.wallH - 2, C.greyD);
+        }
+        B.px(x0, eaveY + 36, w, 6, C.grey);
+        B.px(x0, eaveY + 36, w, 2, C.greyL);
+        B.px(x0, eaveY + 42, w, 2, C.greyD);
+        B.px(x0, baseY - 8, w, 8, C.grey);
+        B.px(x0, baseY - 8, w, 2, C.greyL);
+        B.px(x0, baseY - 1, w, 1, C.greyD);
+
+        /* 4. 上排窗：左右各两扇 */
+        const upY = eaveY + 10, upH = 22;
+        const upX = [x0 + 16, x0 + 58, x1 - 92, x1 - 50];
+        for (let i = 0; i < upX.length; i++) {
+          const wx = upX[i];
+          B.px(wx - 2, upY - 2, 38, upH + 4, C.frameD);
+          B.px(wx, upY, 34, upH, C.frameL);
+          B.px(wx + 1, upY + 1, 32, upH - 2, C.glass);
+          B.px(wx + 1, upY + 1, 32, 4, C.glassL);
+          B.px(wx + 1, upY + 1, 32, 3, "rgba(255,255,255,0.24)");
+          B.px(wx + 12, upY + 1, 2, upH - 2, C.frame);        // 左固定扇
+          B.px(wx + 22, upY + 1, 1, upH - 2, C.frameD);
+          B.px(wx - 3, upY + upH, 40, 3, C.greyL);            // 窗台
+          B.px(wx - 3, upY + upH + 3, 40, 1, "rgba(14,18,28,0.26)");
+        }
+
+        /* 5. 下排窗：左二右二 */
+        const loY = eaveY + 45, loH = 14;
+        const loX = [x0 + 16, x0 + 58, x1 - 92, x1 - 50];
+        for (let i = 0; i < loX.length; i++) {
+          const wx = loX[i];
+          B.px(wx - 2, loY - 2, 38, loH + 4, C.frameD);
+          B.px(wx, loY, 34, loH, C.frameL);
+          B.px(wx + 1, loY + 1, 32, loH - 2, i === 1 || i === 2 ? C.lit : C.glassD);
+          B.px(wx + 1, loY + 1, 32, 2, i === 1 || i === 2 ? C.litL : C.glass);
+          B.px(wx + 12, loY + 1, 2, loH - 2, C.frame);
+          B.px(wx + 22, loY + 1, 1, loH - 2, C.frameD);
+          B.px(wx - 3, loY + loH, 40, 3, C.greyL);
+        }
+
+        /* 6. 中央门：白牌 → 小白雨篷 → 暗棕双扇 */
+        /* 楼名牌（砖墙上嵌一块白牌） */
+        B.signPlate("9号公寓楼", CX, eaveY + 8, 12, {
+          bg: C.sign, bgL: "#faf5e8", bgD: C.signD, col: "#2f2a24", padX: 6, padY: 3
+        });
+        const dW = 38, dx = CX - Math.round(dW / 2), dy = baseY - 30;
+        B.px(dx - 8, eaveY + 28, dW + 16, 6, "#e6e2d6");        // 小白雨篷
+        B.px(dx - 8, eaveY + 28, dW + 16, 2, "#f7f4ea");
+        B.px(dx - 8, eaveY + 34, dW + 16, 2, "rgba(14,18,28,0.28)");
+        B.px(dx - 4, dy - 4, dW + 8, 34, C.greyD);
+        B.px(dx, dy - 2, dW, 8, "#e8e4d2");                     // 门上亮子
+        B.px(dx + 2, dy, dW - 4, 6, C.litL);
+        B.px(dx, dy + 6, dW, 24, C.door);
+        B.px(dx, dy + 6, dW, 2, "#7a5a42");
+        B.px(dx + Math.round(dW / 2), dy + 6, 1, 24, C.doorD);
+        for (let y = dy + 10; y < dy + 28; y += 6) {
+          B.px(dx + 4, y, 10, 1, "rgba(0,0,0,0.22)");
+          B.px(dx + dW - 14, y, 10, 1, "rgba(0,0,0,0.22)");
+        }
+        B.px(dx + 4, dy + 18, 2, 6, "#b9a06a");
+        B.px(dx + dW - 6, dy + 18, 2, 6, "#b9a06a");
+
+        /* 7. 落水管 */
+        B.px(x0 + 106, eaveY + 6, 2, B.wallH - 16, "#d6d5cf");
+        B.px(x0 + 270, eaveY + 6, 2, B.wallH - 16, "#d6d5cf");
+
+        /* 8. 外轮廓 */
+        B.edges("#ad4f43", "#6f2821");
+      },
+      after: function (B) {
+        /* 门前一步混凝土台阶 + 地面 */
+        B.px(B.x0 + Math.round(B.w / 2) - 30, B.baseY, 60, 4, "#b5b1a8");
+        B.px(B.x0 + Math.round(B.w / 2) - 30, B.baseY, 60, 1, "#cbc7be");
+        B.px(B.x0 + Math.round(B.w / 2) - 30, B.baseY + 4, 60, 1, "rgba(14,18,28,0.26)");
+        B.px(B.x0, B.baseY + 6, B.w, 2, "rgba(14,18,28,0.16)");
+      }
+    }
+  });
+})();
+
+/* 11 8号公寓楼
+   照片：两排窗的红砖公寓 + 大坡红瓦屋顶（近半幅画面）
+        + 灰色壁柱与楼层腰带 + 暖黄灯光窗与一排空调外机
+        + 中央黑框玻璃门、门上「8号公寓楼」白牌、门右两块铜牌 + 铺装地面。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "11-d8",
+    name: "8号公寓楼",
+    note: "2 层 · 红砖 / 红瓦坡顶 / 暖黄窗 / 黑框门",
+    spec: {
+      w: 400, floors: 2, sign: false, seed: 7111, roofT: 88,
+      wall: "#9a3f35", roof: "#a8423a", glass: "#e8cf9a", texture: "brick",
+      roofStyle: "tile",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY;
+        const CX = x0 + Math.round(w / 2);
+        const C = {
+          red: "#9a3f35", redL: "#b05247", redD: "#722b23",
+          grey: "#8b8e93", greyL: "#a7aaaf", greyD: "#66696e",
+          frame: "#e4e3dd", frameD: "#b3b2ab",
+          lit: "#f0d9a4", litL: "#fbf0c8", litD: "#c9a86c",
+          dark: "#2b2a28", door: "#232220",
+          sign: "#eee8da", signD: "#aba38f", brass: "#b08a3c"
+        };
+
+        /* 1. 红砖墙 */
+        B.px(x0, eaveY, w, B.wallH, C.red);
+        B.px(x0, eaveY, 3, B.wallH, C.redL);
+        B.px(x1 - 4, eaveY, 4, B.wallH, C.redD);
+        /* 檐下阴影（坡屋面压下来的一条） */
+        for (let i = 0; i < 8; i++)
+          B.px(x0, eaveY + i, w, 1, "rgba(14,18,28," + (0.30 * (1 - i / 8)).toFixed(3) + ")");
+
+        /* 2. 灰壁柱 + 楼层腰带 + 墙裙 */
+        for (const px0 of [x0 + 6, x0 + 100, x0 + 296, x1 - 22]) {
+          B.px(px0, eaveY + 4, 16, B.wallH - 4, C.grey);
+          B.px(px0, eaveY + 4, 2, B.wallH - 4, C.greyL);
+          B.px(px0 + 13, eaveY + 4, 3, B.wallH - 4, C.greyD);
+        }
+        B.px(x0, eaveY + 36, w, 6, C.grey);
+        B.px(x0, eaveY + 36, w, 2, C.greyL);
+        B.px(x0, eaveY + 42, w, 2, C.greyD);
+        B.px(x0, baseY - 8, w, 8, C.grey);
+        B.px(x0, baseY - 8, w, 2, C.greyL);
+        B.px(x0, baseY - 1, w, 1, C.greyD);
+
+        /* 3. 上排：暖黄灯光窗（左右各两扇） */
+        const upY = eaveY + 10, upH = 22, ww = 40;
+        const upX = [x0 + 28, x0 + 74, x1 - 112, x1 - 66];
+        for (let i = 0; i < upX.length; i++) {
+          const wx = upX[i];
+          B.px(wx - 2, upY - 2, ww + 4, upH + 4, C.frameD);
+          B.px(wx, upY, ww, upH, C.frame);
+          B.px(wx + 1, upY + 1, ww - 2, upH - 2, C.lit);
+          B.px(wx + 1, upY + 1, ww - 2, 4, C.litL);
+          B.px(wx + 1, upY + 1, ww - 2, 2, "#fffbe8");
+          B.px(wx + Math.round(ww / 2), upY + 1, 1, upH - 2, C.frame);
+          B.px(wx + 2, upY + upH - 8, 12, 3, C.litD);
+          B.px(wx - 2, upY + upH, ww + 4, 2, C.frameD);
+          B.px(wx - 2, upY + upH + 2, ww + 4, 1, "rgba(14,18,28,0.26)");
+          /* 空调外机（上排每扇一台） */
+          B.ac(wx + ww + 4, upY + 6, { col: "#e3e4e4", w: 15, h: 11 });
+        }
+
+        /* 4. 下排：菱格栅窗（左右各两扇） */
+        const loY = eaveY + 45, loH = 14;
+        const loX = [x0 + 28, x0 + 74, x1 - 112, x1 - 66];
+        for (let i = 0; i < loX.length; i++) {
+          const wx = loX[i];
+          B.px(wx - 2, loY - 2, ww + 4, loH + 4, C.frameD);
+          B.px(wx, loY, ww, loH, C.lit);
+          B.px(wx, loY, ww, 3, C.litL);
+          /* 菱形防盗网 */
+          for (let k = -loH; k < ww; k += 7)
+            for (let j = 0; j < loH; j++) {
+              const xx = wx + k + j;
+              if (xx >= wx && xx < wx + ww) B.px(xx, loY + j, 1, 1, "rgba(120,120,112,0.55)");
+            }
+          for (let k = 0; k < ww + loH; k += 7)
+            for (let j = 0; j < loH; j++) {
+              const xx = wx + k - j;
+              if (xx >= wx && xx < wx + ww) B.px(xx, loY + j, 1, 1, "rgba(120,120,112,0.45)");
+            }
+          B.px(wx, loY, 2, loH, C.frame);
+          B.px(wx + ww - 2, loY, 2, loH, C.frame);
+          B.px(wx - 2, loY + loH, ww + 4, 2, C.frameD);
+          B.ac(wx + ww + 4, loY + 2, { col: "#e3e4e4", w: 15, h: 11 });
+        }
+
+        /* 5. 中央黑框玻璃门 + 白牌 + 铜牌 */
+        /* 白牌（门楣上方的砖墙白牌） */
+        B.signPlate("8号公寓楼", CX, eaveY + 8, 12, {
+          bg: C.sign, bgL: "#fbf6e9", bgD: C.signD, col: "#2f2a24", padX: 6, padY: 3
+        });
+        const dW = 40, dx = CX - Math.round(dW / 2), dy = baseY - 30;
+        B.px(dx - 5, dy - 4, dW + 10, 34, C.dark);
+        B.px(dx - 2, dy - 1, dW + 4, 3, "#4a4a46");
+        B.px(dx, dy, dW, 30, "#3a4a48");
+        B.px(dx + 1, dy + 1, dW - 2, 28, "#55706c");
+        B.px(dx + 1, dy + 1, dW - 2, 4, "rgba(220,235,230,0.30)");
+        B.px(dx + Math.round(dW / 2), dy, 1, 30, C.dark);
+        B.px(dx + 4, dy + 16, 2, 8, "#b9bcb8");
+        B.px(dx + dW - 6, dy + 16, 2, 8, "#b9bcb8");
+        B.px(dx - 5, dy + 32, dW + 10, 2, "#1a1918");
+        /* 门右两块铜牌 */
+        B.px(CX + 34, eaveY + 42, 22, 12, C.brass);
+        B.px(CX + 35, eaveY + 43, 20, 10, "#c9a24f");
+        B.px(CX + 34, eaveY + 56, 22, 10, C.brass);
+        B.px(CX + 35, eaveY + 57, 20, 8, "#c9a24f");
+
+        /* 6. 落水管 */
+        B.px(x0 + 94, eaveY + 8, 2, B.wallH - 18, "#d8d7d1");
+        B.px(x0 + 302, eaveY + 8, 2, B.wallH - 18, "#d8d7d1");
+
+        /* 7. 外轮廓 */
+        B.edges("#b05247", "#722b23");
+      },
+      after: function (B) {
+        /* 门下一级石台 + 铺装广场 */
+        const cx = B.x0 + Math.round(B.w / 2);
+        B.px(cx - 34, B.baseY, 68, 4, "#b8b4ab");
+        B.px(cx - 34, B.baseY, 68, 1, "#d0ccc3");
+        B.px(B.x0 - 8, B.baseY + 5, B.w + 16, 12, "#a9a6a0");
+        B.px(B.x0 - 8, B.baseY + 5, B.w + 16, 2, "#c2bfb8");
+        for (let x = B.x0 - 8; x < B.x0 + B.w + 8; x += 24)
+          B.px(x, B.baseY + 7, 1, 10, "rgba(60,58,52,0.16)");
+        B.px(B.x0 - 8, B.baseY + 17, B.w + 16, 2, "#8e8a83");
+      }
+    }
+  });
+})();
+
+/* 12 15号宿舍楼
+   照片：六层红墙 + 中央一整条灰蓝楼梯间（每层一樘白框大窗）
+        + 两侧成对宽窗与大量空调外机 + 通长灰雨篷挂「15号宿舍楼」白牌
+        + 门口两块白色花格屏板 + 深色玻璃门 + 门前台阶与两丛灌木。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "12-d15",
+    name: "15号宿舍楼",
+    note: "6 层 · 红墙 / 灰蓝楼梯间 / 空调外机 / 花格屏板",
+    spec: {
+      w: 440, floors: 6, sign: false, seed: 7212,
+      wall: "#a8403a", roof: "#8b8274", glass: "#8ea9c6", texture: "none",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY, FH = PC.FLOOR_H;
+        const CX = x0 + Math.round(w / 2);
+        const C = {
+          red: "#a8403a", redL: "#bf554d", redD: "#7e2c27",
+          grey: "#6f7c8a", greyL: "#8b98a6", greyD: "#505b67", greyDD: "#3f4954",
+          frame: "#e8e8e2", frameD: "#b7b7af",
+          glass: "#8ea9c6", glassD: "#5e7896",
+          curtain: "rgba(198,218,238,0.36)",
+          ac: "#e2e5ea", door: "#39434b",
+          sign: "#eae4d6", signD: "#a9a190", cream: "#e3ddcd"
+        };
+        const floorTop = f => eaveY + (B.floors - 1 - f) * FH;
+
+        /* 1. 红墙：横向抹灰分格（照片里是整片红色涂料） */
+        B.px(x0, eaveY, w, B.wallH, C.red);
+        B.px(x0, eaveY, 3, B.wallH, C.redL);
+        B.px(x1 - 4, eaveY, 4, B.wallH, C.redD);
+        for (let f = 1; f < B.floors; f++)
+          B.px(x0, floorTop(f - 1) - 1, w, 1, "rgba(40,14,12,0.22)");
+
+        /* 2. 两侧窗（每层 2 扇） + 空调外机 */
+        const winW = 46, winH = 24;
+        for (let f = 0; f < B.floors; f++) {
+          const wy = floorTop(f) + 6;
+          for (let s = 0; s < 2; s++) {
+            for (let k = 0; k < 2; k++) {
+              const wx = s ? x1 - 126 + k * 58 : x0 + 20 + k * 58;
+              B.win(wx, wy, winW, winH, {
+                frame: C.frame, glass: C.glass, mullions: 1, sillCol: C.frameD
+              });
+              B.curtain(wx + 2, wy + 2, winW - 4, winH - 4, C.curtain);
+              B.px(wx - 1, wy - 1, winW + 2, 2, "#f4f4ef");
+              B.ac(wx + winW + 4, wy + 6, { col: C.ac, w: 15, h: 11 });
+              if (f < B.floors - 1) B.ac(wx - 19, wy + 6, { col: C.ac, w: 15, h: 11 });
+            }
+          }
+        }
+
+        /* 3. 中央灰蓝楼梯间 */
+        const tw = 124, tx0 = CX - Math.round(tw / 2), tx1 = tx0 + tw;
+        B.px(tx0, eaveY, tw, B.wallH, C.grey);
+        B.px(tx0, eaveY, 4, B.wallH, C.greyL);
+        B.px(tx1 - 5, eaveY, 5, B.wallH, C.greyD);
+        B.px(tx0, eaveY, tw, 2, "#9dabb8");
+        for (let x = tx0 + 6; x < tx1 - 6; x += 6)
+          B.px(x, eaveY + 2, 1, B.wallH - 4, "rgba(30,38,48,0.08)");
+        for (let f = 0; f < B.floors; f++) {
+          const wy = floorTop(f) + 5;
+          B.px(CX - 34, wy, 68, 26, C.frame);
+          B.px(CX - 32, wy + 2, 64, 22, C.glassD);
+          B.px(CX - 32, wy + 2, 64, 4, C.glass);
+          B.curtain(CX - 32, wy + 2, 64, 22, C.curtain);
+          B.px(CX - 11, wy + 2, 1, 22, C.frame);
+          B.px(CX + 10, wy + 2, 1, 22, C.frame);
+          B.px(CX - 34, wy + 26, 68, 2, "rgba(14,18,28,0.28)");
+          B.ac(tx0 + 8, wy + 10, { col: C.ac, w: 15, h: 11 });
+          B.ac(tx1 - 24, wy + 10, { col: C.ac, w: 15, h: 11 });
+        }
+        B.px(tx0 - 1, eaveY, 1, B.wallH, "#39434e");
+        B.px(tx1, eaveY, 1, B.wallH, "#39434e");
+
+        /* 4. 通长灰雨篷（楼名牌见第 6 步，压在门框之上） */
+        const cy = baseY - 80;
+        B.px(CX - 124, cy, 248, 14, C.greyD);
+        B.px(CX - 124, cy, 248, 2, C.greyL);
+        B.px(CX - 124, cy + 14, 248, 3, "rgba(14,18,28,0.34)");
+
+        /* 5. 两块白花格屏板 */
+        for (let s = 0; s < 2; s++) {
+          const sx = CX - 102 + s * 156;
+          B.px(sx, baseY - 66, 40, 58, C.cream);
+          B.px(sx, baseY - 66, 40, 2, "#f1ecdf");
+          B.px(sx, baseY - 66, 2, 58, "#f1ecdf");
+          B.px(sx + 38, baseY - 66, 2, 58, "#b5ad9b");
+          /* 回纹：四角小方框 + 中间十字 */
+          for (let r = 0; r < 3; r++)
+            for (let c = 0; c < 2; c++) {
+              const bx = sx + 8 + c * 16, by = baseY - 60 + r * 18;
+              B.px(bx, by, 12, 2, "#b5ad9b");
+              B.px(bx, by, 2, 12, "#b5ad9b");
+              B.px(bx + 10, by, 2, 12, "#b5ad9b");
+              B.px(bx, by + 10, 12, 2, "#b5ad9b");
+              B.px(bx + 5, by + 4, 4, 4, "#cfc6b2");
+            }
+        }
+
+        /* 6. 入口：深色玻璃门 */
+        const dx0 = CX - 40, dx1 = CX + 40, dy0 = baseY - 62;
+        B.px(dx0 - 4, dy0 - 4, dx1 - dx0 + 8, 64, C.greyDD);
+        B.px(dx0, dy0, dx1 - dx0, 60, C.door);
+        B.px(dx0, dy0, dx1 - dx0, 2, "rgba(10,13,20,0.55)");
+        for (let x = dx0 + 20; x < dx1; x += 20) B.px(x, dy0, 1, 60, "#79838b");
+        B.px(dx0, dy0 + 30, dx1 - dx0, 1, "rgba(170,180,190,0.40)");
+        B.px(dx0 + 28, dy0 + 40, 2, 8, "#b9bcbf");
+        B.px(dx1 - 30, dy0 + 40, 2, 8, "#b9bcbf");
+        B.signPlate("15号宿舍楼", CX, cy + 1, 14, {
+          bg: C.sign, bgL: "#f9f4e6", bgD: C.signD, col: "#2e2a24", padX: 7, padY: 2
+        });
+
+        /* 7. 灰墙裙 */
+        B.px(x0, baseY - 10, w, 10, "#69747f");
+        B.px(x0, baseY - 10, w, 2, "#8b97a3");
+        B.px(x0, baseY - 1, w, 1, "#49525c");
+
+        /* 8. 落水管 */
+        B.px(x0 + 12, eaveY + 4, 2, B.wallH - 14, "#dcdcd6");
+        B.px(x1 - 14, eaveY + 4, 2, B.wallH - 14, "#dcdcd6");
+
+        /* 9. 外轮廓 */
+        B.edges("#bf554d", "#7e2c27");
+      },
+      after: function (B) {
+        B.steps(B.x0 + Math.round(B.w / 2), B.baseY + 1, 100, 3, "#b5b1a8");
+        /* 门前两丛圆灌木 */
+        const shrub = (cx, rx) => {
+          const y = B.baseY - 4;
+          for (let i = -rx; i <= rx; i++) {
+            const h = Math.round(12 * Math.sqrt(Math.max(0, 1 - (i * i) / (rx * rx))));
+            B.px(cx + i, y - h, 1, h + 4, "#2f5c33");
+            B.px(cx + i, y - h, 1, 2, "#4a7d47");
+          }
+        };
+        shrub(B.x0 + 42, 30);
+        shrub(B.x1 - 42, 30);
+        B.px(B.x0, B.baseY + 12, B.w, 2, "rgba(14,18,28,0.20)");
+      }
+    }
+  });
+})();
+
+const WEST_SPRITE_X = 1.5986;
+/* ⚠️ 换图之后「立面还能不能看见」取决于精灵画布比 30 段模板高多少：
+   模板给每栋的锚高 ay 都是 318（最北那栋 284），而这批精灵是按真实层数画的 —
+   6 层的 15号/12号 ay = 354/348（屋面厚 132），比模板高 36 行，于是整列的可视
+   带被南邻的屋面吃掉 36 行；4 层的建艺楼（ay 238）和 3 层的研究中心（ay 252）
+   立面恰好整段落到南邻屋面后面，屏幕上只剩一条灰屋面。
+
+   这两行按 61 段 KX_DY=85 的老办法**只把 b.ay 调大**（整栋在画面上北移）：
+   b.y（世界落地线）、addSolid 的碰撞盒、footprint、散射随机流全都不动。
+   抬起来露出的立面正好压在南邻的屋面上，抬离地面的那几十行也全部落在南邻
+   精灵的覆盖范围里（建艺楼 → 15号 999 行起、研究中心 → 12号 1887 行起），
+   所以看不到悬空。数值 = 让立面在南邻屋脊之上露出约两层（≈60 行）：
+     建艺楼   ay 238 → 328   (15号屋脊在 999，立面 61 行可见)
+     研究中心 ay 252 → 337   (12号屋脊在 1887，立面 60 行可见)
+
+   用户 2026-11-07 第三轮：「8号、9号公寓楼上移一点，15号下移一点」。
+   9号/8号是 3 层小楼（ay 140/174），整段立面被南邻的屋脊吃掉，只剩屋瓦；
+   同样只抬 b.ay（负数 = 下移）。抬/压的每一行都落在邻栋精灵的覆盖里：
+     15号  ay 354 → 328（下移 26：屋面顶 999 → 1025，露出建艺楼 88 行立面）
+     9号   ay 140 → 200（上移 60：可见底 1507，正好被 8号新屋脊 1506 压住）
+     8号   ay 174 → 270（上移 96：屋脊 1506、可见底 1680，研究中心屋脊 1676 接住）
+   ⚠️ 8号/9号的数值是配对的：DY9 每加 1 行，DY8 至少也要加 1 行，否则两条画布
+      之间会露出一条假"地面缝"（9号底面悬空 60 行的那截本来就靠 8号盖住）。 */
+const WEST_SPRITE_DY = {
+  "01-jianyi": 90, "12-d15": -26, "10-d9": 60, "11-d8": 96, "09-yanjiu": 85
+};
+/* 19号宿舍楼原始画布 572×447（ay 412）：占地只有 461×160，按原尺寸贴上去会左右
+   各压出 55px、并把北邻 12号楼 的立面吃掉一截。0.8 之后画布 458×358（ay 330），
+   宽几乎正好等于占地，和换之前的 2号宿舍楼（模板 ay 318）只差 12 行 —— 遮挡关系
+   与用户现在看到的基本一致。
+   ⚠️ 缩放只缩画布，不缩 b.w / 碰撞盒；ax / ay 同步乘 q（锚点跟着画布走）。 */
+const WEST_SPRITE_SCALE = { "05-d19": 0.8 };
+const WEST_SPRITE_IDS = [
+  "01-jianyi",   // 建筑艺术学院（最北）
+  "12-d15",      // 15号宿舍楼
+  "10-d9",       // 9号宿舍楼
+  "11-d8",       // 8号宿舍楼
+  "09-yanjiu",   // 研究中心
+  "07-d12",      // 12号宿舍楼
+  "05-d19"       // 19号宿舍楼（最南；用户 2026-11-07：12号楼下方换成19号）
+];
+
+function westSpriteSpec(e) {
+  if (e[1] !== "bld" || Math.abs(e[2] - WEST_SPRITE_X) > 1e-6) return null;
+  /* 按同一列里的 y 升序排名：CAMPUS 表的书写顺序是南 → 北，不能直接拿来用。 */
+  const rows = CAMPUS
+    .filter(c => c[1] === "bld" && Math.abs(c[2] - WEST_SPRITE_X) <= 1e-6)
+    .sort((a, b) => a[3] - b[3]);
+  const id = WEST_SPRITE_IDS[rows.indexOf(e)];
+  if (!id) return null;
+  const lib = window.PC_BUILDINGS || [];
+  for (let i = 0; i < lib.length; i++) if (lib[i].id === id) return lib[i];
+  return null;
+}
+
+/* 画布缩放：imageSmoothingEnabled = false 保住像素块，锚点按同一比例走。
+   ⚠️ 倍数只在 WEST_SPRITE_SCALE 里登记；没登记的楼原尺寸返回，逐字节不变。 */
+function westSpriteScaled(s, id) {
+  const q = WEST_SPRITE_SCALE[id];
+  if (!q || q === 1) return s;
+  const w = Math.round(s.canvas.width * q), h = Math.round(s.canvas.height * q);
+  const c = mkCanvas(w, h), g = c.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  g.drawImage(s.canvas, 0, 0, w, h);
+  return { canvas: c, ax: Math.round(s.ax * q), ay: Math.round(s.ay * q) };
+}
+
+function westSpriteApply(e, b) {
+  const item = westSpriteSpec(e);
+  if (!item) return false;
+  const s = westSpriteScaled(PC.make(item.spec), item.id);
+  b.canvas = s.canvas;
+  b.ax = s.ax;
+  b.ay = s.ay + (WEST_SPRITE_DY[item.id] || 0);
+  return true;
+}
+
+
+/* ===== 楼体资源 · 中部一列（2026-11-07） ===== */
+
+/* 02 信息中心
+   照片：浅灰白小瓷砖上段 + 二层整条横向窗带（白框、拉着帘）
+        + 一条深灰雨篷底 + 首层红砖墙（防盗窗） + 中央深色玻璃门厅（橙色腰线）
+        + 右上方金色「信息中心」 + 门前浅灰石材铺地。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "02-xinxi",
+    name: "信息中心",
+    note: "4 层 · 灰白瓷砖 / 横向窗带 / 红砖首层 / 玻璃门厅",
+    spec: {
+      w: 380, floors: 4, sign: false, seed: 6202,
+      wall: "#cfc7bb", roof: "#a9a196", glass: "#a9c2cc", texture: "tile",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY;
+        const C = {
+          tile: "#d7d0c5", tileL: "#e6e0d6", tileD: "#bdb5a8",
+          frame: "#e6e3da", glass: "#a9c2cc", glassD: "#7d97a2",
+          soffit: "#6e6a63", soffitD: "#4e4b45", lamp: "#e8dcb4",
+          brick: "#8f4436", brickL: "#a45443", brickD: "#743328",
+          steel: "#d2d2cc", steelD: "#9c9c96",
+          door: "#31393c", doorL: "#586569",
+          orange: "#d96a1f", gold: "#d8b13e", goldL: "#f0d878"
+        };
+
+        /* 1. 上段灰白瓷砖墙（底子已是 tile 纹，这里只补受光/背光） */
+        B.px(x0, eaveY, w, 86, C.tile);
+        B.px(x0, eaveY, 3, 86, C.tileL);
+        B.px(x1 - 4, eaveY, 4, 86, C.tileD);
+        for (let y = eaveY + 3; y < eaveY + 86; y += 3)
+          B.px(x0, y, w, 1, "rgba(0,0,0,0.055)");
+        for (let x = x0 + 6; x < x1 - 4; x += 6)
+          for (let y = eaveY + 2; y < eaveY + 86; y += 3)
+            B.px(x, y, 1, 3, "rgba(0,0,0,0.035)");
+        B.px(x0, eaveY, w, 2, "#efeae0");                 // 檐口亮线
+        B.px(x0, eaveY + 84, w, 2, C.tileD);
+
+        /* 2. 右上方金色楼名 */
+        B.goldText("信息中心", x1 - 58, eaveY + 8, 16, C.gold);
+
+        /* 3. 二层整条横向窗带 */
+        const by = eaveY + 48, bh = 28;
+        B.band(x0 + 4, by, w - 8, bh, {
+          frame: C.frame, glass: C.glass, step: 15, transom: false, sill: false
+        });
+        /* 帘影：照片里每扇窗都垂着浅色帘子 */
+        for (let x = x0 + 7; x < x1 - 7; x += 15) {
+          B.px(x + 1, by + 1, 12, 2, "rgba(255,255,255,0.30)");
+          for (let xx = x + 3; xx < x + 12; xx += 4)
+            B.px(xx, by + 2, 1, bh - 4, "rgba(255,255,255,0.20)");
+        }
+        B.px(x0 + 2, by + bh, w - 4, 3, "#c9c3b6");
+        B.px(x0 + 2, by + bh + 3, w - 4, 1, "rgba(14,18,28,0.26)");
+
+        /* 4. 雨篷底（深灰一条，带五盏筒灯） */
+        const sy = eaveY + 83, sh = 10;
+        B.px(x0 - 2, sy, w + 4, sh, C.soffit);
+        B.px(x0 - 2, sy, w + 4, 2, C.soffitD);
+        B.px(x0 - 2, sy + sh - 1, w + 4, 1, "rgba(14,18,28,0.34)");
+        for (let k = 0; k < 5; k++)
+          B.px(x0 + 40 + k * 74, sy + 3, 4, 2, C.lamp);
+
+        /* 5. 首层红砖墙 */
+        const ry = sy + sh;
+        B.brickPatch(x0, ry, w, baseY - ry, C.brick);
+        B.px(x0, ry, w, 1, C.brickL);
+
+        /* 6. 首层防盗窗（左右各两扇） */
+        const wy = baseY - 38, wh = 30, ww = 32;
+        const gx = [x0 + 18, x0 + 64, x1 - 100, x1 - 54];
+        for (let k = 0; k < gx.length; k++) {
+          const x = gx[k];
+          B.px(x - 2, wy - 2, ww + 4, wh + 4, C.steel);
+          B.px(x, wy, ww, wh, C.glassD);
+          B.px(x, wy, ww, 2, "rgba(10,13,20,0.50)");
+          B.px(x + 2, wy + 2, ww - 4, 5, "rgba(200,220,224,0.30)");
+          for (let xx = x + 4; xx < x + ww; xx += 4) B.px(xx, wy, 1, wh, C.steel);   // 竖栅
+          for (let yy = wy + 8; yy < wy + wh; yy += 8) B.px(x, yy, ww, 1, C.steelD); // 横栅
+          B.px(x - 2, wy + wh, ww + 4, 2, C.steelD);
+        }
+
+        /* 7. 中央门厅：深色玻璃 + 橙色腰线 + 两侧铜牌 */
+        const dx0 = x0 + 148, dx1 = x0 + 226, dy0 = baseY - 50;
+        B.px(dx0 - 3, dy0 - 3, dx1 - dx0 + 6, 53, "#3d3d3a");
+        B.px(dx0, dy0, dx1 - dx0, 48, C.door);
+        for (let x = dx0 + 12; x < dx1; x += 13) B.px(x, dy0, 1, 48, C.doorL);
+        B.px(dx0, dy0, dx1 - dx0, 2, "rgba(10,13,20,0.55)");
+        B.px(dx0 + 2, dy0 + 3, dx1 - dx0 - 4, 8, "rgba(150,190,205,0.16)");
+        B.px(dx0 - 1, baseY - 27, dx1 - dx0 + 2, 4, C.orange);          // 橙色腰线
+        B.px(dx0 - 1, baseY - 27, dx1 - dx0 + 2, 1, "#ef8a3e");
+        B.px(dx0 + 30, baseY - 20, 2, 10, "#9aa5a6");                    // 门把手
+        /* 铜牌 */
+        B.px(x0 + 127, baseY - 42, 14, 8, "#a8873a");
+        B.px(x0 + 128, baseY - 41, 12, 6, "#c8a94e");
+        B.px(x0 + 127, baseY - 31, 14, 8, "#a8873a");
+        B.px(x0 + 128, baseY - 30, 12, 6, "#c8a94e");
+        B.px(dx1 + 8, baseY - 40, 15, 9, "#a8873a");
+        B.px(dx1 + 9, baseY - 39, 13, 7, "#c8a94e");
+
+        /* 8. 墙面雨水管 */
+        B.px(x1 - 14, eaveY + 2, 2, B.wallH - 4, C.steelD);
+
+        /* 10. 外轮廓 */
+        B.edges("#e2dbcf", "#a49b8d");
+      },
+      after: function (B) {
+        /* 门前浅灰石材铺地：两排石板 + 一道深色路缘 */
+        const y = B.baseY + 1, w = B.w, x0 = B.x0;
+        B.px(x0 - 6, y, w + 12, 12, "#b9b4a9");
+        B.px(x0 - 6, y, w + 12, 2, "#cbc6bb");
+        for (let x = x0 - 6; x < x0 + w + 6; x += 26)
+          B.px(x, y + 2, 1, 10, "rgba(60,56,48,0.16)");
+        B.px(x0 - 6, y + 6, w + 12, 1, "rgba(60,56,48,0.12)");
+        B.px(x0 - 6, y + 12, w + 12, 2, "#8f8a80");
+      }
+    }
+  });
+})();
+
+
+/* 03 天佑会堂
+   照片：米黄小瓷砖墙 + 两侧通高竖窗 + 中央凹进的蓝灰玻璃幕（白竖梃、顶部百叶）
+        + 一道横贯整个中段的石面挑台与栏杆 + 首层玻璃幕（底边一条蓝色飘带）
+        + 右墙面竖排金字「天佑会堂」。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "03-tyht",
+    name: "天佑会堂",
+    note: "3 层 · 米黄瓷砖 / 蓝灰玻璃幕 / 石面挑台 / 竖排金字",
+    spec: {
+      w: 460, floors: 3, sign: false, seed: 6303,
+      wall: "#d8cdb7", roof: "#a79c86", glass: "#7d94a0", texture: "tile",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY;
+        const C = {
+          tile: "#d8cdb7", tileL: "#e5dcc8", tileD: "#bfb49d",
+          stone: "#c9c2b3", stoneL: "#ddd7c9", stoneD: "#968f80",
+          frame: "#e9e6dd", frameD: "#b9b5ab",
+          glass: "#7d94a0", glassD: "#465a64", glassL: "#a3b8c1",
+          louver: "#b8bdc0", louverD: "#8d949a",
+          wave: "#3f7fc0", waveL: "#71b1e2",
+          gold: "#d8b13e"
+        };
+
+        /* 1. 米黄瓷砖墙 */
+        B.px(x0, eaveY, w, B.wallH, C.tile);
+        B.px(x0, eaveY, 3, B.wallH, C.tileL);
+        B.px(x1 - 4, eaveY, 4, B.wallH, C.tileD);
+        for (let y = eaveY + 3; y < baseY; y += 3)
+          B.px(x0, y, w, 1, "rgba(0,0,0,0.05)");
+        for (let x = x0 + 5; x < x1; x += 6)
+          for (let y = eaveY + 2; y < baseY; y += 3)
+            B.px(x, y, 1, 3, "rgba(0,0,0,0.03)");
+        B.px(x0, eaveY, w, 2, "#eee7d8");
+
+        /* 2. 两侧通高竖窗 */
+        for (let s = 0; s < 2; s++) {
+          const sx = s ? x1 - 36 : x0 + 6;
+          B.px(sx - 2, eaveY + 12, 34, baseY - eaveY - 24, C.frame);
+          B.px(sx, eaveY + 14, 30, baseY - eaveY - 28, C.glassD);
+          B.px(sx, eaveY + 14, 30, 3, "rgba(10,13,20,0.50)");
+          B.px(sx + 2, eaveY + 16, 26, 10, "rgba(190,210,220,0.20)");
+          for (let y = eaveY + 30; y < baseY - 18; y += 16) B.px(sx, y, 30, 1, C.frame);
+          B.px(sx + 14, eaveY + 14, 1, baseY - eaveY - 28, C.frameD);
+          B.px(sx - 2, baseY - 14, 34, 2, C.stoneD);
+        }
+
+        /* 3. 中央上部玻璃幕 */
+        const cx0 = x0 + 78, cx1 = x0 + 382;
+        const gy0 = eaveY + 18, gy1 = eaveY + 58;
+        /* 顶部百叶带 */
+        B.px(cx0 - 2, eaveY + 10, cx1 - cx0 + 4, 9, C.louverD);
+        for (let y = eaveY + 11; y < eaveY + 18; y += 2)
+          B.px(cx0 - 1, y, cx1 - cx0 + 2, 1, C.louver);
+        /* 玻璃幕 */
+        B.px(cx0 - 1, gy0 - 1, cx1 - cx0 + 2, gy1 - gy0 + 2, C.frameD);
+        B.px(cx0, gy0, cx1 - cx0, gy1 - gy0, C.glass);
+        B.px(cx0, gy0, cx1 - cx0, 3, C.glassL);
+        for (let x = cx0 + 13; x < cx1; x += 13) B.px(x, gy0, 1, gy1 - gy0, C.frame);
+        B.px(cx0, gy0 + 18, cx1 - cx0, 1, "rgba(20,30,38,0.45)");
+        for (let x = cx0 + 4; x < cx1; x += 26)
+          B.px(x, gy0 + 4, 2, 8, "rgba(200,220,228,0.20)");
+
+        /* 4. 挑台：一道横贯中段的石面檐板（下沿压深阴影） */
+        const sy = eaveY + 62;
+        const bw0 = cx0 - 30, bw1 = cx1 + 10;
+        B.px(bw0, sy, bw1 - bw0, 11, C.stone);
+        B.px(bw0, sy, bw1 - bw0, 2, C.stoneL);
+        B.px(bw0, sy + 11, bw1 - bw0, 2, C.stoneD);
+        B.px(bw0 - 4, sy + 13, bw1 - bw0 + 8, 2, "rgba(14,18,28,0.28)");
+
+        /* 5. 首层玻璃幕 */
+        const dy0 = sy + 15, dy1 = baseY - 2;
+        B.px(cx0 - 2, dy0, cx1 - cx0 + 4, dy1 - dy0, C.frameD);
+        B.px(cx0, dy0 + 1, cx1 - cx0, dy1 - dy0 - 2, C.glassD);
+        for (let x = cx0 + 14; x < cx1; x += 14) B.px(x, dy0 + 1, 1, dy1 - dy0 - 2, C.frame);
+        B.px(cx0, dy0 + Math.round((dy1 - dy0) * 0.52), cx1 - cx0, 2, C.frameD);
+        /* 门：下半部一排竖门扇 */
+        for (let x = cx0 + 28; x < cx1 - 20; x += 26) {
+          B.px(x, baseY - 26, 20, 24, "#2b3b44");
+          B.px(x + 17, baseY - 18, 2, 6, "#c9c9c2");
+        }
+        /* 玻璃底部蓝色飘带（照片里是一条贴着门槛的浅蓝波浪） */
+        B.wave(cx0 + 6, cx1 - 6, baseY - 14, 4, 72, C.wave);
+        B.wave(cx0 + 6, cx1 - 6, baseY - 16, 3, 72, C.waveL);
+
+        /* 6. 右墙面竖排金字 */
+        for (let i = 0; i < 4; i++) {
+          const ch = "天佑会堂".charAt(i);
+          B.goldText(ch, x1 - 54, eaveY + 14 + i * 21, 18, C.gold);
+        }
+
+        /* 7. 墙面细节：左侧一根落水管 */
+        B.px(x0 + 54, eaveY + 2, 2, B.wallH - 4, C.stoneD);
+
+        /* 8. 屋面：几块小设备箱（照片顶沿的小方块） */
+        for (let k = 0; k < 4; k++)
+          B.px(x0 + 70 + k * 110, B.PADT + 12, 14, 8, "#9a9384");
+        B.px(x0, B.PADT + 2, w, 2, "#c4bba9");
+
+        /* 9. 外轮廓 */
+        B.edges(C.tileL, C.tileD);
+      }
+    }
+  });
+})();
+
+
+/* 08 校史馆
+   照片：两层红砖 + 浅色石材壁柱与深挑檐 + 两排绿玻璃窗（窗下砖砌百叶）
+        + 中央整座石门套（黑漆双门、门上一块「校史馆」白牌）
+        + 门前一整片宽石阶。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "08-xiaoshi",
+    name: "校史馆",
+    note: "2 层 · 红砖 / 石壁柱 / 石门套 / 宽石阶",
+    spec: {
+      w: 420, floors: 2, sign: false, seed: 6808, roofT: 46,
+      wall: "#8f3e33", roof: "#a89f90", glass: "#4f6b58", texture: "brick",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY;
+        const CX = x0 + Math.round(w / 2);
+        const C = {
+          brick: "#8f3e33", brickL: "#a75245", brickD: "#6b2b23",
+          stone: "#d9d1c0", stoneL: "#ece6d8", stoneD: "#aba291",
+          stoneDD: "#8c8473",
+          frame: "#dedad0", frameD: "#b6b0a2",
+          glass: "#4f6b58", glassD: "#33493c", glassL: "#7d9884",
+          door: "#171514", doorL: "#2e2a26",
+          sign: "#f0e8d2", signD: "#b8ac90"
+        };
+
+        /* 1. 红砖底 + 深挑檐 */
+        B.px(x0, eaveY, w, B.wallH, C.brick);
+        B.px(x0, eaveY, 3, B.wallH, C.brickL);
+        B.px(x1 - 4, eaveY, 4, B.wallH, C.brickD);
+        B.px(x0 - 4, eaveY, w + 8, 6, C.stone);            // 檐口石带
+        B.px(x0 - 4, eaveY, w + 8, 2, C.stoneL);
+        B.px(x0 - 4, eaveY + 6, w + 8, 3, "rgba(14,18,28,0.30)");
+        B.px(x0 - 2, eaveY + 9, w + 4, 1, C.stoneD);
+
+        /* 2. 石壁柱：两端 + 门套两侧 */
+        const piers = [x0 + 8, x0 + 118, x0 + 284, x1 - 28];
+        for (const px0 of piers) {
+          B.px(px0, eaveY + 9, 18, B.wallH - 9, C.stone);
+          B.px(px0, eaveY + 9, 2, B.wallH - 9, C.stoneL);
+          B.px(px0 + 15, eaveY + 9, 3, B.wallH - 9, C.stoneD);
+          B.px(px0, baseY - 10, 18, 3, C.stoneDD);
+        }
+        B.px(x0, baseY - 8, w, 8, C.stone);                 // 石材基座
+        B.px(x0, baseY - 8, w, 2, C.stoneL);
+        B.px(x0, baseY - 1, w, 1, C.stoneDD);
+
+        /* 3. 两排窗（每侧两扇） */
+        const wxs = [x0 + 44, x0 + 82, x1 - 122, x1 - 84];
+        for (const wx of wxs) {
+          /* 上排：高窗，深绿玻璃 */
+          B.px(wx - 2, eaveY + 14, 34, 28, C.frameD);
+          B.px(wx, eaveY + 16, 30, 24, C.glassD);
+          B.px(wx, eaveY + 16, 30, 3, C.glassL);
+          B.px(wx + 14, eaveY + 16, 2, 24, C.frame);
+          B.px(wx, eaveY + 28, 30, 1, C.frameD);
+          B.px(wx - 3, eaveY + 41, 36, 2, C.stoneD);
+          /* 下排：矮窗 */
+          B.px(wx - 2, eaveY + 45, 34, 14, C.frameD);
+          B.px(wx, eaveY + 46, 30, 12, C.glass);
+          B.px(wx, eaveY + 46, 30, 2, C.glassL);
+          B.px(wx + 14, eaveY + 46, 2, 12, C.frame);
+        }
+
+        /* 4. 中央石门套 */
+        const sx0 = CX - 62, sx1 = CX + 62, sy0 = eaveY + 9;
+        B.px(sx0, sy0, sx1 - sx0, baseY - sy0, C.stone);
+        B.px(sx0, sy0, 3, baseY - sy0, C.stoneL);
+        B.px(sx1 - 4, sy0, 4, baseY - sy0, C.stoneD);
+        B.px(sx0 - 3, sy0, sx1 - sx0 + 6, 4, C.stoneL);
+        B.px(sx0 - 3, sy0 + 4, sx1 - sx0 + 6, 2, "rgba(14,18,28,0.26)");
+
+        /* 「校史馆」白牌 */
+        B.signPlate("校史馆", CX, sy0 + 6, 14, {
+          bg: C.sign, bgL: "#fbf4e2", bgD: C.signD, col: "#3a2f22", padX: 8, padY: 3
+        });
+
+        /* 5. 门洞：深色花格边框 + 黑漆双门 */
+        const dx0 = CX - 36, dx1 = CX + 36, dy0 = sy0 + 26;
+        B.px(dx0 - 6, dy0 - 2, dx1 - dx0 + 12, baseY - dy0 + 2, "#4a3f36");   // 花格边
+        for (let y = dy0; y < baseY - 8; y += 4) {
+          for (let x = dx0 - 5; x < dx1 + 5; x += 4) {
+            if (x > dx0 && x < dx1) continue;
+            B.px(x, y, 2, 2, "#6b5c4e");
+          }
+        }
+        B.px(dx0, dy0, dx1 - dx0, baseY - dy0 - 8, C.door);
+        B.px(dx0, dy0, dx1 - dx0, 2, C.doorL);
+        B.px(dx0 + Math.round((dx1 - dx0) / 2), dy0, 1, baseY - dy0 - 8, "#3a352f");
+        /* 每扇一对圆环装饰 */
+        const rings = [[CX - 20, dy0 + 9], [CX - 20, dy0 + 20], [CX + 20, dy0 + 9], [CX + 20, dy0 + 20]];
+        for (const r of rings) {
+          B.roundWin(r[0], r[1], 5, 5, "#4d4436", "#241f1b");
+          B.px(r[0] - 2, r[1] - 1, 4, 1, "#6d5f4a");
+        }
+        /* 门缝光 */
+        B.px(CX, dy0 + 4, 1, baseY - dy0 - 12, "rgba(180,170,140,0.20)");
+
+        /* 6. 外轮廓 */
+        B.px(x0 - 1, eaveY + 9, 1, B.wallH - 9, C.stoneDD);
+        B.px(x1, eaveY + 9, 1, B.wallH - 9, C.brickD);
+      },
+      after: function (B) {
+        /* 门前宽石阶：五级，越往下越宽 */
+        B.steps(B.x0 + Math.round(B.w / 2), B.baseY + 1, 230, 5, "#b8b3a8");
+        B.px(B.x0, B.baseY + 18, B.w, 1, "rgba(14,18,28,0.22)");
+      }
+    }
+  });
+})();
+
+
+/* =========================================================================
+   §6.2c 楼体资源：中部一列四栋换精灵 + 积秀园画成公园
+   -------------------------------------------------------------------------
+   用户 2026-11-07（截图圈的是 x = 3.1125 那一列，从上到下）：
+     「将计算机中心替换为信息中心，校史馆用新图替换，积秀园自行作图为公园
+       区域样式，中心是喷泉和亭子，积秀园下方天佑会堂替换，最下面那栋宿舍楼
+       也替换为2号宿舍楼」。
+
+   这一列在 CAMPUS 里的五行（20_ground.js，按世界 y 从北到南）：
+       y 2.5688  计算机中心     → 楼体资源/buildings/02_xinxi.js   （图上写「信息中心」）
+       y 4.0139  校史馆         → 08_xiaoshi.js
+       y 4.3507  积秀园         → **不换精灵**，本段自画公园（喷泉 + 亭子）
+       y 4.7465  天佑会堂       → 03_tyht.js
+       y 5.3708  宿舍（最南）   → 06_d2.js（2号宿舍楼）
+   中间那栋 `思源西楼`（y 3.2076）不在用户点名之列，本段不碰。
+
+   ⚠️ 与 35_west_sprite.js 同一条纪律：**只换 b.canvas / b.ax / b.ay**，
+      b.w、CAMPUS 坐标、addSolid 的碰撞盒、footprint 一个字节不动 ⇒ 全校园
+      散射随机流不重掷（§6.6 那颗地雷，探针 _propdiff.py）。
+   ⚠️ **楼名仍是 CAMPUS 里的名字，不改数据**：71b_center.js 的机房入口按
+      `CAMPUS.find(e => e[0] === "计算机中心")` 认楼，72_guide.js / 74_llm.js
+      的词典也按名字找；改名会让"按 F 进机房"静默失效。信息中心四个字由
+      02_xinxi 精灵自己用金字画在墙上，玩家看到的就是新名字。
+   ⚠️ 必须排在整条 restyle 链（天佑会堂会先跑 70b 的 tyRestyle）之后、
+      addProp 之前 —— addProp 取的就是 b.canvas / b.ax / b.ay。
+
+   ============================ 积秀园公园 =================================
+   占地 1.1792 × 0.2653 in ≈ 461 × 104 px（世界 y 1699.4..1803.0），又长又浅。
+   画法**从地面俯视**（与明湖 / 草坪同一视角），不按楼立面画：
+     草坪 + 石缘 → 十字步道 → 圆形广场 → 北侧六角亭 + 南侧喷泉
+     → 树 / 花坛 / 长椅 / 「积秀园」木牌。
+   画布 = 占地宽 461 + 左右各 26 留白（与 30 段/楼体资源同口径），
+   高 = 104（占地进深）+ 26（亭顶越过北缘的那截，正好落在校史馆接地影子里）。
+   b.ax = 画布中线、b.ay = 画布底边 ⇒ 草坪南缘仍压在世界落地线上。
+   ⚠️ 本地唯一随机量是 makeRng(3617) 的草点/花点 —— 不许碰共享随机流。
+   ========================================================================= */
+
+const CENTER_SPRITE_X = 3.1125;
+const CENTER_SPRITE_ROWS = [
+  { y: 2.5688, id: "02-xinxi" },     // 计算机中心 → 信息中心
+  { y: 4.0139, id: "08-xiaoshi" },   // 校史馆
+  { y: 4.7465, id: "03-tyht" },      // 天佑会堂
+  { y: 5.3708, id: "06-d2" }         // 最南那栋宿舍 → 2号宿舍楼
+];
+const CENTER_PARK_Y = 4.3507;
+const CENTER_EPS = 1e-4;
+
+function centerSpriteItem(id) {
+  const lib = window.PC_BUILDINGS || [];
+  for (let i = 0; i < lib.length; i++) if (lib[i].id === id) return lib[i];
+  return null;
+}
+
+function centerSpriteApply(e, b) {
+  if (e[1] !== "bld" || Math.abs(e[2] - CENTER_SPRITE_X) > 1e-6) return false;
+  if (Math.abs(e[3] - CENTER_PARK_Y) < CENTER_EPS) {
+    centerParkApply(e, b);
+    return true;
+  }
+  for (let i = 0; i < CENTER_SPRITE_ROWS.length; i++) {
+    const row = CENTER_SPRITE_ROWS[i];
+    if (Math.abs(e[3] - row.y) > CENTER_EPS) continue;
+    const item = centerSpriteItem(row.id);
+    if (!item) {
+      console.warn("36_center_sprite: 楼体资源里没有 " + row.id +
+                   "（楼体资源/buildings 少了一个文件？）");
+      return false;
+    }
+    const s = PC.make(item.spec);
+    /* 2号宿舍楼这一行顺带把屋前那条 54 行的空档铺成排球场（见下方 §6.2d）。
+       放在换精灵前调用：addProp 按 baseY 排序，先后顺序不影响画面。 */
+    if (row.id === "06-d2") vcStripPush(e);
+    b.canvas = s.canvas;
+    b.ax = s.ax;
+    b.ay = s.ay;
+    return true;
+  }
+  return false;
+}
+
+/* ============================ §6.2d 排球场条带 ============================
+   用户 2026-11-07 第三轮：「天佑会堂和2号宿舍楼之间有一排排球场。」
+   这条带子就是天佑占地南缘（5.2319 in → 2043）到 2号占地北缘（5.3708 in →
+   2098）之间那 55 行、461 宽的空档 —— 以前被 2号默认的 114 行屋瓦整个盖住，
+   06_d2.js 把屋面压到 20 之后才露出来。
+   五块场地**横放、一字排开**（18×9 m ⇒ 2:1）；画布顶 = 天佑落地线、底 = 2号
+   占地北缘，b.ay = 画布高 ⇒ 条带上下缘各对齐一栋楼的落地线，接缝不露。
+   ⚠️ 用户 2026-11-07 第四轮：「排球场和天佑会堂中间有一条小道，不是完全接壤」
+      ⇒ 条带最北 14 行铺成浅灰混凝土小道（VC_PATH），球场整体从第 17 行起画，
+      不再顶到天佑的落水线；小道两端各压一道深色路缘，避免和天佑的米色基座连成一片。
+   ⚠️ 用户 2026-11-07 第五轮给了实景照片：「排球场是这个样子的」——
+      蓝色塑胶场地 + 白色标线 + 四周绿色围网和草坪，球场与人行道之间有绿化带隔开。
+      所以球场底色从墨绿改成蓝，南北两条绿化带里立绿色围网（立柱 + 网面），
+      东西两端封口；北侧小道之外再没有裸露的"楼贴楼"接缝。
+   ⚠️ baseY 取 2号占地北缘（addProp 的 y）：比天佑（2043）晚、比 2号（2258）
+      早 ⇒ 压住天佑的接地影、被 2号立面和行人的脚盖住，层次与地面画一致。
+   ⚠️ 本地随机量只有 makeRng(3623) 的地坪噪点 —— 不碰共享随机流（§6.6）。 */
+const VC_TOP_IN = 4.7465 + 0.4854;     // 天佑会堂占地南缘（in）
+const VC_N = 5;                        // 一排几块
+const VC_GAP = 5;                      // 场地间距（px）
+const VC_MG = 6;                       // 条带东西两端留白（px）
+const VC_PATH = 14;                    // 北侧小道宽（px）：排球场不与天佑接壤
+const VC_BELT = 3;                     // 球场四周绿化带 + 围网宽（px）
+const VC_SWALK = 3;                    // 南侧小路宽（px）
+
+function vcCourt(g, x, y, w, h) {
+  /* ① 蓝色塑胶面层（实景照片里的场地）：北缘受光、南缘背光 */
+  px(g, x, y, w, h, "#3a6ea6");
+  px(g, x, y, w, 1, "#4a80ba");
+  px(g, x, y + h - 1, w, 1, "#2c5788");
+  /* ② 白线：边线 + 中线 + 两条进攻线（离中线 3 m = 全场 18 m 的 1/6） */
+  const L = "#eef3ee";
+  px(g, x, y, w, 1, L);
+  px(g, x, y + h - 1, w, 1, L);
+  px(g, x, y, 1, h, L);
+  px(g, x + w - 1, y, 1, h, L);
+  const cx = x + Math.round(w / 2);
+  px(g, cx, y, 1, h, L);
+  const a1 = x + Math.round(w / 2 - w / 6), a2 = x + Math.round(w / 2 + w / 6);
+  px(g, a1, y + 1, 1, h - 2, "rgba(238,243,238,0.75)");
+  px(g, a2, y + 1, 1, h - 2, "rgba(238,243,238,0.75)");
+  /* ③ 网：两根柱子立在边线外，网面压在中线上（隔行点一下，俯视才像网眼） */
+  px(g, cx - 1, y - 3, 3, 2, "#c6cbc3");
+  px(g, cx - 1, y + h + 1, 3, 2, "#c6cbc3");
+  for (let yy = y + 2; yy < y + h - 1; yy += 2) px(g, cx, yy, 1, 1, "rgba(228,238,228,0.62)");
+  /* ④ 南侧落地影：两行，别压到下一块 */
+  px(g, x + 2, y + h, w - 2, 2, "rgba(14,18,28,0.14)");
+}
+
+/* 绿色围网：两道横杆夹一条半透明网面，立柱按实景的间距立 */
+function vcFence(g, x0, y, w) {
+  px(g, x0, y - 1, w, 1, "#2b5f38");
+  px(g, x0, y, w, 1, "rgba(214,232,214,0.34)");
+  px(g, x0, y + 1, w, 1, "#275c34");
+  for (let x = x0 + 3; x < x0 + w - 2; x += 24) px(g, x, y - 2, 2, 5, "#275c34");
+}
+
+function vcDraw(g, W, H) {
+  /* ① 周边地坪：操场旁那种灰绿沥青，四周一圈跑动区 */
+  px(g, 0, 0, W, H, "#a4ad9f");
+  px(g, 0, H - 1, W, 1, "rgba(14,18,28,0.26)");
+  /* ② 北侧小道：浅灰混凝土 + 板缝，两端路缘压暗 —— 和天佑的暖米色基座分开 */
+  px(g, 0, 0, W, VC_PATH, "#c9cbc3");
+  px(g, 0, 0, W, 2, "rgba(14,18,28,0.18)");           // 天佑落在小道上的影
+  px(g, 0, 2, W, 1, "#e0e2da");
+  for (let x = 0; x < W; x += 27) px(g, x, 3, 1, VC_PATH - 6, "rgba(92,96,88,0.22)");
+  px(g, 0, Math.round(VC_PATH * 0.6), W, 1, "rgba(92,96,88,0.14)");
+  px(g, 0, VC_PATH - 2, W, 2, "rgba(44,48,40,0.42)"); // 南缘路缘
+  /* ③ 球场区：绿化带打底，南北立围网，东西两端封口 */
+  const top = VC_PATH, bot = H - VC_SWALK;
+  const ct = top + VC_BELT, cb = bot - VC_BELT;
+  px(g, 0, top, W, bot - top, "#3f7a4b");
+  const rng = makeRng(3623);                          // ⚠️ 局部随机流
+  speckle(g, 0, top, W, bot - top, "rgba(0,0,0,0.10)", (W / 3) | 0, rng);
+  speckle(g, 0, top, W, bot - top, "rgba(255,255,255,0.12)", (W / 3) | 0, rng);
+  vcFence(g, 0, ct - 2, W);
+  vcFence(g, 0, cb + 1, W);
+  px(g, 4, ct - 2, 1, cb - ct + 5, "#2b5f38");
+  px(g, W - 5, ct - 2, 1, cb - ct + 5, "#2b5f38");
+  /* ④ 五块蓝场一字排开 */
+  const cw = Math.floor((W - VC_MG * 2 - VC_GAP * (VC_N - 1)) / VC_N);
+  const x0 = Math.round((W - (cw * VC_N + VC_GAP * (VC_N - 1))) / 2);
+  for (let i = 0; i < VC_N; i++) vcCourt(g, x0 + i * (cw + VC_GAP), ct, cw, cb - ct);
+  /* ⑤ 南侧小路：和 2号之间留一条走道，别让围网贴着宿舍楼 */
+  px(g, 0, bot, W, H - bot, "#b9b6a9");
+  px(g, 0, bot, W, 1, "rgba(44,48,40,0.36)");
+  px(g, 0, bot + 1, W, 1, "#cdcabf");
+}
+
+function vcStripPush(e) {
+  const R = zoneRect(e);
+  const top = Math.round(VC_TOP_IN * U);
+  const W = Math.round(R.w);
+  const H = Math.round(R.y) - top;
+  if (H < 20 || W < 120) return false;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  vcDraw(g, W, H);
+  addProp({ canvas: c, ax: W / 2, ay: H, x: R.x + R.w / 2, y: R.y });
+  /* ⚠️ baseY 单独压到条带**北缘 + 1 行**。按 addProp 默认取 y = 2号占地北缘（2098）
+     的话，站进球场的人（feet y 在 2043..2098 之间）全部排在它前面 ⇒ 整块地面画
+     后画、把人盖没（37b 的地坪第一版实测过同一个坑）。北缘 +1 只为了让天佑
+     （baseY 2043，画布还带 35 行接地影）先画；比它再北的人本来也踩不到这条带子。
+     绘制位置仍是 x/y − ax/ay，与 baseY 无关，改这一个数不动画面。 */
+  props[props.length - 1].baseY = top + 1;
+  /* 条带里原本散着的树 / 灯 / 垃圾桶留着就是"长在球场上"：等整轮装配跑完
+     再摘（微任务早于首帧 RAF，也不影响先跑的净空函数计数）。只摘小道具，
+     楼（宽 > 110）与这块地坪自己一件不碰。 */
+  Promise.resolve().then(() => vcClearStrip({ x: R.x, y: top, w: R.w, h: H }));
+  return true;
+}
+
+function vcClearStrip(R) {
+  const x1 = R.x + R.w, y1 = R.y + R.h;
+  for (let i = props.length - 1; i >= 0; i--) {
+    const p = props[i];
+    if (p.img.width > 110) continue;
+    if (p.x > R.x && p.x < x1 && p.y > R.y && p.y < y1) props.splice(i, 1);
+  }
+}
+
+/* --- 公园绘制的几个小笔法（只在本段用） --------------------------------- */
+function cpEllipse(g, cx, cy, rx, ry, col) {
+  g.fillStyle = col;
+  for (let dy = -ry; dy <= ry; dy++) {
+    const t = 1 - (dy * dy) / (ry * ry);
+    if (t < 0) continue;
+    const dx = Math.round(rx * Math.sqrt(t));
+    g.fillRect(Math.round(cx - dx), Math.round(cy + dy), dx * 2 + 1, 1);
+  }
+}
+function cpRing(g, cx, cy, rx, ry, th, col) {
+  g.fillStyle = col;
+  const irx = rx - th, iry = ry - th;
+  for (let dy = -ry; dy <= ry; dy++) {
+    const t = 1 - (dy * dy) / (ry * ry);
+    if (t < 0) continue;
+    const dx = Math.round(rx * Math.sqrt(t));
+    let ix = 0;
+    if (iry > 0 && Math.abs(dy) <= iry) {
+      const t2 = 1 - (dy * dy) / (iry * iry);
+      ix = Math.round(irx * Math.sqrt(Math.max(0, t2)));
+    }
+    if (dx > ix) {
+      g.fillRect(Math.round(cx - dx), Math.round(cy + dy), dx - ix, 1);
+      g.fillRect(Math.round(cx + ix + 1), Math.round(cy + dy), dx - ix, 1);
+    }
+  }
+}
+function cpLine(g, x0, y0, x1, y1, col) {
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+  for (let i = 0; i <= n; i++) {
+    const t = n ? i / n : 0;
+    px(g, Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), 1, 1, col);
+  }
+}
+
+function cpTree(g, cx, cy, r) {
+  cpEllipse(g, cx + 4, cy + 3, r, Math.round(r * 0.6), "rgba(14,18,28,0.20)");
+  cpEllipse(g, cx, cy, r, Math.round(r * 0.6), "#2f5c39");
+  cpEllipse(g, cx - 1, cy - 1, r - 3, Math.round((r - 3) * 0.6), "#3f7a4a");
+  cpEllipse(g, cx - Math.round(r * 0.35), cy - Math.round(r * 0.28),
+            Math.round(r * 0.5), Math.round(r * 0.3), "#5b9a63");
+  px(g, cx - 1, cy, 1, 2, "#5e4433");
+}
+
+function cpBench(g, cx, cy) {
+  const w = 24, h = 7;
+  px(g, cx - w / 2 + 2, cy + 2, w, h, "rgba(14,18,28,0.20)");
+  px(g, cx - w / 2, cy, w, h, "#9c5442");
+  px(g, cx - w / 2, cy, w, 2, "#b96a52");
+  for (let x = cx - w / 2 + 3; x < cx + w / 2 - 1; x += 4) px(g, x, cy + 2, 1, h - 2, "#52241c");
+  px(g, cx - w / 2, cy + h - 1, w, 1, "#52241c");
+}
+
+function cpFountain(g, cx, cy) {
+  /* 池壁 → 池沿 → 水面 → 水柱（从下往上画，水柱最后压在水面上） */
+  cpEllipse(g, cx + 5, cy + 5, 36, 19, "rgba(14,18,28,0.18)");   // 落地影
+  cpEllipse(g, cx, cy, 34, 18, "#a8a294");                      // 池壁（下半圈可见）
+  cpEllipse(g, cx, cy - 4, 34, 17, "#d8d3c6");                  // 池沿
+  cpEllipse(g, cx, cy - 4, 30, 14, "#efeadd");                  // 池沿受光
+  cpEllipse(g, cx, cy - 5, 27, 13, "#2e6e9e");                  // 水面
+  cpEllipse(g, cx, cy - 8, 27, 9, "#3c82b4");                   // 上段映天
+  cpRing(g, cx, cy - 5, 19, 9, 1, "rgba(255,255,255,0.30)");    // 涟漪
+  cpRing(g, cx, cy - 5, 11, 5, 1, "rgba(255,255,255,0.24)");
+  cpEllipse(g, cx, cy - 6, 5, 3, "#e4dfd2");                    // 中央喷嘴基座
+  /* 水柱：下粗上细，顶部散成水雾 */
+  for (let i = 0; i < 20; i++) {
+    const y = cy - 8 - i;
+    const w = i < 4 ? 3 : (i < 13 ? 2 : 1);
+    px(g, cx - Math.floor(w / 2), y, w, 1, i % 3 ? "#dff2ff" : "#bfe3f7");
+  }
+  cpEllipse(g, cx, cy - 28, 9, 3, "rgba(200,235,255,0.34)");    // 水雾
+  const drops = [[-13, -15], [-8, -21], [-4, -25], [3, -26], [8, -21], [13, -15], [-11, -11], [11, -11]];
+  for (let i = 0; i < drops.length; i++) {
+    px(g, cx + drops[i][0], cy + drops[i][1], 2, 2, i % 2 ? "#eaf8ff" : "#c9e8f8");
+    px(g, cx + drops[i][0], cy + drops[i][1] + 2, 1, 1, "rgba(180,220,240,0.55)");
+  }
+}
+
+function cpPavilion(g, cx, cy) {
+  const RX = 26, RY = 13, COL = 20;
+  const baseY = cy - 3, eaveY = baseY - COL, apexY = eaveY - Math.round(RX * 0.95);
+  cpEllipse(g, cx + 5, cy + 5, 30, 16, "rgba(14,18,28,0.20)");  // 台基影
+  cpEllipse(g, cx, cy + 3, 29, 15, "#a8a294");                  // 台基侧壁
+  cpEllipse(g, cx, cy, 29, 15, "#d8d3c6");                      // 台基顶面
+  cpEllipse(g, cx, cy, 22, 11, "#c9c4b6");                      // 台面内圈
+  /* 美人靠（柱间绿坐凳）：正面留出进人的口子 */
+  for (let x = cx - 20; x <= cx + 20; x += 5) {
+    if (Math.abs(x - cx) < 8) continue;
+    px(g, x, baseY - 9, 3, 7, "#43584b");
+    px(g, x, baseY - 9, 3, 1, "#5d7565");
+  }
+  /* 四根红柱（六角环在 2.5D 里看得见的就是这四根） */
+  const cols = [cx - 17, cx - 6, cx + 6, cx + 17];
+  for (let i = 0; i < cols.length; i++) {
+    px(g, cols[i], eaveY, 3, COL, "#7a3a2c");
+    px(g, cols[i], eaveY, 1, COL, "#9c5442");
+    px(g, cols[i] + 2, eaveY, 1, COL, "#52241c");
+    px(g, cols[i] - 1, baseY, 5, 2, "#a8a294");
+  }
+  /* 六角攒尖：六个坡面分别上色，再压戗脊 + 绿剪边 + 宝顶 */
+  const P = [
+    [cx, eaveY - RY],
+    [cx + Math.round(RX * 0.866), eaveY - Math.round(RY / 2)],
+    [cx + Math.round(RX * 0.866), eaveY + Math.round(RY / 2)],
+    [cx, eaveY + RY],
+    [cx - Math.round(RX * 0.866), eaveY + Math.round(RY / 2)],
+    [cx - Math.round(RX * 0.866), eaveY - Math.round(RY / 2)]
+  ];
+  const A = [cx, apexY];
+  const faces = [
+    [5, 0, "#dd9a52"], [0, 1, "#dd9a52"],
+    [4, 5, "#c07436"], [1, 2, "#c07436"],
+    [3, 4, "#a35f2a"], [2, 3, "#a35f2a"]
+  ];
+  for (let i = 0; i < faces.length; i++) {
+    poly(g, [A, P[faces[i][0]], P[faces[i][1]]], faces[i][2]);
+  }
+  for (let i = 0; i < 6; i++) cpLine(g, A[0], A[1], P[i][0], P[i][1], "#8e5222");
+  for (let i = 0; i < 6; i++) {
+    const n = (i + 1) % 6;
+    cpLine(g, P[i][0], P[i][1], P[n][0], P[n][1], "#2e6b4a");
+  }
+  px(g, P[2][0] - 1, P[2][1] - 2, 3, 3, "#4a8a63");             // 东翼角起翘
+  px(g, P[3][0] - 2, P[3][1] - 1, 4, 2, "#4a8a63");
+  px(g, P[4][0] - 1, P[4][1] - 2, 3, 3, "#4a8a63");             // 西翼角起翘
+  px(g, cx - 2, apexY - 4, 4, 4, "#2e6b4a");                    // 宝顶
+  px(g, cx - 1, apexY - 4, 2, 1, "#4a8a63");
+  px(g, cx - 2, apexY, 4, 1, "#d8b13e");                        // 宝顶下金圈
+}
+
+function cpParkDraw(g, W, H, depth, up) {
+  const x0 = 26, x1 = W - 26, fw = x1 - x0;
+  const y0 = up, y1 = H - 1;
+  const CX = W / 2;
+  const fCy = y1 - 34;                       // 喷泉中心
+  const pCy = y0 + 30;                       // 亭子台基中心
+  const rng = makeRng(3617);                 // ⚠️ 局部随机流
+
+  /* ① 石缘 + 草坪 */
+  px(g, x0, y0, fw, depth, "#8f8a7c");
+  px(g, x0, y0, fw, depth - 2, "#c9c4b8");
+  px(g, x0, y0, fw, 2, "#e2ddcd");
+  px(g, x0 + 3, y0 + 3, fw - 6, depth - 6, "#6f9e57");
+  px(g, x0 + 3, y0 + 3, fw - 6, 2, "#5a8746");
+  px(g, x0 + 3, y0 + depth - 6, fw - 6, 3, "#5a8746");
+  speckle(g, x0 + 4, y0 + 6, fw - 8, depth - 12, "rgba(134,181,108,0.55)", (fw / 3) | 0, rng);
+  speckle(g, x0 + 4, y0 + 6, fw - 8, depth - 12, "rgba(66,104,52,0.45)", (fw / 5) | 0, rng);
+
+  /* ② 十字步道（先铺道，再压广场） */
+  const pathY = fCy - 7;
+  const pw = Math.round(CX - 50);
+  px(g, x0 + 3, pathY, pw - (x0 + 3), 14, "#cfc9b8");
+  px(g, x0 + 3, pathY, pw - (x0 + 3), 1, "#e2ddcd");
+  px(g, x0 + 3, pathY + 13, pw - (x0 + 3), 1, "#a9a390");
+  px(g, Math.round(CX + 50), pathY, x1 - 3 - Math.round(CX + 50), 14, "#cfc9b8");
+  px(g, Math.round(CX + 50), pathY, x1 - 3 - Math.round(CX + 50), 1, "#e2ddcd");
+  px(g, Math.round(CX + 50), pathY + 13, x1 - 3 - Math.round(CX + 50), 1, "#a9a390");
+  const vTop = fCy + 22;
+  px(g, CX - 11, vTop, 22, y1 - vTop + 1, "#cfc9b8");
+  px(g, CX - 11, vTop, 22, 1, "#e2ddcd");
+  px(g, CX - 12, vTop, 1, y1 - vTop + 1, "#a9a390");
+  px(g, CX + 12, vTop, 1, y1 - vTop + 1, "#a9a390");
+
+  /* ③ 圆形广场 */
+  cpEllipse(g, CX, fCy, 50, 27, "#a9a390");
+  cpEllipse(g, CX, fCy - 1, 50, 27, "#c6c0af");
+  cpEllipse(g, CX, fCy - 1, 46, 24, "#d5cfbe");
+  cpRing(g, CX, fCy - 1, 40, 20, 1, "rgba(90,84,70,0.30)");
+
+  /* ④ 树 / 花坛 / 长椅 */
+  cpTree(g, x0 + 34, y0 + 30, 15);
+  cpTree(g, x1 - 34, y0 + 30, 15);
+  cpTree(g, x0 + 30, y1 - 18, 12);
+  const beds = [[CX - 70, y1 - 8], [CX + 70, y1 - 8]];
+  for (let i = 0; i < beds.length; i++) {
+    const bx = beds[i][0], by = beds[i][1];
+    cpEllipse(g, bx, by + 2, 20, 9, "rgba(14,18,28,0.16)");
+    cpEllipse(g, bx, by, 20, 9, "#7a5a3d");
+    cpEllipse(g, bx, by - 1, 18, 8, "#8a6a49");
+    for (let k = 0; k < 14; k++) {
+      const fx = bx - 15 + ((rng() * 31) | 0);
+      const fy = by - 7 + ((rng() * 16) | 0);
+      const c = k % 3 === 0 ? "#e8c04a" : (k % 3 === 1 ? "#cf4a45" : "#f2ede0");
+      px(g, fx, fy, 2, 2, c);
+    }
+  }
+  cpBench(g, CX - 84, fCy - 11);
+  cpBench(g, CX + 84, fCy - 11);
+
+  /* ⑤ 亭子 → 喷泉（南边的喷泉后画，水柱压住亭子台基下缘） */
+  cpPavilion(g, CX, pCy);
+  cpFountain(g, CX, fCy);
+
+  /* ⑥ 「积秀园」木牌：立在东南角 */
+  const sgn = makeSign("积秀园");
+  if (sgn) {
+    const sx = Math.round(x1 - 12 - sgn.w), sy = Math.round(y1 - 4 - sgn.h);
+    px(g, sx + 20, sy + sgn.h, 5, 5, "#52241c");
+    px(g, sx + 24, sy + sgn.h, 5, 5, "#52241c");
+    px(g, sx + 3, sy + 3, sgn.w, sgn.h, "rgba(14,18,28,0.30)");
+    g.drawImage(sgn.c, sx, sy);
+  }
+
+  /* ⑦ 南缘接地影：与楼体同一条笔（30 段 §3.8） */
+  contactBand(g, x0 + 1, x1 - 1, y1 - 1, 2, 0.34);
+}
+
+function centerParkApply(e, b) {
+  const depth = Math.round(IX(e[5]));      // 占地进深 104
+  const up = 26;                            // 亭顶越过北缘的那截
+  const W = b.canvas.width;                 // 461 + 26×2 = 513
+  const H = depth + up;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  cpParkDraw(g, W, H, depth, up);
+  b.canvas = c;
+  b.ax = W / 2;
+  b.ay = H;
+  /* 公园是能走进去的地面画，不能像楼那样"人在里面就整块淡成 0.34"（73_occl）。
+     认楼那张表是 60 段在**本函数返回之后**才 `add(b.canvas)` 的，所以只能等
+     本轮装配循环跑完再摘 —— 微任务早于首帧 RAF，来得及。 */
+  Promise.resolve().then(() => BLD_IMGS.delete(c));
+}
+
+/* ===== 楼体资源 · 中部一列 · 结束 ===== */
+
+/* ===== 楼体资源 · 远端西侧（2026-11-07） ===== */
+
+/* 04 学生活动服务中心
+   照片：三层红色曲面裙房（顶部金色横排大字、两排窗、首层沿街店面）
+        + 背后一团白色波浪板高层 + 左侧米色塔楼 + 右侧赭黄塔楼
+        + 中部「美食汇」三块红牌 + 首层「北交文创」入口。
+
+   ⚠️ 用户 2026-11-07 第四轮：「学生活动中心是那一整块空白处都是图片提供的
+      建筑物，现有地图上建筑物占比不足」⇒ 占地 656 行，精灵原来只占 302 行
+      （46%），北边 354 行全是空地。这一版把 roofT 由默认 114 提到 332：
+        · baseY = 18+332+170 = 520，画布顶 = 落地线 − 520
+        · 楼体从画布第 20 行画到 520 行 ⇒ 占占地约 79%，北边只剩 160 行的
+          内院（交给 37b_farwest_sprite 的地坪：草坪 + 下沉广场）
+     ⚠️ 立面宽度 w=380 一点没动：占地 370.9px，380 只超出 4.5px/边。
+     ⚠️ 裙房（红色曲面）的所有构件仍按 B.eaveY / B.baseY 现算，位置与上一版
+        完全一致 —— 变的只是它上面那截背景体量从 118 行长到 332 行。
+     ⚠️ make() 默认的平屋面 / 通风井 / 墙体 / wallQuad 在这一版全部用不上：
+        draw() 第一件事是 clearRect，整张画布从零画（连 make() 的落地影也
+        一起抹掉，所以本文件自己补了一段朝东南的投影）。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "04-xsh",
+    name: "学生活动服务中心",
+    note: "裙房 3 层 · 白色波浪高层 / 米色塔楼 / 赭黄塔楼",
+    spec: {
+      w: 380, floors: 5, sign: false, seed: 6404,
+      /* 332 = 画布上多出来的这截背景体量。改它会同时改画布高与 ay，
+         37b 的地坪高度跟着 s.ay 现算，不用同步改数。 */
+      roofT: 332,
+      wall: "#a5453a", roof: "#dfe0e1", glass: "#b9c9a8", texture: "none",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY, PADT = B.PADT;
+        const CX = x0 + Math.round(w / 2);
+        const C = {
+          red: "#a5453a", redL: "#bd5a4c", redD: "#7d2f27",
+          gold: "#d9b45f", goldD: "#8e6b24",
+          white: "#e4e5e6", whiteL: "#f2f3f4", whiteD: "#c6c8ca",
+          beige: "#cfc6b6", beigeD: "#b3a997", beigeL: "#e0d8c9",
+          ochre: "#c98a52", ochreL: "#dc9f64", ochreD: "#a06a3a",
+          glass: "#8fa3a6", glassD: "#5c7074", glassW: "#c9d3cf",
+          frame: "#e6e4de", frameD: "#a8a49c",
+          shop: "#c9d2b8", shopL: "#e2e8d4",
+          deck: "#cdcbc3", deckL: "#e4e2da", deckD: "#8f8b80",
+          dark: "#3a2b28", cream: "#e9e4d8"
+        };
+
+        /* 圆角矩形（白色波浪体量的轮廓） */
+        function roundRect(x, y, ww, hh, r, col) {
+          for (let j = 0; j < hh; j++) {
+            let ins = 0;
+            if (j < r) ins = r - Math.round(Math.sqrt(r * r - (r - j) * (r - j)));
+            else if (j > hh - r) {
+              const k = j - (hh - r);
+              ins = r - Math.round(Math.sqrt(Math.max(0, r * r - k * k)));
+            }
+            B.px(x + ins, y + j, ww - ins * 2, 1, col);
+          }
+        }
+
+        /* 0. 抹掉 make() 的骨架（默认平屋面 + 通风井 + 墙 + 落地影） */
+        g.clearRect(0, 0, B.canvas.width, B.canvas.height);
+
+        /* 0.1 落地影：SUN 在西北 ⇒ 影子朝东南，20 行，越远越淡 */
+        for (let j = 1; j <= 20; j++) {
+          const off = Math.round(16 * j / 21);
+          B.px(x0 + off, baseY + j, w, 1,
+               "rgba(14,18,28," + (0.10 * (1 - j / 22)).toFixed(3) + ")");
+        }
+
+        /* --- 1. 白色波浪板高层（背景最高的一团，先画） --- */
+        const wx0 = x0 + 74, wx1 = x1 - 80;          // 100..326
+        const wtop = PADT + 2, wbot = eaveY + 30;    // 20..380
+        roundRect(wx0, wtop, wx1 - wx0, wbot - wtop, 18, C.white);
+        roundRect(wx0 + 2, wtop + 2, wx1 - wx0 - 4, wbot - wtop - 4, 16, C.whiteL);
+        /* 波浪横带：每一条由正弦偏移的像素行组成，铺满整个白色体量 */
+        for (let by = wtop + 16; by < wbot - 10; by += 20) {
+          for (let x = wx0 + 6; x < wx1 - 6; x++) {
+            const t = (x - wx0) / 34;
+            const yy = by + Math.round(3.2 * Math.sin(t * Math.PI * 2));
+            B.px(x, yy, 1, 6, C.white);
+            B.px(x, yy + 6, 1, 3, C.whiteD);
+          }
+        }
+        /* 板缝：隔一段一条极淡的竖线，免得整面读成一块白板 */
+        for (let x = wx0 + 24; x < wx1 - 12; x += 46)
+          B.px(x, wtop + 12, 1, wbot - wtop - 22, "rgba(150,152,154,0.16)");
+        /* 体量右侧背光 */
+        B.px(wx1 - 10, wtop + 8, 8, wbot - wtop - 16, "rgba(90,90,92,0.10)");
+        /* 屋顶机房 + 一小段天线 */
+        B.px(wx0 + 82, wtop - 12, 58, 12, C.whiteD);
+        B.px(wx0 + 82, wtop - 12, 58, 2, C.whiteL);
+        B.px(wx0 + 96, wtop - 18, 10, 6, "#b9bbbd");
+        B.px(wx0 + 100, wtop - 26, 2, 8, "#8f9193");
+
+        /* --- 2. 左米色塔楼（次高） --- */
+        const lw = 76, lx = x0, ltop = PADT + 16;    // 34
+        B.px(lx, ltop, lw, baseY - ltop, C.beige);
+        B.px(lx, ltop, 3, baseY - ltop, C.beigeL);
+        B.px(lx + lw - 3, ltop, 3, baseY - ltop, C.beigeD);
+        B.px(lx, ltop, lw, 3, "#e8e0d1");
+        B.px(lx, ltop + 3, lw, 2, "rgba(30,24,16,0.22)");
+        B.px(lx + 20, ltop - 10, 36, 10, C.beigeD);
+        B.px(lx + 20, ltop - 10, 36, 2, "#e8e0d1");
+        B.px(lx + 20, ltop - 10, 2, 10, C.beigeL);
+        for (let f = 0; ; f++) {
+          const wy = ltop + 12 + f * 30;
+          if (wy + 20 > eaveY + 40) break;
+          for (let k = 0; k < 4; k++) {
+            const wx = lx + 7 + k * 17;
+            B.px(wx, wy, 12, 20, C.frameD);
+            B.px(wx + 1, wy + 1, 10, 18, C.glass);
+            B.px(wx + 1, wy + 1, 10, 3, "#c9d5d8");
+            B.px(wx + 6, wy + 1, 1, 18, C.frame);
+            B.px(wx - 1, wy + 20, 14, 2, "rgba(40,32,24,0.20)");
+          }
+        }
+
+        /* --- 3. 右赭黄塔楼（最矮一档） --- */
+        const rw = 82, rx = x1 - rw, rtop = PADT + 30;   // 48
+        B.px(rx, rtop, rw, baseY - rtop, C.ochre);
+        B.px(rx, rtop, 3, baseY - rtop, C.ochreL);
+        B.px(rx + rw - 4, rtop, 4, baseY - rtop, C.ochreD);
+        B.px(rx, rtop, rw, 3, "#d9a06a");
+        B.px(rx, rtop + 3, rw, 2, "rgba(60,30,12,0.24)");
+        for (let f = 0; ; f++) {
+          const wy = rtop + 14 + f * 32;
+          if (wy + 18 > eaveY + 40) break;
+          for (let k = 0; k < 2; k++) {
+            const wx = rx + 12 + k * 40;
+            B.px(wx, wy, 11, 18, "#8a6a48");
+            B.px(wx + 1, wy + 1, 9, 16, "#6d7f86");
+            B.px(wx + 1, wy + 1, 9, 3, "#a9c0c6");
+          }
+        }
+
+        /* --- 4. 裙房屋面：三座塔楼脚下那块混凝土平台 --- */
+        const dx0 = wx0, dx1 = wx1, dy0 = eaveY + 16;    // 366
+        B.px(dx0, dy0, dx1 - dx0, 26, C.deck);
+        B.px(dx0, dy0, dx1 - dx0, 2, C.deckL);
+        B.px(dx0, dy0 + 2, dx1 - dx0, 1, "rgba(60,56,48,0.24)");
+        for (let x = dx0 + 14; x < dx1 - 4; x += 26)
+          B.px(x, dy0 + 3, 1, 25, "rgba(120,112,96,0.16)");
+        /* 天窗 + 两组设备 */
+        B.px(dx0 + 18, dy0 + 7, 26, 12, "#a9bcbe");
+        B.px(dx0 + 18, dy0 + 7, 26, 2, "#cfe0e0");
+        B.px(dx0 + 18, dy0 + 19, 26, 1, "rgba(0,0,0,0.22)");
+        B.px(dx0 + 118, dy0 + 6, 34, 14, "#b8b5aa");
+        B.px(dx0 + 118, dy0 + 6, 34, 2, "#d8d5ca");
+        B.px(dx0 + 118, dy0 + 20, 34, 1, "rgba(0,0,0,0.24)");
+        B.px(dx0 + 168, dy0 + 8, 20, 10, "#aeaba0");
+        B.px(dx0 + 168, dy0 + 8, 20, 2, "#cfccc2");
+
+        /* --- 5. 红色曲面裙房：顶边是一条浅弧（中间低、两端高） --- */
+        const topAt = x => {
+          const t = (x - CX) / (w / 2);
+          return eaveY + 40 + Math.round(12 * (1 - t * t));
+        };
+        for (let x = x0; x <= x1; x++) {
+          const ty = topAt(x);
+          B.px(x, ty, 1, baseY - ty, C.red);
+          B.px(x, ty, 1, 1, C.redL);
+          B.px(x, ty + 1, 1, 2, C.redD);
+        }
+        /* 尽头一点点背光 */
+        for (let x = x1 - 10; x <= x1; x++) B.px(x, topAt(x), 1, baseY - topAt(x), "rgba(60,20,16,0.16)");
+
+        /* --- 6. 金色横排楼名（跟着顶边弧线走） --- */
+        const txt = "学生活动服务中心";
+        const step = 16, tx0 = CX - Math.round((txt.length - 1) * step / 2);
+        for (let i = 0; i < txt.length; i++) {
+          const cx = tx0 + i * step;
+          const ty = topAt(cx) + 4;
+          B.goldText(txt.charAt(i), cx, ty, 12, C.gold);
+        }
+
+        /* --- 7. 裙房上排窗：细高的竖窗，一长排 --- */
+        const ay = eaveY + 64, ah = 20;
+        for (let x = x0 + 18; x < x1 - 16; x += 31) {
+          if (x > CX - 92 && x < CX + 84) continue;           // 中间留给楼名
+          B.px(x, ay, 9, ah, C.frame);
+          B.px(x + 1, ay + 1, 7, ah - 2, C.glassD);
+          B.px(x + 1, ay + 1, 7, 3, C.glass);
+          B.px(x + 1, ay + Math.round(ah * 0.6), 7, 1, "rgba(20,30,34,0.45)");
+          B.px(x - 1, ay + ah, 11, 2, "rgba(60,20,16,0.30)");
+        }
+
+        /* --- 8. 裙房中排窗（沿街店面，绿玻璃） --- */
+        const my = eaveY + 90, mh = 26;
+        for (let x = x0 + 20; x + 28 <= x1 - 8; x += 34) {
+          if (x > CX - 62 && x < CX + 62) continue;           // 中间留给美食汇
+          B.px(x - 1, my - 1, 28, mh + 3, C.frameD);
+          B.px(x, my, 26, mh, C.shop);
+          B.px(x, my, 26, 4, C.shopL);
+          B.px(x, my + Math.round(mh * 0.55), 26, 1, C.frameD);
+          B.px(x + 12, my, 1, mh, C.frameD);
+          B.px(x, my + mh, 26, 2, "rgba(60,20,16,0.35)");
+        }
+        /* 美食汇：三块红牌 + 白字 */
+        const food = "美食汇";
+        for (let i = 0; i < 3; i++) {
+          const fx = CX - 44 + i * 34, fy = my + 2;
+          B.px(fx + 2, fy + 2, 20, 20, "rgba(40,10,8,0.35)");
+          B.px(fx, fy, 20, 20, "#c0392b");
+          B.px(fx, fy, 20, 1, "#e0685c");
+          B.px(fx, fy + 19, 20, 1, "#8e2018");
+          B.goldText(food.charAt(i), fx + 10, fy + 4, 12, "#f5ead2");
+        }
+
+        /* --- 9. 首层沿街店面 --- */
+        const gy = baseY - 34, gh = 30;
+        for (let x = x0 + 14; x + 34 <= x1 - 10; x += 40) {
+          if (x > CX - 42 && x < CX + 42) continue;           // 中间留给入口
+          B.px(x, gy, 34, gh, C.dark);
+          B.px(x + 1, gy + 1, 32, gh - 2, "#6f7f6d");
+          B.px(x + 1, gy + 1, 32, 4, "#93a58c");
+          B.px(x + 16, gy + 1, 1, gh - 2, "#3f4a3e");
+          B.px(x, gy - 1, 34, 2, C.redD);
+        }
+
+        /* --- 10. 北交文创入口 --- */
+        const ex0 = CX - 36, ex1 = CX + 36, ey0 = baseY - 56;
+        B.px(ex0 - 4, ey0 - 4, ex1 - ex0 + 8, baseY - ey0 + 4, C.redD);
+        B.px(ex0, ey0, ex1 - ex0, baseY - ey0 - 2, "#8e3a30");
+        for (let x = ex0 + 4; x < ex1 - 4; x += 7)
+          B.px(x, ey0 + 14, 2, baseY - ey0 - 18, "#c4645a");     // 竖向装饰肋
+        B.px(ex0, ey0, ex1 - ex0, 3, "#c4645a");
+        B.signPlate("北交文创", CX, ey0 + 3, 10, {
+          bg: C.cream, bgL: "#f6f2e8", bgD: "#a89f8c", col: "#3a3230", padX: 4, padY: 3
+        });
+        B.px(ex0 + 18, baseY - 32, 18, 30, "#e7e0d2");
+        B.px(ex0 + 40, baseY - 32, 16, 30, "#d9d2c4");
+        B.px(ex0 + 20, baseY - 24, 2, 6, "#3a3230");
+        B.px(ex0 + 50, baseY - 24, 2, 6, "#3a3230");
+
+        /* --- 11. 外轮廓与接地 --- */
+        B.edges(C.beigeL, C.ochreD);
+        B.px(x0 - 1, ltop, 1, eaveY - ltop, C.beigeL);
+        B.px(x1, rtop, 1, eaveY - rtop, C.ochreD);
+        B.px(x0, baseY - 4, w, 4, "rgba(40,16,12,0.20)");
+      }
+    }
+  });
+})();
+
+
+/* 13 22号宿舍楼
+   照片：浅灰混凝土宿舍楼。右 3/4 是通长的玻璃阳台带 —— 深色玻璃 + 深色格栅栏杆
+        + 零星晾晒的衣物，每层一道浅色楼板；左 1/4 是一条通高的素混凝土服务塔楼，
+        墙上只有一列小方洞（检修口）。平屋顶，檐口一道浅色女儿墙；首层整条灰色
+        雨篷，雨篷上金色「22号宿舍楼」，雨篷下是亮着灯的玻璃门厅，两端防盗栅窗，
+        门口停着几辆蓝色自行车。 */
+(function () {
+  PC_BUILDINGS.push({
+    id: "13-d22",
+    name: "22号宿舍楼",
+    note: "7 层 · 灰混凝土 / 玻璃阳台格栅 / 金色楼名雨篷",
+    spec: {
+      /* ⚠️ w / roofT 是这条占位算出来的：CAMPUS 那一行占地 272×294，
+         base 在 y=1993、北边 61px 处是学生活动中心门前那条路（1638..1699）。
+         屋面再厚 10px 就会压到路上，所以 roofT 只给 28（照片本身就是平屋顶）。 */
+      w: 280, floors: 7, roofT: 28, sign: false, seed: 1313,
+      wall: "#b8b6b0", roof: "#cfcec9", glass: "#5b6b77", texture: "none",
+      draw: function (B) {
+        const g = B.g, x0 = B.x0, x1 = B.x1, w = B.w;
+        const eaveY = B.eaveY, baseY = B.baseY, PADT = B.PADT, FH = PC.FLOOR_H;
+        const CX = x0 + Math.round(w / 2);
+        const C = {
+          con: "#b8b6b0", conL: "#cbc9c3", conD: "#96948e", conDD: "#7c7a75",
+          slab: "#c9c7c1", slabL: "#dedcd6", slabD: "#a3a19b",
+          glass: "#5b6b77", glassL: "#8798a2", glassD: "#3f4d58",
+          rail: "#3d4248", railL: "#5d646b",
+          tower: "#b2b0aa", towerL: "#c6c4be", towerD: "#8b8984",
+          canopy: "#9c9c98", canopyL: "#bcbcb8", canopyD: "#73736c",
+          lobby: "#6d7d86", lobbyL: "#e6d8ac", door: "#33424c",
+          gold: "#d9b45f", bike: "#3f6da8", bikeD: "#26456b"
+        };
+        /* ⚠️ 本文件在「预览页」里只靠 style.js 一个库，拿不到地图那份全局
+           makeRng；自带一支同参数的局部随机流，绝不碰共享 RNG。 */
+        let _s = 1322 >>> 0;
+        const rng = function () { _s = (_s * 1664525 + 1013904223) >>> 0; return _s / 4294967296; };
+
+        /* ---------- 1. 墙底 ---------- */
+        B.px(x0, eaveY, w, B.wallH, C.con);
+        B.px(x0, eaveY, w, 2, C.conL);
+
+        /* ---------- 2. 左端通高服务塔楼 ---------- */
+        const TW = 74, tx1 = x0 + TW;
+        B.px(x0, eaveY - 6, TW, B.wallH + 6, C.tower);
+        B.px(x0, eaveY - 6, 2, B.wallH + 6, C.towerL);
+        B.px(tx1 - 3, eaveY - 6, 3, B.wallH + 6, C.towerD);
+        B.px(x0, eaveY - 6, TW, 2, "#d8d6d0");               // 塔顶压顶
+        B.px(x0, eaveY - 4, TW, 1, "rgba(60,62,64,0.18)");
+        /* 塔身两道竖缝 + 每层一道横缝 */
+        B.px(x0 + 24, eaveY, 1, B.wallH, "rgba(60,62,64,0.14)");
+        B.px(x0 + 51, eaveY, 1, B.wallH, "rgba(60,62,64,0.14)");
+        for (let f = 1; f < B.floors; f++)
+          B.px(x0, eaveY + f * FH, TW, 1, "rgba(60,62,64,0.16)");
+        /* 一列小方洞：每层一个，两个检修口错开 */
+        for (let f = 0; f < B.floors; f++) {
+          const vy = eaveY + f * FH + 12;
+          if (vy + 5 > baseY - 4) continue;
+          const vx = x0 + (f % 2 ? 40 : 32);
+          B.px(vx, vy, 5, 5, "#4f5358");
+          B.px(vx, vy, 5, 1, "#6e7277");
+        }
+        /* 塔楼首层：一扇灰钢门 + 一个防盗栅窗 */
+        B.px(x0 + 12, baseY - 34, 26, 32, C.conDD);
+        B.px(x0 + 14, baseY - 32, 22, 30, "#8f918d");
+        B.px(x0 + 14, baseY - 32, 22, 2, "#a9aba7");
+        B.px(x0 + 24, baseY - 22, 2, 6, "#5c5e5a");
+        B.px(x0 + 46, baseY - 30, 24, 20, "#5a5d60");
+        for (let x = x0 + 47; x < x0 + 70; x += 3) B.px(x, baseY - 30, 1, 20, "#b7b8b4");
+        B.px(x0 + 45, baseY - 30, 26, 1, "#b7b8b4");
+
+        /* ---------- 3. 右翼：连续玻璃阳台带（首层以上留两层给门厅） ---------- */
+        const wx0 = tx1 + 3, wx1 = x1 - 2, ww = wx1 - wx0;
+        const rows = B.floors - 2;                            // 5 排阳台
+        const FINS = 6, finStep = Math.round(ww / FINS);
+        for (let f = 0; f < rows; f++) {
+          const fy = eaveY + f * FH;
+          /* 梁 + 阳台开口 + 楼板 */
+          B.px(wx0, fy, ww, 3, C.conL);
+          B.px(wx0, fy + 3, ww, 1, "rgba(60,62,64,0.24)");
+          const oy = fy + 4, oh = 20;
+          B.px(wx0, oy, ww, oh, C.glassD);
+          B.px(wx0, oy, ww, 3, C.glass);
+          B.px(wx0, oy + 3, ww, 3, C.glassL);
+          /* 玻璃竖向反光 */
+          for (let x = wx0 + 6; x < wx1 - 4; x += 23) B.px(x, oy + 3, 1, 5, "rgba(255,255,255,0.22)");
+          /* 晾晒：每层两三件，颜色与位置走局部随机流 */
+          for (let k = 0; k < 3; k++) {
+            if (rng() < 0.35) continue;
+            const lx = wx0 + 8 + ((rng() * (ww - 22)) | 0);
+            const ly = oy + 6 + ((rng() * 7) | 0);
+            const pick = (rng() * 5) | 0;
+            const col = pick === 0 ? "#e8e2d4" : pick === 1 ? "#c96a5e"
+                      : pick === 2 ? "#7f9fc4" : pick === 3 ? "#b8b8b8" : "#d8c47e";
+            B.px(lx, ly, 3, 5, col);
+            B.px(lx, ly, 3, 1, "rgba(255,255,255,0.35)");
+          }
+          /* 格栅栏杆（压在开口下半）+ 扶手 */
+          for (let x = wx0 + 2; x < wx1 - 1; x += 3) B.px(x, oy + 9, 1, 11, C.rail);
+          B.px(wx0, oy + 8, ww, 2, C.railL);
+          B.px(wx0, oy + 19, ww, 1, C.rail);
+          /* 楼板（开口下沿，左右各探 1px 出挑） */
+          B.px(wx0 - 1, oy + oh, ww + 2, 4, C.slab);
+          B.px(wx0 - 1, oy + oh, ww + 2, 1, C.slabL);
+          B.px(wx0 - 1, oy + oh + 4, ww + 2, 1, C.slabD);
+          /* 竖向混凝土隔板 */
+          for (let k = 0; k <= FINS; k++) {
+            const fx = wx0 + k * finStep;
+            const fw = k === FINS ? Math.min(3, wx1 - fx) : 3;
+            if (fw <= 0) continue;
+            B.px(fx, fy + 2, fw, oh + 4, C.con);
+            B.px(fx, fy + 2, 1, oh + 4, C.conL);
+            B.px(fx + fw - 1, fy + 2, 1, oh + 4, C.conD);
+          }
+        }
+
+        /* ---------- 4. 首两层：雨篷 + 金色楼名 + 玻璃门厅 ---------- */
+        const py = eaveY + rows * FH;                  // 216
+        const cy = py + 4, ch = 18;                    // 雨篷 220..238
+        B.px(wx0, py, ww, baseY - py, C.conD);         // 门厅段的深一档墙
+        B.px(wx0, py, ww, 2, C.conL);
+        /* 雨篷（比墙面探出 2px） */
+        B.px(wx0 - 2, cy, ww + 4, ch, C.canopy);
+        B.px(wx0 - 2, cy, ww + 4, 2, C.canopyL);
+        B.px(wx0 - 2, cy + ch - 2, ww + 4, 2, C.canopyD);
+        B.px(wx0 - 2, cy + ch, ww + 4, 1, "rgba(20,24,32,0.30)");
+        B.goldText("22号宿舍楼", Math.round((wx0 + wx1) / 2), cy + 3, 12, C.gold);
+
+        /* 门厅玻璃：中段整幅，左右各一段防盗栅窗 */
+        const gy = cy + ch + 3, gh = baseY - gy - 5;
+        const ex0 = Math.round(CX) - 52, ex1 = ex0 + 104;
+        B.px(ex0 - 3, gy - 2, 110, gh + 4, "#43474c");
+        B.px(ex0, gy, 104, gh, C.lobby);
+        B.px(ex0, gy, 104, 3, "rgba(10,13,20,0.45)");
+        for (let x = ex0 + 17; x < ex1; x += 18) B.px(x, gy, 1, gh, "#8b969c");
+        B.px(ex0, gy + Math.round(gh * 0.55), 104, 1, "rgba(20,24,30,0.35)");
+        /* 亮着的门厅灯（两团暖光） */
+        B.px(ex0 + 14, gy + 8, 22, 12, C.lobbyL);
+        B.px(ex0 + 14, gy + 8, 22, 2, "#f4ecd0");
+        B.px(ex0 + 58, gy + 8, 22, 12, C.lobbyL);
+        B.px(ex0 + 58, gy + 8, 22, 2, "#f4ecd0");
+        B.px(ex0 + 46, gy, 12, gh, C.door);            // 中间双开门
+        B.px(ex0 + 51, gy, 1, gh, "#7d8a92");
+        B.px(ex0 + 40, baseY - 16, 2, 8, "#c9ccc8");   // 门把手
+        /* 两端防盗栅窗 */
+        const gw = 34;
+        B.px(wx0 + 6, gy + 4, gw, gh - 6, "#4d5357");
+        B.px(wx1 - gw - 6, gy + 4, gw, gh - 6, "#4d5357");
+        for (let x = wx0 + 7; x < wx0 + 6 + gw; x += 4) B.px(x, gy + 4, 1, gh - 6, "#c2c4c0");
+        for (let x = wx1 - gw - 5; x < wx1 - 6; x += 4) B.px(x, gy + 4, 1, gh - 6, "#c2c4c0");
+        /* 墙裙 */
+        B.px(x0, baseY - 6, w, 6, C.conDD);
+        B.px(x0, baseY - 6, w, 1, "#8f8d88");
+
+        /* ---------- 5. 外轮廓 ---------- */
+        B.edges("#d2d0ca", "#74726d");
+      },
+      after: function (B) {
+        /* 门前一排蓝色自行车（画在墙根外侧，跟 05 段的灌木同一支笔） */
+        const y = B.baseY - 1, x0 = B.x0, x1 = B.x1;
+        const bike = (cx) => {
+          B.px(cx + 1, y - 5, 6, 1, "#b9bcbc");                 // 车架横梁
+          B.px(cx + 1, y - 5, 1, 4, "#b9bcbc");
+          B.px(cx + 6, y - 5, 1, 4, "#b9bcbc");
+          B.px(cx, y - 4, 2, 3, "#3a3d40");                     // 后轮
+          B.px(cx + 6, y - 4, 2, 3, "#3a3d40");                 // 前轮
+          B.px(cx + 2, y - 7, 4, 2, "#3f6da8");                 // 车筐 / 车座
+          B.px(cx + 2, y - 7, 4, 1, "#6a92c4");
+          B.px(cx - 1, y - 2, 10, 1, "rgba(14,18,28,0.26)");    // 落地影
+        };
+        bike(x0 + 108);
+        bike(x0 + 120);
+        bike(x0 + 132);
+        bike(x1 - 44);
+        bike(x1 - 32);
+        B.px(x0, B.baseY + 1, B.w, 2, "rgba(14,18,28,0.24)");
+      }
+    }
+  });
+})();
+
+
+/* =========================================================================
+   §6.2d 楼体资源：远端西侧（学生活动中心 + 22号宿舍楼 + 空地铺成活动中心地坪）
+   -------------------------------------------------------------------------
+   用户 2026-11-07：「12号楼下方替换为19号宿舍楼；根据图片作出22号宿舍楼的
+   像素校园地图风格楼体；从上到下替换为学生活动中心、22号宿舍楼，两栋楼之间
+   有一小条道路，空白地块处也全是学生活动中心占地，请灵活做出适应性修改」。
+
+   这一片是 CAMPUS 最西边的两行（20_ground.js）：
+     x 0.4535 / y 2.5132 / 0.9493 × 1.6799 in  学生服务中心
+         → 楼体资源/buildings/04_xsh.js（图上写「学生活动服务中心」）
+         ⚠️ 占地 371×656 px。第四轮把精灵加高到 520 行（占 79%），北边
+            剩 176 行的内院，再由本段在楼**背后**铺一层地坪：
+            两片草坪 + 中央下沉广场 + 中轴步道 + 树/长椅/路灯/名牌。
+            画布底边压进楼精灵顶边 40 行，接缝藏在楼后面。
+     x 0.6542 / y 4.3507 / 0.6972 × 0.7514 in  宿舍
+         → 楼体资源/buildings/13_d22.js（22号宿舍楼）
+         两行之间 1637.6..1699.1 那条 61px 的路**不动**：22号精灵的屋面板
+         只给 28 行，画布顶边 1708.6，落在路南侧。
+
+   ⚠️ 与 35/36 同一条纪律：**只换 b.canvas / b.ax / b.ay**，b.w、CAMPUS 坐标、
+      addSolid 的碰撞盒、footprint 一个字节不动 ⇒ 全校园散射随机流不重掷
+      （§6.6 那颗地雷，探针 _propdiff.py）。
+   ⚠️ 地坪是**地面画**，绝不能进 BLD_IMGS（73_occl 会把它当楼淡成 0.34，
+      人站进去整块广场变半透明 —— 积秀园那一轮的坑）。
+   ⚠️ 地坪只走 addProp；baseY 排序让它天然压在楼精灵下面。它宽 432 > 110，
+      所有「宽 > 110 当楼保留」的净空函数（§5.2.8 / §5.3.10 / §6.6c 等）
+      都不会把它误删。
+   ⚠️ 地坪画布宽 = 04-xsh 精灵画布宽 432，左右各 31px 留在占地外（透明），
+      不把广场铺到邻居的草地上。
+   ========================================================================= */
+
+const FW_SAC_X = 0.4535;
+const FW_SAC_Y = 2.5132;
+const FW_DORM_X = 0.6542;
+const FW_DORM_Y = 4.3507;
+const FW_EPS = 1e-6;
+/* 用户 2026-11-07 第四轮：04-xsh 加了 roofT=332，精灵顶边抬到 1117.9，
+   北边只剩 176 行（原先 380 行）。地坪按这 176 行重画：两片草坪 + 中央
+   下沉广场 + 中轴步道。TUCK 26 → 40：精灵最上面的体量从画布第 20 行起，
+   地坪压 40 行进去，接缝才一定藏在楼后面。 */
+const FW_TUCK = 40;      // 地坪底边压进楼精灵顶边的行数（那截藏在楼后面）
+const FW_PADX = 31;      // 画布左右透明留白（与 04-xsh 精灵的留白同量级）
+
+function fwItem(id) {
+  const lib = window.PC_BUILDINGS || [];
+  for (let i = 0; i < lib.length; i++) if (lib[i].id === id) return lib[i];
+  return null;
+}
+
+function farwestSpriteApply(e, b) {
+  if (e[1] !== "bld") return false;
+  if (Math.abs(e[2] - FW_SAC_X) < FW_EPS && Math.abs(e[3] - FW_SAC_Y) < FW_EPS) {
+    const item = fwItem("04-xsh");
+    if (!item) {
+      console.warn("37b_farwest_sprite: 楼体资源里没有 04-xsh（少了一个文件？）");
+      return false;
+    }
+    const s = PC.make(item.spec);
+    fwGroundsPush(e, s);                 // 先推地坪：stable sort 保证它画在楼下面
+    b.canvas = s.canvas;
+    b.ax = s.ax;
+    b.ay = s.ay;
+    return true;
+  }
+  if (Math.abs(e[2] - FW_DORM_X) < FW_EPS && Math.abs(e[3] - FW_DORM_Y) < FW_EPS) {
+    const item = fwItem("13-d22");
+    if (!item) {
+      console.warn("37b_farwest_sprite: 楼体资源里没有 13-d22（少了一个文件？）");
+      return false;
+    }
+    const s = PC.make(item.spec);
+    b.canvas = s.canvas;
+    b.ax = s.ax;
+    b.ay = s.ay;
+    return true;
+  }
+  return false;
+}
+
+/* --- 内院地坪：一块 432 × 176 的地面画 --------------------------------
+   世界位置：顶边 = 占地北缘 981.7，底边 = 楼精灵顶边 1117.9 + 40 = 1157.9。
+   楼精灵最上面的体量从画布第 20 行起 ⇒ 底下那 40 行被楼挡住，接缝不露。
+   ⚠️ 本地唯一随机量是 makeRng(3741) 的草点 —— 绝不碰共享随机流。 */
+function fwGroundsPush(e, s) {
+  const R = zoneRect(e);
+  const W = 432, fw = W - FW_PADX * 2;              // 370（占地 370.8）
+  const top = Math.round(R.y);
+  const bottom = Math.round(R.y + R.h - s.ay + FW_TUCK);
+  const H = bottom - top;
+  const c = mkCanvas(W, H), g = c.getContext("2d");
+  fwGroundsDraw(g, W, H, fw);
+  addProp({ canvas: c, ax: W / 2, ay: H, x: R.x + R.w / 2, y: bottom });
+  /* ⚠️ baseY 单独压到**占地北缘**：排序只看 baseY，不改的话它是 1158（画布底边），
+     站在内院（982..1158）的玩家、树、长椅都会被它盖掉 —— 第一版实测：
+     玩家站到广场中间整个人消失。地面画必须排在所有站在它上面的东西之前。
+     绘制位置用的是 x/y - ax/ay，与 baseY 无关，改这一个数不动画面位置。 */
+  props[props.length - 1].baseY = top;
+  /* 这块地原来散着树 / 灯 / 长椅，铺装是实心的，留着就是"长在广场石板上"。
+     等整轮装配跑完再摘（微任务早于首帧 RAF），不影响任何先跑的净空函数与
+     它们的计数。只摘根扎在占地里的小道具，楼（宽 > 110）一件不碰。 */
+  Promise.resolve().then(() => fwClearPlot(R));
+  return true;
+}
+
+function fwClearPlot(R) {
+  const x1 = R.x + R.w, y1 = R.y + R.h;
+  for (let i = props.length - 1; i >= 0; i--) {
+    const p = props[i];
+    if (p.img.width > 110) continue;                 // 楼 / 地坪 / 大构件
+    if (p.x > R.x && p.x < x1 && p.y > R.y && p.y < y1) props.splice(i, 1);
+  }
+}
+
+/* --- 地坪的几支小笔（只在本段用，全部自带 fw 前缀） ------------------- */
+function fwBlob(g, cx, cy, rx, ry, col) {
+  g.fillStyle = col;
+  for (let dy = -ry; dy <= ry; dy++) {
+    const t = 1 - (dy * dy) / (ry * ry);
+    if (t < 0) continue;
+    const dx = Math.round(rx * Math.sqrt(t));
+    g.fillRect(Math.round(cx - dx), Math.round(cy + dy), dx * 2 + 1, 1);
+  }
+}
+
+function fwTree(g, cx, cy, r) {
+  /* 与 47_plants 的阔叶树同一套色：亮两档，压在草坪上才看得出是树不是灌木 */
+  fwBlob(g, cx + 5, cy + 3, r + 1, Math.round(r * 0.6), "rgba(14,18,28,0.22)");
+  px(g, cx - 1, cy - 2, 3, 6, "#5e4433");                       // 树干
+  px(g, cx, cy - 2, 1, 6, "#7a5a3d");
+  fwBlob(g, cx, cy - 5, r, Math.round(r * 0.62), "#2f6b3c");
+  fwBlob(g, cx - 1, cy - 6, r - 3, Math.round((r - 3) * 0.62), "#3f8a4d");
+  fwBlob(g, cx - Math.round(r * 0.36), cy - Math.round(r * 0.42),
+         Math.round(r * 0.5), Math.round(r * 0.32), "#68ae6f");
+  px(g, cx - Math.round(r * 0.2), cy - Math.round(r * 0.6), 3, 2, "#8cc48d");
+}
+
+function fwBench(g, cx, cy) {
+  const w = 24, h = 7;
+  px(g, cx - w / 2 + 2, cy + 2, w, h, "rgba(14,18,28,0.20)");
+  px(g, cx - w / 2, cy, w, h, "#9c5442");
+  px(g, cx - w / 2, cy, w, 2, "#b96a52");
+  for (let x = cx - w / 2 + 3; x < cx + w / 2 - 1; x += 4) px(g, x, cy + 2, 1, h - 2, "#52241c");
+  px(g, cx - w / 2, cy + h - 1, w, 1, "#52241c");
+}
+
+function fwLamp(g, cx, cy) {
+  fwBlob(g, cx + 2, cy + 1, 6, 3, "rgba(14,18,28,0.18)");
+  px(g, cx - 1, cy - 24, 3, 25, "#4a4f52");
+  px(g, cx, cy - 24, 1, 25, "#6d7376");
+  px(g, cx - 3, cy - 30, 7, 6, "#5a6063");
+  px(g, cx - 2, cy - 29, 5, 4, "#f2e3b0");
+  px(g, cx - 4, cy - 31, 9, 2, "#3d4245");
+}
+
+/* --- 下沉广场 ---------------------------------------------------------
+   用户 2026-11-07 第四轮：「可以增加绘制一个下沉广场」。
+   俯视画法：外圈与铺装齐平，往里三级台阶（每级 7px），池底比地面低三级；
+   太阳在西北 ⇒ 每级上沿（北墙）压影、下沿（南沿）受光；南侧开一道四级
+   台阶接中轴步道；池心一个圆形花池。 */
+function fwSunken(g, cx, y0, y1, half) {
+  const L = cx - half, R = cx + half, W = R - L, H = y1 - y0;
+  /* 外圈石台（四角斜切，免得读成一张贴纸） */
+  px(g, L + 6, y0, W - 12, H, "#c9c3b2");
+  px(g, L, y0 + 6, 6, H - 12, "#c9c3b2");
+  px(g, R - 6, y0 + 6, 6, H - 12, "#c9c3b2");
+  px(g, L + 6, y0, W - 12, 2, "#ded8c8");
+  px(g, L, y0 + 6, 2, H - 12, "#d8d2c2");
+  px(g, R - 2, y0 + 6, 2, H - 12, "#a49e8e");
+  px(g, L + 6, y1 - 2, W - 12, 2, "#a49e8e");
+  /* 三级台阶 + 池底：逐级内收 7px、逐级压暗。
+     光从西北来 ⇒ 每级北壁投 4 行深影、东壁再压 3px，南缘 2 行受光，
+     三组明暗叠起来才读得出「往下走」而不是一张同心条纹贴纸。 */
+  const steps = ["#c6c0af", "#b3ad9c", "#a19b8a", "#8f8979"];
+  for (let i = 0; i < steps.length; i++) {
+    const ins = 6 + i * 7;
+    const x = L + ins, y = y0 + ins, ww = W - ins * 2, hh = H - ins * 2;
+    px(g, x, y, ww, hh, steps[i]);
+    px(g, x, y, ww, 4, "rgba(14,18,28,0.30)");
+    px(g, x + ww - 3, y + 4, 3, hh - 6, "rgba(14,18,28,0.16)");
+    px(g, x, y + hh - 2, ww, 2, "rgba(255,255,255,0.30)");
+  }
+  /* 池底方砖缝 */
+  const fx = L + 27, fy = y0 + 27, fw2 = W - 54, fh2 = H - 54;
+  for (let yy = fy + 13; yy < fy + fh2; yy += 14) px(g, fx, yy, fw2, 1, "rgba(90,84,72,0.15)");
+  for (let xx = fx + 14; xx < fx + fw2; xx += 14) px(g, xx, fy, 1, fh2, "rgba(90,84,72,0.11)");
+  /* 南侧台阶：从步道走进池底 */
+  const sW = 24;
+  px(g, cx - sW, y1 - 12, sW * 2, 24, "#c6c0b0");
+  px(g, cx - sW, y1 - 12, 2, 24, "#a49e8e");
+  px(g, cx + sW - 2, y1 - 12, 2, 24, "#a49e8e");
+  for (let i = 0; i < 4; i++) {
+    const yy = y1 - 12 + i * 6;
+    px(g, cx - sW + 2, yy, sW * 2 - 4, 6, i % 2 ? "#cfc9b9" : "#c8c2b2");
+    px(g, cx - sW + 2, yy, sW * 2 - 4, 1, "#ded8c8");
+    px(g, cx - sW + 2, yy + 5, sW * 2 - 4, 1, "rgba(60,54,44,0.22)");
+  }
+  /* 池心花池：石圈 + 土 + 一棵小树 + 两丛灌木 */
+  const cy = y0 + Math.round(H / 2);
+  fwBlob(g, cx, cy, 24, 17, "#a8a292");
+  fwBlob(g, cx, cy - 1, 20, 14, "#8f8a7c");
+  fwBlob(g, cx, cy - 2, 18, 12, "#7a5a3d");
+  fwTree(g, cx, cy - 6, 10);
+  fwBlob(g, cx - 9, cy + 6, 5, 3, "#4f8f54");
+  fwBlob(g, cx + 8, cy + 7, 4, 3, "#3f7a46");
+  px(g, cx + 2, cy + 6, 3, 2, "#e8c04a");
+  px(g, cx - 5, cy + 2, 2, 2, "#cf4a45");
+}
+
+/* --- 内院（占地北边剩的 176 行） -------------------------------------
+   用户 2026-11-07 第四轮：「绿化填充的部分可以保留但是要结合实际建筑占比
+   重新规划，可以增加绘制一个下沉广场」。楼占了南边 79%，这一块就只做
+   北入口的院子：中轴步道 → 下沉广场 → 楼门厅，两侧各一片草坪。 */
+function fwGroundsDraw(g, W, H, fw) {
+  const x0 = FW_PADX, x1 = x0 + fw;
+  const CX = W / 2;
+  const rng = makeRng(3741);
+
+  /* ① 铺装底：浅灰石板 + 板缝 */
+  px(g, x0, 0, fw, H, "#b9b3a4");
+  for (let y = 16; y < H; y += 22) px(g, x0, y, fw, 1, "rgba(92,86,72,0.11)");
+  for (let x = x0 + 37; x < x1; x += 37) px(g, x, 0, 1, H, "rgba(92,86,72,0.11)");
+  speckle(g, x0 + 2, 2, fw - 4, H - 4, "rgba(255,255,255,0.10)", 190, rng);
+  speckle(g, x0 + 2, 2, fw - 4, H - 4, "rgba(70,64,52,0.10)", 150, rng);
+
+  /* ② 中轴步道（宽 52）：北入口 → 广场南台阶 → 楼门厅 */
+  const wX0 = Math.round(CX - 26), wX1 = Math.round(CX + 26);
+  px(g, wX0, 0, wX1 - wX0, H, "#d2ccbb");
+  px(g, wX0, 0, 2, H, "#bcb6a5");
+  px(g, wX1 - 2, 0, 2, H, "#bcb6a5");
+  px(g, wX0 + 2, 0, 1, H, "#e0dac9");
+  for (let y = 12; y < H; y += 26) px(g, wX0 + 3, y, wX1 - wX0 - 6, 1, "rgba(120,112,96,0.16)");
+
+  /* ③ 两片草坪（石缘 + 草点），夹着步道 */
+  const lawns = [[x0 + 8, 34, 76, 110], [x1 - 84, 34, 76, 110]];
+  for (let i = 0; i < lawns.length; i++) {
+    const lx = lawns[i][0], ly = lawns[i][1], lw = lawns[i][2], lh = lawns[i][3];
+    px(g, lx - 3, ly - 3, lw + 6, lh + 6, "#a8a292");
+    px(g, lx - 3, ly - 3, lw + 6, 1, "#c9c4b6");
+    px(g, lx, ly, lw, lh, "#6f9e57");
+    px(g, lx, ly, lw, 3, "#5a8746");
+    px(g, lx, ly + lh - 3, lw, 3, "#5a8746");
+    speckle(g, lx + 2, ly + 4, lw - 4, lh - 8, "rgba(134,181,108,0.55)", (lw / 3) | 0, rng);
+    speckle(g, lx + 2, ly + 4, lw - 4, lh - 8, "rgba(66,104,52,0.45)", (lw / 5) | 0, rng);
+  }
+
+  /* ④ 东西两道绿篱收边 */
+  const hedge = function (hx, hy, hw, hh) {
+    px(g, hx, hy, hw, hh, "#3f6b3f");
+    px(g, hx, hy, hw, 2, "#4f7f4a");
+    px(g, hx, hy + hh - 1, hw, 1, "#2f5232");
+    for (let x = hx + 2; x < hx + hw; x += 4) px(g, x, hy + 2, 1, hh - 3, "rgba(30,60,34,0.28)");
+  };
+  hedge(x0 + 2, 34, 5, 110);
+  hedge(x1 - 7, 34, 5, 110);
+
+  /* ⑤ 下沉广场：176×122，压在步道中段 */
+  fwSunken(g, CX, 30, 152, 88);
+
+  /* ⑥ 草坪上的树 */
+  fwTree(g, 63, 66, 14);
+  fwTree(g, 98, 118, 12);
+  fwTree(g, 369, 68, 14);
+  fwTree(g, 341, 120, 12);
+
+  /* ⑦ 广场北角的灯、台阶两侧的椅子 */
+  fwLamp(g, 122, 60);
+  fwLamp(g, 310, 60);
+  fwBench(g, 166, 166);
+  fwBench(g, 266, 166);
+
+  /* ⑧ 「学生活动中心」木牌：立在院子西北角 */
+  const sgn = makeSign("学生活动中心");
+  if (sgn) {
+    const sx = x0 + 4, sy = 0;
+    px(g, sx + 26, sy + sgn.h, 4, 10, "#6d6557");
+    px(g, sx + sgn.w - 30, sy + sgn.h, 4, 10, "#6d6557");
+    px(g, sx + 3, sy + 3, sgn.w, sgn.h, "rgba(14,18,28,0.28)");
+    g.drawImage(sgn.c, sx, sy);
+  }
+}
+
+/* ===== 楼体资源 · 远端西侧 · 结束 ===== */
+
 /* --- 6.2 批量生成建筑 --- */
 let bSeed = 7001;
 for (const e of CAMPUS) {
@@ -17169,6 +20330,9 @@ for (const e of CAMPUS) {
      ⚠️ 色号全部来自照片实测，**不拿 `pal` 推**；本段不许再存一份 PALETTE。
      必须在这里、addProp **之前** 调 —— addProp 取的就是 b.canvas / b.ay。 */
   else if (name === "天佑会堂") tyRestyle(b, pal);
+  westSpriteApply(e, b);
+  centerSpriteApply(e, b);
+  farwestSpriteApply(e, b);
   const ax = R.x + R.w / 2, ay = R.y + R.h;
   /* 门的世界坐标登记给 §5.8.6 的门前净空（parts/58_dxdoor.js 的 DX_DOORS）。
      ⚠️ 只能在这里登记，**不能在 props 里找** —— 建筑是 addProp 造的道具，而 addProp

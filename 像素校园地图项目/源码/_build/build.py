@@ -25,6 +25,17 @@ def part(name):
     return io.open(os.path.join(HERE, 'parts', name), encoding='utf-8').read()
 
 
+def asset(rel):
+    """`像素校园地图项目/楼体资源/` 下的文件（按正面图画的分栋精灵，与 parts 分开）。
+
+    ⚠️ 这批楼是 2026-11-07 直接按用户给的照片画的，公共绘制层 style.js 与
+       30_building.js 同一套层高 / 窗 / 光源 / 接地带口径；地图这边只负责把
+       西侧 / 中部 / 远端西侧的 `b.canvas / b.ax / b.ay` 换掉
+       （parts/35 `_west_sprite` / `36_center_sprite` / `37b_farwest_sprite`）。"""
+    return io.open(os.path.join(os.path.dirname(PROJ), '楼体资源', rel),
+                   encoding='utf-8').read()
+
+
 def _strip_js(s):
     """去掉 JS 注释（供**否定**断言使用）。
 
@@ -3728,6 +3739,27 @@ chunks = [
                                        #         否则猫和人同框像两个引擎做的。
                                        #      ⚠️ 排 50_char.js **之后**：加载期就要 outlineSprite。
                                        #      ⚠️ 不进 props、不加 addSolid（同向导那两条理由）。
+    # 楼体资源：与地图同款的精灵绘制层 + 西侧一列七栋按正面图重画的楼（2026-11-07）。
+    # 放在 60 段**之前**：60 段的建筑循环在加载期就调 westSpriteApply，
+    # 晚一步 `PC` / `PC_BUILDINGS` 还不存在，整页 JS 直接死。
+    'window.PC_BUILDINGS = window.PC_BUILDINGS || [];',
+    asset('style.js'),
+    asset('buildings/01_jianyi.js'),
+    asset('buildings/02_xinxi.js'),
+    asset('buildings/03_tyht.js'),
+    asset('buildings/04_xsh.js'),             # 学生活动中心（远端西侧，2026-11-07 第二轮）
+    asset('buildings/05_d19.js'),             # 19号宿舍楼（西侧一列最南，同上）
+    asset('buildings/06_d2.js'),
+    asset('buildings/07_d12.js'),
+    asset('buildings/08_xiaoshi.js'),
+    asset('buildings/09_yanjiu.js'),
+    asset('buildings/10_d9.js'),
+    asset('buildings/11_d8.js'),
+    asset('buildings/12_d15.js'),
+    asset('buildings/13_d22.js'),             # 22号宿舍楼（按用户照片画，同上）
+    part('35_west_sprite.js'),                # 西侧一列七行的换图钩子（60 段调用）
+    part('36_center_sprite.js'),              # 中部一列四栋换图 + 积秀园公园（60 段调用）
+    part('37b_farwest_sprite.js'),            # 远端西侧两行 + 活动中心地坪（60 段调用）
     part('60_assemble.js'),
     part('72_guide.js'),               # §7.2 向导：地名词典 + 别称 + 栅格寻路 + 对话框 + 自动带路
                                        #      ⚠️ 必须排在 60_assemble.js **之后**：
@@ -3814,6 +3846,36 @@ chunks = [
 ]
 
 html = '\n'.join(chunks)
+
+# --- 楼体资源：西侧一列七栋的精灵（2026-11-07）---
+# 缺了不是语法错，而是**加载期 ReferenceError**（westSpriteApply / PC 未定义），
+# 整页 JS 死、页面只剩静态标题 —— node --check 查不出来。
+for _need in ('window.PC_BUILDINGS = window.PC_BUILDINGS || [];',
+              'function westSpriteSpec(e)',
+              'function westSpriteApply(e, b)',
+              'const WEST_SPRITE_IDS = [',
+              '  "01-jianyi",   // 建筑艺术学院（最北）',
+              'function centerSpriteApply(e, b)',
+              'function cpParkDraw(g, W, H, depth, up)',
+              'function farwestSpriteApply(e, b)',
+              'function fwGroundsDraw(g, W, H, fw)'):
+    assert _need in html, '楼体资源没进产物：缺 ' + _need
+assert html.count('id: "01-jianyi"') == 1 and html.count('id: "12-d15"') == 1 \
+   and html.count('id: "10-d9"') == 1 and html.count('id: "11-d8"') == 1 \
+   and html.count('id: "09-yanjiu"') == 1 and html.count('id: "07-d12"') == 1 \
+   and html.count('id: "06-d2"') == 1 and html.count('id: "05-d19"') == 1 \
+   and html.count('id: "02-xinxi"') == 1 and html.count('id: "03-tyht"') == 1 \
+   and html.count('id: "08-xiaoshi"') == 1 \
+   and html.count('id: "04-xsh"') == 1 and html.count('id: "13-d22"') == 1, \
+    '楼体资源的 spec 没有全部进产物（build.py 的 asset(...) 列表少了一行？）'
+assert _ca.index('westSpriteApply(e, b);') \
+       < _ca.index('centerSpriteApply(e, b);') \
+       < _ca.index('farwestSpriteApply(e, b);') \
+       < _ca.index('addProp(Object.assign({}, b, { x: ax, y: ay,'), \
+    'farwestSpriteApply 没夹在 centerSpriteApply 与 addProp 之间'
+assert _ca.index('else if (name === "天佑会堂") tyRestyle(b, pal);') \
+       < _ca.index('westSpriteApply(e, b);'), \
+    'westSpriteApply 没排在整条 restyle 链之后'
 
 # --- 段是否真的进了产物（只有拼完之后才查得了）---
 assert 'function xgRestyle(b, roofCol)' in html, \

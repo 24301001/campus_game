@@ -421,6 +421,32 @@ for (const e of CAMPUS) {
      ⚠️ 色号全部来自照片实测，**不拿 `pal` 推**；本段不许再存一份 PALETTE。
      必须在这里、addProp **之前** 调 —— addProp 取的就是 b.canvas / b.ay。 */
   else if (name === "天佑会堂") tyRestyle(b, pal);
+  /* §6.2b 楼体资源（2026-11-07）：西侧一列七栋换成 楼体资源/ 里按正面图画好的精灵。
+     用户口径：「现有本地地图文件上这几栋楼依次从上到下用生成的图片替换。从上到下
+     分别是：建艺楼、15号宿舍楼、9号宿舍楼、8号宿舍楼、研究中心、12号宿舍楼、2号宿舍楼」。
+     ⚠️ 必须排在**整条 restyle 链之后、addProp 之前** —— addProp 取的就是
+        b.canvas / b.ax / b.ay。建艺楼那一行仍会先跑一遍 jyRestyle（那条 `else if`
+        被 build.py 的断言逐字钉着，不能改），随后整张画布被换掉，等于白画一遍；
+        不影响结果，也不动 bSeed / 共享 RNG。
+     ⚠️ 只换精灵，**不动 b.w** —— 占地宽、addSolid 的碰撞盒与全校园散射随机流
+        一个数都不变（§6.6 那颗地雷）。b.ay 必须换成精灵自己的落地线：render()
+        按 `y - ay` 落笔，留 30 段的旧 baseY 会把整栋楼上下错位。 */
+  westSpriteApply(e, b);
+  /* §6.2c 楼体资源（2026-11-07）：中部一列四栋换精灵 + 积秀园画成公园
+     （parts/36_center_sprite.js）。用户口径：「将计算机中心替换为信息中心，
+     校史馆用新图替换，积秀园自行作图为公园区域样式，中心是喷泉和亭子，
+     积秀园下方天佑会堂替换，最下面那栋宿舍楼也替换为2号宿舍楼」。
+     ⚠️ 与 westSpriteApply 同一条纪律 + 同一个调用位置：整条 restyle 链之后、
+        addProp 之前；只换 b.canvas / b.ax / b.ay，b.w 与 addSolid 不动。 */
+  centerSpriteApply(e, b);
+  /* §6.2d 楼体资源（2026-11-07）：远端西侧两行 —— 学生服务中心 → 学生活动中心
+     精灵 + 楼后空地铺成活动中心地坪；下面那行宿舍 → 22号宿舍楼
+     （parts/37b_farwest_sprite.js）。用户口径：「根据图片作出22号宿舍楼的像素校园
+     地图风格楼体；从上到下替换为学生活动中心、22号宿舍楼，两栋楼之间有一小条
+     道路，空白地块处也全是学生活动中心占地」。中间那条 61px 的路不动。
+     ⚠️ 同一条纪律 + 同一个位置：restyle 链之后、addProp 之前；只换
+        b.canvas / b.ax / b.ay，b.w 与 addSolid 不动。 */
+  farwestSpriteApply(e, b);
   const ax = R.x + R.w / 2, ay = R.y + R.h;
   /* 门的世界坐标登记给 §5.8.6 的门前净空（parts/58_dxdoor.js 的 DX_DOORS）。
      ⚠️ 只能在这里登记，**不能在 props 里找** —— 建筑是 addProp 造的道具，而 addProp
