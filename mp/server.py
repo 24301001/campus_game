@@ -16,8 +16,10 @@ import mmap
 import os
 import re
 import secrets
+import shutil
 import smtplib
 import sqlite3
+import subprocess
 import threading
 import time
 import unicodedata
@@ -27,7 +29,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from http.cookies import SimpleCookie
 from pathlib import Path
 import urllib.request
-from urllib.parse import parse_qs, unquote, urlsplit
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from websockets.asyncio.server import serve
 
@@ -65,6 +67,121 @@ DEFAULT_LOOK = {"skin": "#e0ae87", "faceShape": "round", "hairStyle": "short", "
 LOOK_COLORS = ("skin", "hairColor", "eyeColor", "cloth", "clothAlt", "pants", "accColor", "packColor")
 LOOK_CHOICES = {"faceShape": ("square", "round"), "hairStyle": ("short", "mid", "long", "ponytail", "bun", "twintails"), "eye": ("round", "narrow", "dot"), "mouth": ("soft", "smile"), "acc": ("none", "glasses", "cap", "scarf"), "clothPattern": ("solid", "stripe")}
 DEFAULT_VISIBILITY = {"bio": True, "college": True, "grade": True, "tags": True}
+
+# --- 真实天气：北京市海淀区 ------------------------------------------------
+# 数据源 Open-Meteo，免费、不用注册。逐小时给到 48 小时，实况是 15 分钟粒度，
+# 所以「每小时换一次天气」完全够用，真想更细也能做到 15 分钟。
+WEATHER_LAT = float(os.environ.get("MP_WX_LAT", "39.96"))
+WEATHER_LON = float(os.environ.get("MP_WX_LON", "116.30"))
+WEATHER_PLACE = os.environ.get("MP_WX_PLACE", "北京市海淀区")
+WEATHER_TTL = int(os.environ.get("MP_WX_TTL", "1800"))   # 半小时拉一次
+_weather_lock = threading.Lock()
+_weather_state = {"at": 0.0, "now": None, "hours": [], "error": ""}
+
+# WMO 天气代码 -> 页面里那八种天气。分不清的一律往「像」的那边靠：
+# 毛毛雨按雨算，冰粒按雪算，阵雨里的强对流按雷雨算。
+WMO_KIND = {
+    0: "clear", 1: "clear",
+    2: "cloudy", 3: "overcast",
+    45: "fog", 48: "fog",
+    51: "rain", 53: "rain", 55: "rain", 56: "rain", 57: "rain",
+    61: "rain", 63: "rain", 65: "rain", 66: "rain", 67: "rain",
+    71: "snow", 73: "snow", 75: "snow", 77: "snow",
+    80: "rain", 81: "rain", 82: "storm",
+    85: "snow", 86: "snow",
+    95: "storm", 96: "storm", 99: "storm",
+}
+
+
+def wmo_to_kind(code) -> str:
+    try:
+        return WMO_KIND.get(int(code), "clear")
+    except (TypeError, ValueError):
+        return "clear"
+
+
+def _weather_pull() -> dict:
+    url = (
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={WEATHER_LAT}&longitude={WEATHER_LON}"
+        "&current=weather_code,temperature_2m,precipitation,wind_speed_10m,cloud_cover"
+        "&hourly=weather_code,temperature_2m,precipitation,wind_speed_10m,cloud_cover"
+        "&daily=sunrise,sunset"
+        "&forecast_days=2&timezone=Asia%2FShanghai"
+    )
+    req = urllib.request.Request(url, headers={"User-Agent": "PacketCampus/1.0"})
+    with urllib.request.urlopen(req, timeout=25) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    cur = data.get("current") or {}
+    hours = data.get("hourly") or {}
+    times = hours.get("time") or []
+    codes = hours.get("weather_code") or []
+    temps = hours.get("temperature_2m") or []
+    precs = hours.get("precipitation") or []
+    winds = hours.get("wind_speed_10m") or []
+    clouds = hours.get("cloud_cover") or []
+    items = []
+    for i, t in enumerate(times):
+        code = codes[i] if i < len(codes) else 0
+        items.append({
+            "time": t,
+            "kind": wmo_to_kind(code),
+            "code": code,
+            "temp": temps[i] if i < len(temps) else None,
+            "precip": precs[i] if i < len(precs) else 0,
+            "wind": winds[i] if i < len(winds) else 0,
+            "cloud": clouds[i] if i < len(clouds) else 0,
+        })
+    day = data.get("daily") or {}
+    days = day.get("time") or []
+    sunrises = day.get("sunrise") or []
+    sunsets = day.get("sunset") or []
+    sun = []
+    for i, dt in enumerate(days):
+        sun.append({
+            "date": dt,
+            "sunrise": sunrises[i] if i < len(sunrises) else "",
+            "sunset": sunsets[i] if i < len(sunsets) else "",
+        })
+    return {
+        "place": WEATHER_PLACE,
+        "source": "open-meteo",
+        "sun": sun,
+        "now": {
+            "time": cur.get("time", ""),
+            "kind": wmo_to_kind(cur.get("weather_code")),
+            "code": cur.get("weather_code"),
+            "temp": cur.get("temperature_2m"),
+            "precip": cur.get("precipitation", 0),
+            "wind": cur.get("wind_speed_10m", 0),
+            "cloud": cur.get("cloud_cover", 0),
+            "interval": cur.get("interval", 900),
+        },
+        "hours": items,
+    }
+
+
+def _weather_worker() -> None:
+    """后台拉天气。拉失败就沿用上一份，只把错误记下来，绝不拖累主服务。"""
+    while True:
+        try:
+            payload = _weather_pull()
+            with _weather_lock:
+                _weather_state.update(payload, at=time.time(), error="")
+        except Exception as exc:  # 网络抖动 / 源站限流
+            with _weather_lock:
+                _weather_state["at"] = time.time()
+                _weather_state["error"] = str(exc)[:120]
+        time.sleep(WEATHER_TTL)
+
+
+def weather_payload() -> dict:
+    with _weather_lock:
+        st = dict(_weather_state)
+    stamp = st.pop("at", 0.0)
+    st["age"] = int(time.time() - stamp) if stamp else None
+    st["stale"] = bool(stamp and time.time() - stamp > WEATHER_TTL * 3)
+    return st
 
 
 def nickname_key(name: str) -> str:
@@ -128,9 +245,7 @@ with lock:
        mp_play：一条 = 一段联机游玩（进大厅到断线），ended_at 为空表示还在玩 —— "结束游玩的时间"靠它。
        mp_app_log：打开过哪个小应用（算法哥 /agent、学霸姐 /xbg、阿姨 /cmr、躲猫猫 /game/duo1，
                    映射表在 mp/app-track.js），
-                   日活按"当天有没有记录"去重算，同一天开十次也只算一个人。
-       mp_user_secret：后台要显示的密码。⚠️ 这是**明文备份**，登录和注册时顺手存一份；
-                       老账号在加这个功能之前注册的，只有哈希、永远补不回来，后台显示"（旧账号）"。 */
+                   日活按"当天有没有记录"去重算，同一天开十次也只算一个人。 */
     CREATE TABLE IF NOT EXISTS mp_login_log(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, at REAL NOT NULL, ip TEXT NOT NULL DEFAULT '');
     CREATE INDEX IF NOT EXISTS idx_mp_login_log_time ON mp_login_log(at);
     CREATE INDEX IF NOT EXISTS idx_mp_login_log_user ON mp_login_log(user_id, at);
@@ -139,7 +254,6 @@ with lock:
     CREATE INDEX IF NOT EXISTS idx_mp_play_user ON mp_play(user_id, id);
     CREATE TABLE IF NOT EXISTS mp_app_log(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, app TEXT NOT NULL, at REAL NOT NULL);
     CREATE INDEX IF NOT EXISTS idx_mp_app_log_time ON mp_app_log(at);
-    CREATE TABLE IF NOT EXISTS mp_user_secret(user_id INTEGER PRIMARY KEY, password TEXT NOT NULL, updated_at REAL NOT NULL);
     /* ---------------- 网络安全（2026-11-04，后台第二个页签） ----------------
        mp_http_log：每个请求一行（IP / 时间 / 路径 / 状态码），只留 7 天 —— "每个 IP 发起的请求"靠它。
        mp_ip_ban：IP 封禁名单，until=0 表示永久，auto=1 表示是系统自动封的。
@@ -219,7 +333,27 @@ with lock:
     CREATE TABLE IF NOT EXISTS mp_pulse_event(id INTEGER PRIMARY KEY, kind TEXT NOT NULL,
         item TEXT NOT NULL DEFAULT '', at REAL NOT NULL);
     CREATE INDEX IF NOT EXISTS idx_mp_pulse_event_at ON mp_pulse_event(at);
+    /* ---------------- 校园论坛（2026-11-08） ----------------
+       帖子 / 评论 / 点赞三张表。标题和正文都由发帖人自己填；点赞按
+       (post_id,user_id) 去重，取消点赞就是删掉那一行。
+       client_msg_id 用来兜住客户端重试：同一个键只落一条。 */
+    CREATE TABLE IF NOT EXISTS mp_forum_post(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL,
+        title TEXT NOT NULL, content TEXT NOT NULL, created_at REAL NOT NULL,
+        pinned INTEGER NOT NULL DEFAULT 0,
+        client_msg_id TEXT, UNIQUE(user_id, client_msg_id));
+    CREATE INDEX IF NOT EXISTS idx_mp_forum_post_time ON mp_forum_post(id);
+    CREATE TABLE IF NOT EXISTS mp_forum_comment(id INTEGER PRIMARY KEY, post_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL, content TEXT NOT NULL, created_at REAL NOT NULL,
+        pinned INTEGER NOT NULL DEFAULT 0,
+        client_msg_id TEXT, UNIQUE(user_id, client_msg_id));
+    CREATE INDEX IF NOT EXISTS idx_mp_forum_comment_post ON mp_forum_comment(post_id, id);
+    CREATE TABLE IF NOT EXISTS mp_forum_like(post_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
+        created_at REAL NOT NULL, PRIMARY KEY(post_id, user_id));
     """)
+    if "pinned" not in {column["name"] for column in db.execute("PRAGMA table_info(mp_forum_post)")}:
+        db.execute("ALTER TABLE mp_forum_post ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0")
+    if "pinned" not in {column["name"] for column in db.execute("PRAGMA table_info(mp_forum_comment)")}:
+        db.execute("ALTER TABLE mp_forum_comment ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0")
     if "visibility_json" not in {column["name"] for column in db.execute("PRAGMA table_info(mp_player)")}:
         db.execute("ALTER TABLE mp_player ADD COLUMN visibility_json TEXT NOT NULL DEFAULT '{\"bio\":true,\"college\":true,\"grade\":true,\"tags\":true}'")
     _user_cols = {column["name"] for column in db.execute("PRAGMA table_info(mp_user)")}
@@ -290,7 +424,7 @@ def token_user(token: str):
     if not token:
         return None
     digest = hashlib.sha256(token.encode()).hexdigest()
-    return row("SELECT u.id,u.nickname FROM mp_token t JOIN mp_user u ON u.id=t.user_id WHERE t.token_hash=? AND t.expires_at>?", (digest, time.time()))
+    return row("SELECT u.id,u.nickname,u.banned_until FROM mp_token t JOIN mp_user u ON u.id=t.user_id WHERE t.token_hash=? AND t.expires_at>?", (digest, time.time()))
 
 
 def player_of(user_id: int):
@@ -300,11 +434,28 @@ def player_of(user_id: int):
     return {"id": user_id, "nickname": p["nickname"], "look": json.loads(p["look_json"]), "bio": p["bio"], "college": p["college"], "grade": p["grade"], "tags": json.loads(p["tags"]), "visibility": json.loads(p["visibility_json"]), "admin": bool(p["is_admin"])}
 
 
+def clean_nickname(name: str) -> str:
+    """昵称白名单：只允许文字、数字、组合附标，以及下划线/短横线。
+
+    NFKC 先把全角折成半角；Cc（换行、DEL）、Cf（零宽、双向控制符）、Zs（空格）、
+    So（emoji）都会被拒绝，避免视觉冒充和日志污染。
+    """
+    value = unicodedata.normalize("NFKC", str(name or "")).strip()
+    if not 2 <= len(value) <= 16:
+        raise ValueError("昵称须为 2 至 16 字")
+    for ch in value:
+        cat = unicodedata.category(ch)
+        if not (cat[0] in ("L", "N") or cat == "Mn" or ch in "_-"):
+            raise ValueError("昵称只能包含文字、数字、下划线或短横线")
+    return value
+
+
 def nickname_status(name: str) -> dict:
     """注册页边打字边问：这个名字还能不能用。按规范化键比对，大小写/全角都算同一个。"""
-    name = (name or "").strip()
-    if not 2 <= len(name) <= 16 or any(ord(c) < 32 for c in name):
-        return {"ok": False, "available": False, "error": "昵称须为 2 至 16 字"}
+    try:
+        name = clean_nickname(name)
+    except ValueError as e:
+        return {"ok": False, "available": False, "error": str(e)}
     taken = row("SELECT id FROM mp_user WHERE name_key=?", (nickname_key(name),))
     return {"ok": True, "available": not taken,
             "error": "" if not taken else "这个昵称已经被使用了（大小写、全角半角算同一个）"}
@@ -334,6 +485,109 @@ def message_dict(m):
 def announcements(limit=50):
     items = rows("SELECT a.*,u.nickname,p.look_json FROM mp_announcement a JOIN mp_user u ON u.id=a.user_id JOIN mp_player p ON p.user_id=a.user_id WHERE a.created_at>? ORDER BY a.id DESC LIMIT ?", (time.time() - 7 * 86400, min(max(int(limit), 1), 50)))
     return [{"id": a["id"], "userId": a["user_id"], "nickname": a["nickname"], "look": json.loads(a["look_json"]), "content": a["content"], "at": now_iso(a["created_at"]), "online": a["user_id"] in active} for a in reversed(items)]
+
+
+# ---------------- 校园论坛（2026-11-08） ----------------
+def forum_online(user_id: int) -> bool:
+    try:
+        return user_id in active
+    except RuntimeError:
+        # HTTP 线程正好撞上 WS 循环增删在线表，这一拍就当离线。
+        return False
+
+
+def forum_post_dict(p, viewer_id: int, full: bool = False) -> dict:
+    author = player_of(p["user_id"])
+    likes = row("SELECT COUNT(*) AS n FROM mp_forum_like WHERE post_id=?", (p["id"],))["n"]
+    comments = row("SELECT COUNT(*) AS n FROM mp_forum_comment WHERE post_id=?", (p["id"],))["n"]
+    liked = bool(row("SELECT 1 FROM mp_forum_like WHERE post_id=? AND user_id=?", (p["id"], viewer_id)))
+    item = {
+        "id": p["id"], "userId": p["user_id"],
+        "nickname": author["nickname"] if author else "（已删号）",
+        "look": author["look"] if author else DEFAULT_LOOK,
+        "title": p["title"],
+        "excerpt": p["content"][:160] + ("…" if len(p["content"]) > 160 else ""),
+        "at": now_iso(p["created_at"]),
+        "likeCount": likes, "commentCount": comments, "liked": liked,
+        "pinned": bool(p["pinned"]),
+        "online": forum_online(p["user_id"]),
+    }
+    if full:
+        item["content"] = p["content"]
+    return item
+
+
+def forum_posts(limit: int = 30, before: int = 0, viewer_id: int = 0) -> list:
+    if before:
+        items = rows("SELECT * FROM mp_forum_post WHERE id<? ORDER BY id DESC LIMIT ?", (before, limit))
+    else:
+        # 置顶只影响第一页；按 id 翻页时仍用纯时间序，免得一篇老置顶在每一页都出现一次。
+        items = rows("SELECT * FROM mp_forum_post ORDER BY pinned DESC,id DESC LIMIT ?", (limit,))
+    return [forum_post_dict(p, viewer_id) for p in items]
+
+
+def forum_review_meta(kind: str, ref_id: int) -> dict:
+    """审核列表要的论坛上下文：帖子看计数，评论看所属帖子；内容被删就标失效。"""
+    if kind == "forum_post":
+        p = row("SELECT * FROM mp_forum_post WHERE id=?", (ref_id,))
+        if not p:
+            return {"exists": False, "postId": ref_id}
+        return {"exists": True, "postId": p["id"], "authorId": p["user_id"],
+                "title": p["title"],
+                "excerpt": p["content"][:160] + ("…" if len(p["content"]) > 160 else ""),
+                "commentCount": row("SELECT COUNT(*) AS n FROM mp_forum_comment WHERE post_id=?", (ref_id,))["n"],
+                "likeCount": row("SELECT COUNT(*) AS n FROM mp_forum_like WHERE post_id=?", (ref_id,))["n"],
+                "pinned": bool(p["pinned"])}
+    if kind == "forum_comment":
+        c = row("SELECT c.*,p.title AS post_title,p.user_id AS post_user FROM mp_forum_comment c "
+                "LEFT JOIN mp_forum_post p ON p.id=c.post_id WHERE c.id=?", (ref_id,))
+        if not c:
+            return {"exists": False, "postId": 0}
+        parent = player_of(c["post_user"]) if c["post_user"] else None
+        return {"exists": True, "commentId": c["id"], "postId": c["post_id"],
+                "postTitle": c["post_title"] or "", "postAuthor": parent["nickname"] if parent else "（已删号）",
+                "authorId": c["user_id"], "content": c["content"]}
+    return {}
+
+
+def forum_detail(post_id: int, viewer_id: int) -> dict:
+    p = row("SELECT * FROM mp_forum_post WHERE id=?", (post_id,))
+    if not p:
+        raise ValueError("帖子不存在，可能已被清理")
+    item = forum_post_dict(p, viewer_id, full=True)
+    raw = rows("SELECT c.*,u.nickname,p.look_json FROM mp_forum_comment c "
+               "JOIN mp_user u ON u.id=c.user_id LEFT JOIN mp_player p ON p.user_id=c.user_id "
+               "WHERE c.post_id=? ORDER BY c.pinned DESC,c.id ASC LIMIT 200", (post_id,))
+    item["comments"] = [{"id": c["id"], "userId": c["user_id"], "nickname": c["nickname"],
+                         "look": json.loads(c["look_json"]) if c["look_json"] else DEFAULT_LOOK,
+                         "content": c["content"], "at": now_iso(c["created_at"]),
+                         "pinned": bool(c["pinned"]),
+                         "online": forum_online(c["user_id"])} for c in raw]
+    return item
+
+
+def forum_muted(user_id: int) -> str:
+    """禁言对论坛也生效：返回非空串就是不能发，直接把它显示给用户。"""
+    mute = row("SELECT muted_until FROM mp_user WHERE id=?", (user_id,))
+    if mute and mute["muted_until"] and mute["muted_until"] > time.time():
+        return mute_message(mute["muted_until"])
+    return ""
+
+
+def forum_post_rate(user_id: int) -> str:
+    latest = row("SELECT created_at FROM mp_forum_post WHERE user_id=? ORDER BY id DESC LIMIT 1", (user_id,))
+    count = row("SELECT COUNT(*) AS n FROM mp_forum_post WHERE user_id=? AND created_at>?", (user_id, time.time() - 86400))["n"]
+    if (latest and time.time() - latest["created_at"] < 60) or count >= 10:
+        return "发帖每 60 秒一篇，每天最多 10 篇"
+    return ""
+
+
+def forum_comment_rate(user_id: int) -> str:
+    latest = row("SELECT created_at FROM mp_forum_comment WHERE user_id=? ORDER BY id DESC LIMIT 1", (user_id,))
+    count = row("SELECT COUNT(*) AS n FROM mp_forum_comment WHERE user_id=? AND created_at>?", (user_id, time.time() - 86400))["n"]
+    if (latest and time.time() - latest["created_at"] < 5) or count >= 100:
+        return "评论每 5 秒一条，每天最多 100 条"
+    return ""
 
 
 def npc_credentials(user_id: int, kind: str):
@@ -861,13 +1115,6 @@ def record_login(user_id: int, ip: str):
     execute("INSERT INTO mp_login_log(user_id,at,ip) VALUES(?,?,?)", (user_id, time.time(), ip))
 
 
-def remember_password(user_id: int, password: str):
-    """【2026-11-05 停用】以前把明文口令存进 mp_user_secret，好让后台"找回密码"。
-    但整个库一旦泄露就是全站口令裸奔，风险远大于这点便利，已停用：不再写入。
-    函数名和调用点（注册、登录）保留不动，省得漏改。历史数据由部署脚本一并清掉。"""
-    return
-
-
 # ---------------- WAF（CrowdSec）对接（2026-11-05） ----------------
 # CrowdSec 的本地 API 只听 127.0.0.1:8080，用 bouncer 级别的 key 只能读决策、
 # 不能改配置，所以把 key 给网站进程是安全的。key 存在 /etc/campus-portal/app.env。
@@ -1003,7 +1250,9 @@ def ban_message(banned_until: float) -> str:
 # 口径：先发布、后审核。内容照常进库、照常显示，同时往 mp_review 记一行。
 # 管理员在「审核和举报中心」里通过（什么都不用做）或清理（真删）。
 
-REVIEW_KINDS = {"announce": "留言板", "bld_comment": "楼宇留言", "bld_photo": "楼宇照片"}
+REVIEW_KINDS = {"announce": "留言板", "bld_comment": "楼宇留言", "bld_photo": "楼宇照片",
+                "forum_post": "论坛帖子", "forum_comment": "论坛评论"}
+REPORT_KINDS = {"chat": "私聊", "forum_post": "论坛帖子", "forum_comment": "论坛评论"}
 
 
 def blocked_ids(user_id: int) -> list:
@@ -1017,8 +1266,8 @@ def is_muted(user_id: int) -> bool:
 
 def mute_message(muted_until: float) -> str:
     if muted_until >= BAN_FOREVER:
-        return "你已被禁言，暂时不能发消息、留言和传照片，可以浏览别人的内容"
-    return f"你被禁言到 {stamp_text(muted_until)}，这期间不能发私聊、留言和传照片"
+        return "你已被禁言，暂时不能发私聊、留言板、楼宇留言/照片和论坛帖子/评论，也不能点赞，可以浏览别人的内容"
+    return f"你被禁言到 {stamp_text(muted_until)}，这期间不能发私聊、留言板、楼宇留言/照片和论坛帖子/评论，也不能点赞"
 
 
 def push_review(kind: str, ref_id: int, user_id: int, ip: str, content: str, extra: str = ""):
@@ -1039,18 +1288,23 @@ def push_review(kind: str, ref_id: int, user_id: int, ip: str, content: str, ext
 
 def _review_dict(r) -> dict:
     u = row("SELECT nickname,muted_until,banned_until FROM mp_user WHERE id=?", (r["user_id"],)) if r["user_id"] else None
-    return {"id": r["id"], "kind": r["kind"], "kindName": REVIEW_KINDS.get(r["kind"], r["kind"]),
+    item = {"id": r["id"], "kind": r["kind"], "kindName": REVIEW_KINDS.get(r["kind"], r["kind"]),
             "refId": r["ref_id"], "userId": r["user_id"],
             "nickname": (u["nickname"] if u else "（已删号）"),
             "muted": bool(u and u["muted_until"] > time.time()),
             "banned": bool(u and u["banned_until"] > time.time()),
             "ip": r["ip"] or "", "content": r["content"] or "", "extra": r["extra"] or "",
-            "bldName": BLD_NAMES.get(r["extra"], r["extra"] or ""),
+            # 只有楼宇内容把 extra 当楼名；论坛评论的 extra 是帖子 id，不能拿来当楼名显示。
+            "bldName": BLD_NAMES.get(r["extra"], r["extra"] or "") if r["kind"] in ("bld_comment", "bld_photo") else "",
             "status": r["status"], "createdAt": stamp_text(r["created_at"]),
             "reviewedAt": stamp_text(r["reviewed_at"]) if r["reviewed_at"] else "",
             "reviewer": r["reviewer"] or "",
             # 照片要能直接看缩略图：content 里存的就是相对 ROOT 的路径
             "image": r["content"] if r["kind"] == "bld_photo" else ""}
+    if r["kind"] in ("forum_post", "forum_comment"):
+        item["forum"] = forum_review_meta(r["kind"], r["ref_id"])
+        item["stale"] = not item["forum"].get("exists", False)
+    return item
 
 
 def _report_dict(r) -> dict:
@@ -1061,7 +1315,8 @@ def _report_dict(r) -> dict:
             "target": tgt["nickname"] if tgt else "（已删号）",
             "muted": bool(tgt and tgt["muted_until"] > time.time()),
             "banned": bool(tgt and tgt["banned_until"] > time.time()),
-            "msgId": r["msg_id"], "kind": r["kind"], "content": r["content"] or "",
+            "msgId": r["msg_id"], "kind": r["kind"], "kindName": REPORT_KINDS.get(r["kind"], r["kind"]),
+            "content": r["content"] or "",
             "reason": r["reason"] or "", "ip": r["ip"] or "", "status": r["status"],
             "createdAt": stamp_text(r["created_at"]),
             "handledAt": stamp_text(r["handled_at"]) if r["handled_at"] else "",
@@ -1115,6 +1370,18 @@ def review_remove(rev_id: int, admin_name: str) -> dict:
             except OSError:
                 pass      # 文件已经被手工删过，不要因为少一个文件让整个操作失败
         notify_all({"type": "bld.remove", "bld": rev["extra"], "kind": "photo", "id": ref_id})
+    elif kind == "forum_post":
+        # 帖子一删，它的评论审核行也跟着结案，不然待审队列里会留下点不动的幽灵行。
+        execute("UPDATE mp_review SET status=2,reviewed_at=?,reviewer=? WHERE kind='forum_comment' AND status=0 "
+                "AND ref_id IN (SELECT id FROM mp_forum_comment WHERE post_id=?)", (time.time(), admin_name, ref_id))
+        execute("DELETE FROM mp_forum_comment WHERE post_id=?", (ref_id,))
+        execute("DELETE FROM mp_forum_like WHERE post_id=?", (ref_id,))
+        execute("DELETE FROM mp_forum_post WHERE id=?", (ref_id,))
+        notify_all({"type": "forum.remove", "postId": ref_id})
+    elif kind == "forum_comment":
+        comment = row("SELECT post_id FROM mp_forum_comment WHERE id=?", (ref_id,))
+        execute("DELETE FROM mp_forum_comment WHERE id=?", (ref_id,))
+        notify_all({"type": "forum.remove", "postId": comment["post_id"] if comment else 0, "commentId": ref_id})
     else:
         raise ValueError("这种内容不会自动删，请手动处理")
     review_mark(rev_id, 2, admin_name)
@@ -1181,7 +1448,6 @@ def admin_users() -> list:
     for u in rows("SELECT id,nickname,is_admin,banned_until,ban_reason,muted_until,mute_reason,created_at FROM mp_user ORDER BY id"):
         last = row("SELECT at,ip FROM mp_login_log WHERE user_id=? ORDER BY at DESC LIMIT 1", (u["id"],))
         play = row("SELECT MAX(ended_at) AS last_end, SUM(COALESCE(ended_at,?)-started_at) AS secs, COUNT(*) AS n FROM mp_play WHERE user_id=?", (now, u["id"]))
-        secret = row("SELECT 1 AS ok FROM mp_user_secret WHERE user_id=?", (u["id"],))
         banned_until = u["banned_until"] or 0
         muted_until = u["muted_until"] or 0
         result.append({
@@ -1193,7 +1459,6 @@ def admin_users() -> list:
             "playSeconds": int(play["secs"] or 0) if play else 0,
             "playCount": int(play["n"] or 0) if play else 0,
             "online": u["id"] in active,
-            "hasPassword": bool(secret),
             "banned": banned_until > now,
             "bannedUntil": stamp_text(banned_until) if banned_until > now else "",
             "banForever": banned_until >= BAN_FOREVER,
@@ -1222,7 +1487,6 @@ def seed_admin():
                          (ADMIN_NICK, salt, digest, 1, time.time(), nickname_key(ADMIN_NICK)))
         db.execute("INSERT INTO mp_player(user_id,look_json) VALUES(?,?)", (cur.lastrowid, json.dumps(DEFAULT_LOOK)))
         db.execute("INSERT INTO mp_npc_secret(user_id,secret) VALUES(?,?)", (cur.lastrowid, secrets.token_bytes(32)))
-    remember_password(cur.lastrowid, ADMIN_PASS)
 
 
 # ---------------------------------------------------------------------------
@@ -1354,8 +1618,10 @@ PW_CHECK_PER_MIN = 30
 CAPTCHA_PER_MIN = 12
 # 登录失败限流：同一 IP 10 分钟内最多错 7 次，超了先晾着。
 # scrypt 本身每次要几十毫秒，但换 IP 并发就能慢慢试，所以按 IP 卡一道。
-LOGIN_FAIL_WINDOW = 600
+LOGIN_FAIL_WINDOW = 900
 LOGIN_FAIL_LIMIT = 7
+LOGIN_IP_WINDOW = 600
+LOGIN_IP_LIMIT = 30
 # 每一对账号之间的私聊只留最近 200 条，超出的从旧往新删。
 # 两个人聊一年也就 200 条，翻不到更早的；换来的是库不会被聊天撑大。
 CHAT_KEEP = 200
@@ -1542,6 +1808,63 @@ def ban_ip(ip: str, reason: str, seconds: float, auto: int = 0):
 
 def unban_ip(ip: str):
     execute("DELETE FROM mp_ip_ban WHERE ip=?", (ip,))
+
+
+def waf_decisions_of(ip: str) -> list:
+    """查 CrowdSec 里这个 IP 的决策。没装、没 key、连不上都当作没封，不挡这次查询。"""
+    if not CROWDSEC_KEY:
+        return []
+    try:
+        conn = http.client.HTTPConnection(CROWDSEC_HOST, CROWDSEC_PORT, timeout=4)
+        conn.request("GET", "/v1/decisions?ip=" + quote(ip), headers={"X-Api-Key": CROWDSEC_KEY})
+        resp = conn.getresponse()
+        body = resp.read(1024 * 1024)
+        conn.close()
+        if resp.status != 200:
+            return []
+        items = []
+        for d in json.loads(body or b"null") or []:
+            items.append({"reason": d.get("scenario", ""), "origin": d.get("origin", ""),
+                          "action": d.get("type", "ban"), "left": _secs_left(d)})
+        return items
+    except Exception:
+        return []
+
+
+def unban_waf_ip(ip: str):
+    """删掉 CrowdSec 里这个 IP 的本机决策。返回（删了几条，错误说明）。
+
+    走本机 cscli，与后台现有读 WAF 的方式（LAPI 只读 key）分开：
+    读用 HTTP，删用命令行，删不了也不会把整次解封带崩。
+    """
+    exe = shutil.which("cscli") or "/usr/bin/cscli"
+    if not os.path.exists(exe):
+        return 0, ""
+    try:
+        p = subprocess.run([exe, "decisions", "delete", "--ip", ip],
+                           capture_output=True, text=True, timeout=8)
+        out = ((p.stdout or "") + (p.stderr or "")).strip()
+        m = re.search(r"(\d+)\s+decision\(s\)\s+deleted", out)
+        if p.returncode != 0:
+            return 0, out[:160] or "cscli 返回 %d" % p.returncode
+        return (int(m.group(1)) if m else 0), ""
+    except Exception as exc:
+        return 0, str(exc)[:160]
+
+
+def ip_lookup(ip: str) -> dict:
+    """后台查一个 IP：自家封禁表与 WAF 各查一遍，两边口径不同，分开返回。"""
+    b = row("SELECT * FROM mp_ip_ban WHERE ip=?", (ip,))
+    now = time.time()
+    db = None
+    if b:
+        db = {"reason": b["reason"], "auto": bool(b["auto"]),
+              "until": "永久" if not b["until"] else stamp_text(b["until"]),
+              "createdAt": stamp_text(b["created_at"]),
+              "expired": bool(b["until"] and b["until"] <= now)}
+    waf = waf_decisions_of(ip)
+    return {"ip": ip, "region": geo_regions([ip]).get(ip, ""), "db": db, "waf": waf,
+            "banned": bool((db and not db["expired"]) or waf)}
 
 
 def prune_chat():
@@ -1910,6 +2233,8 @@ class Handler(BaseHTTPRequestHandler):
         user = token_user(bearer[7:] if bearer.startswith("Bearer ") else "")
         if not user:
             raise PermissionError("请重新登录")
+        if user["banned_until"] and user["banned_until"] > time.time():
+            raise PermissionError(ban_message(user["banned_until"]))
         return user
 
     def browser_session(self):
@@ -1921,7 +2246,11 @@ class Handler(BaseHTTPRequestHandler):
         item = cookies.get("mp_session")
         if not item:
             return None, None
-        return token_user(item.value), hashlib.sha256(item.value.encode()).hexdigest()
+        digest = hashlib.sha256(item.value.encode()).hexdigest()
+        user = token_user(item.value)
+        if user and user["banned_until"] and user["banned_until"] > time.time():
+            return None, digest
+        return user, digest
 
     def npc_gate(self, kind, user, body):
         """NPC 提问的两道闸。返回 None = 放行，否则返回已经写好的响应。
@@ -2084,9 +2413,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(200, {"ok": True, "ticket": ticket})
             elif path == "/api/mp/register":
                 data = self.body()
-                name, password = str(data.get("nickname", "")).strip(), str(data.get("password", ""))
-                if not 2 <= len(name) <= 16 or any(ord(c) < 32 for c in name):
-                    raise ValueError("昵称须为 2 至 16 字")
+                name = clean_nickname(data.get("nickname", ""))
+                password = str(data.get("password", ""))
                 # 昵称查重按"规范化键"来：ZlK / zlk / ＺＬＫ 算同一个名字。
                 if row("SELECT id FROM mp_user WHERE name_key=?", (nickname_key(name),)):
                     raise ValueError("昵称已被使用")
@@ -2095,34 +2423,44 @@ class Handler(BaseHTTPRequestHandler):
                 verdict = password_check(password, name)
                 if not verdict["ok"]:
                     raise ValueError("；".join(verdict["issues"][:2]) or "密码太弱，换一个")
-                # 验证码票据在昵称、密码都过了之后再核销：前面任何一步不通过，
-                # 用户改一下就能重提，不用重新拖一次拼图。
+                # 票据在昵称、密码都过了之后再做原子核销：先 SELECT 再 UPDATE
+                # 会让两个并发请求同时看到 used=0，必须用 UPDATE ... WHERE used=0
+                # 的 rowcount 判定唯一赢家。
                 ip = client_ip(self)
-                ticket = row("SELECT * FROM mp_captcha_ticket WHERE token=? AND used=0",
-                             (str(data.get("captchaTicket", ""))[:64],))
-                if not ticket or ticket["ip"] != ip or ticket["expires_at"] < time.time():
-                    raise ValueError("请先完成拖动验证")
+                ticket_token = str(data.get("captchaTicket", ""))[:64]
                 salt = secrets.token_bytes(16)
                 digest = hashlib.scrypt(password.encode(), salt=salt, n=16384, r=8, p=1)
                 with lock:
+                    claim = db.execute(
+                        "UPDATE mp_captcha_ticket SET used=1 "
+                        "WHERE token=? AND used=0 AND ip=? AND expires_at>?",
+                        (ticket_token, ip, time.time()))
+                    if claim.rowcount != 1:
+                        raise ValueError("请先完成拖动验证")
                     try:
                         cur = db.execute("INSERT INTO mp_user(nickname,salt,password_hash,created_at,name_key) VALUES(?,?,?,?,?)",
                                          (name, salt, digest, time.time(), nickname_key(name)))
+                        db.execute("INSERT INTO mp_player(user_id,look_json) VALUES(?,?)", (cur.lastrowid, json.dumps(DEFAULT_LOOK)))
+                        db.execute("INSERT INTO mp_npc_secret(user_id,secret) VALUES(?,?)", (cur.lastrowid, secrets.token_bytes(32)))
                     except sqlite3.IntegrityError:
+                        db.execute("UPDATE mp_captcha_ticket SET used=0 WHERE token=?", (ticket_token,))
                         raise ValueError("昵称已被使用")
-                    db.execute("INSERT INTO mp_player(user_id,look_json) VALUES(?,?)", (cur.lastrowid, json.dumps(DEFAULT_LOOK)))
-                    db.execute("INSERT INTO mp_npc_secret(user_id,secret) VALUES(?,?)", (cur.lastrowid, secrets.token_bytes(32)))
-                    db.execute("UPDATE mp_captcha_ticket SET used=1 WHERE token=?", (ticket["token"],))
-                remember_password(cur.lastrowid, password)
+                    except Exception:
+                        db.execute("UPDATE mp_captcha_ticket SET used=0 WHERE token=?", (ticket_token,))
+                        raise
                 self.send_json(201, {"ok": True})
             elif path == "/api/mp/login":
                 data = self.body()
                 name, password = str(data.get("nickname", "")).strip(), str(data.get("password", ""))
                 ip = client_ip(self)
-                # 同一 IP 10 分钟内错够 7 次就先不让试了。成功登录会清零，
-                # 所以正常用户偶尔打错两次不会被晾着。
-                if rate_store.count("loginfail:" + ip, LOGIN_FAIL_WINDOW) >= LOGIN_FAIL_LIMIT:
-                    raise PermissionError("登录失败次数太多，请 10 分钟后再试")
+                # 双键限流：账号+IP 15 分钟 7 次；IP 10 分钟 30 次。
+                # 成功只清"本账号+本 IP"，不清 IP 键，避免攻击者用一个自己的
+                # 账号把失败计数刷掉；同时 IP 阈值放宽，避免校园 NAT 连带锁死。
+                ip_key = "loginfail:ip:" + ip
+                acct_key = "loginfail:acct:" + nickname_key(name) + ":" + ip
+                if (rate_store.count(ip_key, LOGIN_IP_WINDOW) >= LOGIN_IP_LIMIT
+                        or rate_store.count(acct_key, LOGIN_FAIL_WINDOW) >= LOGIN_FAIL_LIMIT):
+                    raise PermissionError("登录失败次数太多，请稍后再试")
                 # 登录也认规范化键：注册时 "ZlK"、登录时打 "zlk" 也能进（键是唯一的，不会串号）
                 u = row("SELECT * FROM mp_user WHERE name_key=?", (nickname_key(name),))
                 if not u:
@@ -2137,7 +2475,8 @@ class Handler(BaseHTTPRequestHandler):
                         pass
                     # 记进限流窗口。用"失败次数"而不是"请求次数"计数：
                     # 连续错 7 次才拦，正常人多半是打错一两次。
-                    rate_store.hit("loginfail:" + ip, LOGIN_FAIL_WINDOW)
+                    rate_store.hit(ip_key, LOGIN_IP_WINDOW)
+                    rate_store.hit(acct_key, LOGIN_FAIL_WINDOW)
                     raise PermissionError("昵称或密码错误")
                 if u["banned_until"] and u["banned_until"] > time.time():
                     raise PermissionError(ban_message(u["banned_until"]))
@@ -2145,11 +2484,8 @@ class Handler(BaseHTTPRequestHandler):
                 # 邮件服务器慢也不会拖住登录。
                 if u["is_admin"]:
                     alert_admin_login(client_ip(self), self.headers.get("User-Agent", ""))
-                # 密码只在这两处（注册、登录）是明文，顺手存一份给后台看；
-                # 老账号在功能上线前注册的没有这份，后台显示"（旧账号）"。
-                remember_password(u["id"], password)
                 record_login(u["id"], ip)
-                rate_store.reset("loginfail:" + ip)   # 登进来了，把失败计数清掉
+                rate_store.reset(acct_key)   # 只清本账号+本 IP，不清 IP 键
                 daily_grant(u["id"], "login")       # 每日任务：当天第一次进来送一份猫粮
                 token = secrets.token_urlsafe(32)
                 with lock:
@@ -2354,11 +2690,24 @@ class Handler(BaseHTTPRequestHandler):
                     seconds = until - time.time()
                 ban_ip(ip, reason, seconds)
                 self.send_json(200, {"ok": True, "security": security_payload()})
+            elif path == "/api/mp/admin/ip/check":
+                require_admin(self)
+                data = self.body()
+                ip = str(data.get("ip", "")).strip()
+                if not IP_RE.match(ip):
+                    raise ValueError("IP 格式不对")
+                self.send_json(200, ip_lookup(ip))
             elif path == "/api/mp/admin/ip/unban":
                 require_admin(self)
                 data = self.body()
-                unban_ip(str(data.get("ip", "")).strip())
-                self.send_json(200, {"ok": True, "security": security_payload()})
+                ip = str(data.get("ip", "")).strip()
+                if not IP_RE.match(ip):
+                    raise ValueError("IP 格式不对")
+                had_db = bool(row("SELECT 1 FROM mp_ip_ban WHERE ip=?", (ip,)))
+                unban_ip(ip)
+                waf_n, waf_err = unban_waf_ip(ip)
+                self.send_json(200, {"ok": True, "db": had_db, "waf": waf_n,
+                                     "wafError": waf_err, "security": security_payload()})
             elif path == "/api/mp/admin/maintenance":
                 require_admin(self)
                 data = self.body()
@@ -2383,6 +2732,16 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("没有这个账号")
                 execute("UPDATE mp_user SET banned_until=0,ban_reason='' WHERE id=?", (target,))
                 self.send_json(200, {"ok": True, "users": admin_users()})
+            elif path == "/api/mp/admin/forum/pin":
+                require_admin(self)
+                data = self.body()
+                pid = int(data.get("postId", 0) or 0)
+                on = bool(data.get("on", True))
+                if not row("SELECT id FROM mp_forum_post WHERE id=?", (pid,)):
+                    raise ValueError("帖子不存在，可能已被清理")
+                execute("UPDATE mp_forum_post SET pinned=? WHERE id=?", (1 if on else 0, pid))
+                notify_all({"type": "forum.changed", "kind": "pin", "postId": pid})
+                self.send_json(200, {"ok": True, "postId": pid, "pinned": on, **review_payload()})
             elif path == "/api/mp/admin/review/approve":
                 admin = require_admin(self)
                 rev_id = int(self.body().get("id", 0))
@@ -2469,6 +2828,45 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception as exc:
                     print(f"[alert] 举报提醒没排上：{exc}")
                 self.send_json(200, {"ok": True, "msg": "举报已提交，管理员会尽快受理"})
+            elif path == "/api/mp/forum/report":
+                # 论坛举报：帖子/评论都能报，快照存被举报原文，管理员在同一个举报列表里处理。
+                u = self.auth()
+                _, allowed = rate_store.hit("forumreport:%d" % u["id"], 3600, limit=20)
+                if not allowed:
+                    return self.send_json(429, {"error": "举报太频繁了，歇一会儿再来"})
+                data = self.body()
+                kind = "forum_comment" if str(data.get("kind", "")) == "comment" else "forum_post"
+                reason = str(data.get("reason", "")).strip()
+                if not 2 <= len(reason) <= 200:
+                    raise ValueError("举报理由请写 2 到 200 字")
+                pid = int(data.get("postId", 0) or 0)
+                p = row("SELECT * FROM mp_forum_post WHERE id=?", (pid,))
+                if not p:
+                    raise ValueError("帖子不存在，可能已被清理")
+                if kind == "forum_comment":
+                    cid = int(data.get("commentId", 0) or 0)
+                    c = row("SELECT * FROM mp_forum_comment WHERE id=? AND post_id=?", (cid, pid))
+                    if not c:
+                        raise ValueError("评论不存在，可能已被清理")
+                    target, content = c["user_id"], c["content"][:300]
+                else:
+                    target, content = p["user_id"], (p["title"] + "\n" + p["content"])[:300]
+                if target == u["id"]:
+                    raise ValueError("不能举报自己的内容")
+                last_ip = row("SELECT ip FROM mp_login_log WHERE user_id=? ORDER BY at DESC LIMIT 1", (target,))
+                execute("INSERT INTO mp_report(reporter_id,target_id,msg_id,kind,content,reason,ip,status,created_at) VALUES(?,?,?,?,?,?,?,0,?)",
+                        (u["id"], target, pid, kind, content, reason,
+                         (last_ip["ip"] if last_ip else "") or "", time.time()))
+                try:
+                    tgt = row("SELECT nickname FROM mp_user WHERE id=?", (target,))
+                    notify_moderation(
+                        f"[举报·{REPORT_KINDS[kind]}] {u['nickname']}（id {u['id']}）举报 "
+                        f"{(tgt['nickname'] if tgt else target)}（id {target}） {stamp_text(time.time())}\n"
+                        f"    理由：{reason[:120]}\n"
+                        f"    被举报内容：{content[:120]}")
+                except Exception as exc:
+                    print(f"[alert] 举报提醒没排上：{exc}")
+                self.send_json(200, {"ok": True, "msg": "举报已提交，管理员会尽快受理"})
             elif path == "/api/mp/block":
                 u = self.auth()
                 data = self.body()
@@ -2494,6 +2892,98 @@ class Handler(BaseHTTPRequestHandler):
                 with lock:
                     grants.setdefault(digest, set()).add(kind)
                 self.send_json(200, ticket, cookie)
+            elif path == "/api/mp/forum/posts":
+                u = self.auth()
+                data = self.body(16384)
+                title = str(data.get("title", "")).strip()
+                content = str(data.get("content", "")).strip()
+                key = str(data.get("clientMsgId", ""))[:80]
+                if not 1 <= len(title) <= 60:
+                    raise ValueError("标题须为 1 至 60 字")
+                if not 1 <= len(content) <= 2000:
+                    raise ValueError("正文须为 1 至 2000 字")
+                muted = forum_muted(u["id"])
+                if muted:
+                    raise ValueError(muted)
+                if key:
+                    duplicate = row("SELECT id FROM mp_forum_post WHERE user_id=? AND client_msg_id=?", (u["id"], key))
+                    if duplicate:
+                        return self.send_json(200, forum_detail(duplicate["id"], u["id"]))
+                rate = forum_post_rate(u["id"])
+                if rate:
+                    raise ValueError(rate)
+                stamp = time.time()
+                cur = execute("INSERT INTO mp_forum_post(user_id,title,content,created_at,client_msg_id) VALUES(?,?,?,?,?)",
+                              (u["id"], title, content, stamp, key or None))
+                push_review("forum_post", cur.lastrowid, u["id"], client_ip(self), title + "\n" + content)
+                notify_all({"type": "forum.changed", "kind": "post", "postId": cur.lastrowid,
+                            "userId": u["id"], "nickname": u["nickname"], "title": title})
+                self.send_json(201, forum_detail(cur.lastrowid, u["id"]))
+            elif re.fullmatch(r"/api/mp/forum/posts/\d+/comments", path):
+                u = self.auth()
+                data = self.body()
+                pid = int(path.split("/")[-2])
+                if not row("SELECT id FROM mp_forum_post WHERE id=?", (pid,)):
+                    raise ValueError("帖子不存在，可能已被清理")
+                content = str(data.get("content", "")).strip()
+                key = str(data.get("clientMsgId", ""))[:80]
+                if not 1 <= len(content) <= 500:
+                    raise ValueError("评论须为 1 至 500 字")
+                muted = forum_muted(u["id"])
+                if muted:
+                    raise ValueError(muted)
+                if key:
+                    duplicate = row("SELECT post_id FROM mp_forum_comment WHERE user_id=? AND client_msg_id=?", (u["id"], key))
+                    if duplicate:
+                        return self.send_json(200, forum_detail(duplicate["post_id"], u["id"]))
+                rate = forum_comment_rate(u["id"])
+                if rate:
+                    raise ValueError(rate)
+                stamp = time.time()
+                cur = execute("INSERT INTO mp_forum_comment(post_id,user_id,content,created_at,client_msg_id) VALUES(?,?,?,?,?)",
+                              (pid, u["id"], content, stamp, key or None))
+                push_review("forum_comment", cur.lastrowid, u["id"], client_ip(self), content, extra=str(pid))
+                notify_all({"type": "forum.changed", "kind": "comment", "postId": pid, "commentId": cur.lastrowid})
+                self.send_json(201, forum_detail(pid, u["id"]))
+            elif re.fullmatch(r"/api/mp/forum/posts/\d+/like", path):
+                u = self.auth()
+                data = self.body()
+                pid = int(path.split("/")[-2])
+                if not row("SELECT id FROM mp_forum_post WHERE id=?", (pid,)):
+                    raise ValueError("帖子不存在，可能已被清理")
+                muted = forum_muted(u["id"])
+                if muted:
+                    raise ValueError(muted)
+                _, allowed = rate_store.hit("forumlike:" + str(u["id"]), 60, limit=120)
+                if not allowed:
+                    return self.send_json(429, {"error": "点赞点太快了，歇一下"})
+                on = bool(data.get("on", True))
+                if on:
+                    execute("INSERT OR IGNORE INTO mp_forum_like(post_id,user_id,created_at) VALUES(?,?,?)",
+                            (pid, u["id"], time.time()))
+                else:
+                    execute("DELETE FROM mp_forum_like WHERE post_id=? AND user_id=?", (pid, u["id"]))
+                count = row("SELECT COUNT(*) AS n FROM mp_forum_like WHERE post_id=?", (pid,))["n"]
+                notify_all({"type": "forum.changed", "kind": "like", "postId": pid, "likeCount": count})
+                self.send_json(200, {"liked": on, "likeCount": count})
+            elif re.fullmatch(r"/api/mp/forum/comments/\d+/pin", path):
+                # 只有楼主能管理自己帖子里的留言：置顶只改本帖的展示顺序。
+                u = self.auth()
+                data = self.body()
+                cid = int(path.split("/")[-2])
+                comment = row("SELECT * FROM mp_forum_comment WHERE id=?", (cid,))
+                if not comment:
+                    raise ValueError("这条留言不存在，可能已被清理")
+                post = row("SELECT * FROM mp_forum_post WHERE id=?", (comment["post_id"],))
+                if not post:
+                    raise ValueError("帖子不存在，可能已被清理")
+                if post["user_id"] != u["id"]:
+                    return self.send_json(403, {"error": "只有楼主能置顶自己帖子里的留言"})
+                on = bool(data.get("on", True))
+                execute("UPDATE mp_forum_comment SET pinned=? WHERE id=?", (1 if on else 0, cid))
+                notify_all({"type": "forum.changed", "kind": "comment-pin",
+                            "postId": post["id"], "commentId": cid})
+                self.send_json(200, {"ok": True, "commentId": cid, "pinned": on})
             elif any(path == prefix or path.startswith(prefix) for prefix, _ in PROXY_PREFIXES):
                 self.proxy(path)
             else:
@@ -2564,12 +3054,43 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError:
                 days = 7
             return self.send_json(200, admin_stats(max(1, min(30, days))))
+        if path == "/api/mp/admin/forum/view":
+            query = parse_qs(urlsplit(self.path).query)
+            kind = (query.get("kind") or [""])[0]
+            try:
+                ref_id = int((query.get("id") or ["0"])[0])
+            except (TypeError, ValueError):
+                ref_id = 0
+            if kind not in ("forum_post", "forum_comment"):
+                return self.send_json(400, {"error": "类型无效"})
+            post = None
+            if kind == "forum_post":
+                post = row("SELECT * FROM mp_forum_post WHERE id=?", (ref_id,))
+                if not post:
+                    return self.send_json(404, {"error": "帖子不存在，可能已被清理"})
+            else:
+                comment = row("SELECT * FROM mp_forum_comment WHERE id=?", (ref_id,))
+                if not comment:
+                    return self.send_json(404, {"error": "评论不存在，可能已被清理"})
+                post = row("SELECT * FROM mp_forum_post WHERE id=?", (comment["post_id"],))
+            author = player_of(post["user_id"]) if post else None
+            comments = rows("SELECT c.*,u.nickname,p.look_json FROM mp_forum_comment c JOIN mp_user u ON u.id=c.user_id "
+                            "LEFT JOIN mp_player p ON p.user_id=c.user_id WHERE c.post_id=? ORDER BY c.id ASC LIMIT 200",
+                            (post["id"],)) if post else []
+            return self.send_json(200, {
+                "kind": kind, "refId": ref_id,
+                "commentId": ref_id if kind == "forum_comment" else 0,
+                "post": {"id": post["id"], "title": post["title"], "content": post["content"],
+                         "author": author["nickname"] if author else "（已删号）",
+                         "at": stamp_text(post["created_at"]), "pinned": bool(post["pinned"]),
+                         "likeCount": row("SELECT COUNT(*) AS n FROM mp_forum_like WHERE post_id=?", (post["id"],))["n"],
+                         "commentCount": len(comments)} if post else None,
+                "comments": [{"id": c["id"], "nickname": c["nickname"], "content": c["content"],
+                              "at": stamp_text(c["created_at"]),
+                              "look": json.loads(c["look_json"]) if c["look_json"] else DEFAULT_LOOK} for c in comments],
+            })
         if path.startswith("/api/mp/admin/password/"):
-            target = int(path.rsplit("/", 1)[1])
-            secret = row("SELECT password,updated_at FROM mp_user_secret WHERE user_id=?", (target,))
-            if not secret:
-                return self.send_json(404, {"error": "明文口令存储已于 2026-11-05 停用，后台不再能查看密码，只能让本人重置"})
-            return self.send_json(200, {"password": secret["password"], "updatedAt": stamp_text(secret["updated_at"])})
+            return self.send_json(410, {"error": "明文口令功能已永久移除"})
         if path.startswith("/api/mp/admin/user/"):
             target = int(path.rsplit("/", 1)[1])
             profile = player_of(target)
@@ -2581,11 +3102,21 @@ class Handler(BaseHTTPRequestHandler):
             chats = rows("SELECT m.id,m.to_user,n.nickname,m.content,m.created_at FROM mp_message m JOIN mp_user n ON n.id=m.to_user "
                          "WHERE m.from_user=? ORDER BY m.id DESC LIMIT 60", (target,))
             plays = rows("SELECT started_at,ended_at,ip FROM mp_play WHERE user_id=? ORDER BY id DESC LIMIT 20", (target,))
+            forum_post_rows = rows("SELECT p.id,p.title,p.content,p.pinned,p.created_at,"
+                                   "(SELECT COUNT(*) FROM mp_forum_comment WHERE post_id=p.id) AS comments,"
+                                   "(SELECT COUNT(*) FROM mp_forum_like WHERE post_id=p.id) AS likes "
+                                   "FROM mp_forum_post p WHERE p.user_id=? ORDER BY p.id DESC LIMIT 30", (target,))
+            forum_comment_rows = rows("SELECT c.id,c.post_id,c.content,c.created_at,p.title AS post_title "
+                                      "FROM mp_forum_comment c LEFT JOIN mp_forum_post p ON p.id=c.post_id "
+                                      "WHERE c.user_id=? ORDER BY c.id DESC LIMIT 60", (target,))
             counts = {
                 "comments": row("SELECT COUNT(*) AS n FROM mp_bld_comment WHERE user_id=?", (target,))["n"],
                 "photos": row("SELECT COUNT(*) AS n FROM mp_bld_photo WHERE user_id=?", (target,))["n"],
                 "board": row("SELECT COUNT(*) AS n FROM mp_announcement WHERE user_id=?", (target,))["n"],
                 "chats": row("SELECT COUNT(*) AS n FROM mp_message WHERE from_user=?", (target,))["n"],
+                "forumPosts": row("SELECT COUNT(*) AS n FROM mp_forum_post WHERE user_id=?", (target,))["n"],
+                "forumComments": row("SELECT COUNT(*) AS n FROM mp_forum_comment WHERE user_id=?", (target,))["n"],
+                "forumLikes": row("SELECT COUNT(*) AS n FROM mp_forum_like WHERE post_id IN (SELECT id FROM mp_forum_post WHERE user_id=?)", (target,))["n"],
             }
             return self.send_json(200, {
                 "profile": dict(profile),
@@ -2595,6 +3126,12 @@ class Handler(BaseHTTPRequestHandler):
                 "photos": [{"id": r["id"], "bld": BLD_NAMES.get(r["bld"], r["bld"]), "url": "/" + r["file"],
                             "note": r["note"], "at": stamp_text(r["created_at"])} for r in photos],
                 "board": [{"id": r["id"], "content": r["content"], "at": stamp_text(r["created_at"])} for r in board],
+                "forumPosts": [{"id": r["id"], "title": r["title"],
+                                "excerpt": r["content"][:120] + ("…" if len(r["content"]) > 120 else ""),
+                                "pinned": bool(r["pinned"]), "comments": r["comments"], "likes": r["likes"],
+                                "at": stamp_text(r["created_at"])} for r in forum_post_rows],
+                "forumComments": [{"id": r["id"], "postId": r["post_id"], "postTitle": r["post_title"] or "",
+                                   "content": r["content"], "at": stamp_text(r["created_at"])} for r in forum_comment_rows],
                 "chats": [{"id": r["id"], "to": r["to_user"], "nickname": r["nickname"], "content": r["content"],
                            "at": stamp_text(r["created_at"])} for r in chats],
                 # 每一段联机游玩的起止时间：后台详情里显示"几点来、几点走、玩了多久"
@@ -2629,6 +3166,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_json(200, nickname_status((query.get("nickname", [""])[0] or "")))
                 if path == "/api/mp/health":
                     return self.send_json(200, {"ok": True, "online": len(active)})
+                if path == "/api/mp/weather":
+                    return self.send_json(200, weather_payload())
                 if path == "/api/mp/colleges":
                     return self.send_json(200, {"colleges": list(CAMPUS_COLLEGES)})
                 # 楼宇照片墙是公开的：没登录的人站在楼底下也能先看看这楼什么样，
@@ -2645,6 +3184,21 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_json(200, public_profile(u["id"], u["id"]))
                 if path == "/api/mp/task/me":
                     return self.send_json(200, daily_state(u["id"]))
+                if path == "/api/mp/forum/posts":
+                    try:
+                        limit = int((query.get("limit", ["30"])[0] or 30))
+                    except (TypeError, ValueError):
+                        limit = 30
+                    try:
+                        before = int((query.get("before", ["0"])[0] or 0))
+                    except (TypeError, ValueError):
+                        before = 0
+                    return self.send_json(200, {"items": forum_posts(min(max(limit, 1), 50), max(before, 0), u["id"])})
+                if re.fullmatch(r"/api/mp/forum/posts/\d+", path):
+                    pid = int(path.rsplit("/", 1)[1])
+                    if not row("SELECT id FROM mp_forum_post WHERE id=?", (pid,)):
+                        return self.send_json(404, {"error": "帖子不存在，可能已被清理"})
+                    return self.send_json(200, forum_detail(pid, u["id"]))
                 if path == "/api/mp/online":
                     # 只给"头像 + 昵称"，一个字段都不多 —— 前台那张表按设计点不开。
                     # active 是 WS 线程（asyncio 循环）在增删的，HTTP 这边只读；
@@ -2692,7 +3246,9 @@ class Handler(BaseHTTPRequestHandler):
         if any(path == prefix or path.startswith(prefix) for prefix, _ in PROXY_PREFIXES):
             return self.proxy(path)
         requested = unquote(path.lstrip("/")) or "像素校园_全校地图.html"
-        if requested not in {"像素校园_全校地图.html", "mp/look.js", "mp/lobby.js", "mp/duo1-bridge.js", "mp/theme.css", "mp/avatar3d.js", "mp/three.module.js", "pixel-3d/pixel-3d.js", "pixel-3d/pixel-3d.css", "admin.html", "mp/admin.js", "mp/admin.css", "mp/app-track.js"} and not requested.startswith("cat-dex/") and not requested.startswith("building/"):
+        if requested in ("ddz3d", "ddz3d/"):
+            requested = "ddz3d/index.html"
+        if requested not in {"像素校园_全校地图.html", "mp/look.js", "mp/lobby.js", "mp/mobile-controls.js", "mp/duo1-bridge.js", "mp/ddz-bridge.js", "mp/guandan-bridge.js", "mp/basketball-bridge.js", "mp/badminton-bridge.js", "mp/theme.css", "mp/avatar3d.js", "mp/three.module.js", "pixel-3d/pixel-3d.js", "pixel-3d/pixel-3d.css", "admin.html", "mp/admin.js", "mp/admin.css", "mp/app-track.js", "uno/uno.css", "uno/rules.js", "uno/board.js", "uno/net.js", "uno/uno.js"} and not requested.startswith("cat-dex/") and not requested.startswith("building/") and not requested.startswith("ddz3d/") and not requested.startswith("fbwg/"):
             self.send_error(404)
             return
         target = (ROOT / requested).resolve()
@@ -2728,7 +3284,9 @@ async def send(ws, payload):
 
 
 def authorized(s):
-    return active.get(s["id"]) is s and bool(token_user(s["token"]))
+    u = token_user(s["token"])
+    return (active.get(s["id"]) is s and bool(u)
+            and not (u["banned_until"] and u["banned_until"] > time.time()))
 
 
 async def broadcast(payload, recipients):
@@ -2769,6 +3327,19 @@ async def handle_message(s, data):
             await send(s["ws"], {"type": "chat.msg", **message_dict(item)})
         return
     if not s["hello"]:
+        return
+    # --- 森林冰火人（fbwg）：借大厅这条连接转发两只娃的快照，不另开端口 ---
+    if typ == "fbwg.state":
+        stamp = time.monotonic()
+        if stamp - s.get("fbwg_at", 0) < 0.06:
+            return
+        s["fbwg_at"] = stamp
+        payload = {"type": "fbwg.state", "from": uid}
+        for key in ("level", "t", "reset", "self", "gems", "door", "join", "mode"):
+            if key in data:
+                payload[key] = data[key]
+        await broadcast(payload, [p for p in active.values()
+                                  if p is not s and p["hello"] and p["scene"] == s["scene"]])
         return
     if typ == "move":
         stamp = time.monotonic()
@@ -2915,15 +3486,36 @@ def clamp_number(value, minimum, maximum):
         return minimum
 
 
+def ws_token(ws):
+    """优先用查询串里的 token（兼容旧前端），否则读同源 Cookie。
+
+    长期会话 token 不应放在 URL 里：nginx/上游/浏览器都会记录完整 URL。
+    新前端改为同源 WS + HttpOnly Cookie，服务端保留 query 兼容旧缓存页面。
+    """
+    token = parse_qs(urlsplit(ws.request.path).query).get("token", [""])[0]
+    if token:
+        return token
+    cookies = SimpleCookie()
+    try:
+        cookies.load(ws.request.headers.get("Cookie", ""))
+    except Exception:
+        return ""
+    item = cookies.get("mp_session")
+    return item.value if item else ""
+
+
 async def handle_ws(ws):
     path = urlsplit(ws.request.path)
     if path.path != "/mp":
         await ws.close(4003, "路径无效")
         return
-    token = parse_qs(path.query).get("token", [""])[0]
+    token = ws_token(ws)
     user = token_user(token)
     if not user:
         await ws.close(4003, "登录已失效")
+        return
+    if user["banned_until"] and user["banned_until"] > time.time():
+        await ws.close(4003, ban_message(user["banned_until"]))
         return
     uid = user["id"]
     old = active.get(uid)
@@ -2945,8 +3537,12 @@ async def handle_ws(ws):
             if len(raw) > 4096:
                 await ws.close(1009, "消息过大")
                 break
-            if not token_user(token):
+            current = token_user(token)
+            if not current:
                 await ws.close(4003, "登录已失效")
+                break
+            if current["banned_until"] and current["banned_until"] > time.time():
+                await ws.close(4003, ban_message(current["banned_until"]))
                 break
             try:
                 data = json.loads(raw)
@@ -2983,6 +3579,7 @@ async def main():
     event_loop = asyncio.get_running_loop()
     http = ThreadingHTTPServer((HOST, HTTP_PORT), Handler)
     threading.Thread(target=http.serve_forever, daemon=True).start()
+    threading.Thread(target=_weather_worker, daemon=True).start()
     seed_building()
     seed_admin()
     close_stale_plays()

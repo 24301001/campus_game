@@ -1,0 +1,94 @@
+/* =========================================================
+   weather/weather.css —— 天气面板的外观
+   ---------------------------------------------------------
+   只服务 .wx-panel 这一块（weather.js 的 panel.mount() 造出来的 DOM）。
+   配色沿用大厅 mp/theme.css 那一套深色 + 金色高亮，但变量自己声明在
+   .wx-panel 上，不依赖 mp/theme.css 是否加载：地图单独双击打开时
+   （没有 mp/）面板也得是同一个样子。
+   ========================================================= */
+.wx-panel {
+  --wx-bg: #1d2129;
+  --wx-deep: #11151b;
+  --wx-line: #475261;
+  --wx-ink: #f3efe3;
+  --wx-muted: #b9c9d5;
+  --wx-gold: #ffd76e;
+  position: fixed;
+  right: 16px;
+  top: 70px;                       /* 让开右上角那排公告/留言按钮（top:16、高约 34） */
+  z-index: 60;
+  width: 232px;
+  padding: 9px 10px 8px;
+  border: 1px solid var(--wx-line);
+  border-radius: 5px;
+  background: var(--wx-bg);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, .3), 0 12px 26px rgba(0, 0, 0, .35);
+  color: var(--wx-ink);
+  font: 12px/1.5 system-ui, "Microsoft YaHei", sans-serif;
+  user-select: none;
+}
+.wx-panel .wx-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+.wx-panel .wx-cap {
+  width: 100%;
+  margin-bottom: 2px;
+  color: var(--wx-gold);
+  font-weight: 700;
+  letter-spacing: .06em;
+}
+.wx-panel button {
+  padding: 4px 8px;
+  border: 1px solid var(--wx-line);
+  border-radius: 4px;
+  background: #2a303b;
+  color: var(--wx-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.wx-panel button:hover { border-color: var(--wx-gold); color: #ffe397; }
+.wx-panel button:focus-visible { outline: 2px solid var(--wx-gold); outline-offset: 2px; }
+.wx-panel button.on {
+  border-color: #c89d36;
+  background: var(--wx-gold);
+  color: #1b2028;
+  font-weight: 700;
+}
+/* 「自动」是开关不是选项：点亮时只描边，不抢季节/天气那颗实心金，
+   否则一屏三个金色按钮，看不出当前到底是哪个季节。 */
+.wx-panel .wx-auto.on {
+  background: #3a4657;
+  border-color: var(--wx-gold);
+  color: var(--wx-gold);
+  font-weight: 400;
+}
+.wx-panel .wx-now {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--wx-line);
+  color: var(--wx-muted);
+}
+.wx-panel .wx-now-season { color: var(--wx-ink); font-weight: 700; }
+.wx-panel .wx-int {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+}
+.wx-panel .wx-int input[type=range] {
+  width: 62px;
+  accent-color: var(--wx-gold);
+  cursor: pointer;
+}
+/* 地图窗口很窄时（大厅里嵌 iframe 看小屏）面板缩到右下角，别盖住楼名 */
+@media (max-width: 720px) {
+  .wx-panel { width: 190px; top: 58px; right: 8px; padding: 7px 8px; }
+  .wx-panel button { padding: 3px 6px; }
+}
